@@ -211,3 +211,46 @@ exports.deleteUser = async (req, res, next) => {
     });
   }
 };
+
+
+// Get User Online
+exports.getUserOnline = async(req, res, next) => {
+    try{
+        const userData = req.user.data;
+        if(userData && userData.Permission === 1){
+            await ent_user.findAll({
+                attributes: ['Username', 'Emails', 'ID_Duan','ID_KhoiCV', 'Permission'],
+                where: {
+                    isDelete: 0
+                }
+            }).then((data) => {
+                res.status(201).json({
+                  message: "Danh sách nhân viên!",
+                  data: data,
+                });
+              })
+              .catch((err) => {
+                res.status(500).json({
+                  message: err.message || "Lỗi! Vui lòng thử lại sau.",
+                });
+              });
+        }else {
+            return res.status(401).json({
+                message: "Bạn không có quyền truy cập",
+              });
+        }
+    }catch(err){
+        return res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+    }
+}
+
+
+// SELECT
+//   ent_toanha.ID_Toanha,
+//   ent_toanha.Toanha,
+//   ent_duan.Duan
+// FROM ent_toanha
+// LEFT JOIN ent_duan 
+//   ON ent_duan.ID_Duan = ent_toanha.ID_Duan;

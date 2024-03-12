@@ -8,6 +8,7 @@ module.exports = (app) => {
     router.post("/change-password",isAuthenticated, ent_user.changePassword);
     router.post("/delete-user",isAuthenticated, ent_user.deleteUser);
     router.post("/login", ent_user.login);
+    router.get("/get-online",isAuthenticated, ent_user.getUserOnline);
     
     
     app.use("/api/ent_user", router);
