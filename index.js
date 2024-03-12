@@ -29,6 +29,7 @@ app.get("/", (req, res) => {
 
 require("./app/routes/ent_calv.route")(app);
 require("./app/routes/ent_user.route")(app);
+require("./app/routes/ent_tang.route")(app);
 
 const PORT = process.env.PORT || 6868;
 app.listen(PORT, () => {

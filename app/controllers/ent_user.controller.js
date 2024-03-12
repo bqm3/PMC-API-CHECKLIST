@@ -8,7 +8,7 @@ exports.login = async (req, res) => {
   try {
     if (!req.body.Username || !req.body.Password) {
       res.status(400).send({
-        message: "User not found or Username and Password wrong!!",
+        message: "Sai tài khoản hoặc mật khẩu. Vui lòng thử lại!!",
       });
       return;
     }
@@ -17,7 +17,8 @@ exports.login = async (req, res) => {
         Username: req.body.Username,
       },
     });
-    if (user) {
+
+    if (user && user?.isDelete === 0) {
       const password_valid = await compareSync(
         req.body.Password,
         user.Password
@@ -42,18 +43,24 @@ exports.login = async (req, res) => {
 
         return res.status(200).send({ token: token, user: user });
       } else {
-        return res.status(400).json({ error: "Password Incorrect" });
+        return res
+          .status(400)
+          .json({ error: "Sai mật khẩu. Vui lòng thử lại." });
       }
+    } else {
+      return res.status(400).json({
+        error:
+          "Bạn không thể đăng nhập. Vui lòng nhắn tin cho phòng chuyển đổi số.",
+      });
     }
   } catch (err) {
     return res.status(500).send({
-      message: err ? err : "Internal Server Error",
+      message: err ? err : "Lỗi! Vui lòng thử lại sau.",
     });
   }
 };
 
 // Create User
-
 exports.register = async (req, res, next) => {
   try {
     if (
@@ -65,7 +72,7 @@ exports.register = async (req, res, next) => {
       !req.body.ID_KhoiCV
     ) {
       return res.status(400).json({
-        message: "Phải nhập đầy đủ dữ liệu",
+        message: "Phải nhập đầy đủ dữ liệu.",
       });
     }
     const Username = req.body.Username;
@@ -75,11 +82,10 @@ exports.register = async (req, res, next) => {
         [Op.or]: [{ Username }, { Emails }],
       },
     });
-    console.log("user", user);
 
     if (user !== null) {
       return res.status(400).json({
-        message: "Tài khoản hoặc Email đã bị trùng",
+        message: "Tài khoản hoặc Email đã bị trùng.",
       });
     }
     const salt = genSaltSync(10);
@@ -93,22 +99,115 @@ exports.register = async (req, res, next) => {
       isDelete: 0,
     };
 
-    console.log("data", data);
-
-    ent_user.create(data)
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while creating.",
+    ent_user
+      .create(data)
+      .then((data) => {
+        res.send(data);
+      })
+      .catch((err) => {
+        res.status(500).send({
+          message: err.message || "Lỗi! Vui lòng thử lại sau.",
+        });
       });
-    });
   } catch (err) {
     return res.status(500).json({
-      message: "Internal Server Error",
+      message: err.message || "Lỗi! Vui lòng thử lại sau",
     });
-    // console.log('err', err)
+  }
+};
+
+// Change Password
+exports.changePassword = async (req, res, next) => {
+  try {
+    if (!req.body) {
+      return res.status(400).send({
+        message: "Phải nhập đầy đủ dữ liệu!",
+      });
+    }
+
+    const userData = req.user.data;
+    if (userData) {
+      const { currentPassword, newPassword } = req.body;
+      const isPasswordValid = await compareSync(
+        currentPassword,
+        userData?.Password
+      );
+      if (!isPasswordValid) {
+        return res.status(403).json({ message: "Sai mật khẩu" });
+      }
+      const hashedNewPassword = await hashSync(newPassword, 10);
+      await ent_user
+        .update(
+          {
+            Password: hashedNewPassword,
+          },
+          {
+            where: {
+              ID_User: userData.ID_User,
+            },
+          }
+        )
+        .then((data) => {
+          res.status(201).send({
+            message: "Cập nhật mật khẩu thành công!",
+          });
+        })
+        .catch((err) => {
+          res.status(500).send({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+// Get All User
+exports.deleteUser = async (req, res, next) => {
+  try {
+    if (!req.body?.isDelete || !req.body.ID_User) {
+      return res.status(400).send({
+        message: "Phải nhập đầy đủ dữ liệu!",
+      });
+    }
+
+    const userData = req.user.data;
+
+    if (userData.Permission === 1 && userData.ID_User !== req.body.ID_User) {
+      const ID_User = req.body.ID_User;
+      await ent_user
+        .update(
+          {
+            isDelete: req.body.isDelete,
+          },
+          {
+            where: {
+              ID_User: ID_User,
+            },
+          }
+        )
+        .then((data) => {
+          res.status(201).json({
+            message: "Xóa tài khoản thành công!",
+            data: data,
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    } else {
+      return res.status(401).json({
+        message: "Bạn không có quyền truy cập",
+      });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
   }
 };
