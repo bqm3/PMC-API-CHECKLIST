@@ -1,12 +1,16 @@
 var multer = require("multer");
+const path = require("path");
+
+
 module.exports.image = {
   storage: function () {
     var storage = multer.diskStorage({
       destination: function (req, file, cb) {
-        cb(null, "public/images/");
+        console.log( 'file ', file)
+        cb(null, path.join(__dirname, '../public/anh1'));
       },
       filename: function (req, file, cb) {
-        cb(null, `image-${Date.now()}.${file.originalname}`);
+        cb(null,file.fieldname+`-pmc-${Date.now()}`+file.originalname);
       },
     });
     return storage;

@@ -37,7 +37,7 @@ const Ent_checklistc = sequelize.define("ent_checklistc", {
         allowNull: false,
        },
        Anh1: {
-        type: DataTypes.CHAR,
+        type: DataTypes.BLOB('long'),
         allowNull: false,
        },
        Giochupanh1: {
@@ -45,7 +45,7 @@ const Ent_checklistc = sequelize.define("ent_checklistc", {
         allowNull: false,
        },
        Anh1: {
-        type: DataTypes.CHAR,
+        type: DataTypes.BLOB('long'),
         allowNull: false,
        },
        Giochupanh2: {
@@ -53,7 +53,7 @@ const Ent_checklistc = sequelize.define("ent_checklistc", {
         allowNull: false,
        },
        Anh2: {
-        type: DataTypes.CHAR,
+        type: DataTypes.BLOB('long'),
         allowNull: false,
        },
        Giochupanh3: {
@@ -61,7 +61,7 @@ const Ent_checklistc = sequelize.define("ent_checklistc", {
         allowNull: false,
        },
        Anh3: {
-        type: DataTypes.CHAR,
+        type: DataTypes.BLOB('long'),
         allowNull: false,
        },
        Giochupanh4: {
@@ -69,7 +69,7 @@ const Ent_checklistc = sequelize.define("ent_checklistc", {
         allowNull: false,
        },
        Anh4: {
-        type: DataTypes.CHAR,
+        type: DataTypes.BLOB('long'),
         allowNull: false,
        },
        Giokt: {

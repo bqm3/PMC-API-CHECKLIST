@@ -1,6 +1,6 @@
-const ent_tang = require("../models/ent_tang.model");
+const {Ent_tang} = require("../models/setup.model");
 
-// Create and Save a new ent_tang
+// Create and Save a new Ent_tang
 exports.create = (req, res, next) => {
   // Validate request
   try {
@@ -20,7 +20,7 @@ exports.create = (req, res, next) => {
         isDelete: 0,
       };
 
-      ent_tang
+      Ent_tang
         .create(data)
         .then((data) => {
           res.status(201).json({

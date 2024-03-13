@@ -1,4 +1,4 @@
-const ent_user = require("../models/ent_user.model");
+const {Ent_user} = require("../models/setup.model");
 const { hashSync, genSaltSync, compareSync } = require("bcrypt");
 const jsonwebtoken = require("jsonwebtoken");
 const { Op } = require("sequelize");
@@ -12,7 +12,7 @@ exports.login = async (req, res) => {
       });
       return;
     }
-    const user = await ent_user.findOne({
+    const user = await Ent_user.findOne({
       where: {
         Username: req.body.Username,
       },
@@ -77,7 +77,7 @@ exports.register = async (req, res, next) => {
     }
     const Username = req.body.Username;
     const Emails = req.body.Emails;
-    const user = await ent_user.findOne({
+    const user = await Ent_user.findOne({
       where: {
         [Op.or]: [{ Username }, { Emails }],
       },
@@ -99,7 +99,7 @@ exports.register = async (req, res, next) => {
       isDelete: 0,
     };
 
-    ent_user
+    Ent_user
       .create(data)
       .then((data) => {
         res.send(data);
@@ -136,7 +136,7 @@ exports.changePassword = async (req, res, next) => {
         return res.status(403).json({ message: "Sai mật khẩu" });
       }
       const hashedNewPassword = await hashSync(newPassword, 10);
-      await ent_user
+      await Ent_user
         .update(
           {
             Password: hashedNewPassword,
@@ -178,7 +178,7 @@ exports.deleteUser = async (req, res, next) => {
 
     if (userData.Permission === 1 && userData.ID_User !== req.body.ID_User) {
       const ID_User = req.body.ID_User;
-      await ent_user
+      await Ent_user
         .update(
           {
             isDelete: req.body.isDelete,
@@ -218,7 +218,7 @@ exports.getUserOnline = async(req, res, next) => {
     try{
         const userData = req.user.data;
         if(userData && userData.Permission === 1){
-            await ent_user.findAll({
+            await Ent_user.findAll({
                 attributes: ['Username', 'Emails', 'ID_Duan','ID_KhoiCV', 'Permission'],
                 include: [{
                   association: 'ent_duan',
