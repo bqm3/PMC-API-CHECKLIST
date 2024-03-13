@@ -220,6 +220,10 @@ exports.getUserOnline = async(req, res, next) => {
         if(userData && userData.Permission === 1){
             await ent_user.findAll({
                 attributes: ['Username', 'Emails', 'ID_Duan','ID_KhoiCV', 'Permission'],
+                include: [{
+                  association: 'ent_duan',
+                  required: true,
+                }],
                 where: {
                     isDelete: 0
                 }

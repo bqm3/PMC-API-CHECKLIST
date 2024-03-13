@@ -2,6 +2,10 @@
 const { Sequelize, DataTypes } = require("sequelize");
 const sequelize = require("../config/db.config");
 
+const Ent_khuvuc = require("./ent_khuvuc.model");
+const Ent_tang = require("./ent_tang.model");
+const Ent_user = require("./ent_user.model");
+
 const Ent_checklist = sequelize.define("ent_checklist", {
     
    ID_Checklist: {
@@ -58,6 +62,25 @@ const Ent_checklist = sequelize.define("ent_checklist", {
   }
 );
 
-module.exports = Ent_checklist;
+Ent_user.hasMany(Ent_checklist, { as: "ent_checklist" });
+Ent_tang.hasMany(Ent_checklist, { as: "ent_checklist" });
+Ent_khuvuc.hasMany(Ent_checklist, { as: "ent_checklist" });
+
+Ent_checklist.belongsTo(Ent_user, {
+  foreignKey: "ID_User",
+});
+Ent_checklist.belongsTo(Ent_tang, {
+  foreignKey: "ID_Tang",
+});
+Ent_checklist.belongsTo(Ent_khuvuc, {
+  foreignKey: "ID_Khuvuc",
+});
+
+module.exports = {
+  Ent_checklist,
+  Ent_user,
+  Ent_tang,
+  Ent_khuvuc
+};
 
 

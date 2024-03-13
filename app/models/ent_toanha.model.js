@@ -1,6 +1,8 @@
 const { Sequelize, DataTypes } = require("sequelize");
 const sequelize = require("../config/db.config");
 
+const Ent_duan = require("./ent_duan.model");
+
 const Ent_toanha = sequelize.define("ent_toanha", {
     ID_Toanha: {
         type: DataTypes.INTEGER,
@@ -30,5 +32,6 @@ const Ent_toanha = sequelize.define("ent_toanha", {
     timestamps: false,
     tableName: 'ent_toanha'
 });
+
 
 module.exports = Ent_toanha;
