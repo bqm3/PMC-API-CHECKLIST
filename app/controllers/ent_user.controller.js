@@ -31,6 +31,16 @@ exports.login = async (req, res) => {
         "Emails",
         "isDelete",
       ],
+      include: [
+        {
+          model: Ent_duan,
+          attributes: ["Duan"],
+        },
+        {
+          model: Ent_chucvu,
+          attributes: ["Chucvu"],
+        },
+      ]
     });
 
     if (user && user?.isDelete === 0) {
