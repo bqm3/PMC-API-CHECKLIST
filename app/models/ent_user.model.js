@@ -16,7 +16,7 @@ const Ent_user = sequelize.define("ent_user", {
         type: DataTypes.INTEGER,
         allowNull: false,
        },
-       Username: {
+       UserName: {
          type: DataTypes.CHAR,
          allowNull: false,
        },

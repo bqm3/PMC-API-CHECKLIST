@@ -1,6 +1,7 @@
 const jsonwebtoken = require('jsonwebtoken');
+const asyncHandler = require('express-async-handler')
 
-function isAuthenticated(req, res, next) {
+const isAuthenticated = asyncHandler((req, res, next) => {
   // const token = req.cookies.token;
   const tokenFromClient =
   req.body.token || req.query.token || req.headers["authorization"];
@@ -18,6 +19,19 @@ function isAuthenticated(req, res, next) {
     req.user = user;
     next();
   });
-}
+})
 
-module.exports = isAuthenticated;
+
+const isAdmin = asyncHandler((req, res, next) => {
+    const { Permission } = req.user.data;
+
+    if (Permission !== 1)
+        return res.status(401).json({
+            success: false,
+            message: 'Không có quyền truy cập'
+        })
+    next()
+})
+
+
+module.exports = {isAuthenticated, isAdmin};

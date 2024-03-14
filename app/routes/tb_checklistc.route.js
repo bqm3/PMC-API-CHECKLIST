@@ -2,7 +2,7 @@ const multer = require("multer");
 
 module.exports = (app) => {
     const tb_checklistc = require("../controllers/tb_checklistc.controller.js");
-    const isAuthenticated = require('../middleware/auth_middleware.js');
+    const {isAuthenticated}= require('../middleware/auth_middleware.js');
     var imageMiddleware = require("../middleware/image_middleware.js");
   
     const upload = multer({

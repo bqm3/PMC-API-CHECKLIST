@@ -36,10 +36,6 @@ exports.create = (req, res) => {
             message: err.message || "Lỗi! Vui lòng thử lại sau.",
           });
         });
-    } else {
-      return res.status(401).json({
-        message: "Bạn không có quyền truy cập",
-      });
     }
   } catch (err) {
     return res.status(500).json({
@@ -86,10 +82,6 @@ exports.get = async (req, res) => {
             message: err.message || "Lỗi! Vui lòng thử lại sau.",
           });
         });
-    } else {
-      return res.status(401).json({
-        message: "Bạn không có quyền truy cập",
-      });
     }
   } catch (err) {
     return res.status(500).json({

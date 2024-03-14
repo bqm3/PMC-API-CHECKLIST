@@ -117,7 +117,7 @@ const {
                 model: Ent_chucvu,
                 attributes: ["Chucvu"],
               },
-              attributes: ["Username", "Emails"],
+              attributes: ["UserName", "Emails"],
             },
           ],
           where: {
@@ -197,7 +197,7 @@ const {
                 model: Ent_chucvu,
                 attributes: ["Chucvu"],
               },
-              attributes: ["Username", "Emails"],
+              attributes: ["UserName", "Emails"],
             },
           ],
           where: {

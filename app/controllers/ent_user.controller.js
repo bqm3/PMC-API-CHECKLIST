@@ -1,4 +1,9 @@
-const {Ent_user} = require("../models/setup.model");
+const {
+  Ent_user,
+  Ent_duan,
+  Ent_khoicv,
+  Ent_chucvu,
+} = require("../models/setup.model");
 const { hashSync, genSaltSync, compareSync } = require("bcrypt");
 const jsonwebtoken = require("jsonwebtoken");
 const { Op } = require("sequelize");
@@ -6,7 +11,7 @@ const { Op } = require("sequelize");
 // Login User
 exports.login = async (req, res) => {
   try {
-    if (!req.body.Username || !req.body.Password) {
+    if (!req.body.UserName || !req.body.Password) {
       res.status(400).send({
         message: "Sai tài khoản hoặc mật khẩu. Vui lòng thử lại!!",
       });
@@ -14,8 +19,18 @@ exports.login = async (req, res) => {
     }
     const user = await Ent_user.findOne({
       where: {
-        Username: req.body.Username,
+        UserName: req.body.UserName,
       },
+      attributes: [
+        "ID_User",
+        "UserName",
+        "Permission",
+        "ID_Duan",
+        "Password",
+        "ID_KhoiCV",
+        "Emails",
+        "isDelete",
+      ],
     });
 
     if (user && user?.isDelete === 0) {
@@ -31,14 +46,14 @@ exports.login = async (req, res) => {
           process.env.JWT_SECRET,
           {
             algorithm: "HS256",
-            expiresIn: "360d",
+            expiresIn: "7d",
           }
         );
         res.cookie("token", token, {
           httpOnly: true,
           secure: true,
           SameSite: "strict",
-          expires: new Date(Number(new Date()) + 360 * 24 * 60 * 60 * 1000),
+          expires: new Date(Number(new Date()) + 7 * 24 * 60 * 60 * 1000),
         }); //we add secure: true, when using https.
 
         return res.status(200).send({ token: token, user: user });
@@ -55,7 +70,7 @@ exports.login = async (req, res) => {
     }
   } catch (err) {
     return res.status(500).send({
-      message: err ? err : "Lỗi! Vui lòng thử lại sau.",
+      message: err ? err.message : "Lỗi! Vui lòng thử lại sau.",
     });
   }
 };
@@ -64,7 +79,7 @@ exports.login = async (req, res) => {
 exports.register = async (req, res, next) => {
   try {
     if (
-      !req.body.Username ||
+      !req.body.UserName ||
       !req.body.Emails ||
       !req.body.Password ||
       !req.body.Permission ||
@@ -75,12 +90,22 @@ exports.register = async (req, res, next) => {
         message: "Phải nhập đầy đủ dữ liệu.",
       });
     }
-    const Username = req.body.Username;
+    const UserName = req.body.UserName;
     const Emails = req.body.Emails;
     const user = await Ent_user.findOne({
       where: {
-        [Op.or]: [{ Username }, { Emails }],
+        [Op.or]: [{ UserName }, { Emails }],
       },
+      attributes: [
+        "ID_User",
+        "UserName",
+        "Permission",
+        "ID_Duan",
+        "Password",
+        "ID_KhoiCV",
+        "Emails",
+        "isDelete",
+      ],
     });
 
     if (user !== null) {
@@ -90,7 +115,7 @@ exports.register = async (req, res, next) => {
     }
     const salt = genSaltSync(10);
     var data = {
-      Username: req.body.Username,
+      UserName: req.body.UserName,
       Emails: req.body.Emails,
       Password: await hashSync(req.body.Password, salt),
       Permission: req.body.Permission,
@@ -99,8 +124,7 @@ exports.register = async (req, res, next) => {
       isDelete: 0,
     };
 
-    Ent_user
-      .create(data)
+    Ent_user.create(data)
       .then((data) => {
         res.send(data);
       })
@@ -136,17 +160,16 @@ exports.changePassword = async (req, res, next) => {
         return res.status(403).json({ message: "Sai mật khẩu" });
       }
       const hashedNewPassword = await hashSync(newPassword, 10);
-      await Ent_user
-        .update(
-          {
-            Password: hashedNewPassword,
+      await Ent_user.update(
+        {
+          Password: hashedNewPassword,
+        },
+        {
+          where: {
+            ID_User: userData.ID_User,
           },
-          {
-            where: {
-              ID_User: userData.ID_User,
-            },
-          }
-        )
+        }
+      )
         .then((data) => {
           res.status(201).send({
             message: "Cập nhật mật khẩu thành công!",
@@ -176,19 +199,18 @@ exports.deleteUser = async (req, res, next) => {
 
     const userData = req.user.data;
 
-    if (userData.Permission === 1 && userData.ID_User !== req.body.ID_User) {
+    if (userData.ID_User !== req.body.ID_User) {
       const ID_User = req.body.ID_User;
-      await Ent_user
-        .update(
-          {
-            isDelete: req.body.isDelete,
+      await Ent_user.update(
+        {
+          isDelete: req.body.isDelete,
+        },
+        {
+          where: {
+            ID_User: ID_User,
           },
-          {
-            where: {
-              ID_User: ID_User,
-            },
-          }
-        )
+        }
+      )
         .then((data) => {
           res.status(201).json({
             message: "Xóa tài khoản thành công!",
@@ -200,10 +222,6 @@ exports.deleteUser = async (req, res, next) => {
             message: err.message || "Lỗi! Vui lòng thử lại sau.",
           });
         });
-    } else {
-      return res.status(401).json({
-        message: "Bạn không có quyền truy cập",
-      });
     }
   } catch (err) {
     return res.status(500).json({
@@ -212,49 +230,38 @@ exports.deleteUser = async (req, res, next) => {
   }
 };
 
-
 // Get User Online
-exports.getUserOnline = async(req, res, next) => {
-    try{
-        const userData = req.user.data;
-        if(userData && userData.Permission === 1){
-            await Ent_user.findAll({
-                attributes: ['Username', 'Emails', 'ID_Duan','ID_KhoiCV', 'Permission'],
-                include: [{
-                  association: 'ent_duan',
-                  required: true,
-                }],
-                where: {
-                    isDelete: 0
-                }
-            }).then((data) => {
-                res.status(201).json({
-                  message: "Danh sách nhân viên!",
-                  data: data,
-                });
-              })
-              .catch((err) => {
-                res.status(500).json({
-                  message: err.message || "Lỗi! Vui lòng thử lại sau.",
-                });
-              });
-        }else {
-            return res.status(401).json({
-                message: "Bạn không có quyền truy cập",
-              });
-        }
-    }catch(err){
-        return res.status(500).json({
-            message: err.message || "Lỗi! Vui lòng thử lại sau.",
-          });
-    }
-}
+exports.getUserOnline = async (req, res, next) => {
+  try {
+    const userData = req.user.data;
+    //
+    await Ent_user.findAll({
+      attributes: ["UserName", "Emails", "ID_Duan", "ID_KhoiCV", "Permission"],
+      include: [
+        {
+          association: "ent_duan",
+          required: true,
+        },
+      ],
+      where: {
+        isDelete: 0,
+      },
+    })
+      .then((data) => {
+        res.status(201).json({
+          message: "Danh sách nhân viên!",
+          data: data,
+        });
+      })
+      .catch((err) => {
+        res.status(500).json({
+          message: err.message || "Lỗi! Vui lòng thử lại sau.",
+        });
+      });
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
 
-
-// SELECT
-//   ent_toanha.ID_Toanha,
-//   ent_toanha.Toanha,
-//   ent_duan.Duan
-// FROM ent_toanha
-// LEFT JOIN ent_duan 
-//   ON ent_duan.ID_Duan = ent_toanha.ID_Duan;
