@@ -113,6 +113,16 @@ Tb_checklistc.belongsTo(Ent_giamsat, {
   foreignKey: "ID_Giamsat",
 });
 
+// Checklist Chi tiet
+Tb_checklistc.hasMany(Tb_checklistchitiet);
+Tb_checklistchitiet.belongsTo(Tb_checklistc, {
+  foreignKey: "ID_ChecklistC",
+});
+
+Ent_checklist.hasMany(Tb_checklistchitiet);
+Tb_checklistchitiet.belongsTo(Ent_checklist, {
+  foreignKey: "ID_Checklist",
+});
 
 
 module.exports = {

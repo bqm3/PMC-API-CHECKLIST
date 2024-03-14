@@ -1,7 +1,7 @@
 const { Sequelize, DataTypes } = require("sequelize");
 const sequelize = require("../config/db.config");
 
-const Ent_checklistc = sequelize.define("ent_checklistc", {
+const Ent_checklistc = sequelize.define("tb_checklistc", {
     ID_ChecklistC: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -37,7 +37,7 @@ const Ent_checklistc = sequelize.define("ent_checklistc", {
         allowNull: false,
        },
        Anh1: {
-        type: DataTypes.BLOB('long'),
+        type: DataTypes.TEXT,
         allowNull: false,
        },
        Giochupanh1: {
@@ -45,7 +45,7 @@ const Ent_checklistc = sequelize.define("ent_checklistc", {
         allowNull: false,
        },
        Anh1: {
-        type: DataTypes.BLOB('long'),
+        type: DataTypes.TEXT,
         allowNull: false,
        },
        Giochupanh2: {
@@ -53,7 +53,7 @@ const Ent_checklistc = sequelize.define("ent_checklistc", {
         allowNull: false,
        },
        Anh2: {
-        type: DataTypes.BLOB('long'),
+        type: DataTypes.TEXT,
         allowNull: false,
        },
        Giochupanh3: {
@@ -61,7 +61,7 @@ const Ent_checklistc = sequelize.define("ent_checklistc", {
         allowNull: false,
        },
        Anh3: {
-        type: DataTypes.BLOB('long'),
+        type: DataTypes.TEXT,
         allowNull: false,
        },
        Giochupanh4: {
@@ -69,7 +69,7 @@ const Ent_checklistc = sequelize.define("ent_checklistc", {
         allowNull: false,
        },
        Anh4: {
-        type: DataTypes.BLOB('long'),
+        type: DataTypes.TEXT,
         allowNull: false,
        },
        Giokt: {
@@ -91,7 +91,14 @@ const Ent_checklistc = sequelize.define("ent_checklistc", {
 },{
     freezeTableName: true,
     timestamps: false,
-    tableName: 'ent_checklistc'
+    tableName: 'tb_checklistc'
+}, {
+  indexes:[
+    {
+      unique: false,
+      fields:['ID_ChecklistC','ID_Search']
+    }
+   ]
 });
 
 module.exports = Ent_checklistc;

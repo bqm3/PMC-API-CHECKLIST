@@ -1,11 +1,11 @@
 const { Sequelize, DataTypes } = require("sequelize");
 const sequelize = require("../config/db.config");
 
-const Ent_checklistchitiet = sequelize.define(
-  "ent_checklistchitiet",
+const Tb_checklistchitiet = sequelize.define(
+  "tb_checklistchitiet",
   {
     ID_ChecklistChitiet: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
@@ -42,8 +42,8 @@ const Ent_checklistchitiet = sequelize.define(
   {
     freezeTableName: true,
     timestamps: false,
-    tableName: "ent_checklistchitiet",
+    tableName: "tb_checklistchitiet",
   }
 );
 
-module.exports = Ent_checklistchitiet;
+module.exports = Tb_checklistchitiet;
