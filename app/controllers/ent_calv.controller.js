@@ -9,6 +9,7 @@ const {
 exports.create = async (req, res) => {
   try {
     const userData = req.user.data;
+    console.log('req',req.body)
     if(userData){
       if (!req.body.Tenca) {
         res.status(400).send({
@@ -171,3 +172,88 @@ exports.getDetail = async (req, res) => {
     });
   }
 };
+
+exports.update = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    if (req.params.id && userData) {
+      if (!req.body.Tenca) {
+        res.status(400).send({
+          message: "Cần nhập đầy đủ thông tin!",
+        });
+        return;
+      } else if (!req.body.Giobatdau || !req.body.Gioketthuc) {
+        res.status(400).send({
+          message: "Cần có thời gian bắt đầu và kết thúc!",
+        });
+        return;
+      }
+    
+      const reqData = {
+        ID_Duan: req.body.ID_Duan,
+        ID_KhoiCV: req.body.ID_KhoiCV,
+        Tenca: req.body.Tenca,
+        Giobatdau: req.body.Giobatdau,
+        Gioketthuc: req.body.Gioketthuc,
+        ID_User: userData.ID_User,
+        isDelete: 0,
+      };
+
+      Ent_calv
+        .update(reqData, {
+          where: {
+            ID_Calv: req.params.id
+          }
+          
+        })
+        .then((data) => {
+          res.status(201).json({
+            message: "Cập nhật ca làm việc thành công!",
+          });
+        })
+        .catch((err) => {
+          res.status(500).send({
+            message:
+              err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    }
+  } catch (error) {
+    res.status(500).send({
+      message:
+      error.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+}
+
+exports.delete = async(req,res) => {
+  try {
+    const userData = req.user.data;
+     
+    if (req.params.id && userData) {
+      Ent_calv
+        .update({isDelete: 1}, {
+          where: {
+            ID_Calv: req.params.id
+          }
+        })
+        .then((data) => {
+          res.status(201).json({
+            message: "Xóa ca làm việc thành công!",
+            
+          });
+        })
+        .catch((err) => {
+          res.status(500).send({
+            message:
+              err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    }
+  } catch (error) {
+    res.status(500).send({
+      message:
+      error.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+}
