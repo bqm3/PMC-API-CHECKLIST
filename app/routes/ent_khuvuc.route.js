@@ -7,6 +7,8 @@ module.exports = (app) => {
   router.post("/create", [isAuthenticated, isAdmin], ent_khuvuc.create);
   router.get("/", isAuthenticated, ent_khuvuc.get);
   router.get("/:id", isAuthenticated, ent_khuvuc.getDetail);
+  router.put("/delete/:id",isAuthenticated, ent_khuvuc.delete);
+  router.put("/update/:id",isAuthenticated, ent_khuvuc.update);
 
   app.use("/api/ent_khuvuc", router);
 };

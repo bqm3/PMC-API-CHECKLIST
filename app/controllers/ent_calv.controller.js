@@ -3,14 +3,14 @@ const {
   Ent_duan,
   Ent_khoicv,
   Ent_user,
-  Ent_chucvu
+  Ent_chucvu,
 } = require("../models/setup.model");
 
 exports.create = async (req, res) => {
   try {
     const userData = req.user.data;
-    console.log('req',req.body)
-    if(userData){
+    console.log("req", req.body);
+    if (userData) {
       if (!req.body.Tenca) {
         res.status(400).send({
           message: "Cần nhập đầy đủ thông tin!",
@@ -22,7 +22,7 @@ exports.create = async (req, res) => {
         });
         return;
       }
-    
+
       const reqData = {
         ID_Duan: req.body.ID_Duan,
         ID_KhoiCV: req.body.ID_KhoiCV,
@@ -32,9 +32,8 @@ exports.create = async (req, res) => {
         ID_User: userData.ID_User,
         isDelete: 0,
       };
-    
-      Ent_calv
-        .create(reqData)
+
+      Ent_calv.create(reqData)
         .then((data) => {
           res.status(201).json({
             message: "Tạo ca làm việc thành công!",
@@ -43,15 +42,13 @@ exports.create = async (req, res) => {
         })
         .catch((err) => {
           res.status(500).send({
-            message:
-              err.message || "Lỗi! Vui lòng thử lại sau.",
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
           });
         });
     }
   } catch (error) {
     res.status(500).send({
-      message:
-      error.message || "Lỗi! Vui lòng thử lại sau.",
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
 };
@@ -86,7 +83,7 @@ exports.get = async (req, res) => {
               model: Ent_chucvu,
               attributes: ["Chucvu"],
             },
-            attributes: ["UserName", "Emails",],
+            attributes: ["UserName", "Emails"],
           },
         ],
         where: {
@@ -104,7 +101,7 @@ exports.get = async (req, res) => {
             message: err.message || "Lỗi! Vui lòng thử lại sau.",
           });
         });
-      }
+    }
   } catch (err) {
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
@@ -142,7 +139,7 @@ exports.getDetail = async (req, res) => {
               model: Ent_chucvu,
               attributes: ["Chucvu"],
             },
-            attributes: ["UserName", "Emails",],
+            attributes: ["UserName", "Emails"],
           },
         ],
         where: {
@@ -160,12 +157,11 @@ exports.getDetail = async (req, res) => {
             message: err.message || "Lỗi! Vui lòng thử lại sau.",
           });
         });
-    }else{
+    } else {
       return res.status(401).json({
         message: "Không tồn tại ca làm việc",
       });
     }
-    
   } catch (err) {
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
@@ -188,7 +184,7 @@ exports.update = async (req, res) => {
         });
         return;
       }
-    
+
       const reqData = {
         ID_Duan: req.body.ID_Duan,
         ID_KhoiCV: req.body.ID_KhoiCV,
@@ -199,13 +195,11 @@ exports.update = async (req, res) => {
         isDelete: 0,
       };
 
-      Ent_calv
-        .update(reqData, {
-          where: {
-            ID_Calv: req.params.id
-          }
-          
-        })
+      Ent_calv.update(reqData, {
+        where: {
+          ID_Calv: req.params.id,
+        },
+      })
         .then((data) => {
           res.status(201).json({
             message: "Cập nhật ca làm việc thành công!",
@@ -213,47 +207,43 @@ exports.update = async (req, res) => {
         })
         .catch((err) => {
           res.status(500).send({
-            message:
-              err.message || "Lỗi! Vui lòng thử lại sau.",
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
           });
         });
     }
   } catch (error) {
     res.status(500).send({
-      message:
-      error.message || "Lỗi! Vui lòng thử lại sau.",
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
-}
+};
 
-exports.delete = async(req,res) => {
+exports.delete = async (req, res) => {
   try {
     const userData = req.user.data;
-     
     if (req.params.id && userData) {
-      Ent_calv
-        .update({isDelete: 1}, {
+      Ent_calv.update(
+        { isDelete: 1 },
+        {
           where: {
-            ID_Calv: req.params.id
-          }
-        })
+            ID_Calv: req.params.id,
+          },
+        }
+      )
         .then((data) => {
           res.status(201).json({
             message: "Xóa ca làm việc thành công!",
-            
           });
         })
         .catch((err) => {
           res.status(500).send({
-            message:
-              err.message || "Lỗi! Vui lòng thử lại sau.",
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
           });
         });
     }
   } catch (error) {
     res.status(500).send({
-      message:
-      error.message || "Lỗi! Vui lòng thử lại sau.",
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
-}
+};

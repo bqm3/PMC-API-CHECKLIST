@@ -55,6 +55,7 @@ exports.get = async (req, res) => {
     if (userData) {
       await Ent_khuvuc.findAll({
         attributes: [
+          "ID_Khuvuc",
           "ID_Toanha",
           "ID_KhoiCV",
           "Sothutu",
@@ -103,6 +104,7 @@ exports.getDetail = async (req, res) => {
     if (req.params.id && userData) {
       await Ent_khuvuc.findByPk(req.params.id, {
         attributes: [
+          "ID_Khuvuc",
           "ID_Toanha",
           "ID_KhoiCV",
           "Sothutu",
@@ -141,6 +143,77 @@ exports.getDetail = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+
+exports.update = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    if (req.params.id && userData) {
+    
+      const reqData = {
+        ID_Toanha: req.body.ID_Toanha,
+        ID_KhoiCV: req.body.ID_KhoiCV,
+        Sothutu: req.body.Sothutu,
+        Makhuvuc: req.body.Makhuvuc,
+        MaQrCode: req.body.MaQrCode,
+        Tenkhuvuc: req.body.Tenkhuvuc,
+        ID_User: userData.ID_User,
+        isDelete: 0,
+      };
+
+      Ent_khuvuc.update(reqData, {
+        where: {
+          ID_Khuvuc: req.params.id,
+        },
+      })
+        .then((data) => {
+          console.log('data',data)
+          res.status(201).json({
+            message: "Cập nhật khu vực thành công!",
+          });
+        })
+        .catch((err) => {
+          res.status(500).send({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    }
+  } catch (error) {
+    res.status(500).send({
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+exports.delete = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    if (req.params.id && userData) {
+      Ent_khuvuc.update(
+        { isDelete: 1 },
+        {
+          where: {
+            ID_Khuvuc: req.params.id,
+          },
+        }
+      )
+        .then((data) => {
+          res.status(201).json({
+            message: "Xóa khu vực thành công!",
+          });
+        })
+        .catch((err) => {
+          res.status(500).send({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    }
+  } catch (error) {
+    res.status(500).send({
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
 };
