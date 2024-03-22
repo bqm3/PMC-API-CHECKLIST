@@ -6,6 +6,7 @@ exports.create = (req, res) => {
     if (
       !req.body.ID_Duan ||
       !req.body.Hoten ||
+      !req.body.Sodienthoai ||
       !req.body.ID_Chucvu ||
       !req.body.iQuyen 
     ) {
@@ -19,6 +20,9 @@ exports.create = (req, res) => {
       const data = {
         ID_Duan: req.body.ID_Duan,
         Hoten: req.body.Hoten,
+        Gioitinh: req.body.Gioitinh,
+        Sodienthoai: req.body.Sodienthoai,
+        Ngaysinh: req.body.Ngaysinh,
         ID_Chucvu: req.body.ID_Chucvu,
         iQuyen: req.body.iQuyen,
         isDelete: 0,
@@ -54,6 +58,9 @@ exports.get = async (req, res) => {
           "ID_Duan",
           "ID_Chucvu",
           "Hoten",
+          "Ngaysinh",
+          "Sodienthoai",
+          "Gioitinh",
           "iQuyen",
           "isDelete",
         ],
@@ -100,6 +107,9 @@ exports.getDetail = async (req, res) => {
             "ID_Duan",
             "ID_Chucvu",
             "Hoten",
+          "Ngaysinh",
+          "Sodienthoai",
+          "Gioitinh",
             "iQuyen",
             "isDelete",
         ],
@@ -132,6 +142,81 @@ exports.getDetail = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+exports.update = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    if (req.params.id && userData) {
+      if (!req.body.Hoten || !req.body.Sodienthoai) {
+        res.status(400).send({
+          message: "Cần nhập đầy đủ thông tin!",
+        });
+        return;
+      } 
+
+      const reqData = {
+        ID_Duan: req.body.ID_Duan,
+        Hoten: req.body.Hoten,
+        Gioitinh: req.body.Gioitinh,
+        Sodienthoai: req.body.Sodienthoai,
+        Ngaysinh: req.body.Ngaysinh,
+        ID_Chucvu: req.body.ID_Chucvu,
+        iQuyen: req.body.iQuyen,
+        isDelete: 0,
+      };
+
+      Ent_giamsat.update(reqData, {
+        where: {
+          ID_Giamsat: req.params.id,
+        },
+      })
+        .then((data) => {
+          res.status(201).json({
+            message: "Cập nhật ca làm việc thành công!",
+          });
+        })
+        .catch((err) => {
+          res.status(500).send({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    }
+  } catch (error) {
+    res.status(500).send({
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+exports.delete = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    if (req.params.id && userData) {
+      Ent_giamsat.update(
+        { isDelete: 1 },
+        {
+          where: {
+            ID_Giamsat: req.params.id,
+          },
+        }
+      )
+        .then((data) => {
+          res.status(201).json({
+            message: "Xóa ca làm việc thành công!",
+          });
+        })
+        .catch((err) => {
+          res.status(500).send({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    }
+  } catch (error) {
+    res.status(500).send({
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
 };

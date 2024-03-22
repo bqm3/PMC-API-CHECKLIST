@@ -16,6 +16,18 @@ const Ent_giamsat = sequelize.define("ent_giamsat", {
         type: DataTypes.CHAR,
         allowNull: false,
        },
+       Gioitinh: {
+        type: DataTypes.CHAR,
+        allowNull: false,
+       },
+       Ngaysinh: {
+        type: DataTypes.DATE,
+        allowNull: false,
+       },
+       Sodienthoai: {
+        type: DataTypes.CHAR,
+        allowNull: false,
+       },
        ID_Chucvu: {
         type: DataTypes.INTEGER,
         allowNull: false,
