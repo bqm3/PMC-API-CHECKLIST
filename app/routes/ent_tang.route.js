@@ -8,6 +8,7 @@ module.exports = (app) => {
   var router = require("express").Router();
 
   router.post("/", [isAuthenticated, isAdmin], ent_tang.create);
+  router.get("/", [isAuthenticated], ent_tang.get);
 
   app.use("/api/ent_tang", router);
 };

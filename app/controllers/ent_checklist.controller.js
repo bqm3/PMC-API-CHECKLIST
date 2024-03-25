@@ -13,14 +13,14 @@ exports.create = (req, res) => {
     const userData = req.user.data;
     if (userData) {
       if (
-        !req.body.ID_Khuvuc ||
-        !req.body.ID_Tang ||
-        !req.body.Sothutu ||
-        !req.body.Maso ||
-        !req.body.MaQrCode ||
-        !req.body.Checklist ||
-        !req.body.Giatridinhdanh ||
-        !req.body.Giatrinhan
+        // !req.body.ID_Khuvuc ||
+        // !req.body.ID_Tang ||
+        // !req.body.Sothutu ||
+        // !req.body.Maso ||
+        // !req.body.MaQrCode ||
+        !req.body.Checklist 
+        // !req.body.Giatridinhdanh ||
+        // !req.body.Giatrinhan
       ) {
         res.status(400).send({
           message: "Phải nhập đầy đủ dữ liệu!",
@@ -98,6 +98,7 @@ exports.get = async (req, res) => {
             model: Ent_tang,
             attributes: ["Tentang", "Sotang"],
           },
+
           {
             model: Ent_user,
             include: {

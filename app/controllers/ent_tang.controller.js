@@ -37,3 +37,33 @@ exports.create = (req, res, next) => {
     });
   }
 };
+
+exports.get = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    if (userData) {
+      await Ent_tang.findAll({
+        attributes: ["ID_Tang", "Tentang", "Sotang", "isDelete"],
+      
+        where: {
+          isDelete: 0,
+        },
+      })
+        .then((data) => {
+          res.status(201).json({
+            message: "Danh sách tầng!",
+            data: data,
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+      }
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};

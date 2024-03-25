@@ -8,7 +8,6 @@ exports.get = async (req, res) => {
         attributes: [
           "ID_Khoi",
           "KhoiCV",
-          
         ],
      
         where: {

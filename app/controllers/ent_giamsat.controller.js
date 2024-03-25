@@ -156,7 +156,6 @@ exports.update = async (req, res) => {
         });
         return;
       } 
-
       const reqData = {
         ID_Duan: req.body.ID_Duan,
         Hoten: req.body.Hoten,
