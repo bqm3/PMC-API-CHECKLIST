@@ -7,6 +7,9 @@ module.exports = (app) => {
     router.post("/create",[isAuthenticated], ent_checklist.create);
     router.get("/",[isAuthenticated], ent_checklist.get);
     router.get("/:id",[isAuthenticated], ent_checklist.getDetail);
-  
+    router.post("/filter",isAuthenticated, ent_checklist.getFilter);
+    router.put("/update/:id",[isAuthenticated], ent_checklist.update);
+    router.put("/delete/:id",[isAuthenticated], ent_checklist.delete);
+
     app.use("/api/ent_checklist", router);
   };

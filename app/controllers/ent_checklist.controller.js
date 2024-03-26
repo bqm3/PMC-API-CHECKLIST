@@ -7,6 +7,7 @@ const {
   Ent_toanha,
   Ent_khoicv,
 } = require("../models/setup.model");
+const { Op } = require("sequelize");
 
 exports.create = (req, res) => {
   try {
@@ -82,7 +83,7 @@ exports.get = async (req, res) => {
         include: [
           {
             model: Ent_khuvuc,
-            attributes: ["Tenkhuvuc", "MaQrCode", "Makhuvuc", "Sothutu"],
+            attributes: ["Tenkhuvuc", "MaQrCode", "Makhuvuc", "Sothutu", "ID_Toanha", "ID_KhoiCV"],
             include: [
               {
                 model: Ent_toanha,
@@ -209,6 +210,180 @@ exports.getDetail = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+exports.update = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    if (req.params.id && userData) {
+      if (!req.body.Giatrinhan || !req.body.Checklist) {
+        res.status(400).send({
+          message: "Cần nhập đầy đủ thông tin!",
+        });
+        return;
+      } 
+      const reqData = {
+        ID_Khuvuc: req.body.ID_Khuvuc,
+        ID_Tang: req.body.ID_Tang,
+        Sothutu: req.body.Sothutu,
+        Maso: req.body.Maso,
+        MaQrCode: req.body.MaQrCode,
+        Checklist: req.body.Checklist,
+        Giatridinhdanh: req.body.Giatridinhdanh,
+        Giatrinhan: req.body.Giatrinhan,
+        Sothutu: req.body.Sothutu,
+        isDelete: 0,
+      };
+
+      Ent_checklist.update(reqData, {
+        where: {
+          ID_Checklist: req.params.id,
+        },
+      })
+        .then((data) => {
+          res.status(201).json({
+            message: "Cập nhật checklist thành công!",
+          });
+        })
+        .catch((err) => {
+          res.status(500).send({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    }
+  } catch (error) {
+    res.status(500).send({
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+exports.delete = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    if (req.params.id && userData) {
+      Ent_checklist.update(
+        { isDelete: 1 },
+        {
+          where: {
+            ID_Checklist: req.params.id,
+          },
+        }
+      )
+        .then((data) => {
+          res.status(201).json({
+            message: "Xóa checklist thành công!",
+          });
+        })
+        .catch((err) => {
+          res.status(500).send({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    }
+  } catch (error) {
+    res.status(500).send({
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+exports.getFilter = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    const ID_Khuvuc = req.body.ID_Khuvuc;
+    const ID_Tang = req.body.ID_Tang;
+
+   
+    
+    if (userData) {
+      const whereCondition = {
+        [Op.or]: []
+      };
+      if(ID_Khuvuc == null && ID_Tang == null){
+
+      }
+      // Xây dựng điều kiện where dựa trên các giá trị đã kiểm tra
+     
+      if (ID_Khuvuc !== undefined) {
+        whereCondition[Op.or].push({
+          ID_Khuvuc: ID_Khuvuc
+        });
+      }
+      if (ID_Tang !== undefined) {
+        whereCondition[Op.or].push({
+          ID_Tang: ID_Tang
+        });
+      }
+      whereCondition.isDelete = 0;
+
+      await Ent_checklist.findAll({
+        attributes: [
+          "ID_Checklist",
+          "ID_Khuvuc",
+          "ID_Tang",
+          "Sothutu",
+          "Maso",
+          "MaQrCode",
+          "Checklist",
+          "Giatridinhdanh",
+          "Giatrinhan",
+          "ID_User",
+          "isDelete",
+        ],
+        include: [
+          {
+            model: Ent_khuvuc,
+            attributes: ["Tenkhuvuc", "MaQrCode", "Makhuvuc", "Sothutu", "ID_Toanha", "ID_KhoiCV"],
+            include: [
+              {
+                model: Ent_toanha,
+                attributes: ["Toanha", "Sotang"],
+              },
+              {
+                model: Ent_khoicv,
+                attributes: ["KhoiCV"],
+              },
+            ],
+          },
+          {
+            model: Ent_tang,
+            attributes: ["Tentang", "Sotang"],
+          },
+
+          {
+            model: Ent_user,
+            include: {
+              model: Ent_chucvu,
+              attributes: ["Chucvu"],
+            },
+            attributes: ["UserName", "Emails"],
+          },
+        ],
+        where: whereCondition,
+      })
+        .then((data) => {
+          res.status(201).json({
+            message: "Thông tin khu vực!",
+            data: data,
+          });
+        })
+        .catch((err) => {
+          res.status(500).send({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    } else {
+      // Trả về lỗi nếu không có dữ liệu người dùng hoặc không có ID được cung cấp
+      return res.status(400).json({
+        message: "Vui lòng cung cấp ít nhất một trong hai ID.",
+      });
+    }
+  } catch (error) {
+    res.status(500).send({
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
 };
