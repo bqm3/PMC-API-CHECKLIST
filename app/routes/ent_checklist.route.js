@@ -10,6 +10,7 @@ module.exports = (app) => {
     router.post("/filter",isAuthenticated, ent_checklist.getFilter);
     router.put("/update/:id",[isAuthenticated], ent_checklist.update);
     router.put("/delete/:id",[isAuthenticated], ent_checklist.delete);
+    router.put("/delete-all/:ids", isAuthenticated, ent_checklist.deleteChecklists)
 
     app.use("/api/ent_checklist", router);
   };

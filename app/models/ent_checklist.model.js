@@ -34,12 +34,16 @@ const Ent_checklist = sequelize.define(
       type: DataTypes.CHAR,
       allowNull: false,
     },
+    Ghichu: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
     Giatridinhdanh: {
       type: DataTypes.CHAR,
       allowNull: false,
     },
     Giatrinhan: {
-      type: DataTypes.CITEXT,
+      type: DataTypes.CHAR,
       allowNull: false,
     },
     ID_User: {

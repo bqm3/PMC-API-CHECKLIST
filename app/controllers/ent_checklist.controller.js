@@ -36,6 +36,7 @@ exports.create = (req, res) => {
         Maso: req.body.Maso,
         MaQrCode: req.body.MaQrCode,
         Checklist: req.body.Checklist,
+        Ghichu: req.body.Ghichu,
         Giatridinhdanh: req.body.Giatridinhdanh,
         Giatrinhan: req.body.Giatrinhan,
         ID_User: userData.ID_User,
@@ -75,6 +76,7 @@ exports.get = async (req, res) => {
           "Maso",
           "MaQrCode",
           "Checklist",
+          "Ghichu",
           "Giatridinhdanh",
           "Giatrinhan",
           "ID_User",
@@ -152,6 +154,7 @@ exports.getDetail = async (req, res) => {
           "Maso",
           "MaQrCode",
           "Checklist",
+          "Ghichu",
           "Giatridinhdanh",
           "Giatrinhan",
           "ID_User",
@@ -231,6 +234,7 @@ exports.update = async (req, res) => {
         Maso: req.body.Maso,
         MaQrCode: req.body.MaQrCode,
         Checklist: req.body.Checklist,
+        Ghichu: req.body.Ghichu,
         Giatridinhdanh: req.body.Giatridinhdanh,
         Giatrinhan: req.body.Giatrinhan,
         Sothutu: req.body.Sothutu,
@@ -328,6 +332,7 @@ exports.getFilter = async (req, res) => {
           "Maso",
           "MaQrCode",
           "Checklist",
+          "Ghichu",
           "Giatridinhdanh",
           "Giatrinhan",
           "ID_User",
@@ -387,3 +392,36 @@ exports.getFilter = async (req, res) => {
     });
   }
 };
+
+exports.deleteChecklists = async(req, res) => {
+  try{
+    const ids = req.params.ids.split(',');
+    const userData = req.user.data;
+
+    if (ids && userData) {
+      Ent_checklist.update(
+        { isDelete: 1 },
+        {
+          where: {
+            ID_Checklist: ids,
+          },
+        }
+      )
+        .then((data) => {
+          res.status(201).json({
+            message: "Xóa checklist thành công!",
+          });
+        })
+        .catch((err) => {
+          res.status(500).send({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    }
+
+  }catch(err){
+    res.status(500).send({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+}
