@@ -5,6 +5,7 @@ const {
   Ent_user,
   Ent_chucvu,
 } = require("../models/setup.model");
+const { Op } = require("sequelize");
 
 exports.create = async (req, res) => {
   try {
@@ -57,6 +58,16 @@ exports.get = async (req, res) => {
   try {
     const userData = req.user.data;
     if (userData) {
+      let whereClause = {
+        ID_Duan: userData?.ID_Duan,
+        isDelete: 0,
+      };
+
+      // Nếu quyền là 1 (Permission === 1) thì không cần thêm điều kiện ID_KhoiCV
+      if (userData.Permission !== 1) {
+        whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
+      }
+
       await Ent_calv.findAll({
         attributes: [
           "ID_Calv",
@@ -75,7 +86,7 @@ exports.get = async (req, res) => {
           },
           {
             model: Ent_khoicv,
-            attributes: ["KhoiCV"],
+            attributes: ["KhoiCV", "ID_Khoi"],
           },
           {
             model: Ent_user,
@@ -86,9 +97,7 @@ exports.get = async (req, res) => {
             attributes: ["UserName", "Emails"],
           },
         ],
-        where: {
-          isDelete: 0,
-        },
+        where: whereClause,
       })
         .then((data) => {
           res.status(201).json({
@@ -108,6 +117,7 @@ exports.get = async (req, res) => {
     });
   }
 };
+
 
 exports.getDetail = async (req, res) => {
   try {

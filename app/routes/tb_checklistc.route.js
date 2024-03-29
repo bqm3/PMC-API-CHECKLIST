@@ -13,7 +13,12 @@ module.exports = (app) => {
     uploader.array("images", 4),
     tb_checklistc.createCheckList
   );
-
+  router.post(
+    "/create-first",
+    [isAuthenticated],
+    tb_checklistc.createFirstChecklist
+  );
+  
   router.get(
     "/",
     [isAuthenticated],

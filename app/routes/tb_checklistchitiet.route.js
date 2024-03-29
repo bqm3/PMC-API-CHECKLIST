@@ -14,8 +14,8 @@ module.exports = (app) => {
     tb_checklistchitiet.createCheckListChiTiet
   );
 
-  router.get(
-    "/",
+  router.post(
+    "/filters",
     [isAuthenticated],
     tb_checklistchitiet.getCheckListChiTiet
   );

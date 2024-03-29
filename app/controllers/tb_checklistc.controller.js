@@ -1,3 +1,4 @@
+const moment = require("moment");
 const {
   Ent_duan,
   Ent_calv,
@@ -6,23 +7,97 @@ const {
   Tb_checklistc,
   Ent_chucvu,
 } = require("../models/setup.model");
+const { Op } = require("sequelize");
+
+exports.createFirstChecklist = async (req, res, next) => {
+  // Validate request
+  if (!req.body.ID_Calv || !req.body.ID_Giamsat) {
+    res.status(400).send({
+      message: "Phải nhập đầy đủ dữ liệu!",
+    });
+    return;
+  }
+
+  const formattedDate = moment(req.body.Ngay).startOf('day').format('YYYY-MM-DD');
+  const { ID_Giamsat, ID_Calv } = req.body;
+  console.log('Ngay',req.body.Ngay, ID_Giamsat, ID_Calv)
+
+  // Kiểm tra sự tồn tại của Ngay, ID_Giamsat, ID_KhoiCV trong cơ sở dữ liệu
+  Tb_checklistc.findOne({
+    attributes: [
+      "ID_ChecklistC",
+      "ID_Duan",
+      "ID_KhoiCV",
+      "ID_Calv",
+      "ID_Giamsat",
+      "Ngay"
+    ],
+    where: {
+      [Op.and]:[
+        {Ngay: req.body.Ngay},
+        {ID_Giamsat: ID_Giamsat},
+        {ID_Calv: ID_Calv},
+      ]
+    }
+  }).then((existingChecklist) => {
+    console.log('existingChecklist',existingChecklist)
+    if (!existingChecklist) { // Kiểm tra nếu không có checklist tồn tại
+      // Nếu không có checklist tồn tại, tạo mới
+      const data = {
+        ID_Giamsat: req.body.ID_Giamsat,
+        ID_Calv: req.body.ID_Calv,
+        ID_Duan: req.body.ID_Duan,
+        ID_KhoiCV: req.body.ID_KhoiCV,
+        Giobd: req.body.Giobd,
+        Ngay: formattedDate,
+        Tinhtrang: 0,
+        isDelete: 0,
+      };
+  
+      Tb_checklistc.create(data)
+        .then((data) => {
+          res.status(201).json({
+            message: "Tạo checklist thành công!",
+            data: data,
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    } else {
+      // Nếu checklist đã tồn tại, trả về thông báo lỗi
+      res.status(400).json({
+        message: "Checklist với Ngày, ID_Giamsat và ID_KhoiCV đã tồn tại!",
+        data: existingChecklist
+      });
+    }
+  }).catch((err) => {
+    res.status(500).send({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  });
+  
+}
+
 
 exports.createCheckList = async (req, res, next) => {
   try {
    
     if (
-      !req.body.ID_Duan ||
-      !req.body.ID_KhoiCV ||
+      // !req.body.ID_Duan ||
+      // !req.body.ID_KhoiCV ||
       !req.body.Ngay ||
       !req.body.ID_Calv ||
       !req.body.ID_Giamsat ||
-      !req.body.Giobd ||
-      !req.body.Giochupanh1 ||
-      !req.body.Giochupanh2 ||
-      !req.body.Giochupanh3 ||
-      !req.body.Giochupanh4 ||
-      !req.body.Giokt ||
-      !req.body.Tinhtrang
+      !req.body.Giobd 
+      // !req.body.Giochupanh1 ||
+      // !req.body.Giochupanh2 ||
+      // !req.body.Giochupanh3 ||
+      // !req.body.Giochupanh4 ||
+      // !req.body.Giokt ||
+      // !req.body.Tinhtrang
     ) {
          res.status(400).send({
         message: "Phải nhập đầy đủ dữ liệu bao gồm cả 4 ảnh checklist!",
@@ -131,6 +206,7 @@ exports.getCheckListc = async (req, res, next) => {
         where: {
           isDelete: 0,
         },
+        order: [ ['Ngay',  'DESC'] ] 
       })
         .then((data) => {
           if (data) {

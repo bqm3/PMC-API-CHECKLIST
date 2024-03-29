@@ -44,6 +44,7 @@ exports.get = async (req, res) => {
         },
         where: {
           isDelete: 0,
+          ID_Duan: userData.ID_Duan
         },
       })
         .then((data) => {

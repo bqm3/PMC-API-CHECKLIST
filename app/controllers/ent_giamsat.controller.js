@@ -52,6 +52,17 @@ exports.get = async (req, res) => {
   try {
     const userData = req.user.data;
     if (userData) {
+      let whereClause = {
+        ID_Duan: userData?.ID_Duan,
+        isDelete: 0,
+      };
+
+      // Nếu quyền là 1 (Permission === 1) thì không cần thêm điều kiện ID_KhoiCV
+      // if (userData.Permission !== 1) {
+      //   whereClause.ID_Chucvu = userData?.ID_KhoiCV;
+      // }
+
+
       await Ent_giamsat.findAll({
         attributes: [
           "ID_Giamsat",
@@ -74,9 +85,7 @@ exports.get = async (req, res) => {
             attributes: ["Chucvu"],
           },
         ],
-        where: {
-          isDelete: 0,
-        },
+        where: whereClause
       })
         .then((data) => {
           res.status(201).json({
