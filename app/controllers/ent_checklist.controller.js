@@ -1,3 +1,4 @@
+const sequelize = require("../config/db.config");
 const {
   Ent_checklist,
   Ent_khuvuc,
@@ -33,13 +34,13 @@ exports.create = (req, res) => {
       const data = {
         ID_Khuvuc: req.body.ID_Khuvuc,
         ID_Tang: req.body.ID_Tang,
-        Sothutu: req.body.Sothutu,
-        Maso: req.body.Maso,
-        MaQrCode: req.body.MaQrCode,
+        Sothutu: req.body.Sothutu || "",
+        Maso: req.body.Maso || "",
+        MaQrCode: req.body.MaQrCode || "",
         Checklist: req.body.Checklist,
-        Ghichu: req.body.Ghichu,
-        Giatridinhdanh: req.body.Giatridinhdanh,
-        Giatrinhan: req.body.Giatrinhan,
+        Ghichu: req.body.Ghichu || "",
+        Giatridinhdanh: req.body.Giatridinhdanh || "",
+        Giatrinhan: req.body.Giatrinhan || "",
         ID_User: userData.ID_User,
         isDelete: 0,
       };
@@ -93,19 +94,19 @@ exports.get = async (req, res) => {
               "Sothutu",
               "ID_Toanha",
               "ID_KhoiCV",
-              "ID_Khuvuc"
+              "ID_Khuvuc",
             ],
             include: [
               {
                 model: Ent_toanha,
                 attributes: ["Toanha", "Sotang", "ID_Toanha"],
-                
+
                 include: {
                   model: Ent_duan,
                   attributes: ["ID_Duan", "Duan"],
                   // Điều kiện tìm kiếm dựa trên ID_Duan
                 },
-                where: { ID_Duan: userData.ID_Duan }, 
+                where: { ID_Duan: userData.ID_Duan },
               },
               {
                 model: Ent_khoicv,
@@ -130,39 +131,37 @@ exports.get = async (req, res) => {
           isDelete: 0,
         },
       })
-      .then((data) => {
-        if (data && data.length > 0) {
-          let arrNew = [];
-          for (let i = 0; i < data.length; i++) {
-            if (data[i].ent_khuvuc !== null) {
-              arrNew.push(data[i]);
+        .then((data) => {
+          if (data && data.length > 0) {
+            let arrNew = [];
+            for (let i = 0; i < data.length; i++) {
+              if (data[i].ent_khuvuc !== null) {
+                arrNew.push(data[i]);
+              }
             }
-          }
-          if (arrNew.length > 0) {
-          //   const processedData = arrNew.map(item => {
-          //     return { ...item, Giatrinhan: item.Giatrinhan.split('/') };
-          // });
-            res.status(200).json({
-              message: "Danh sách checklist!",
-              length: arrNew.length,
-              data: arrNew,
-            });
+            if (arrNew.length > 0) {
+              //   const processedData = arrNew.map(item => {
+              //     return { ...item, Giatrinhan: item.Giatrinhan.split('/') };
+              // });
+              res.status(200).json({
+                message: "Danh sách checklist!",
+                length: arrNew.length,
+                data: arrNew,
+              });
+            } else {
+              res.status(404).json({
+                message: "Không tìm thấy checklist cho dự án này!",
+                data: [],
+              });
+            }
           } else {
             res.status(404).json({
               message: "Không tìm thấy checklist cho dự án này!",
               data: [],
             });
           }
-        } else {
-          res.status(404).json({
-            message: "Không tìm thấy checklist cho dự án này!",
-            data: [],
-          });
-        }
-      })
-      
-      
-      
+        })
+
         .catch((err) => {
           res.status(500).json({
             message: err.message || "Lỗi! Vui lòng thử lại sau.",
@@ -175,8 +174,6 @@ exports.get = async (req, res) => {
     });
   }
 };
-
-
 
 exports.getDetail = async (req, res) => {
   try {
@@ -200,7 +197,15 @@ exports.getDetail = async (req, res) => {
         include: [
           {
             model: Ent_khuvuc,
-            attributes: ["Tenkhuvuc", "MaQrCode", "Makhuvuc", "Sothutu"],
+            attributes: [
+              "Tenkhuvuc",
+              "MaQrCode",
+              "Makhuvuc",
+              "Sothutu",
+              "ID_Toanha",
+              "ID_KhoiCV",
+            ],
+            required: false,
             include: [
               {
                 model: Ent_toanha,
@@ -336,28 +341,22 @@ exports.getFilter = async (req, res) => {
     const userData = req.user.data;
     const ID_Khuvuc = req.body.ID_Khuvuc;
     const ID_Tang = req.body.ID_Tang;
-    const ID_KhoiCV = req.body.ID_KhoiCV;
-    const ID_Toanha = req.body.ID_Tang;
-
+    const ID_Toanha = req.body.ID_Toanha;
+    const ID_ChecklistC= req.body.ID_ChecklistC;
+    const orConditions = []
     if (userData) {
-      const whereCondition = {
-        [Op.or]: [],
-      };
-      if (ID_Khuvuc == null && ID_Tang == null) {
+      
+      if (ID_Khuvuc !== undefined) {
+        orConditions.push({ ID_Khuvuc: ID_Khuvuc });
       }
-      // Xây dựng điều kiện where dựa trên các giá trị đã kiểm tra
-
-      // if (ID_Khuvuc !== undefined) {
-      //   whereCondition[Op.or].push({
-      //     ID_Khuvuc: ID_Khuvuc,
-      //   });
-      // }
-      // if (ID_Tang !== undefined) {
-      //   whereCondition[Op.or].push({
-      //     ID_Tang: ID_Tang,
-      //   });
-      // }
-      whereCondition.isDelete = 0;
+      
+      if (ID_Tang !== undefined) {
+        orConditions.push({ ID_Tang: ID_Tang });
+      }
+      
+      if (ID_Toanha !== undefined) {
+        orConditions.push({ "$ent_khuvuc.ent_toanha.ID_Toanha$": ID_Toanha });
+      }
 
       await Ent_checklist.findAll({
         attributes: [
@@ -385,6 +384,7 @@ exports.getFilter = async (req, res) => {
               "ID_Toanha",
               "ID_KhoiCV",
             ],
+            required: false,
             include: [
               {
                 model: Ent_toanha,
@@ -400,7 +400,6 @@ exports.getFilter = async (req, res) => {
             model: Ent_tang,
             attributes: ["Tentang", "Sotang"],
           },
-
           {
             model: Ent_user,
             include: {
@@ -410,16 +409,24 @@ exports.getFilter = async (req, res) => {
             attributes: ["UserName", "Emails"],
           },
         ],
-        // where: whereCondition,
-        // where: {
-        //   "$or": {
-        //     '$Ent_checklist.ID_Khuvuc$': ID_Khuvuc,
-        //     '$Ent_tang.ID_Tang$': ID_Tang,
-        //     '$Ent_khuvuc.Ent_toanha.ID_Toanha$': ID_Toanha,
-        //     '$Ent_khuvuc.Ent_khoicv.ID_Khoi$': ID_KhoiCV,
-        //   }
-        // }
-        where: []
+        where: {
+          isDelete: 0,
+          [Op.and]: [
+            orConditions,
+            {
+              ID_Checklist: {
+                [Op.notIn]: sequelize.literal(
+                  `(SELECT ID_Checklist FROM tb_checklistchitiet where ID_ChecklistC = ${ID_ChecklistC})`
+                ),
+              },
+            },
+          ],
+        },
+
+        // order: [
+        //   ["ID_Khuvuc", "ASC"],
+        //   ["Sothutu", "ASC"],
+        // ],
       })
         .then((data) => {
           res.status(201).json({
@@ -476,3 +483,134 @@ exports.deleteChecklists = async (req, res) => {
     });
   }
 };
+
+exports.getChecklist = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    const ID_KhoiCV = req.params.id;
+    const ID_ChecklistC = req.params.idc;
+    if (userData && ID_KhoiCV) {
+      await Ent_checklist.findAll({
+        attributes: [
+          "ID_Checklist",
+          "ID_Khuvuc",
+          "ID_Tang",
+          "Sothutu",
+          "Maso",
+          "MaQrCode",
+          "Checklist",
+          "Ghichu",
+          "Giatridinhdanh",
+          "Giatrinhan",
+          "ID_User",
+          "isDelete",
+        ],
+        include: [
+          {
+            model: Ent_khuvuc,
+            attributes: [
+              "Tenkhuvuc",
+              "MaQrCode",
+              "Makhuvuc",
+              "Sothutu",
+              "ID_Toanha",
+              "ID_KhoiCV",
+              "ID_Khuvuc",
+            ],
+            where: {
+              ID_KhoiCV: ID_KhoiCV,
+            },
+            include: [
+              {
+                model: Ent_toanha,
+                attributes: ["Toanha", "Sotang", "ID_Toanha"],
+
+                include: {
+                  model: Ent_duan,
+                  attributes: ["ID_Duan", "Duan"],
+                  // Điều kiện tìm kiếm dựa trên ID_Duan
+                },
+                where: { ID_Duan: userData.ID_Duan },
+              },
+              {
+                model: Ent_khoicv,
+                attributes: ["KhoiCV"],
+              },
+            ],
+          },
+          {
+            model: Ent_tang,
+            attributes: ["Tentang", "Sotang"],
+          },
+          {
+            model: Ent_user,
+            include: {
+              model: Ent_chucvu,
+              attributes: ["Chucvu"],
+            },
+            attributes: ["UserName", "Emails"],
+          },
+        ],
+        where: {
+          isDelete: 0,
+          [Op.and]: [
+            {
+              ID_Checklist: {
+                [Op.notIn]: sequelize.literal(
+                  `(SELECT ID_Checklist FROM tb_checklistchitiet where ID_ChecklistC = ${ID_ChecklistC})`
+                ),
+              },
+            },
+          ],
+        },
+
+        order: [
+          ["ID_Khuvuc", "ASC"],
+          ["Sothutu", "ASC"],
+        ],
+      })
+        .then((data) => {
+          if (data && data.length > 0) {
+            let arrNew = [];
+            for (let i = 0; i < data.length; i++) {
+              if (data[i].ent_khuvuc !== null) {
+                arrNew.push(data[i]);
+              }
+            }
+            if (arrNew.length > 0) {
+              //   const processedData = arrNew.map(item => {
+              //     return { ...item, Giatrinhan: item.Giatrinhan.split('/') };
+              // });
+              res.status(200).json({
+                message: "Danh sách checklist!",
+                length: arrNew.length,
+                data: arrNew,
+              });
+            } else {
+              res.status(404).json({
+                message: "Không tìm thấy checklist cho dự án này!",
+                data: [],
+              });
+            }
+          } else {
+            res.status(404).json({
+              message: "Không tìm thấy checklist cho dự án này!",
+              data: [],
+            });
+          }
+        })
+
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+

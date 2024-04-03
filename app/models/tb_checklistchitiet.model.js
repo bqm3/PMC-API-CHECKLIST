@@ -20,19 +20,15 @@ const Tb_checklistchitiet = sequelize.define(
     },
     Ketqua: {
       type: DataTypes.CHAR,
-      allowNull: false,
     },
     Anh: {
       type: DataTypes.CHAR,
-      allowNull: false,
     },
     Gioht: {
       type: DataTypes.TIME,
-      allowNull: false,
     },
     Ghichu: {
       type: DataTypes.TEXT,
-      allowNull: false,
     },
     isDelete: {
       type: DataTypes.INTEGER,

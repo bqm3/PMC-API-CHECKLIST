@@ -7,8 +7,7 @@ exports.create = (req, res) => {
       !req.body.ID_Duan ||
       !req.body.Hoten ||
       !req.body.Sodienthoai ||
-      !req.body.ID_Chucvu ||
-      !req.body.iQuyen 
+      !req.body.ID_Chucvu
     ) {
       res.status(400).send({
         message: "Phải nhập đầy đủ dữ liệu!",
@@ -24,9 +23,11 @@ exports.create = (req, res) => {
         Sodienthoai: req.body.Sodienthoai,
         Ngaysinh: req.body.Ngaysinh,
         ID_Chucvu: req.body.ID_Chucvu,
+        ID_KhoiCV: req.body.ID_KhoiCV,
         iQuyen: req.body.iQuyen,
         isDelete: 0,
       };
+      console.log("data", data);
 
       Ent_giamsat.create(data)
         .then((data) => {
@@ -36,12 +37,14 @@ exports.create = (req, res) => {
           });
         })
         .catch((err) => {
-          res.status(500).send({
+          console.log("err", err);
+          res.status(500).json({
             message: err.message || "Lỗi! Vui lòng thử lại sau.",
           });
         });
     }
   } catch (err) {
+    console.log("err", err);
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
@@ -58,16 +61,16 @@ exports.get = async (req, res) => {
       };
 
       // Nếu quyền là 1 (Permission === 1) thì không cần thêm điều kiện ID_KhoiCV
-      // if (userData.Permission !== 1) {
-      //   whereClause.ID_Chucvu = userData?.ID_KhoiCV;
-      // }
-
+      if (userData.Permission !== 1) {
+        whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
+      }
 
       await Ent_giamsat.findAll({
         attributes: [
           "ID_Giamsat",
           "ID_Duan",
           "ID_Chucvu",
+          "ID_KhoiCV",
           "Hoten",
           "Ngaysinh",
           "Sodienthoai",
@@ -85,7 +88,7 @@ exports.get = async (req, res) => {
             attributes: ["Chucvu"],
           },
         ],
-        where: whereClause
+        where: whereClause,
       })
         .then((data) => {
           res.status(201).json({
@@ -112,26 +115,27 @@ exports.getDetail = async (req, res) => {
     if (req.params.id && userData) {
       await Ent_giamsat.findByPk(req.params.id, {
         attributes: [
-            "ID_Giamsat",
-            "ID_Duan",
-            "ID_Chucvu",
-            "Hoten",
+          "ID_Giamsat",
+          "ID_Duan",
+          "ID_Chucvu",
+          "ID_KhoiCV",
+          "Hoten",
           "Ngaysinh",
           "Sodienthoai",
           "Gioitinh",
-            "iQuyen",
-            "isDelete",
+          "iQuyen",
+          "isDelete",
         ],
         include: [
-            {
-              model: Ent_duan,
-              attributes: ["Duan"],
-            },
-            {
-              model: Ent_chucvu,
-              attributes: ["Chucvu"],
-            },
-          ],
+          {
+            model: Ent_duan,
+            attributes: ["Duan"],
+          },
+          {
+            model: Ent_chucvu,
+            attributes: ["Chucvu"],
+          },
+        ],
         where: {
           isDelete: 0,
         },
@@ -164,7 +168,7 @@ exports.update = async (req, res) => {
           message: "Cần nhập đầy đủ thông tin!",
         });
         return;
-      } 
+      }
       const reqData = {
         ID_Duan: req.body.ID_Duan,
         Hoten: req.body.Hoten,
@@ -172,6 +176,7 @@ exports.update = async (req, res) => {
         Sodienthoai: req.body.Sodienthoai,
         Ngaysinh: req.body.Ngaysinh,
         ID_Chucvu: req.body.ID_Chucvu,
+        ID_KhoiCV: req.body.ID_KhoiCV,
         iQuyen: req.body.iQuyen,
         isDelete: 0,
       };

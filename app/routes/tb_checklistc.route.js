@@ -18,17 +18,17 @@ module.exports = (app) => {
     [isAuthenticated],
     tb_checklistc.createFirstChecklist
   );
-  
-  router.get(
-    "/",
+
+  router.get("/", [isAuthenticated], tb_checklistc.getCheckListc);
+  router.get("/:id", [isAuthenticated], tb_checklistc.getDetail);
+  router.put("/close/:id", [isAuthenticated], tb_checklistc.close);
+
+  router.put(
+    "/update-images/:id",
     [isAuthenticated],
-    tb_checklistc.getCheckListc
+    uploader.array("Images"),
+    tb_checklistc.checklistImages
   );
-  router.get(
-    "/:id",
-    [isAuthenticated],
-    tb_checklistc.getDetail
-  );
-  
+
   app.use("/api/tb_checklistc", router);
 };

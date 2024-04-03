@@ -40,6 +40,10 @@ exports.login = async (req, res) => {
           model: Ent_chucvu,
           attributes: ["Chucvu"],
         },
+        {
+          model: Ent_khoicv,
+          attributes: ["KhoiCV"],
+        },
       ]
     });
 

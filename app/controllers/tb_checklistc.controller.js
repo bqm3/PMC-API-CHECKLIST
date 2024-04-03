@@ -8,19 +8,22 @@ const {
   Ent_chucvu,
 } = require("../models/setup.model");
 const { Op } = require("sequelize");
+const Ent_checklistc = require("../models/tb_checklistc.model");
 
 exports.createFirstChecklist = async (req, res, next) => {
   // Validate request
   if (!req.body.ID_Calv || !req.body.ID_Giamsat) {
-    res.status(400).send({
+    res.status(400).json({
       message: "Phải nhập đầy đủ dữ liệu!",
     });
     return;
   }
 
-  const formattedDate = moment(req.body.Ngay).startOf('day').format('YYYY-MM-DD');
+  const formattedDate = moment(req.body.Ngay)
+    .startOf("day")
+    .format("YYYY-MM-DD");
   const { ID_Giamsat, ID_Calv } = req.body;
-  console.log('Ngay',req.body.Ngay, ID_Giamsat, ID_Calv)
+  console.log("Ngay", req.body.Ngay, ID_Giamsat, ID_Calv);
 
   // Kiểm tra sự tồn tại của Ngay, ID_Giamsat, ID_KhoiCV trong cơ sở dữ liệu
   Tb_checklistc.findOne({
@@ -30,68 +33,67 @@ exports.createFirstChecklist = async (req, res, next) => {
       "ID_KhoiCV",
       "ID_Calv",
       "ID_Giamsat",
-      "Ngay"
+      "Ngay",
     ],
     where: {
-      [Op.and]:[
-        {Ngay: req.body.Ngay},
-        {ID_Giamsat: ID_Giamsat},
-        {ID_Calv: ID_Calv},
-      ]
-    }
-  }).then((existingChecklist) => {
-    console.log('existingChecklist',existingChecklist)
-    if (!existingChecklist) { // Kiểm tra nếu không có checklist tồn tại
-      // Nếu không có checklist tồn tại, tạo mới
-      const data = {
-        ID_Giamsat: req.body.ID_Giamsat,
-        ID_Calv: req.body.ID_Calv,
-        ID_Duan: req.body.ID_Duan,
-        ID_KhoiCV: req.body.ID_KhoiCV,
-        Giobd: req.body.Giobd,
-        Ngay: formattedDate,
-        Tinhtrang: 0,
-        isDelete: 0,
-      };
-  
-      Tb_checklistc.create(data)
-        .then((data) => {
-          res.status(201).json({
-            message: "Tạo checklist thành công!",
-            data: data,
-          });
-        })
-        .catch((err) => {
-          res.status(500).json({
-            message: err.message || "Lỗi! Vui lòng thử lại sau.",
-          });
-        });
-    } else {
-      // Nếu checklist đã tồn tại, trả về thông báo lỗi
-      res.status(400).json({
-        message: "Checklist với Ngày, ID_Giamsat và ID_KhoiCV đã tồn tại!",
-        data: existingChecklist
-      });
-    }
-  }).catch((err) => {
-    res.status(500).send({
-      message: err.message || "Lỗi! Vui lòng thử lại sau.",
-    });
-  });
-  
-}
+      [Op.and]: [
+        { Ngay: req.body.Ngay },
+        { ID_Giamsat: ID_Giamsat },
+        { ID_Calv: ID_Calv },
+      ],
+    },
+  })
+    .then((existingChecklist) => {
+      if (!existingChecklist) {
+        // Kiểm tra nếu không có checklist tồn tại
+        // Nếu không có checklist tồn tại, tạo mới
+        const data = {
+          ID_Giamsat: req.body.ID_Giamsat,
+          ID_Calv: req.body.ID_Calv,
+          ID_Duan: req.body.ID_Duan,
+          ID_KhoiCV: req.body.ID_KhoiCV,
+          Giobd: req.body.Giobd,
+          Ngay: formattedDate,
+          Tinhtrang: 0,
+          isDelete: 0,
+        };
 
+        Tb_checklistc.create(data)
+          .then((data) => {
+            res.status(201).json({
+              message: "Tạo checklist thành công!",
+              data: data,
+            });
+          })
+          .catch((err) => {
+            res.status(500).json({
+              message: err.message || "Lỗi! Vui lòng thử lại sau.",
+            });
+          });
+      } else {
+        // Nếu checklist đã tồn tại, trả về thông báo lỗi
+        res.status(400).json({
+          message: "Checklist với Ngày, ID_Giamsat và ID_KhoiCV đã tồn tại!",
+          data: existingChecklist,
+        });
+      }
+    })
+    .catch((err) => {
+      res.status(500).json({
+        message: err.message || "Lỗi! Vui lòng thử lại sau.",
+      });
+    });
+};
 
 exports.createCheckList = async (req, res, next) => {
   try {
-   
     if (
       // !req.body.ID_Duan ||
       // !req.body.ID_KhoiCV ||
       !req.body.Ngay ||
       !req.body.ID_Calv ||
       !req.body.ID_Giamsat ||
-      !req.body.Giobd 
+      !req.body.Giobd
       // !req.body.Giochupanh1 ||
       // !req.body.Giochupanh2 ||
       // !req.body.Giochupanh3 ||
@@ -99,18 +101,20 @@ exports.createCheckList = async (req, res, next) => {
       // !req.body.Giokt ||
       // !req.body.Tinhtrang
     ) {
-         res.status(400).send({
+      res.status(400).json({
         message: "Phải nhập đầy đủ dữ liệu bao gồm cả 4 ảnh checklist!",
       });
       return;
     }
     let pictureFiles = req.files;
-    const uploadPromises = pictureFiles.map(image => {return image});
-    
+    const uploadPromises = pictureFiles.map((image) => {
+      return image;
+    });
+
     // Wait for all uploads to finish
     const results = await Promise.all(uploadPromises);
     // Extract URLs from Cloudinary upload results
-    const imageURLs = results.map(result => result.path);
+    const imageURLs = results.map((result) => result.path);
 
     const data = {
       ID_Duan: req.body.ID_Duan,
@@ -120,15 +124,15 @@ exports.createCheckList = async (req, res, next) => {
       ID_Giamsat: req.body.ID_Giamsat,
       Giobd: req.body.Giobd,
       Giochupanh1: req.body.Giochupanh1,
-      Anh1: imageURLs[0] ? imageURLs[0] : '',
+      Anh1: imageURLs[0] ? imageURLs[0] : "",
       Giochupanh2: req.body.Giochupanh2,
-      Anh2: imageURLs[1] ? imageURLs[1] : '',
+      Anh2: imageURLs[1] ? imageURLs[1] : "",
       Giochupanh3: req.body.Giochupanh3,
-      Anh3: imageURLs[2] ? imageURLs[2] : '',
+      Anh3: imageURLs[2] ? imageURLs[2] : "",
       Giochupanh4: req.body.Giochupanh4,
-      Anh4: imageURLs[3] ? imageURLs[3] : '',
+      Anh4: imageURLs[3] ? imageURLs[3] : "",
       Giokt: req.body.Giokt,
-      Ghichu: req.body.Ghichu || '',
+      Ghichu: req.body.Ghichu || "",
       Tinhtrang: req.body.Tinhtrang,
       isDelete: 0,
     };
@@ -141,7 +145,7 @@ exports.createCheckList = async (req, res, next) => {
         });
       })
       .catch((err) => {
-        res.status(500).send({
+        res.status(500).json({
           message: err.message || "Lỗi! Vui lòng thử lại sau.",
         });
       });
@@ -181,32 +185,31 @@ exports.getCheckListc = async (req, res, next) => {
         include: [
           {
             model: Ent_duan,
-            attributes: ["ID_Duan","Duan"],
+            attributes: ["ID_Duan", "Duan"],
           },
           {
             model: Ent_khoicv,
-            attributes: ["ID_Khoi","KhoiCV"],
+            attributes: ["ID_Khoi", "KhoiCV"],
           },
           {
             model: Ent_calv,
-            attributes: ["ID_Calv","Tenca", "Giobatdau","Gioketthuc"],
+            attributes: ["ID_Calv", "Tenca", "Giobatdau", "Gioketthuc"],
           },
           {
             model: Ent_giamsat,
-            attributes: ["ID_Giamsat","Hoten"],
+            attributes: ["ID_Giamsat", "Hoten"],
             include: [
               {
                 model: Ent_chucvu,
                 attributes: ["Chucvu"],
               },
-              
             ],
           },
         ],
         where: {
           isDelete: 0,
         },
-        order: [ ['Ngay',  'DESC'] ] 
+        order: [["Ngay", "DESC"]],
       })
         .then((data) => {
           if (data) {
@@ -267,25 +270,24 @@ exports.getDetail = async (req, res) => {
         include: [
           {
             model: Ent_duan,
-            attributes: ["ID_Duan","Duan"],
+            attributes: ["ID_Duan", "Duan"],
           },
           {
             model: Ent_khoicv,
-            attributes: ["ID_Khoi","KhoiCV"],
+            attributes: ["ID_Khoi", "KhoiCV"],
           },
           {
             model: Ent_calv,
-            attributes: ["ID_Calv","Tenca", "Giobatdau","Gioketthuc"],
+            attributes: ["ID_Calv", "Tenca", "Giobatdau", "Gioketthuc"],
           },
           {
             model: Ent_giamsat,
-            attributes: ["ID_Giamsat","Hoten"],
+            attributes: ["ID_Giamsat", "Hoten"],
             include: [
               {
                 model: Ent_chucvu,
                 attributes: ["Chucvu"],
               },
-              
             ],
           },
         ],
@@ -318,20 +320,107 @@ exports.getDetail = async (req, res) => {
   }
 };
 
-exports.searchChecklist = async(req, res) => {
-  try{
+exports.searchChecklist = async (req, res) => {
+  try {
     var options = {
       where: {
         $or: [
-          { 'subject': { like: '%' + query + '%' } },
-          { '$Comment.body$': { like: '%' + query + '%' } }
-        ]
+          { subject: { like: "%" + query + "%" } },
+          { "$Comment.body$": { like: "%" + query + "%" } },
+        ],
       },
-      include: [{ model: Comment }]
+      include: [{ model: Comment }],
     };
-  }catch(err){
+  } catch (err) {
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
+};
+
+exports.close = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    if (req.params.id && userData) {
+      Tb_checklistc.update(
+        { Tinhtrang: 1, Giokt: req.body.Giokt },
+        {
+          where: {
+            ID_ChecklistC: req.params.id,
+          },
+        }
+      )
+        .then((data) => {
+          res.status(201).json({
+            message: "Khóa ca thành công!",
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+
+function isValidImageRequestBody(body) {
+  // Check if Anh1 and Giochupanh1 exist or Anh2 and Giochupanh2 exist, and so on...
+  for (let i = 1; i <= 4; i++) {
+    const imageKey = `Anh${i}`;
+    const timestampKey = `Giochupanh${i}`;
+    
+    // If any image key or its corresponding timestamp key is missing, return false
+    if (!body.hasOwnProperty(imageKey) || !body.hasOwnProperty(timestampKey)) {
+      return false;
+    }
+  }
+  
+  return true; // All image keys and their corresponding timestamp keys exist
 }
+
+exports.checklistImages = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    const ID_Checklist = req.params.id;
+    if (userData && ID_Checklist) {
+      let images = req.files;
+
+      const reqData = {};
+
+      // Populate reqData with available image data
+      for (let i = 1; i <= 4; i++) {
+        const imageKey = `Anh${i}`;
+        const timestampKey = `Giochupanh${i}`;
+        if (req.body[imageKey]) {
+          const imagePath = images.find(file => file.originalname === req.body[imageKey])?.path;
+          if (imagePath) {
+            reqData[imageKey] = imagePath;
+            reqData[timestampKey] = req.body[timestampKey] || '';
+          }
+        }
+      }
+
+      // Perform update only if reqData contains any data
+      if (Object.keys(reqData).length > 0) {
+        await Ent_checklistc.update(reqData, {
+          where: { ID_ChecklistC: ID_Checklist },
+        });
+        
+        res.status(201).json({ message: "Cập nhật khu vực thành công!" });
+      } else {
+        res.status(400).json({ message: "Không có dữ liệu hình ảnh hợp lệ để cập nhật!" });
+      }
+    } else {
+      res.status(401).json({ message: "Bạn không có quyền truy cập! Vui lòng thử lại" });
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+  }
+}
+

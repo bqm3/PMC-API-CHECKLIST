@@ -7,10 +7,11 @@ module.exports = (app) => {
 
   var router = require("express").Router();
 
+
   router.post(
     "/create",
     [isAuthenticated],
-    uploader.single("image"),
+    uploader.array("Images"),
     tb_checklistchitiet.createCheckListChiTiet
   );
 

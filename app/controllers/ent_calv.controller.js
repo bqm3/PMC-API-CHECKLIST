@@ -63,6 +63,8 @@ exports.get = async (req, res) => {
         isDelete: 0,
       };
 
+      
+
       // Nếu quyền là 1 (Permission === 1) thì không cần thêm điều kiện ID_KhoiCV
       if (userData.Permission !== 1) {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;

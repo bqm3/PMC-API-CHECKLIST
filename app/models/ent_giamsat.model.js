@@ -12,29 +12,26 @@ const Ent_giamsat = sequelize.define("ent_giamsat", {
          type: DataTypes.INTEGER,
          allowNull: false,
        },
+       ID_KhoiCV: {
+        type: DataTypes.INTEGER,
+      },
        Hoten: {
         type: DataTypes.CHAR,
-        allowNull: false,
        },
        Gioitinh: {
         type: DataTypes.CHAR,
-        allowNull: false,
        },
        Ngaysinh: {
-        type: DataTypes.DATE,
-        allowNull: false,
+        type: DataTypes.CHAR,
        },
        Sodienthoai: {
         type: DataTypes.CHAR,
-        allowNull: false,
        },
        ID_Chucvu: {
         type: DataTypes.INTEGER,
-        allowNull: false,
        },
        iQuyen: {
         type: DataTypes.INTEGER,
-        allowNull: false
        },
        isDelete: {
         type: DataTypes.INTEGER,
