@@ -5,7 +5,7 @@ exports.create = (req, res, next) => {
   // Validate request
   try {
     if (!req.body.Tentang || !req.body.Sotang) {
-      res.status(400).send({
+      res.status(400).json({
         message: "Cần nhập đầy đủ thông tin!",
       });
       return;
@@ -27,7 +27,7 @@ exports.create = (req, res, next) => {
         });
       })
       .catch((err) => {
-        res.status(500).send({
+        res.status(500).json({
           message: err.message || "Lỗi! Vui lòng thử lại sau.",
         });
       });

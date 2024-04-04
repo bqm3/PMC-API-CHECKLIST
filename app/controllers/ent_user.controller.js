@@ -12,7 +12,7 @@ const { Op } = require("sequelize");
 exports.login = async (req, res) => {
   try {
     if (!req.body.UserName || !req.body.Password) {
-      res.status(400).send({
+      res.status(400).json({
         message: "Sai tài khoản hoặc mật khẩu. Vui lòng thử lại!!",
       });
       return;
@@ -44,7 +44,7 @@ exports.login = async (req, res) => {
           model: Ent_khoicv,
           attributes: ["KhoiCV"],
         },
-      ]
+      ],
     });
 
     if (user && user?.isDelete === 0) {
@@ -70,7 +70,7 @@ exports.login = async (req, res) => {
           expires: new Date(Number(new Date()) + 7 * 24 * 60 * 60 * 1000),
         }); //we add secure: true, when using https.
 
-        return res.status(200).send({ token: token, user: user });
+        return res.status(200).json({ token: token, user: user });
       } else {
         return res
           .status(400)
@@ -83,7 +83,7 @@ exports.login = async (req, res) => {
       });
     }
   } catch (err) {
-    return res.status(500).send({
+    return res.status(500).json({
       message: err ? err.message : "Lỗi! Vui lòng thử lại sau.",
     });
   }
@@ -94,7 +94,7 @@ exports.register = async (req, res, next) => {
   try {
     if (
       !req.body.UserName ||
-      !req.body.Emails ||
+      // !req.body.Emails ||
       !req.body.Password ||
       !req.body.Permission ||
       !req.body.ID_Duan ||
@@ -105,10 +105,9 @@ exports.register = async (req, res, next) => {
       });
     }
     const UserName = req.body.UserName;
-    const Emails = req.body.Emails;
     const user = await Ent_user.findOne({
       where: {
-        [Op.or]: [{ UserName }, { Emails }],
+        [Op.or]: [{ UserName }],
       },
       attributes: [
         "ID_User",
@@ -138,12 +137,14 @@ exports.register = async (req, res, next) => {
       isDelete: 0,
     };
 
+    console.log('data',data)
+
     Ent_user.create(data)
       .then((data) => {
-        res.send(data);
+        res.json(data);
       })
       .catch((err) => {
-        res.status(500).send({
+        res.status(500).json({
           message: err.message || "Lỗi! Vui lòng thử lại sau.",
         });
       });
@@ -158,7 +159,7 @@ exports.register = async (req, res, next) => {
 exports.changePassword = async (req, res, next) => {
   try {
     if (!req.body) {
-      return res.status(400).send({
+      return res.status(400).json({
         message: "Phải nhập đầy đủ dữ liệu!",
       });
     }
@@ -185,12 +186,60 @@ exports.changePassword = async (req, res, next) => {
         }
       )
         .then((data) => {
-          res.status(201).send({
+          res.status(201).json({
             message: "Cập nhật mật khẩu thành công!",
           });
         })
         .catch((err) => {
-          res.status(500).send({
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+// Update user
+exports.updateUser = async (req, res, next) => {
+  try {
+    if (!req.body) {
+      return res.status(400).json({
+        message: "Phải nhập đầy đủ dữ liệu!",
+      });
+    }
+
+    const userData = req.user.data;
+    if (userData) {
+      const { ID_Duan, Permission, ID_KhoiCV, UserName, Emails, Password } =
+        req.body;
+     
+      const hashedNewPassword = await hashSync(Password, 10);
+      await Ent_user.update(
+        {
+          ID_Duan: ID_Duan,
+          Permission: Permission,
+          ID_KhoiCV: ID_KhoiCV,
+          UserName: UserName,
+          Emails: Emails,
+          Password: hashedNewPassword,
+        },
+        {
+          where: {
+            ID_User: req.params.id,
+          },
+        }
+      )
+        .then((data) => {
+          res.status(201).json({
+            message: "Cập nhật thông tin thành công!",
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
             message: err.message || "Lỗi! Vui lòng thử lại sau.",
           });
         });
@@ -205,23 +254,17 @@ exports.changePassword = async (req, res, next) => {
 // Get All User
 exports.deleteUser = async (req, res, next) => {
   try {
-    if (!req.body?.isDelete || !req.body.ID_User) {
-      return res.status(400).send({
-        message: "Phải nhập đầy đủ dữ liệu!",
-      });
-    }
-
+  
     const userData = req.user.data;
-
-    if (userData.ID_User !== req.body.ID_User) {
-      const ID_User = req.body.ID_User;
+    console.log('req.params.id',req.params.id)
+    if (userData) {
       await Ent_user.update(
         {
-          isDelete: req.body.isDelete,
+          isDelete: 1,
         },
         {
           where: {
-            ID_User: ID_User,
+            ID_User: req.params.id,
           },
         }
       )
@@ -250,11 +293,27 @@ exports.getUserOnline = async (req, res, next) => {
     const userData = req.user.data;
     //
     await Ent_user.findAll({
-      attributes: ["UserName", "Emails", "ID_Duan", "ID_KhoiCV", "Permission"],
+      attributes: [
+        "ID_User",
+        "UserName",
+        "Emails",
+        "Password",
+        "ID_Duan",
+        "ID_KhoiCV",
+        "Permission",
+      ],
       include: [
         {
           association: "ent_duan",
           required: true,
+        },
+        {
+          model: Ent_chucvu,
+          attributes: ["Chucvu"],
+        },
+        {
+          model: Ent_khoicv,
+          attributes: ["KhoiCV"],
         },
       ],
       where: {
@@ -278,4 +337,3 @@ exports.getUserOnline = async (req, res, next) => {
     });
   }
 };
-

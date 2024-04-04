@@ -26,7 +26,7 @@ app.use("/upload3", express.static("app/public/anh3"));
 app.use("/upload4", express.static("app/public/anh4"));
 
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.json("Hello World!");
 });
 
 require("./app/routes/ent_calv.route")(app);

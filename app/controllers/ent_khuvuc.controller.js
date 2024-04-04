@@ -5,7 +5,7 @@ exports.create = (req, res) => {
   // Validate request
   try {
     if (!req.body.ID_Toanha || !req.body.ID_KhoiCV || !req.body.Tenkhuvuc) {
-      res.status(400).send({
+      res.status(400).json({
         message: "Phải nhập đầy đủ dữ liệu!",
       });
       return;
@@ -31,7 +31,7 @@ exports.create = (req, res) => {
           });
         })
         .catch((err) => {
-          res.status(500).send({
+          res.status(500).json({
             message: err.message || "Lỗi! Vui lòng thử lại sau.",
           });
         });
@@ -168,13 +168,13 @@ exports.update = async (req, res) => {
           });
         })
         .catch((err) => {
-          res.status(500).send({
+          res.status(500).json({
             message: err.message || "Lỗi! Vui lòng thử lại sau.",
           });
         });
     }
   } catch (error) {
-    res.status(500).send({
+    res.status(500).json({
       message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
@@ -198,13 +198,13 @@ exports.delete = async (req, res) => {
           });
         })
         .catch((err) => {
-          res.status(500).send({
+          res.status(500).json({
             message: err.message || "Lỗi! Vui lòng thử lại sau.",
           });
         });
     }
   } catch (error) {
-    res.status(500).send({
+    res.status(500).json({
       message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
@@ -264,7 +264,7 @@ exports.getKhuVuc = async (req, res) => {
           });
         })
         .catch((err) => {
-          res.status(500).send({
+          res.status(500).json({
             message: err.message || "Lỗi! Vui lòng thử lại sau.",
           });
         });
@@ -275,7 +275,7 @@ exports.getKhuVuc = async (req, res) => {
       });
     }
   } catch (error) {
-    res.status(500).send({
+    res.status(500).json({
       message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }

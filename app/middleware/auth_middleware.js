@@ -25,7 +25,7 @@ const isAuthenticated = asyncHandler((req, res, next) => {
 const isAdmin = asyncHandler((req, res, next) => {
     const { Permission } = req.user.data;
 
-    if (Permission !== 1)
+    if (Permission !== 4)
         return res.status(401).json({
             success: false,
             message: 'Không có quyền truy cập'

@@ -13,12 +13,12 @@ exports.create = async (req, res) => {
     console.log("req", req.body);
     if (userData) {
       if (!req.body.Tenca) {
-        res.status(400).send({
+        res.status(400).json({
           message: "Cần nhập đầy đủ thông tin!",
         });
         return;
       } else if (!req.body.Giobatdau || !req.body.Gioketthuc) {
-        res.status(400).send({
+        res.status(400).json({
           message: "Cần có thời gian bắt đầu và kết thúc!",
         });
         return;
@@ -42,13 +42,13 @@ exports.create = async (req, res) => {
           });
         })
         .catch((err) => {
-          res.status(500).send({
+          res.status(500).json({
             message: err.message || "Lỗi! Vui lòng thử lại sau.",
           });
         });
     }
   } catch (error) {
-    res.status(500).send({
+    res.status(500).json({
       message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
@@ -186,12 +186,12 @@ exports.update = async (req, res) => {
     const userData = req.user.data;
     if (req.params.id && userData) {
       if (!req.body.Tenca) {
-        res.status(400).send({
+        res.status(400).json({
           message: "Cần nhập đầy đủ thông tin!",
         });
         return;
       } else if (!req.body.Giobatdau || !req.body.Gioketthuc) {
-        res.status(400).send({
+        res.status(400).json({
           message: "Cần có thời gian bắt đầu và kết thúc!",
         });
         return;
@@ -218,13 +218,13 @@ exports.update = async (req, res) => {
           });
         })
         .catch((err) => {
-          res.status(500).send({
+          res.status(500).json({
             message: err.message || "Lỗi! Vui lòng thử lại sau.",
           });
         });
     }
   } catch (error) {
-    res.status(500).send({
+    res.status(500).json({
       message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
@@ -248,13 +248,13 @@ exports.delete = async (req, res) => {
           });
         })
         .catch((err) => {
-          res.status(500).send({
+          res.status(500).json({
             message: err.message || "Lỗi! Vui lòng thử lại sau.",
           });
         });
     }
   } catch (error) {
-    res.status(500).send({
+    res.status(500).json({
       message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }

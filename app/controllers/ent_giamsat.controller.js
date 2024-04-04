@@ -9,7 +9,7 @@ exports.create = (req, res) => {
       !req.body.Sodienthoai ||
       !req.body.ID_Chucvu
     ) {
-      res.status(400).send({
+      res.status(400).json({
         message: "Phải nhập đầy đủ dữ liệu!",
       });
       return;
@@ -164,7 +164,7 @@ exports.update = async (req, res) => {
     const userData = req.user.data;
     if (req.params.id && userData) {
       if (!req.body.Hoten || !req.body.Sodienthoai) {
-        res.status(400).send({
+        res.status(400).json({
           message: "Cần nhập đầy đủ thông tin!",
         });
         return;
@@ -192,13 +192,13 @@ exports.update = async (req, res) => {
           });
         })
         .catch((err) => {
-          res.status(500).send({
+          res.status(500).json({
             message: err.message || "Lỗi! Vui lòng thử lại sau.",
           });
         });
     }
   } catch (error) {
-    res.status(500).send({
+    res.status(500).json({
       message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
@@ -222,13 +222,13 @@ exports.delete = async (req, res) => {
           });
         })
         .catch((err) => {
-          res.status(500).send({
+          res.status(500).json({
             message: err.message || "Lỗi! Vui lòng thử lại sau.",
           });
         });
     }
   } catch (error) {
-    res.status(500).send({
+    res.status(500).json({
       message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }

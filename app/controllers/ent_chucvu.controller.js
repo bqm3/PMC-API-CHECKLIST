@@ -1,9 +1,10 @@
 const { Ent_chucvu } = require("../models/setup.model");
+const Op = require('sequelize').Op;
 
 exports.create = (req, res) => {
   try {
     if (!req.body.Chucvu) {
-      res.status(400).send({
+      res.status(400).json({
         message: "Phải nhập đầy đủ dữ liệu!",
       });
       return;
@@ -24,7 +25,7 @@ exports.create = (req, res) => {
         });
       })
       .catch((err) => {
-        res.status(500).send({
+        res.status(500).json({
           message: err.message || "Lỗi! Vui lòng thử lại sau.",
         });
       });
@@ -47,6 +48,8 @@ exports.get = async (req, res) => {
       await Ent_chucvu.findAll({
         where: {
           isDelete: 0,
+          ID_Chucvu: {[Op.ne]: 4}
+          // {attribute: { $not: 'x'}},
         },
       })
         .then((data) => {
