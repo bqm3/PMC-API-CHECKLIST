@@ -21,7 +21,7 @@ exports.create = (req, res, next) => {
 
     Ent_tang.create(data)
       .then((data) => {
-        res.status(201).json({
+        res.status(200).json({
           message: "Tạo tầng thành công!",
           data: data,
         });
@@ -50,7 +50,7 @@ exports.get = async (req, res) => {
         },
       })
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Danh sách tầng!",
             data: data,
           });

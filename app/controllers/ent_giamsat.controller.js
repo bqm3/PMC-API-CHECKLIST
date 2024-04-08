@@ -17,21 +17,20 @@ exports.create = (req, res) => {
     const userData = req.user.data;
     if (userData) {
       const data = {
-        ID_Duan: req.body.ID_Duan,
-        Hoten: req.body.Hoten,
-        Gioitinh: req.body.Gioitinh,
-        Sodienthoai: req.body.Sodienthoai,
-        Ngaysinh: req.body.Ngaysinh,
-        ID_Chucvu: req.body.ID_Chucvu,
-        ID_KhoiCV: req.body.ID_KhoiCV,
-        iQuyen: req.body.iQuyen,
+        ID_Duan: req.body.ID_Duan || null,
+        Hoten: req.body.Hoten || null,
+        Gioitinh: req.body.Gioitinh || null,
+        Sodienthoai: req.body.Sodienthoai || null,
+        Ngaysinh: req.body.Ngaysinh || null,
+        ID_Chucvu: req.body.ID_Chucvu || null,
+        ID_KhoiCV: req.body.ID_KhoiCV || null,
+        iQuyen: req.body.iQuyen || null,
         isDelete: 0,
       };
-      console.log("data", data);
 
       Ent_giamsat.create(data)
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Tạo giám sát thành công!",
             data: data,
           });
@@ -44,7 +43,6 @@ exports.create = (req, res) => {
         });
     }
   } catch (err) {
-    console.log("err", err);
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
@@ -91,7 +89,7 @@ exports.get = async (req, res) => {
         where: whereClause,
       })
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Danh sách giám sát!",
             data: data,
           });
@@ -141,7 +139,7 @@ exports.getDetail = async (req, res) => {
         },
       })
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Giám sát chi tiết!",
             data: data,
           });
@@ -187,7 +185,7 @@ exports.update = async (req, res) => {
         },
       })
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Cập nhật ca làm việc thành công!",
           });
         })
@@ -217,7 +215,7 @@ exports.delete = async (req, res) => {
         }
       )
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Xóa ca làm việc thành công!",
           });
         })

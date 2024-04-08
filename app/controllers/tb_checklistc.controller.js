@@ -42,6 +42,7 @@ exports.createFirstChecklist = async (req, res, next) => {
         [Op.and]: [
           { Ngay: req.body.Ngay },
           { ID_KhoiCV: ID_KhoiCV },
+          { ID_Duan: userData.ID_Duan },
         ],
       },
     })
@@ -63,7 +64,7 @@ exports.createFirstChecklist = async (req, res, next) => {
 
           Tb_checklistc.create(data)
             .then((data) => {
-              res.status(201).json({
+              res.status(200).json({
                 message: "Tạo checklist thành công!",
                 data: data,
               });
@@ -95,7 +96,7 @@ exports.createFirstChecklist = async (req, res, next) => {
 
             Tb_checklistc.create(data)
               .then((data) => {
-                res.status(201).json({
+                res.status(200).json({
                   message: "Tạo checklist thành công!",
                   data: data,
                 });
@@ -172,7 +173,7 @@ exports.createCheckList = async (req, res, next) => {
 
     Tb_checklistc.create(data)
       .then((data) => {
-        res.status(201).json({
+        res.status(200).json({
           message: "Tạo checklistc thành công!",
           data: data,
         });
@@ -240,13 +241,17 @@ exports.getCheckListc = async (req, res, next) => {
           },
         ],
         where: {
-          isDelete: 0,
+          [Op.and]: [
+            {isDelete: 0},
+            {ID_Duan: userData.ID_Duan}
+          ]
+         
         },
         order: [["Ngay", "DESC"]],
       })
         .then((data) => {
           if (data) {
-            res.status(201).json({
+            res.status(200).json({
               message: "Danh sách checklistc!",
               data: data,
             });
@@ -330,7 +335,7 @@ exports.getDetail = async (req, res) => {
       })
         .then((data) => {
           if (data) {
-            res.status(201).json({
+            res.status(200).json({
               message: "Checklistc chi tiết!",
               data: data,
             });
@@ -384,7 +389,7 @@ exports.close = async (req, res) => {
         }
       )
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Khóa ca thành công!",
           });
         })
@@ -439,7 +444,7 @@ exports.checklistImages = async (req, res) => {
           where: { ID_ChecklistC: ID_Checklist },
         });
 
-        res.status(201).json({ message: "Cập nhật khu vực thành công!" });
+        res.status(200).json({ message: "Cập nhật khu vực thành công!" });
       } else {
         res
           .status(400)

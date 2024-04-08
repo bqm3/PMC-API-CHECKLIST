@@ -10,18 +10,23 @@ const { Op } = require("sequelize");
 exports.create = async (req, res) => {
   try {
     const userData = req.user.data;
-    console.log("req", req.body);
     if (userData) {
       if (!req.body.Tenca) {
-        res.status(400).json({
+        return res.status(400).json({
           message: "Cần nhập đầy đủ thông tin!",
         });
-        return;
+        
       } else if (!req.body.Giobatdau || !req.body.Gioketthuc) {
-        res.status(400).json({
+        return res.status(400).json({
           message: "Cần có thời gian bắt đầu và kết thúc!",
         });
-        return;
+        
+      }
+      if (req.body.Gioketthuc <= req.body.Giobatdau) {
+        return res.status(400).json({
+          message: "Giờ kết thúc phải lớn hơn giờ bắt đầu!",
+        });
+        
       }
 
       const reqData = {
@@ -34,9 +39,35 @@ exports.create = async (req, res) => {
         isDelete: 0,
       };
 
+      // Kiểm tra xem có ca làm việc nào đã tồn tại với ID_KhoiCV và Tenca tương tự không
+      const existingCalv = await Ent_calv.findOne({
+        where: {
+          ID_KhoiCV: req.body.ID_KhoiCV,
+          Tenca: req.body.Tenca,
+          ID_Duan: userData.ID_Duan
+        },
+        attributes: [
+          "ID_Calv",
+          "ID_KhoiCV",
+          "ID_Duan",
+          "Tenca",
+          "Giobatdau",
+          "Gioketthuc",
+          "ID_User",
+          "isDelete",
+        ],
+      });
+
+      if (existingCalv) {
+        return res.status(400).json({
+          message: "Ca làm việc đã tồn tại!",
+        });
+      }
+
+      // Nếu không có ca làm việc nào trùng, thêm mới
       Ent_calv.create(reqData)
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Tạo ca làm việc thành công!",
             data: data,
           });
@@ -53,6 +84,7 @@ exports.create = async (req, res) => {
     });
   }
 };
+
 
 exports.get = async (req, res) => {
   try {
@@ -102,7 +134,7 @@ exports.get = async (req, res) => {
         where: whereClause,
       })
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Danh sách ca làm việc!",
             data: data,
           });
@@ -119,7 +151,6 @@ exports.get = async (req, res) => {
     });
   }
 };
-
 
 exports.getDetail = async (req, res) => {
   try {
@@ -159,7 +190,7 @@ exports.getDetail = async (req, res) => {
         },
       })
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Ca làm việc chi tiết!",
             data: data,
           });
@@ -186,15 +217,44 @@ exports.update = async (req, res) => {
     const userData = req.user.data;
     if (req.params.id && userData) {
       if (!req.body.Tenca) {
-        res.status(400).json({
+        return res.status(400).json({
           message: "Cần nhập đầy đủ thông tin!",
         });
-        return;
       } else if (!req.body.Giobatdau || !req.body.Gioketthuc) {
-        res.status(400).json({
+        return res.status(400).json({
           message: "Cần có thời gian bắt đầu và kết thúc!",
         });
-        return;
+      } else if (req.body.Gioketthuc <= req.body.Giobatdau) {
+        return res.status(400).json({
+          message: "Giờ kết thúc phải lớn hơn giờ bắt đầu!",
+        });
+      }
+
+      // Kiểm tra xem có ca làm việc nào đã tồn tại với ID_KhoiCV và Tenca tương tự không
+      const existingCalv = await Ent_calv.findOne({
+        where: {
+          ID_KhoiCV: req.body.ID_KhoiCV,
+          Tenca: req.body.Tenca,
+          ID_Calv: {
+            [Op.ne]: req.params.id // Loại bỏ bản ghi hiện tại (với ID_Calv = req.params.id)
+          }
+        },
+        attributes: [
+          "ID_Calv",
+          "ID_KhoiCV",
+          "ID_Duan",
+          "Tenca",
+          "Giobatdau",
+          "Gioketthuc",
+          "ID_User",
+          "isDelete",
+        ],
+      });
+
+      if (existingCalv) {
+        return res.status(400).json({
+          message: "Ca làm việc đã tồn tại!",
+        });
       }
 
       const reqData = {
@@ -212,8 +272,8 @@ exports.update = async (req, res) => {
           ID_Calv: req.params.id,
         },
       })
-        .then((data) => {
-          res.status(201).json({
+        .then(() => {
+          res.status(200).json({
             message: "Cập nhật ca làm việc thành công!",
           });
         })
@@ -230,6 +290,7 @@ exports.update = async (req, res) => {
   }
 };
 
+
 exports.delete = async (req, res) => {
   try {
     const userData = req.user.data;
@@ -243,7 +304,7 @@ exports.delete = async (req, res) => {
         }
       )
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Xóa ca làm việc thành công!",
           });
         })

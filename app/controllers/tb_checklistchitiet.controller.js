@@ -70,7 +70,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     }
 
     // Respond with success message
-    res.status(201).json({ message: "Records created successfully" });
+    res.status(200).json({ message: "Records created successfully" });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
   }
@@ -171,7 +171,7 @@ exports.getCheckListChiTiet = async (req, res, next) => {
       })
         .then((data) => {
           if (data) {
-            res.status(201).json({
+            res.status(200).json({
               message: "Danh sách checklistchitiet!",
               length: data.length,
               data: data,
@@ -255,7 +255,7 @@ exports.getDetail = async (req, res) => {
       })
         .then((data) => {
           if (data) {
-            res.status(201).json({
+            res.status(200).json({
               message: "Checklist chi tiết!",
               data: data,
             });
@@ -400,7 +400,7 @@ exports.searchChecklist = async (req, res) => {
       })
         .then((data) => {
           if (data) {
-            res.status(201).json({
+            res.status(200).json({
               message: "Danh sách checklistchitiet!",
               length: data.length,
               data: data,
@@ -492,7 +492,7 @@ exports.uploadImages = async (req, res) => {
     }
 
     // Respond with success message
-    res.status(201).json({ message: "Records created successfully" });
+    res.status(200).json({ message: "Records created successfully" });
   } catch (err) {
     console.log("err", err);
   }

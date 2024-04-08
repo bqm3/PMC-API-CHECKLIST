@@ -1,17 +1,18 @@
 const { Ent_toanha, Ent_khuvuc, Ent_khoicv } = require("../models/setup.model");
 const { Op } = require("sequelize");
 
-exports.create = (req, res) => {
+exports.create = async (req, res) => {
   // Validate request
   try {
     if (!req.body.ID_Toanha || !req.body.ID_KhoiCV || !req.body.Tenkhuvuc) {
-      res.status(400).json({
+      return res.status(400).json({
         message: "Phải nhập đầy đủ dữ liệu!",
       });
-      return;
     }
     const userData = req.user.data;
+
     if (userData) {
+      const ID_User = userData.ID_User;
       const data = {
         ID_Toanha: req.body.ID_Toanha,
         ID_KhoiCV: req.body.ID_KhoiCV,
@@ -19,22 +20,59 @@ exports.create = (req, res) => {
         Makhuvuc: req.body.Makhuvuc,
         MaQrCode: req.body.MaQrCode,
         Tenkhuvuc: req.body.Tenkhuvuc,
-        ID_User: userData.ID_User,
+        ID_User: ID_User,
         isDelete: 0,
       };
-
-      Ent_khuvuc.create(data)
-        .then((data) => {
-          res.status(201).json({
-            message: "Tạo khu vực thành công!",
-            data: data,
-          });
-        })
-        .catch((err) => {
-          res.status(500).json({
-            message: err.message || "Lỗi! Vui lòng thử lại sau.",
-          });
+      if (req.body.MaQrCode) {
+        const dataRes = await Ent_khuvuc.findOne({
+          where: {
+            MaQrCode: req.body.MaQrCode,
+          },
+          attributes: [
+            "ID_Khuvuc",
+            "ID_Toanha",
+            "ID_KhoiCV",
+            "Sothutu",
+            "Makhuvuc",
+            "MaQrCode",
+            "Tenkhuvuc",
+            "ID_User",
+            "isDelete",
+          ],
         });
+
+        if (dataRes !== null) {
+          return res.status(401).json({
+            message: "Mã QrCode đã bị trùng",
+          });
+        } else {
+          Ent_khuvuc.create(data)
+            .then((data) => {
+              res.status(200).json({
+                message: "Tạo khu vực thành công!",
+                data: data,
+              });
+            })
+            .catch((err) => {
+              res.status(500).json({
+                message: err.message || "Lỗi! Vui lòng thử lại sau.",
+              });
+            });
+        }
+      } else {
+        Ent_khuvuc.create(data)
+          .then((data) => {
+            res.status(200).json({
+              message: "Tạo khu vực thành công!",
+              data: data,
+            });
+          })
+          .catch((err) => {
+            res.status(500).json({
+              message: err.message || "Lỗi! Vui lòng thử lại sau.",
+            });
+          });
+      }
     }
   } catch (err) {
     return res.status(500).json({
@@ -46,7 +84,9 @@ exports.create = (req, res) => {
 exports.get = async (req, res) => {
   try {
     const userData = req.user.data;
+    const orConditions = [];
     if (userData) {
+      orConditions.push({ "$ent_toanha.ID_Duan$": userData?.ID_Duan });
       await Ent_khuvuc.findAll({
         attributes: [
           "ID_Khuvuc",
@@ -71,10 +111,11 @@ exports.get = async (req, res) => {
         ],
         where: {
           isDelete: 0,
+          [Op.and]: [orConditions],
         },
       })
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Danh sách khu vực!",
             data: data,
           });
@@ -123,7 +164,7 @@ exports.getDetail = async (req, res) => {
         },
       })
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Khu vực chi tiết!",
             data: data,
           });
@@ -156,6 +197,34 @@ exports.update = async (req, res) => {
         isDelete: 0,
       };
 
+      // Kiểm tra xem mã QR Code mới có trùng với bất kỳ bản ghi nào khác trong cơ sở dữ liệu không
+      const existingKhuvuc = await Ent_khuvuc.findOne({
+        where: {
+          MaQrCode: req.body.MaQrCode,
+          ID_Khuvuc: {
+            [Op.ne]: req.params.id, // Loại bỏ bản ghi hiện tại (với ID_Khuvuc = req.params.id)
+          },
+        },
+        attributes: [
+          "ID_Khuvuc",
+          "ID_Toanha",
+          "ID_KhoiCV",
+          "Sothutu",
+          "Makhuvuc",
+          "MaQrCode",
+          "Tenkhuvuc",
+          "ID_User",
+          "isDelete",
+        ],
+      });
+
+      if (existingKhuvuc) {
+        res.status(400).json({
+          message: "Mã QR Code đã tồn tại!",
+        });
+        return;
+      }
+
       Ent_khuvuc.update(reqData, {
         where: {
           ID_Khuvuc: req.params.id,
@@ -163,7 +232,7 @@ exports.update = async (req, res) => {
       })
         .then((data) => {
           console.log("data", data);
-          res.status(201).json({
+          res.status(200).json({
             message: "Cập nhật khu vực thành công!",
           });
         })
@@ -193,7 +262,7 @@ exports.delete = async (req, res) => {
         }
       )
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Xóa khu vực thành công!",
           });
         })
@@ -219,16 +288,16 @@ exports.getKhuVuc = async (req, res) => {
     if (userData && (ID_Toanha !== undefined || ID_KhoiCV !== undefined)) {
       // Xây dựng điều kiện where dựa trên các giá trị đã kiểm tra
       const whereCondition = {
-        [Op.or]: []
+        [Op.or]: [],
       };
       if (ID_Toanha !== undefined) {
         whereCondition[Op.or].push({
-          ID_Toanha: ID_Toanha
+          ID_Toanha: ID_Toanha,
         });
       }
       if (ID_KhoiCV !== undefined) {
         whereCondition[Op.or].push({
-          ID_KhoiCV: ID_KhoiCV
+          ID_KhoiCV: ID_KhoiCV,
         });
       }
       whereCondition.isDelete = 0;
@@ -258,7 +327,7 @@ exports.getKhuVuc = async (req, res) => {
         where: whereCondition,
       })
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Thông tin khu vực!",
             data: data,
           });
@@ -280,5 +349,3 @@ exports.getKhuVuc = async (req, res) => {
     });
   }
 };
-
-

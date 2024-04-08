@@ -15,7 +15,7 @@ exports.get = async (req, res) => {
         },
       })
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Danh sách khối công việc!",
             data: data,
           });
@@ -48,7 +48,7 @@ exports.getDetail = async (req, res) => {
         },
       })
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Khối công việc chi tiết!",
             data: data,
           });

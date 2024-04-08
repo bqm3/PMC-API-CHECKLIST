@@ -47,7 +47,7 @@ exports.create = (req, res) => {
 
       Ent_checklist.create(data)
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Tạo checklist thành công!",
             data: data,
           });
@@ -104,7 +104,6 @@ exports.get = async (req, res) => {
                 include: {
                   model: Ent_duan,
                   attributes: ["ID_Duan", "Duan"],
-                  // Điều kiện tìm kiếm dựa trên ID_Duan
                 },
                 where: { ID_Duan: userData.ID_Duan },
               },
@@ -140,23 +139,20 @@ exports.get = async (req, res) => {
               }
             }
             if (arrNew.length > 0) {
-              //   const processedData = arrNew.map(item => {
-              //     return { ...item, Giatrinhan: item.Giatrinhan.split('/') };
-              // });
               res.status(200).json({
                 message: "Danh sách checklist!",
                 length: arrNew.length,
                 data: arrNew,
               });
             } else {
-              res.status(404).json({
-                message: "Không tìm thấy checklist cho dự án này!",
+              res.status(200).json({
+                message: "Không còn checklist cho ca làm việc này!",
                 data: [],
               });
             }
           } else {
-            res.status(404).json({
-              message: "Không tìm thấy checklist cho dự án này!",
+            res.status(200).json({
+              message: "Không còn checklist cho ca làm việc này!",
               data: [],
             });
           }
@@ -236,7 +232,7 @@ exports.getDetail = async (req, res) => {
       })
         .then((data) => {
           if (data) {
-            res.status(201).json({
+            res.status(200).json({
               message: "Checklist chi tiết!",
               data: data,
             });
@@ -289,7 +285,7 @@ exports.update = async (req, res) => {
         },
       })
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Cập nhật checklist thành công!",
           });
         })
@@ -319,7 +315,7 @@ exports.delete = async (req, res) => {
         }
       )
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Xóa checklist thành công!",
           });
         })
@@ -423,13 +419,9 @@ exports.getFilter = async (req, res) => {
           ],
         },
 
-        // order: [
-        //   ["ID_Khuvuc", "ASC"],
-        //   ["Sothutu", "ASC"],
-        // ],
       })
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Thông tin khu vực!",
             data: data,
           });
@@ -467,7 +459,7 @@ exports.deleteChecklists = async (req, res) => {
         }
       )
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Xóa checklist thành công!",
           });
         })
@@ -578,23 +570,20 @@ exports.getChecklist = async (req, res) => {
               }
             }
             if (arrNew.length > 0) {
-              //   const processedData = arrNew.map(item => {
-              //     return { ...item, Giatrinhan: item.Giatrinhan.split('/') };
-              // });
               res.status(200).json({
                 message: "Danh sách checklist!",
                 length: arrNew.length,
                 data: arrNew,
               });
             } else {
-              res.status(404).json({
-                message: "Không tìm thấy checklist cho dự án này!",
+              res.status(200).json({
+                message: "Không còn checklist cho ca làm việc này!",
                 data: [],
               });
             }
           } else {
-            res.status(404).json({
-              message: "Không tìm thấy checklist cho dự án này!",
+            res.status(200).json({
+              message: "Không còn checklist cho ca làm việc này!",
               data: [],
             });
           }

@@ -19,7 +19,7 @@ exports.create = (req, res) => {
     // Save Ent_duan in the database
     Ent_chucvu.create(data)
       .then((data) => {
-        res.status(201).json({
+        res.status(200).json({
           message: "Tạo chức vụ thành công!",
           data: data,
         });
@@ -53,7 +53,7 @@ exports.get = async (req, res) => {
         },
       })
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Danh sách chức vụ!",
             data: data,
           });
@@ -85,7 +85,7 @@ exports.getDetail = async (req, res) => {
         },
       })
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Chức vụ chi tiết!",
             data: data,
           });

@@ -1,4 +1,5 @@
 const { Ent_toanha, Ent_duan } = require("../models/setup.model");
+const { Op } = require("sequelize");
 
 exports.create = (req, res) => {
   // Validate request
@@ -20,7 +21,7 @@ exports.create = (req, res) => {
   // Save Ent_toanha in the database
   Ent_toanha.create(data)
     .then((data) => {
-      res.status(201).json({
+      res.status(200).json({
         message: "Tạo tòa nhà thành công!",
         data: data,
       });
@@ -43,11 +44,14 @@ exports.get = async (req, res) => {
           attributes: ["Duan"],
         },
         where: {
-          isDelete: 0,
+          [Op.and]: [
+            {isDelete: 0},
+            {ID_Duan: userData.ID_Duan}
+          ]
         },
       })
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Danh sách tòa nhà!",
             data: data,
           });
@@ -82,7 +86,7 @@ exports.update = async (req, res) => {
         }
       )
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Cập nhật tòa nhà thành công!!!",
             data: data,
           });
@@ -113,7 +117,7 @@ exports.delete = async (req, res) => {
         }
       )
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Xóa tòa nhà thành công!",
           });
         })

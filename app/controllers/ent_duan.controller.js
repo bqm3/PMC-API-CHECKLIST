@@ -1,11 +1,11 @@
 const { Ent_duan } = require("../models/setup.model");
+const { Op } = require("sequelize");
 
 exports.create = (req, res) => {
   try {
     const userData = req.user.data;
 
-    console.log('userData',userData, req.body.Duan)
-    if(!userData){
+    if (!userData) {
       res.status(401).json({
         message: "Bạn không có quyền tạo dự án!",
       });
@@ -27,7 +27,7 @@ exports.create = (req, res) => {
     // Save Ent_duan in the database
     Ent_duan.create(data)
       .then((data) => {
-        res.status(201).json({
+        res.status(200).json({
           message: "Tạo dự án thành công!",
           data: data,
         });
@@ -37,7 +37,6 @@ exports.create = (req, res) => {
           message: err.message || "Lỗi! Vui lòng thử lại sau.",
         });
       });
-    
   } catch (err) {
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
@@ -48,14 +47,34 @@ exports.create = (req, res) => {
 exports.get = async (req, res) => {
   try {
     const userData = req.user.data;
-    if (userData) {
+    if (userData && userData.ent_chucvu.Chucvu === "PSH") {
       await Ent_duan.findAll({
         where: {
           isDelete: 0,
         },
       })
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
+            message: "Danh sách dự án!",
+            data: data,
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    } else if (userData && userData.ent_chucvu.Chucvu !== "PSH") {
+      await Ent_duan.findAll({
+        where: {
+          [Op.and]: {
+            isDelete: 0,
+            ID_Duan: userData.ID_Duan,
+          },
+        },
+      })
+        .then((data) => {
+          res.status(200).json({
             message: "Danh sách dự án!",
             data: data,
           });
@@ -80,7 +99,6 @@ exports.get = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const userData = req.user.data;
-    console.log('req.body.Duan',req.body.Duan)
     if (req.params.id && userData) {
       Ent_duan.update(
         { Duan: req.body.Duan },
@@ -91,7 +109,7 @@ exports.update = async (req, res) => {
         }
       )
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Dự án chi tiết!",
             data: data,
           });
@@ -122,7 +140,7 @@ exports.delete = async (req, res) => {
         }
       )
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Xóa dự án thành công!",
           });
         })

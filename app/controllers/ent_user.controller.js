@@ -96,18 +96,19 @@ exports.register = async (req, res, next) => {
       !req.body.UserName ||
       // !req.body.Emails ||
       !req.body.Password ||
-      !req.body.Permission ||
-      !req.body.ID_Duan ||
-      !req.body.ID_KhoiCV
+      !req.body.Permission
+      // !req.body.ID_Duan ||
+      // !req.body.ID_KhoiCV
     ) {
       return res.status(400).json({
         message: "Phải nhập đầy đủ dữ liệu.",
       });
     }
     const UserName = req.body.UserName;
+    const Emails = req.body.Emails;
     const user = await Ent_user.findOne({
       where: {
-        [Op.or]: [{ UserName }],
+        [Op.or]: [{ UserName: UserName }, { Emails: Emails }],
       },
       attributes: [
         "ID_User",
@@ -117,31 +118,29 @@ exports.register = async (req, res, next) => {
         "Password",
         "ID_KhoiCV",
         "Emails",
-        "isDelete",
       ],
     });
 
     if (user !== null) {
-      return res.status(400).json({
+      return res.status(401).json({
         message: "Tài khoản hoặc Email đã bị trùng.",
       });
     }
+
     const salt = genSaltSync(10);
     var data = {
       UserName: req.body.UserName,
       Emails: req.body.Emails,
       Password: await hashSync(req.body.Password, salt),
       Permission: req.body.Permission,
-      ID_Duan: req.body.ID_Duan,
-      ID_KhoiCV: req.body.ID_KhoiCV,
+      ID_Duan: req.body.ID_Duan || null,
+      ID_KhoiCV: req.body.ID_KhoiCV || null,
       isDelete: 0,
     };
 
-    console.log('data',data)
-
     Ent_user.create(data)
       .then((data) => {
-        res.json(data);
+        res.status(200).json(data);
       })
       .catch((err) => {
         res.status(500).json({
@@ -186,7 +185,7 @@ exports.changePassword = async (req, res, next) => {
         }
       )
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Cập nhật mật khẩu thành công!",
           });
         })
@@ -216,7 +215,7 @@ exports.updateUser = async (req, res, next) => {
     if (userData) {
       const { ID_Duan, Permission, ID_KhoiCV, UserName, Emails, Password } =
         req.body;
-     
+
       const hashedNewPassword = await hashSync(Password, 10);
       await Ent_user.update(
         {
@@ -234,7 +233,7 @@ exports.updateUser = async (req, res, next) => {
         }
       )
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Cập nhật thông tin thành công!",
           });
         })
@@ -254,9 +253,8 @@ exports.updateUser = async (req, res, next) => {
 // Get All User
 exports.deleteUser = async (req, res, next) => {
   try {
-  
     const userData = req.user.data;
-    console.log('req.params.id',req.params.id)
+    console.log("req.params.id", req.params.id);
     if (userData) {
       await Ent_user.update(
         {
@@ -269,7 +267,7 @@ exports.deleteUser = async (req, res, next) => {
         }
       )
         .then((data) => {
-          res.status(201).json({
+          res.status(200).json({
             message: "Xóa tài khoản thành công!",
             data: data,
           });
@@ -321,7 +319,7 @@ exports.getUserOnline = async (req, res, next) => {
       },
     })
       .then((data) => {
-        res.status(201).json({
+        res.status(200).json({
           message: "Danh sách nhân viên!",
           data: data,
         });
