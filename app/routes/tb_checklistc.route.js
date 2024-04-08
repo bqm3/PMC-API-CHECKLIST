@@ -1,4 +1,5 @@
 const multer = require("multer");
+const upload = multer();
 
 module.exports = (app) => {
   const tb_checklistc = require("../controllers/tb_checklistc.controller.js");
@@ -25,8 +26,7 @@ module.exports = (app) => {
 
   router.put(
     "/update-images/:id",
-    [isAuthenticated],
-    uploader.array("Images"),
+    [isAuthenticated, upload.any()],
     tb_checklistc.checklistImages
   );
 
