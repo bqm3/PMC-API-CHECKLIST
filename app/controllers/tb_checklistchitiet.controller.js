@@ -50,7 +50,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       const Ghichu = records.Ghichu[i];
       let Anh = records.Anh[i];
       // const Anh = records.Anh[i];
-      const matchingImage = uploadedFileIds.find( 
+      const matchingImage = uploadedFileIds.find(
         (file) => file.name === records.Anh[i]
       )?.id;
       if (matchingImage) {
@@ -110,7 +110,6 @@ exports.getCheckListChiTiet = async (req, res, next) => {
               {
                 model: Ent_khoicv,
                 attributes: ["KhoiCV"],
-                
               },
               {
                 model: Ent_giamsat,
@@ -285,23 +284,25 @@ exports.searchChecklist = async (req, res) => {
     const ID_Khuvuc = req.body.ID_Khuvuc;
     const ID_Tang = req.body.ID_Tang;
     const ID_Toanha = req.body.ID_Toanha;
-    const fromDate = req.body.fromDate; // Assuming fromDate and toDate are provided in the request body
+    // Assuming fromDate and toDate are provided in the request body
+    const fromDate = req.body.fromDate; 
     const toDate = req.body.toDate;
-    const orConditions = []
+    const orConditions = [];
     if (userData) {
-      
       orConditions.push({ "$tb_checklistc.ID_KhoiCV$": userData?.ID_KhoiCV });
 
-      if ( ID_Khuvuc !== null) {
+      if (ID_Khuvuc !== null) {
         orConditions.push({ "$ent_checklist.ID_Khuvuc$": ID_Khuvuc });
       }
-      
-      if ( ID_Tang !== null) {
-        orConditions.push({ "$ent_checklist.ID_Tang$": ID_Tang  });
+
+      if (ID_Tang !== null) {
+        orConditions.push({ "$ent_checklist.ID_Tang$": ID_Tang });
       }
-      
-      if ( ID_Toanha !== null) {
-        orConditions.push({ "$ent_checklist.ent_khuvuc.ID_Toanha$": ID_Toanha });
+
+      if (ID_Toanha !== null) {
+        orConditions.push({
+          "$ent_checklist.ent_khuvuc.ID_Toanha$": ID_Toanha,
+        });
       }
 
       await Tb_checklistchitiet.findAll({
@@ -327,13 +328,12 @@ exports.searchChecklist = async (req, res) => {
               "ID_Calv",
             ],
             where: {
-              Ngay: { [Op.between]: [fromDate, toDate] } // Filter by Ngay attribute between fromDate and toDate
+              Ngay: { [Op.between]: [fromDate, toDate] }, // Filter by Ngay attribute between fromDate and toDate
             },
             include: [
               {
                 model: Ent_khoicv,
                 attributes: ["KhoiCV"],
-                
               },
               {
                 model: Ent_giamsat,
@@ -365,20 +365,25 @@ exports.searchChecklist = async (req, res) => {
             include: [
               {
                 model: Ent_khuvuc,
-                attributes: ["Tenkhuvuc", "MaQrCode", "Makhuvuc", "Sothutu", 'ID_Toanha'],
-              
+                attributes: [
+                  "Tenkhuvuc",
+                  "MaQrCode",
+                  "Makhuvuc",
+                  "Sothutu",
+                  "ID_Toanha",
+                  "ID_Khuvuc",
+                ],
+
                 include: [
                   {
                     model: Ent_toanha,
                     attributes: ["Toanha", "Sotang"],
-                   
                   },
                 ],
               },
               {
                 model: Ent_tang,
                 attributes: ["Tentang", "Sotang"],
-               
               },
               {
                 model: Ent_user,
@@ -388,11 +393,10 @@ exports.searchChecklist = async (req, res) => {
           },
         ],
         where: {
-            isDelete: 0,
-            [Op.and]: [
-              orConditions,
-            ],
+          isDelete: 0,
+          [Op.and]: [orConditions],
         },
+        order: [["ID_Checklistchitiet", "DESC"]],
       })
         .then((data) => {
           if (data) {
@@ -489,7 +493,6 @@ exports.uploadImages = async (req, res) => {
 
     // Respond with success message
     res.status(201).json({ message: "Records created successfully" });
-
   } catch (err) {
     console.log("err", err);
   }

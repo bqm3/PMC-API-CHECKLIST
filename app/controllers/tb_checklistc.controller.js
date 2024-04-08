@@ -8,7 +8,6 @@ const {
   Ent_chucvu,
 } = require("../models/setup.model");
 const { Op } = require("sequelize");
-const sharp = require("sharp");
 const { uploadFile } = require("../middleware/auth_google");
 const Ent_checklistc = require("../models/tb_checklistc.model");
 
