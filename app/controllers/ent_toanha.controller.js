@@ -37,18 +37,21 @@ exports.get = async (req, res) => {
   try {
     const userData = req.user.data;
     if (userData) {
+      let whereClause = {
+        isDelete: 0
+      };
+
+      if (userData.Permission !== 4) {
+        whereClause.ID_Duan = userData.ID_Duan;
+      }
+
       await Ent_toanha.findAll({
         attributes: ["ID_Toanha", "ID_Duan", "Toanha", "Sotang", "isDelete"],
         include: {
           model: Ent_duan,
           attributes: ["Duan"],
         },
-        where: {
-          [Op.and]: [
-            {isDelete: 0},
-            {ID_Duan: userData.ID_Duan}
-          ]
-        },
+        where: whereClause,
       })
         .then((data) => {
           res.status(200).json({
@@ -68,6 +71,7 @@ exports.get = async (req, res) => {
     });
   }
 };
+
 
 exports.update = async (req, res) => {
   try {

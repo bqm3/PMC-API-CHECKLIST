@@ -1,4 +1,5 @@
 const { Ent_giamsat, Ent_duan, Ent_chucvu } = require("../models/setup.model");
+const { Op } = require("sequelize");
 
 exports.create = (req, res) => {
   // Validate request
@@ -57,10 +58,16 @@ exports.get = async (req, res) => {
         ID_Duan: userData?.ID_Duan,
         isDelete: 0,
       };
+      // whereClause.ID_Chucvu = {
+      //   [Op.not]: 1 // Exclude records where ID_Chucvu is 1
+      // };
 
       // Nếu quyền là 1 (Permission === 1) thì không cần thêm điều kiện ID_KhoiCV
       if (userData.Permission !== 1) {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
+        whereClause.ID_Chucvu = {
+          [Op.not]: 1 // Exclude records where ID_Chucvu is 1
+        };
       }
 
       await Ent_giamsat.findAll({

@@ -288,8 +288,6 @@ exports.deleteUser = async (req, res, next) => {
 // Get User Online
 exports.getUserOnline = async (req, res, next) => {
   try {
-    const userData = req.user.data;
-    //
     await Ent_user.findAll({
       attributes: [
         "ID_User",

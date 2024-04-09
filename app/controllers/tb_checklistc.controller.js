@@ -47,6 +47,7 @@ exports.createFirstChecklist = async (req, res, next) => {
       },
     })
       .then(({ count, rows }) => {
+        // console.log('count',count, rows)
 
         // Kiểm tra xem đã có checklist được tạo hay chưa
         if (count === 0) {
@@ -78,34 +79,47 @@ exports.createFirstChecklist = async (req, res, next) => {
           // Nếu đã có checklist được tạo
           // Kiểm tra xem tất cả các ca checklist đều đã hoàn thành (Tinhtrang === 1)
           const allCompleted = rows.every(
-            (checklist) => checklist.dataValues.Tinhtrang === 1
+            (checklist) => checklist.dataValues.Tinhtrang === 1 
           );
           //
           if (allCompleted) {
-            // Nếu tất cả các ca checklist đều đã hoàn thành (Tinhtrang === 1), cho phép tạo mới
-            const data = {
-              ID_Giamsat: req.body.ID_Giamsat,
-              ID_Calv: req.body.ID_Calv,
-              ID_Duan: req.body.ID_Duan,
-              ID_KhoiCV: req.body.ID_KhoiCV,
-              Giobd: req.body.Giobd,
-              Ngay: formattedDate,
-              Tinhtrang: 0,
-              isDelete: 0,
-            };
+            const allCompletedTwo = rows.every(
+              (checklist) => checklist.dataValues.ID_Calv !== ID_Calv 
+            );
 
-            Tb_checklistc.create(data)
-              .then((data) => {
-                res.status(200).json({
-                  message: "Tạo checklist thành công!",
-                  data: data,
+            // Nếu tất cả các ca checklist đều đã hoàn thành (Tinhtrang === 1) va khong phai CALV, cho phép tạo mới
+            if(allCompletedTwo){
+              const data = {
+                ID_Giamsat: req.body.ID_Giamsat,
+                ID_Calv: req.body.ID_Calv,
+                ID_Duan: req.body.ID_Duan,
+                ID_KhoiCV: req.body.ID_KhoiCV,
+                Giobd: req.body.Giobd,
+                Ngay: formattedDate,
+                Tinhtrang: 0,
+                isDelete: 0,
+              };
+  
+              Tb_checklistc.create(data)
+                .then((data) => {
+                  res.status(200).json({
+                    message: "Tạo checklist thành công!",
+                    data: data,
+                  });
+                })
+                .catch((err) => {
+                  res.status(500).json({
+                    message: err.message || "Lỗi! Vui lòng thử lại sau.",
+                  });
                 });
-              })
-              .catch((err) => {
-                res.status(500).json({
-                  message: err.message || "Lỗi! Vui lòng thử lại sau.",
-                });
+            }else {
+              res.status(400).json({
+                message: "Đã có ca làm việc",
+                data: rows,
               });
+            }
+            
+            
           } else {
             // Nếu có ít nhất một ca checklist chưa hoàn thành (Tinhtrang !== 1), không cho tạo mới
             res.status(400).json({
@@ -127,73 +141,20 @@ exports.createFirstChecklist = async (req, res, next) => {
   }
 };
 
-exports.createCheckList = async (req, res, next) => {
-  try {
-    if (
-      !req.body.Ngay ||
-      !req.body.ID_Calv ||
-      !req.body.ID_Giamsat ||
-      !req.body.Giobd
-    ) {
-      res.status(400).json({
-        message: "Phải nhập đủ các trường thông tin!!!",
-      });
-      return;
-    }
-    let pictureFiles = req.files;
-    const uploadPromises = pictureFiles.map((image) => {
-      return image;
-    });
-
-    // Wait for all uploads to finish
-    const results = await Promise.all(uploadPromises);
-    // Extract URLs from Cloudinary upload results
-    const imageURLs = results.map((result) => result.path);
-
-    const data = {
-      ID_Duan: req.body.ID_Duan,
-      ID_KhoiCV: req.body.ID_KhoiCV,
-      Ngay: req.body.Ngay,
-      ID_Calv: req.body.ID_Calv,
-      ID_Giamsat: req.body.ID_Giamsat,
-      Giobd: req.body.Giobd,
-      Giochupanh1: req.body.Giochupanh1,
-      Anh1: imageURLs[0] ? imageURLs[0] : "",
-      Giochupanh2: req.body.Giochupanh2,
-      Anh2: imageURLs[1] ? imageURLs[1] : "",
-      Giochupanh3: req.body.Giochupanh3,
-      Anh3: imageURLs[2] ? imageURLs[2] : "",
-      Giochupanh4: req.body.Giochupanh4,
-      Anh4: imageURLs[3] ? imageURLs[3] : "",
-      Giokt: req.body.Giokt,
-      Ghichu: req.body.Ghichu || "",
-      Tinhtrang: req.body.Tinhtrang,
-      isDelete: 0,
-    };
-
-    Tb_checklistc.create(data)
-      .then((data) => {
-        res.status(200).json({
-          message: "Tạo checklistc thành công!",
-          data: data,
-        });
-      })
-      .catch((err) => {
-        res.status(500).json({
-          message: err.message || "Lỗi! Vui lòng thử lại sau.",
-        });
-      });
-  } catch (err) {
-    return res.status(500).json({
-      message: err.message || "Lỗi! Vui lòng thử lại sau.",
-    });
-  }
-};
-
 exports.getCheckListc = async (req, res, next) => {
   try {
     const userData = req.user.data;
     if (userData) {
+      let whereClause = {
+        ID_Duan: userData?.ID_Duan,
+        isDelete: 0,
+      };
+     
+      // Nếu quyền là 1 (Permission === 1) thì không cần thêm điều kiện ID_KhoiCV
+      if (userData.Permission !== 1) {
+        whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
+      }
+
       await Tb_checklistc.findAll({
         attributes: [
           "ID_ChecklistC",
@@ -240,13 +201,7 @@ exports.getCheckListc = async (req, res, next) => {
             ],
           },
         ],
-        where: {
-          [Op.and]: [
-            {isDelete: 0},
-            {ID_Duan: userData.ID_Duan}
-          ]
-         
-        },
+        where: whereClause,
         order: [["Ngay", "DESC"]],
       })
         .then((data) => {

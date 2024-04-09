@@ -85,7 +85,6 @@ exports.create = async (req, res) => {
   }
 };
 
-
 exports.get = async (req, res) => {
   try {
     const userData = req.user.data;
@@ -94,8 +93,6 @@ exports.get = async (req, res) => {
         ID_Duan: userData?.ID_Duan,
         isDelete: 0,
       };
-
-      
 
       // Nếu quyền là 1 (Permission === 1) thì không cần thêm điều kiện ID_KhoiCV
       if (userData.Permission !== 1) {

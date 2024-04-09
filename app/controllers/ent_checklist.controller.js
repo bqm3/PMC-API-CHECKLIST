@@ -16,14 +16,14 @@ exports.create = (req, res) => {
     const userData = req.user.data;
     if (userData) {
       if (
-        // !req.body.ID_Khuvuc ||
+        !req.body.ID_Khuvuc ||
         // !req.body.ID_Tang ||
         // !req.body.Sothutu ||
         // !req.body.Maso ||
         // !req.body.MaQrCode ||
         !req.body.Checklist
         // !req.body.Giatridinhdanh ||
-        // !req.body.Giatrinhan
+        || !req.body.Giatrinhan
       ) {
         res.status(400).json({
           message: "Phải nhập đầy đủ dữ liệu!",
@@ -39,6 +39,7 @@ exports.create = (req, res) => {
         MaQrCode: req.body.MaQrCode || "",
         Checklist: req.body.Checklist,
         Ghichu: req.body.Ghichu || "",
+        Tieuchuan: req.body.Tieuchuan || "",
         Giatridinhdanh: req.body.Giatridinhdanh || "",
         Giatrinhan: req.body.Giatrinhan || "",
         ID_User: userData.ID_User,
@@ -79,6 +80,7 @@ exports.get = async (req, res) => {
           "MaQrCode",
           "Checklist",
           "Ghichu",
+          "Tieuchuan",
           "Giatridinhdanh",
           "Giatrinhan",
           "ID_User",
@@ -342,15 +344,15 @@ exports.getFilter = async (req, res) => {
     const orConditions = []
     if (userData) {
       
-      if (ID_Khuvuc !== undefined) {
+      if (ID_Khuvuc !== undefined || ID_Khuvuc !== null) {
         orConditions.push({ ID_Khuvuc: ID_Khuvuc });
       }
       
-      if (ID_Tang !== undefined) {
+      if (ID_Tang !== undefined || ID_Tang !== null) {
         orConditions.push({ ID_Tang: ID_Tang });
       }
       
-      if (ID_Toanha !== undefined) {
+      if (ID_Toanha !== undefined || ID_Toanha !== null) {
         orConditions.push({ "$ent_khuvuc.ent_toanha.ID_Toanha$": ID_Toanha });
       }
 
@@ -364,6 +366,7 @@ exports.getFilter = async (req, res) => {
           "MaQrCode",
           "Checklist",
           "Ghichu",
+          "Tieuchuan",
           "Giatridinhdanh",
           "Giatrinhan",
           "ID_User",
@@ -492,6 +495,7 @@ exports.getChecklist = async (req, res) => {
           "MaQrCode",
           "Checklist",
           "Ghichu",
+          "Tieuchuan",
           "Giatridinhdanh",
           "Giatrinhan",
           "ID_User",

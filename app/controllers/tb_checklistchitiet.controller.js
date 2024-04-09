@@ -65,6 +65,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
         Gioht: Gioht,
         Anh: Anh, // Assuming Anh is the image URL
       });
+      console.log('newRecord',newRecord)
 
       await newRecord.save();
     }
@@ -290,6 +291,7 @@ exports.searchChecklist = async (req, res) => {
     const orConditions = [];
     if (userData) {
       orConditions.push({ "$tb_checklistc.ID_KhoiCV$": userData?.ID_KhoiCV });
+      orConditions.push({ "$tb_checklistc.ID_Duan$": userData?.ID_Duan });
 
       if (ID_Khuvuc !== null) {
         orConditions.push({ "$ent_checklist.ID_Khuvuc$": ID_Khuvuc });
@@ -304,6 +306,8 @@ exports.searchChecklist = async (req, res) => {
           "$ent_checklist.ent_khuvuc.ID_Toanha$": ID_Toanha,
         });
       }
+
+      console.log('orConditions',orConditions)
 
       await Tb_checklistchitiet.findAll({
         attributes: [
@@ -329,7 +333,9 @@ exports.searchChecklist = async (req, res) => {
             ],
             where: {
               Ngay: { [Op.between]: [fromDate, toDate] }, // Filter by Ngay attribute between fromDate and toDate
+              
             },
+            
             include: [
               {
                 model: Ent_khoicv,
@@ -396,7 +402,7 @@ exports.searchChecklist = async (req, res) => {
           isDelete: 0,
           [Op.and]: [orConditions],
         },
-        order: [["ID_Checklistchitiet", "DESC"]],
+        order: [[{ model: Tb_checklistc }, "Ngay", "DESC"]], 
       })
         .then((data) => {
           if (data) {
