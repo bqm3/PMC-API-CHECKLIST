@@ -81,6 +81,7 @@ exports.getCheckListChiTiet = async (req, res, next) => {
   try {
     const userData = req.user.data;
     if (userData) {
+     
       await Tb_checklistchitiet.findAll({
         attributes: [
           "ID_Checklistchitiet",
@@ -166,6 +167,7 @@ exports.getCheckListChiTiet = async (req, res, next) => {
             ],
           },
         ],
+      
         // where: {
         //     isDelete: 0,
         // },
@@ -290,6 +292,12 @@ exports.searchChecklist = async (req, res) => {
     const toDate = req.body.toDate;
     const orConditions = [];
     if (userData) {
+      const page = parseInt(req.query.page) || 1;
+      const pageSize = parseInt(req.query.pageSize) || 100; // Số lượng bản ghi mặc định trên mỗi trang
+
+      // Tính toán offset để phân trang
+      const offset = (page - 1) * pageSize;
+
       orConditions.push({ "$tb_checklistc.ID_KhoiCV$": userData?.ID_KhoiCV });
       orConditions.push({ "$tb_checklistc.ID_Duan$": userData?.ID_Duan });
 
@@ -307,7 +315,102 @@ exports.searchChecklist = async (req, res) => {
         });
       }
 
-      console.log('orConditions',orConditions)
+      const totalCount = await Tb_checklistchitiet.count({
+        attributes: [
+          "ID_Checklistchitiet",
+          "ID_ChecklistC",
+          "ID_Checklist",
+          "Ketqua",
+          "Anh",
+          "Gioht",
+          "Ghichu",
+          "isDelete",
+        ],
+        include: [
+          {
+            model: Tb_checklistc,
+            attributes: [
+              "Ngay",
+              "Giobd",
+              "Giokt",
+              "ID_KhoiCV",
+              "ID_Giamsat",
+              "ID_Calv",
+            ],
+            where: {
+              Ngay: { [Op.between]: [fromDate, toDate] }, // Filter by Ngay attribute between fromDate and toDate
+              
+            },
+            
+            include: [
+              {
+                model: Ent_khoicv,
+                attributes: ["KhoiCV"],
+              },
+              {
+                model: Ent_giamsat,
+                attributes: ["Hoten"],
+              },
+              {
+                model: Ent_duan,
+                attributes: ["Duan"],
+              },
+              {
+                model: Ent_calv,
+                attributes: ["Tenca", "Giobatdau", "Gioketthuc"],
+              },
+            ],
+          },
+          {
+            model: Ent_checklist,
+            attributes: [
+              "ID_Checklist",
+              "ID_Khuvuc",
+              "ID_Tang",
+              "Sothutu",
+              "Maso",
+              "MaQrCode",
+              "Checklist",
+              "Giatridinhdanh",
+              "Giatrinhan",
+            ],
+            include: [
+              {
+                model: Ent_khuvuc,
+                attributes: [
+                  "Tenkhuvuc",
+                  "MaQrCode",
+                  "Makhuvuc",
+                  "Sothutu",
+                  "ID_Toanha",
+                  "ID_Khuvuc",
+                ],
+
+                include: [
+                  {
+                    model: Ent_toanha,
+                    attributes: ["Toanha", "Sotang"],
+                  },
+                ],
+              },
+              {
+                model: Ent_tang,
+                attributes: ["Tentang", "Sotang"],
+              },
+              {
+                model: Ent_user,
+                attributes: ["UserName"],
+              },
+            ],
+          },
+        ],
+        where: {
+          isDelete: 0,
+          [Op.and]: [orConditions],
+        }
+      })
+
+      const totalPages = Math.ceil(totalCount / pageSize);
 
       await Tb_checklistchitiet.findAll({
         attributes: [
@@ -403,12 +506,16 @@ exports.searchChecklist = async (req, res) => {
           [Op.and]: [orConditions],
         },
         order: [[{ model: Tb_checklistc }, "Ngay", "DESC"]], 
+        limit: pageSize,
+        offset: offset,
       })
         .then((data) => {
           if (data) {
             res.status(200).json({
               message: "Danh sách checklistchitiet!",
-              length: data.length,
+              page: page,
+              pageSize: pageSize,
+              totalPages: totalPages,
               data: data,
             });
           } else {
@@ -501,5 +608,65 @@ exports.uploadImages = async (req, res) => {
     res.status(200).json({ message: "Records created successfully" });
   } catch (err) {
     console.log("err", err);
+  }
+};
+
+
+exports.getCheckList = async (req, res, next) => {
+  try {
+    const userData = req.user.data;
+    if (userData) {
+      const page = req.query.page || 1; // Giả sử trang mặc định là trang 1
+      const offset = (page - 1) * 100; // Tính toán offset
+      const limit = 100; // Số lượng bản ghi mỗi trang
+
+      await Tb_checklistchitiet.findAndCountAll({
+        attributes: [
+          "ID_Checklistchitiet",
+          "ID_ChecklistC",
+          "ID_Checklist",
+          "Ketqua",
+          "Anh",
+          "Gioht",
+          "Ghichu",
+          "isDelete",
+        ],
+        where: {
+          isDelete: 0,
+        },
+        limit: limit,
+        offset: offset,
+      })
+      .then((result) => {
+        const { count, rows } = result;
+        if (count > 0) {
+          res.status(200).json({
+            message: "Danh sách checklistchitiet!",
+            totalItems: count,
+            totalPages: Math.ceil(count / limit),
+            currentPage: page,
+            data: rows,
+          });
+        } else {
+          res.status(404).json({
+            message: "Không tìm thấy bản ghi nào!",
+            data: [],
+          });
+        }
+      })
+      .catch((err) => {
+        res.status(500).json({
+          message: err.message || "Lỗi! Vui lòng thử lại sau.",
+        });
+      });
+    } else {
+      return res.status(401).json({
+        message: "Bạn không có quyền truy cập",
+      });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
   }
 };

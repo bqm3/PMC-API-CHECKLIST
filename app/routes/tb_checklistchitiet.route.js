@@ -27,6 +27,12 @@ module.exports = (app) => {
     tb_checklistchitiet.getDetail
   );
 
+  router.get(
+    "/",
+    [isAuthenticated],
+    tb_checklistchitiet.getCheckList
+  );
+
   router.post(
     '/upload-images',
     [isAuthenticated, upload.any()],

@@ -79,16 +79,16 @@ exports.createFirstChecklist = async (req, res, next) => {
           // Nếu đã có checklist được tạo
           // Kiểm tra xem tất cả các ca checklist đều đã hoàn thành (Tinhtrang === 1)
           const allCompleted = rows.every(
-            (checklist) => checklist.dataValues.Tinhtrang === 1 
+            (checklist) => checklist.dataValues.Tinhtrang === 1
           );
           //
           if (allCompleted) {
             const allCompletedTwo = rows.every(
-              (checklist) => checklist.dataValues.ID_Calv !== ID_Calv 
+              (checklist) => checklist.dataValues.ID_Calv !== ID_Calv
             );
 
             // Nếu tất cả các ca checklist đều đã hoàn thành (Tinhtrang === 1) va khong phai CALV, cho phép tạo mới
-            if(allCompletedTwo){
+            if (allCompletedTwo) {
               const data = {
                 ID_Giamsat: req.body.ID_Giamsat,
                 ID_Calv: req.body.ID_Calv,
@@ -99,7 +99,7 @@ exports.createFirstChecklist = async (req, res, next) => {
                 Tinhtrang: 0,
                 isDelete: 0,
               };
-  
+
               Tb_checklistc.create(data)
                 .then((data) => {
                   res.status(200).json({
@@ -112,14 +112,12 @@ exports.createFirstChecklist = async (req, res, next) => {
                     message: err.message || "Lỗi! Vui lòng thử lại sau.",
                   });
                 });
-            }else {
+            } else {
               res.status(400).json({
                 message: "Đã có ca làm việc",
                 data: rows,
               });
             }
-            
-            
           } else {
             // Nếu có ít nhất một ca checklist chưa hoàn thành (Tinhtrang !== 1), không cho tạo mới
             res.status(400).json({
@@ -149,11 +147,65 @@ exports.getCheckListc = async (req, res, next) => {
         ID_Duan: userData?.ID_Duan,
         isDelete: 0,
       };
-     
+
       // Nếu quyền là 1 (Permission === 1) thì không cần thêm điều kiện ID_KhoiCV
       if (userData.Permission !== 1) {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
       }
+
+      const page = parseInt(req.query.page) || 1;
+      const pageSize = parseInt(req.query.limit) || 100; // Số lượng phần tử trên mỗi trang
+      const offset = (page - 1) * pageSize;
+
+      const totalCount = await Tb_checklistc.count({
+        attributes: [
+          "ID_ChecklistC",
+          "ID_Duan",
+          "ID_KhoiCV",
+          "ID_Calv",
+          "ID_Giamsat",
+          "Ngay",
+          "Giobd",
+          "Giochupanh1",
+          "Anh1",
+          "Giochupanh2",
+          "Anh2",
+          "Giochupanh3",
+          "Anh3",
+          "Giochupanh4",
+          "Anh4",
+          "Giokt",
+          "Ghichu",
+          "Tinhtrang",
+          "isDelete",
+        ],
+        include: [
+          {
+            model: Ent_duan,
+            attributes: ["ID_Duan", "Duan"],
+          },
+          {
+            model: Ent_khoicv,
+            attributes: ["ID_Khoi", "KhoiCV"],
+          },
+          {
+            model: Ent_calv,
+            attributes: ["ID_Calv", "Tenca", "Giobatdau", "Gioketthuc"],
+          },
+          {
+            model: Ent_giamsat,
+            attributes: ["ID_Giamsat", "Hoten"],
+            include: [
+              {
+                model: Ent_chucvu,
+                attributes: ["Chucvu"],
+              },
+            ],
+          },
+        ],
+        where: whereClause,
+      });
+      const totalPages = Math.ceil(totalCount / pageSize);
 
       await Tb_checklistc.findAll({
         attributes: [
@@ -203,11 +255,16 @@ exports.getCheckListc = async (req, res, next) => {
         ],
         where: whereClause,
         order: [["Ngay", "DESC"]],
+        offset: offset,
+        limit: pageSize,
       })
         .then((data) => {
           if (data) {
             res.status(200).json({
               message: "Danh sách checklistc!",
+              page: page,
+              pageSize: pageSize,
+              totalPages: totalPages,
               data: data,
             });
           } else {

@@ -8,6 +8,7 @@ const {
   Ent_toanha,
   Ent_khoicv,
   Ent_duan,
+  Tb_checklistchitiet,
 } = require("../models/setup.model");
 const { Op } = require("sequelize");
 
@@ -21,9 +22,9 @@ exports.create = (req, res) => {
         // !req.body.Sothutu ||
         // !req.body.Maso ||
         // !req.body.MaQrCode ||
-        !req.body.Checklist
+        !req.body.Checklist ||
         // !req.body.Giatridinhdanh ||
-        || !req.body.Giatrinhan
+        !req.body.Giatrinhan
       ) {
         res.status(400).json({
           message: "Phải nhập đầy đủ dữ liệu!",
@@ -69,102 +70,178 @@ exports.create = (req, res) => {
 exports.get = async (req, res) => {
   try {
     const userData = req.user.data;
-    if (userData) {
-      await Ent_checklist.findAll({
-        attributes: [
-          "ID_Checklist",
-          "ID_Khuvuc",
-          "ID_Tang",
-          "Sothutu",
-          "Maso",
-          "MaQrCode",
-          "Checklist",
-          "Ghichu",
-          "Tieuchuan",
-          "Giatridinhdanh",
-          "Giatrinhan",
-          "ID_User",
-          "isDelete",
-        ],
-        include: [
-          {
-            model: Ent_khuvuc,
-            attributes: [
-              "Tenkhuvuc",
-              "MaQrCode",
-              "Makhuvuc",
-              "Sothutu",
-              "ID_Toanha",
-              "ID_KhoiCV",
-              "ID_Khuvuc",
-            ],
-            include: [
-              {
-                model: Ent_toanha,
-                attributes: ["Toanha", "Sotang", "ID_Toanha"],
+    if (!userData) {
+      return res
+        .status(401)
+        .json({ message: "Không tìm thấy thông tin người dùng." });
+    }
 
-                include: {
-                  model: Ent_duan,
-                  attributes: ["ID_Duan", "Duan"],
-                },
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.limit) || 100; // Số lượng phần tử trên mỗi trang
+    const offset = (page - 1) * pageSize;
+
+    const orConditions = [];
+    if (userData) {
+      orConditions.push({
+        "$ent_khuvuc.ent_toanha.ID_Duan$": userData.ID_Duan,
+      });
+    }
+
+    const totalCount = await Ent_checklist.count({
+      attributes: [
+        "ID_Checklist",
+        "ID_Khuvuc",
+        "ID_Tang",
+        "Sothutu",
+        "Maso",
+        "MaQrCode",
+        "Checklist",
+        "Ghichu",
+        "Tieuchuan",
+        "Giatridinhdanh",
+        "Giatrinhan",
+        "ID_User",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_khuvuc,
+          attributes: [
+            "Tenkhuvuc",
+            "MaQrCode",
+            "Makhuvuc",
+            "Sothutu",
+            "ID_Toanha",
+            "ID_KhoiCV",
+            "ID_Khuvuc",
+          ],
+          include: [
+            {
+              model: Ent_toanha,
+              attributes: ["Toanha", "Sotang", "ID_Toanha"],
+              include: {
+                model: Ent_duan,
+                attributes: ["ID_Duan", "Duan"],
                 where: { ID_Duan: userData.ID_Duan },
               },
-              {
-                model: Ent_khoicv,
-                attributes: ["KhoiCV"],
-              },
-            ],
-          },
-          {
-            model: Ent_tang,
-            attributes: ["Tentang", "Sotang"],
-          },
-          {
-            model: Ent_user,
-            include: {
-              model: Ent_chucvu,
-              attributes: ["Chucvu"],
             },
-            attributes: ["UserName", "Emails"],
-          },
-        ],
-        where: {
-          isDelete: 0,
+            {
+              model: Ent_khoicv,
+              attributes: ["KhoiCV"],
+            },
+          ],
         },
-      })
-        .then((data) => {
-          if (data && data.length > 0) {
-            let arrNew = [];
-            for (let i = 0; i < data.length; i++) {
-              if (data[i].ent_khuvuc !== null) {
-                arrNew.push(data[i]);
-              }
-            }
-            if (arrNew.length > 0) {
-              res.status(200).json({
-                message: "Danh sách checklist!",
-                length: arrNew.length,
-                data: arrNew,
-              });
-            } else {
-              res.status(200).json({
-                message: "Không còn checklist cho ca làm việc này!",
-                data: [],
-              });
-            }
-          } else {
-            res.status(200).json({
-              message: "Không còn checklist cho ca làm việc này!",
-              data: [],
-            });
-          }
-        })
+        {
+          model: Ent_tang,
+          attributes: ["Tentang", "Sotang"],
+        },
+        {
+          model: Ent_user,
+          include: {
+            model: Ent_chucvu,
+            attributes: ["Chucvu"],
+          },
+          attributes: ["UserName", "Emails"],
+        },
+      ],
+      where: {
+        isDelete: 0,
+        [Op.and]: [orConditions],
+      },
+    });
 
-        .catch((err) => {
-          res.status(500).json({
-            message: err.message || "Lỗi! Vui lòng thử lại sau.",
-          });
-        });
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    const data = await Ent_checklist.findAll({
+      attributes: [
+        "ID_Checklist",
+        "ID_Khuvuc",
+        "ID_Tang",
+        "Sothutu",
+        "Maso",
+        "MaQrCode",
+        "Checklist",
+        "Ghichu",
+        "Tieuchuan",
+        "Giatridinhdanh",
+        "Giatrinhan",
+        "ID_User",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_khuvuc,
+          attributes: [
+            "Tenkhuvuc",
+            "MaQrCode",
+            "Makhuvuc",
+            "Sothutu",
+            "ID_Toanha",
+            "ID_KhoiCV",
+            "ID_Khuvuc",
+          ],
+          include: [
+            {
+              model: Ent_toanha,
+              attributes: ["Toanha", "Sotang", "ID_Toanha"],
+              include: {
+                model: Ent_duan,
+                attributes: ["ID_Duan", "Duan"],
+                where: { ID_Duan: userData.ID_Duan },
+              },
+            },
+            {
+              model: Ent_khoicv,
+              attributes: ["KhoiCV"],
+            },
+          ],
+        },
+        {
+          model: Ent_tang,
+          attributes: ["Tentang", "Sotang"],
+        },
+        {
+          model: Ent_user,
+          include: {
+            model: Ent_chucvu,
+            attributes: ["Chucvu"],
+          },
+          attributes: ["UserName", "Emails"],
+        },
+      ],
+      where: {
+        isDelete: 0,
+      },
+      order: [
+        ["ID_Khuvuc", "ASC"],
+        ["Sothutu", "ASC"],
+      ],
+      offset: offset,
+      limit: pageSize,
+    });
+
+    if (!data || data.length === 0) {
+      return res.status(200).json({
+        message: "Không còn checklist cho ca làm việc này!",
+        data: [],
+      });
+    }
+
+    const filteredData = data.filter((item) => item.ent_khuvuc !== null);
+
+    if (filteredData.length > 0) {
+      return res.status(200).json({
+        message: "Danh sách checklist!",
+        page: page,
+        pageSize: pageSize,
+        totalPages: totalPages,
+        data: filteredData,
+      });
+    } else {
+      return res.status(200).json({
+        message: "Không còn checklist cho ca làm việc này!",
+        data: [],
+      });
     }
   } catch (err) {
     return res.status(500).json({
@@ -340,18 +417,17 @@ exports.getFilter = async (req, res) => {
     const ID_Khuvuc = req.body.ID_Khuvuc;
     const ID_Tang = req.body.ID_Tang;
     const ID_Toanha = req.body.ID_Toanha;
-    const ID_ChecklistC= req.body.ID_ChecklistC;
-    const orConditions = []
+    const ID_ChecklistC = req.body.ID_ChecklistC;
+    const orConditions = [];
     if (userData) {
-      
       if (ID_Khuvuc !== undefined || ID_Khuvuc !== null) {
         orConditions.push({ ID_Khuvuc: ID_Khuvuc });
       }
-      
+
       if (ID_Tang !== undefined || ID_Tang !== null) {
         orConditions.push({ ID_Tang: ID_Tang });
       }
-      
+
       if (ID_Toanha !== undefined || ID_Toanha !== null) {
         orConditions.push({ "$ent_khuvuc.ent_toanha.ID_Toanha$": ID_Toanha });
       }
@@ -421,7 +497,6 @@ exports.getFilter = async (req, res) => {
             },
           ],
         },
-
       })
         .then((data) => {
           res.status(200).json({
@@ -484,126 +559,113 @@ exports.getChecklist = async (req, res) => {
     const userData = req.user.data;
     const ID_KhoiCV = req.params.id;
     const ID_ChecklistC = req.params.idc;
-    if (userData && ID_KhoiCV) {
-      await Ent_checklist.findAll({
-        attributes: [
-          "ID_Checklist",
-          "ID_Khuvuc",
-          "ID_Tang",
-          "Sothutu",
-          "Maso",
-          "MaQrCode",
-          "Checklist",
-          "Ghichu",
-          "Tieuchuan",
-          "Giatridinhdanh",
-          "Giatrinhan",
-          "ID_User",
-          "isDelete",
-        ],
-        include: [
-          {
-            model: Ent_khuvuc,
-            attributes: [
-              "Tenkhuvuc",
-              "MaQrCode",
-              "Makhuvuc",
-              "Sothutu",
-              "ID_Toanha",
-              "ID_KhoiCV",
-              "ID_Khuvuc",
-            ],
-            where: {
-              ID_KhoiCV: ID_KhoiCV,
-            },
-            include: [
-              {
-                model: Ent_toanha,
-                attributes: ["Toanha", "Sotang", "ID_Toanha"],
+    if (!userData || !ID_KhoiCV) {
+      return res.status(400).json({ message: "Dữ liệu không hợp lệ." });
+    }
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.limit); // Số lượng phần tử trên mỗi trang
+    const offset = (page - 1) * pageSize;
+    // const pageMaxSize =
+    const checklistItems = await Tb_checklistchitiet.findAll({
+      attributes: ["ID_Checklist"],
+      where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC },
+    });
 
-                include: {
-                  model: Ent_duan,
-                  attributes: ["ID_Duan", "Duan"],
-                  // Điều kiện tìm kiếm dựa trên ID_Duan
-                },
+    const checklistIds = checklistItems.map((item) => item.ID_Checklist);
+    const checklistData = await Ent_checklist.findAll({
+      attributes: [
+        "ID_Checklist",
+        "ID_Khuvuc",
+        "ID_Tang",
+        "Sothutu",
+        "Maso",
+        "MaQrCode",
+        "Checklist",
+        "Ghichu",
+        "Tieuchuan",
+        "Giatridinhdanh",
+        "Giatrinhan",
+        "ID_User",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_khuvuc,
+          attributes: [
+            "Tenkhuvuc",
+            "MaQrCode",
+            "Makhuvuc",
+            "Sothutu",
+            "ID_Toanha",
+            "ID_KhoiCV",
+            "ID_Khuvuc",
+          ],
+          where: { ID_KhoiCV },
+          include: [
+            {
+              model: Ent_toanha,
+              attributes: ["Toanha", "Sotang", "ID_Toanha"],
+              include: {
+                model: Ent_duan,
+                attributes: ["ID_Duan", "Duan"],
                 where: { ID_Duan: userData.ID_Duan },
               },
-              {
-                model: Ent_khoicv,
-                attributes: ["KhoiCV"],
-              },
-            ],
-          },
-          {
-            model: Ent_tang,
-            attributes: ["Tentang", "Sotang"],
-          },
-          {
-            model: Ent_user,
-            include: {
-              model: Ent_chucvu,
-              attributes: ["Chucvu"],
             },
-            attributes: ["UserName", "Emails"],
-          },
-        ],
-        where: {
-          isDelete: 0,
-          [Op.and]: [
             {
-              ID_Checklist: {
-                [Op.notIn]: sequelize.literal(
-                  `(SELECT ID_Checklist FROM tb_checklistchitiet where ID_ChecklistC = ${ID_ChecklistC})`
-                ),
-              },
+              model: Ent_khoicv,
+              attributes: ["KhoiCV"],
             },
           ],
         },
+        {
+          model: Ent_tang,
+          attributes: ["Tentang", "Sotang"],
+        },
+        {
+          model: Ent_user,
+          include: {
+            model: Ent_chucvu,
+            attributes: ["Chucvu"],
+          },
+          attributes: ["UserName", "Emails"],
+        },
+      ],
+      where: {
+        isDelete: 0,
+        ID_Checklist: {
+          [Op.notIn]: checklistIds,
+        },
+      },
+      order: [
+        ["ID_Khuvuc", "ASC"],
+        ["Sothutu", "ASC"],
+      ],
+      offset: offset,
+      limit: pageSize,
+    });
 
-        order: [
-          ["ID_Khuvuc", "ASC"],
-          ["Sothutu", "ASC"],
-        ],
-      })
-        .then((data) => {
-          if (data && data.length > 0) {
-            let arrNew = [];
-            for (let i = 0; i < data.length; i++) {
-              if (data[i].ent_khuvuc !== null) {
-                arrNew.push(data[i]);
-              }
-            }
-            if (arrNew.length > 0) {
-              res.status(200).json({
-                message: "Danh sách checklist!",
-                length: arrNew.length,
-                data: arrNew,
-              });
-            } else {
-              res.status(200).json({
-                message: "Không còn checklist cho ca làm việc này!",
-                data: [],
-              });
-            }
-          } else {
-            res.status(200).json({
-              message: "Không còn checklist cho ca làm việc này!",
-              data: [],
-            });
-          }
-        })
-
-        .catch((err) => {
-          res.status(500).json({
-            message: err.message || "Lỗi! Vui lòng thử lại sau.",
-          });
-        });
+    if (!checklistData || checklistData.length === 0) {
+      return res.status(200).json({
+        message: "Không còn checklist cho ca làm việc này!",
+        data: [],
+      });
     }
+
+    const filteredData = checklistData.filter(
+      (item) => item.ent_khuvuc !== null
+    );
+
+    return res.status(200).json({
+      message:
+        filteredData.length > 0
+          ? "Danh sách checklist!"
+          : "Không còn checklist cho ca làm việc này!",
+      length: filteredData.length,
+      data: filteredData,
+    });
   } catch (err) {
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
 };
-
-

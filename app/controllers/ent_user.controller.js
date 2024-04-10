@@ -94,11 +94,8 @@ exports.register = async (req, res, next) => {
   try {
     if (
       !req.body.UserName ||
-      // !req.body.Emails ||
       !req.body.Password ||
       !req.body.Permission
-      // !req.body.ID_Duan ||
-      // !req.body.ID_KhoiCV
     ) {
       return res.status(400).json({
         message: "Phải nhập đầy đủ dữ liệu.",
@@ -203,7 +200,8 @@ exports.changePassword = async (req, res, next) => {
 };
 
 // Update user
-exports.updateUser = async (req, res, next) => {
+
+exports.updateUser = async (req, res) => {
   try {
     if (!req.body) {
       return res.status(400).json({
@@ -212,49 +210,45 @@ exports.updateUser = async (req, res, next) => {
     }
 
     const userData = req.user.data;
-    if (userData) {
-      const { ID_Duan, Permission, ID_KhoiCV, UserName, Emails, Password } =
-        req.body;
-
-      const hashedNewPassword = await hashSync(Password, 10);
-      await Ent_user.update(
-        {
-          ID_Duan: ID_Duan,
-          Permission: Permission,
-          ID_KhoiCV: ID_KhoiCV,
-          UserName: UserName,
-          Emails: Emails,
-          Password: hashedNewPassword,
-        },
-        {
-          where: {
-            ID_User: req.params.id,
-          },
-        }
-      )
-        .then((data) => {
-          res.status(200).json({
-            message: "Cập nhật thông tin thành công!",
-          });
-        })
-        .catch((err) => {
-          res.status(500).json({
-            message: err.message || "Lỗi! Vui lòng thử lại sau.",
-          });
-        });
+    if (!userData) {
+      return res.status(401).json({ message: "Không tìm thấy thông tin người dùng." });
     }
-  } catch (err) {
-    return res.status(500).json({
-      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+
+    const { ID_Duan, Permission, ID_KhoiCV, UserName, Emails, Password } = req.body;
+
+    // Kiểm tra xem có dữ liệu mật khẩu được gửi không
+    let updateData = {
+      ID_Duan,
+      Permission,
+      ID_KhoiCV,
+      UserName,
+      Emails,
+      isDelete: 0
+    };
+
+    if (Password) {
+      const hashedNewPassword = await hashSync(Password, 10);
+      updateData.Password = hashedNewPassword;
+    }
+    console.log('updateData',updateData, req.params.id)
+
+    await Ent_user.update(updateData, {
+      where: {
+        ID_User: req.params.id,
+      },
     });
+
+    return res.status(200).json({ message: "Cập nhật thông tin thành công!" });
+  } catch (err) {
+    return res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
+
 
 // Get All User
 exports.deleteUser = async (req, res, next) => {
   try {
     const userData = req.user.data;
-    console.log("req.params.id", req.params.id);
     if (userData) {
       await Ent_user.update(
         {
