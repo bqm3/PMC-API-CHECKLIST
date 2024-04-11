@@ -48,8 +48,7 @@ exports.get = async (req, res) => {
       await Ent_chucvu.findAll({
         where: {
           isDelete: 0,
-          ID_Chucvu: {[Op.ne]: 4}
-          // {attribute: { $not: 'x'}},
+          Chucvu: {[Op.ne]: 'PSH'}
         },
       })
         .then((data) => {

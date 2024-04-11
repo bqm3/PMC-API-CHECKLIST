@@ -41,7 +41,7 @@ exports.get = async (req, res) => {
         isDelete: 0
       };
 
-      if (userData.Permission !== 4) {
+      if (userData.Permission !== 3 || userData.ent_chucvu.Chucvu !== 'PSH') {
         whereClause.ID_Duan = userData.ID_Duan;
       }
 

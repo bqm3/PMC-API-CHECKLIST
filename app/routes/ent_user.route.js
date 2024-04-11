@@ -4,11 +4,12 @@ module.exports = (app) => {
   
     var router = require("express").Router();
   
+    router.post("/login", ent_user.login);
     router.post("/register", [isAuthenticated, isAdmin],ent_user.register);
     router.post("/change-password",[isAuthenticated], ent_user.changePassword);
     router.put("/delete/:id",[isAuthenticated, isAdmin], ent_user.deleteUser);
     router.put("/update/:id",[isAuthenticated, isAdmin], ent_user.updateUser);
-    router.post("/login", ent_user.login);
+   
     router.get("/get-online",[isAuthenticated,isAdmin], ent_user.getUserOnline);
     
     

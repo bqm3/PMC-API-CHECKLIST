@@ -5,18 +5,21 @@ const {
   Ent_chucvu,
 } = require("../models/setup.model");
 const { hashSync, genSaltSync, compareSync } = require("bcrypt");
+const bcrypt = require("bcrypt");
 const jsonwebtoken = require("jsonwebtoken");
 const { Op } = require("sequelize");
 
 // Login User
 exports.login = async (req, res) => {
   try {
+    // Check if username and password are provided
     if (!req.body.UserName || !req.body.Password) {
-      res.status(400).json({
+      return res.status(400).json({
         message: "Sai tài khoản hoặc mật khẩu. Vui lòng thử lại!!",
       });
-      return;
     }
+
+    // Find user by username
     const user = await Ent_user.findOne({
       where: {
         UserName: req.body.UserName,
@@ -47,13 +50,17 @@ exports.login = async (req, res) => {
       ],
     });
 
-    if (user && user?.isDelete === 0) {
-      const password_valid = await compareSync(
+    // Check if user exists and is not deleted
+    if (user && user.isDelete === 0) {
+      // Compare passwords
+      const passwordValid = await bcrypt.compare(
         req.body.Password,
         user.Password
       );
-      if (password_valid) {
-        token = jsonwebtoken.sign(
+
+      if (passwordValid) {
+        // Generate JWT token
+        const token = jsonwebtoken.sign(
           {
             data: user,
           },
@@ -63,26 +70,31 @@ exports.login = async (req, res) => {
             expiresIn: "7d",
           }
         );
+
+        // Set token as cookie
         res.cookie("token", token, {
           httpOnly: true,
           secure: true,
-          SameSite: "strict",
-          expires: new Date(Number(new Date()) + 7 * 24 * 60 * 60 * 1000),
-        }); //we add secure: true, when using https.
+          sameSite: "strict",
+          expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        });
 
         return res.status(200).json({ token: token, user: user });
       } else {
+        // Incorrect password
         return res
           .status(400)
-          .json({ error: "Sai mật khẩu. Vui lòng thử lại." });
+          .json({ message: "Sai mật khẩu. Vui lòng thử lại." });
       }
     } else {
+      // User not found or deleted
       return res.status(400).json({
-        error:
+        message:
           "Bạn không thể đăng nhập. Vui lòng nhắn tin cho phòng chuyển đổi số.",
       });
     }
   } catch (err) {
+    // Internal server error
     return res.status(500).json({
       message: err ? err.message : "Lỗi! Vui lòng thử lại sau.",
     });
@@ -92,11 +104,7 @@ exports.login = async (req, res) => {
 // Create User
 exports.register = async (req, res, next) => {
   try {
-    if (
-      !req.body.UserName ||
-      !req.body.Password ||
-      !req.body.Permission
-    ) {
+    if (!req.body.UserName || !req.body.Password || !req.body.Permission) {
       return res.status(400).json({
         message: "Phải nhập đầy đủ dữ liệu.",
       });
@@ -115,6 +123,20 @@ exports.register = async (req, res, next) => {
         "Password",
         "ID_KhoiCV",
         "Emails",
+      ],
+      include: [
+        {
+          model: Ent_duan,
+          attributes: ["Duan"],
+        },
+        {
+          model: Ent_chucvu,
+          attributes: ["Chucvu"],
+        },
+        {
+          model: Ent_khoicv,
+          attributes: ["KhoiCV"],
+        },
       ],
     });
 
@@ -211,10 +233,13 @@ exports.updateUser = async (req, res) => {
 
     const userData = req.user.data;
     if (!userData) {
-      return res.status(401).json({ message: "Không tìm thấy thông tin người dùng." });
+      return res
+        .status(401)
+        .json({ message: "Không tìm thấy thông tin người dùng." });
     }
 
-    const { ID_Duan, Permission, ID_KhoiCV, UserName, Emails, Password } = req.body;
+    const { ID_Duan, Permission, ID_KhoiCV, UserName, Emails, Password } =
+      req.body;
 
     // Kiểm tra xem có dữ liệu mật khẩu được gửi không
     let updateData = {
@@ -223,14 +248,14 @@ exports.updateUser = async (req, res) => {
       ID_KhoiCV,
       UserName,
       Emails,
-      isDelete: 0
+      isDelete: 0,
     };
 
     if (Password) {
       const hashedNewPassword = await hashSync(Password, 10);
       updateData.Password = hashedNewPassword;
     }
-    console.log('updateData',updateData, req.params.id)
+    console.log("updateData", updateData, req.params.id);
 
     await Ent_user.update(updateData, {
       where: {
@@ -240,10 +265,11 @@ exports.updateUser = async (req, res) => {
 
     return res.status(200).json({ message: "Cập nhật thông tin thành công!" });
   } catch (err) {
-    return res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    return res
+      .status(500)
+      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
-
 
 // Get All User
 exports.deleteUser = async (req, res, next) => {

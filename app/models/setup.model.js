@@ -10,6 +10,7 @@ const Ent_tang = require("./ent_tang.model");
 const Ent_user = require("./ent_user.model");
 const Tb_checklistc = require("./tb_checklistc.model");
 const Tb_checklistchitiet = require("./tb_checklistchitiet.model");
+const Tb_checklistchitietdone = require("./tb_checklistchitietdone.model");
 
 // Toa nha
 Ent_duan.hasMany(Ent_toanha, { as: "ent_toanha" });
@@ -92,6 +93,11 @@ Ent_giamsat.belongsTo(Ent_chucvu, {
   foreignKey: "ID_Chucvu",
 });
 
+Ent_khoicv.hasMany(Ent_giamsat);
+Ent_giamsat.belongsTo(Ent_khoicv, {
+  foreignKey: "ID_KhoiCV",
+});
+
 //ChecklistC
 Ent_duan.hasMany(Tb_checklistc);
 Tb_checklistc.belongsTo(Ent_duan, {
@@ -138,4 +144,5 @@ module.exports = {
   Ent_checklist,
   Tb_checklistc,
   Tb_checklistchitiet,
+  Tb_checklistchitietdone
 };

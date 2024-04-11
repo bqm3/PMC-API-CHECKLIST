@@ -41,6 +41,7 @@ require("./app/routes/ent_chucvu.route")(app);
 require("./app/routes/ent_giamsat.route")(app);
 require("./app/routes/tb_checklistc.route")(app);
 require("./app/routes/tb_checklistchitiet.route")(app);
+require("./app/routes/tb_checklistchitietdone.route")(app);
 
 const PORT = process.env.PORT || 6868;
 app.listen(PORT, () => {

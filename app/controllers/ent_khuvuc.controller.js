@@ -200,10 +200,16 @@ exports.update = async (req, res) => {
       // Kiểm tra xem mã QR Code mới có trùng với bất kỳ bản ghi nào khác trong cơ sở dữ liệu không
       const existingKhuvuc = await Ent_khuvuc.findOne({
         where: {
-          MaQrCode: req.body.MaQrCode,
-          ID_Khuvuc: {
-            [Op.ne]: req.params.id, // Loại bỏ bản ghi hiện tại (với ID_Khuvuc = req.params.id)
-          },
+          [Op.and]: [
+            { 
+              MaQrCode: { [Op.not]: null, [Op.ne]: '' } // MaQrCode is not null and not empty
+            },
+            {
+              ID_Khuvuc: {
+                [Op.ne]: req.params.id, // Loại bỏ bản ghi hiện tại (với ID_Khuvuc = req.params.id)
+              }
+            }
+          ]
         },
         attributes: [
           "ID_Khuvuc",

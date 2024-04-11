@@ -6,7 +6,6 @@ const Ent_checklistc = sequelize.define(
   {
     ID_ChecklistC: {
       type: DataTypes.INTEGER,
-
       autoIncrement: true,
       primaryKey: true,
     },
@@ -16,17 +15,17 @@ const Ent_checklistc = sequelize.define(
     ID_KhoiCV: {
       type: DataTypes.INTEGER,
     },
-    ID_Khuvuc: {
-      type: DataTypes.INTEGER,
-    },
-    Ngay: {
-      type: DataTypes.TEXT,
-    },
+    // ID_Khuvuc: {
+    //   type: DataTypes.INTEGER,
+    // },
     ID_Calv: {
       type: DataTypes.INTEGER,
     },
     ID_Giamsat: {
       type: DataTypes.INTEGER,
+    },
+    Ngay: {
+      type: DataTypes.TEXT,
     },
     Giobd: {
       type: DataTypes.TIME,

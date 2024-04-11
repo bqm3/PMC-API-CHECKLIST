@@ -9,8 +9,10 @@ const {
   Ent_khoicv,
   Ent_duan,
   Tb_checklistchitiet,
+  Tb_checklistchitietdone,
 } = require("../models/setup.model");
 const { Op } = require("sequelize");
+const { getDataFormat } = require("./tb_checklistchitietdone.controller");
 
 exports.create = (req, res) => {
   try {
@@ -411,14 +413,17 @@ exports.delete = async (req, res) => {
   }
 };
 
+// filter data
 exports.getFilter = async (req, res) => {
   try {
     const userData = req.user.data;
     const ID_Khuvuc = req.body.ID_Khuvuc;
     const ID_Tang = req.body.ID_Tang;
     const ID_Toanha = req.body.ID_Toanha;
-    const ID_ChecklistC = req.body.ID_ChecklistC;
     const orConditions = [];
+
+    const ID_KhoiCV = req.params.id;
+    const ID_ChecklistC = req.params.idc;
     if (userData) {
       if (ID_Khuvuc !== undefined || ID_Khuvuc !== null) {
         orConditions.push({ ID_Khuvuc: ID_Khuvuc });
@@ -430,6 +435,77 @@ exports.getFilter = async (req, res) => {
 
       if (ID_Toanha !== undefined || ID_Toanha !== null) {
         orConditions.push({ "$ent_khuvuc.ent_toanha.ID_Toanha$": ID_Toanha });
+      }
+
+      const checklistItems = await Tb_checklistchitiet.findAll({
+        attributes: ["ID_Checklist", "isDelete", "ID_ChecklistC"],
+        where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC },
+      });
+
+      const checklistDoneItems = await Tb_checklistchitietdone.findAll({
+        attributes: ["Description"],
+        where: { isDelete: 0 },
+      });
+
+      const arrPush = [];
+
+      // Duyệt qua từng phần tử trong mảng checklistDoneItems
+      checklistDoneItems.forEach((item) => {
+        // Chuyển đổi chuỗi JSON thành một đối tượng JavaScript
+        const descriptionArray = JSON.parse(item.dataValues.Description);
+
+        // Lặp qua mỗi phần tử của mảng descriptionArray
+        descriptionArray.forEach((description) => {
+          // Tách các mục dữ liệu trước dấu phẩy (,)
+          const splitByComma = description.split(",");
+
+          // Lặp qua mỗi phần tử sau khi tách
+          splitByComma.forEach((splitItem) => {
+            // Trích xuất thông tin từ mỗi chuỗi
+            const [ID_ChecklistC, ID_Checklist, valueCheck, gioht] =
+              splitItem.split("/");
+            // Kiểm tra điều kiện và thêm vào mảng arrPush nếu điều kiện đúng
+            if (parseInt(ID_ChecklistC) === parseInt(req.params.idc)) {
+              arrPush.push({
+                ID_ChecklistC: parseInt(ID_ChecklistC),
+                ID_Checklist: parseInt(ID_Checklist),
+                valueCheck: valueCheck,
+                gioht: gioht,
+              });
+            }
+          });
+        });
+      });
+
+      const checklistIds = checklistItems.map((item) => item.ID_Checklist);
+      const checklistDoneIds = arrPush.map((item) => item.ID_Checklist);
+
+      let whereCondition = {
+        isDelete: 0,
+      };
+
+      if (
+        checklistIds &&
+        Array.isArray(checklistIds) &&
+        checklistIds.length > 0 &&
+        checklistDoneIds &&
+        checklistDoneIds.length > 0
+      ) {
+        whereCondition.ID_Checklist = {
+          [Op.notIn]: [...checklistIds, ...checklistDoneIds],
+        };
+      } else if (
+        checklistIds &&
+        Array.isArray(checklistIds) &&
+        checklistIds.length > 0
+      ) {
+        whereCondition.ID_Checklist = {
+          [Op.notIn]: checklistIds,
+        };
+      } else if (checklistDoneIds && checklistDoneIds.length > 0) {
+        whereCondition.ID_Checklist = {
+          [Op.notIn]: checklistDoneIds,
+        };
       }
 
       await Ent_checklist.findAll({
@@ -460,6 +536,9 @@ exports.getFilter = async (req, res) => {
               "ID_KhoiCV",
             ],
             required: false,
+            where: {
+              ID_KhoiCV: ID_KhoiCV,
+            },
             include: [
               {
                 model: Ent_toanha,
@@ -486,16 +565,7 @@ exports.getFilter = async (req, res) => {
         ],
         where: {
           isDelete: 0,
-          [Op.and]: [
-            orConditions,
-            {
-              ID_Checklist: {
-                [Op.notIn]: sequelize.literal(
-                  `(SELECT ID_Checklist FROM tb_checklistchitiet where ID_ChecklistC = ${ID_ChecklistC})`
-                ),
-              },
-            },
-          ],
+          [Op.and]: [orConditions, whereCondition],
         },
       })
         .then((data) => {
@@ -554,6 +624,7 @@ exports.deleteChecklists = async (req, res) => {
   }
 };
 
+// get data
 exports.getChecklist = async (req, res) => {
   try {
     const userData = req.user.data;
@@ -562,16 +633,78 @@ exports.getChecklist = async (req, res) => {
     if (!userData || !ID_KhoiCV) {
       return res.status(400).json({ message: "Dữ liệu không hợp lệ." });
     }
-    const page = parseInt(req.query.page) || 1;
-    const pageSize = parseInt(req.query.limit); // Số lượng phần tử trên mỗi trang
-    const offset = (page - 1) * pageSize;
     // const pageMaxSize =
     const checklistItems = await Tb_checklistchitiet.findAll({
-      attributes: ["ID_Checklist"],
+      attributes: ["ID_Checklist", "isDelete", "ID_ChecklistC"],
       where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC },
     });
 
+    const checklistDoneItems = await Tb_checklistchitietdone.findAll({
+      attributes: ["Description"],
+      where: { isDelete: 0 },
+    });
+
+    const arrPush = [];
+
+    // Duyệt qua từng phần tử trong mảng checklistDoneItems
+    checklistDoneItems.forEach((item) => {
+      // Chuyển đổi chuỗi JSON thành một đối tượng JavaScript
+      const descriptionArray = JSON.parse(item.dataValues.Description);
+
+      // Lặp qua mỗi phần tử của mảng descriptionArray
+      descriptionArray.forEach((description) => {
+        // Tách các mục dữ liệu trước dấu phẩy (,)
+        const splitByComma = description.split(",");
+
+        // Lặp qua mỗi phần tử sau khi tách
+        splitByComma.forEach((splitItem) => {
+          // Trích xuất thông tin từ mỗi chuỗi
+          const [ID_ChecklistC, ID_Checklist, valueCheck, gioht] =
+            splitItem.split("/");
+          // Kiểm tra điều kiện và thêm vào mảng arrPush nếu điều kiện đúng
+          if (parseInt(ID_ChecklistC) === parseInt(req.params.idc)) {
+            arrPush.push({
+              ID_ChecklistC: parseInt(ID_ChecklistC),
+              ID_Checklist: parseInt(ID_Checklist),
+              valueCheck: valueCheck,
+              gioht: gioht,
+            });
+          }
+        });
+      });
+    });
+
     const checklistIds = checklistItems.map((item) => item.ID_Checklist);
+    const checklistDoneIds = arrPush.map((item) => item.ID_Checklist);
+
+    let whereCondition = {
+      isDelete: 0,
+    };
+
+    if (
+      checklistIds &&
+      Array.isArray(checklistIds) &&
+      checklistIds.length > 0 &&
+      checklistDoneIds &&
+      checklistDoneIds.length > 0
+    ) {
+      whereCondition.ID_Checklist = {
+        [Op.notIn]: [...checklistIds, ...checklistDoneIds],
+      };
+    } else if (
+      checklistIds &&
+      Array.isArray(checklistIds) &&
+      checklistIds.length > 0
+    ) {
+      whereCondition.ID_Checklist = {
+        [Op.notIn]: checklistIds,
+      };
+    } else if (checklistDoneIds && checklistDoneIds.length > 0) {
+      whereCondition.ID_Checklist = {
+        [Op.notIn]: checklistDoneIds,
+      };
+    }
+
     const checklistData = await Ent_checklist.findAll({
       attributes: [
         "ID_Checklist",
@@ -630,18 +763,11 @@ exports.getChecklist = async (req, res) => {
           attributes: ["UserName", "Emails"],
         },
       ],
-      where: {
-        isDelete: 0,
-        ID_Checklist: {
-          [Op.notIn]: checklistIds,
-        },
-      },
+      where: whereCondition,
       order: [
         ["ID_Khuvuc", "ASC"],
         ["Sothutu", "ASC"],
       ],
-      offset: offset,
-      limit: pageSize,
     });
 
     if (!checklistData || checklistData.length === 0) {

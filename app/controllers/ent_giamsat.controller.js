@@ -1,4 +1,4 @@
-const { Ent_giamsat, Ent_duan, Ent_chucvu } = require("../models/setup.model");
+const { Ent_giamsat, Ent_duan, Ent_chucvu, Ent_khoicv } = require("../models/setup.model");
 const { Op } = require("sequelize");
 
 exports.create = (req, res) => {
@@ -92,6 +92,10 @@ exports.get = async (req, res) => {
             model: Ent_chucvu,
             attributes: ["Chucvu"],
           },
+          {
+            model: Ent_khoicv,
+            attributes: ["ID_Khoi", "KhoiCV"],
+          },
         ],
         where: whereClause,
       })
@@ -140,6 +144,10 @@ exports.getDetail = async (req, res) => {
             model: Ent_chucvu,
             attributes: ["Chucvu"],
           },
+          {
+            model: Ent_khoicv,
+            attributes: ["ID_Khoi"],
+          },
         ],
         where: {
           isDelete: 0,
@@ -185,6 +193,7 @@ exports.update = async (req, res) => {
         iQuyen: req.body.iQuyen,
         isDelete: 0,
       };
+      console.log('reqData',reqData, req.params.id)
 
       Ent_giamsat.update(reqData, {
         where: {
