@@ -33,6 +33,8 @@
     "pg-hstore": "2.3.4",
     "rootpath": "^0.1.2",
     "sequelize": "^6.37.1",
+    "sharp": "^0.33.3",
+    "stream": "^0.0.2",
     "stripe": "^14.5.0"
   },
   "name": "api",
