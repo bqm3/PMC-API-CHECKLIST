@@ -153,9 +153,9 @@ exports.getCheckListc = async (req, res, next) => {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
       }
 
-      const page = parseInt(req.query.page) || 1;
+      const page = parseInt(req.query.page) || 0;
       const pageSize = parseInt(req.query.limit) || 100; // Số lượng phần tử trên mỗi trang
-      const offset = (page - 1) * pageSize;
+      const offset = (page) * pageSize;
 
       const totalCount = await Tb_checklistc.count({
         attributes: [
@@ -206,7 +206,6 @@ exports.getCheckListc = async (req, res, next) => {
         where: whereClause,
       });
       const totalPages = Math.ceil(totalCount / pageSize);
-
       await Tb_checklistc.findAll({
         attributes: [
           "ID_ChecklistC",

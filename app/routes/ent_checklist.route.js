@@ -8,6 +8,7 @@ module.exports = (app) => {
   router.get("/", [isAuthenticated], ent_checklist.get);
   router.get("/:id/:idc", [isAuthenticated], ent_checklist.getChecklist);
   router.post("/filter/:id/:idc", [isAuthenticated], ent_checklist.getFilter);
+  router.post("/filter/", [isAuthenticated], ent_checklist.getFilterAll);
   router.post("/filter_qr/:id/:idc",[isAuthenticated], ent_checklist.getFilterQrCode);
   router.put("/update/:id", [isAuthenticated], ent_checklist.update);
   router.put("/delete/:id", [isAuthenticated], ent_checklist.delete);

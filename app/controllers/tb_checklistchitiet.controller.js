@@ -292,13 +292,15 @@ exports.searchChecklist = async (req, res) => {
     const toDate = req.body.toDate;
     const orConditions = [];
     if (userData) {
-      const page = parseInt(req.query.page) || 1;
-      const pageSize = parseInt(req.query.pageSize) || 100; // Số lượng bản ghi mặc định trên mỗi trang
+      const page = parseInt(req.query.page) || 0;
+      const pageSize = parseInt(req.query.limit) || 100; // Số lượng phần tử trên mỗi trang
+      const offset = (page) * pageSize;
 
-      // Tính toán offset để phân trang
-      const offset = (page - 1) * pageSize;
+      if (userData?.ID_KhoiCV !== null) {
+        orConditions.push({ "$tb_checklistc.ID_KhoiCV$": userData?.ID_KhoiCV });
+      }
 
-      orConditions.push({ "$tb_checklistc.ID_KhoiCV$": userData?.ID_KhoiCV });
+      // orConditions.push({ "$tb_checklistc.ID_KhoiCV$": userData?.ID_KhoiCV });
       orConditions.push({ "$tb_checklistc.ID_Duan$": userData?.ID_Duan });
 
       if (ID_Khuvuc !== null) {
@@ -315,7 +317,7 @@ exports.searchChecklist = async (req, res) => {
         });
       }
 
-      const totalCount = await Tb_checklistchitiet.count({
+      const totalCount =  await Tb_checklistchitiet.count({
         attributes: [
           "ID_Checklistchitiet",
           "ID_ChecklistC",
@@ -407,11 +409,10 @@ exports.searchChecklist = async (req, res) => {
         where: {
           isDelete: 0,
           [Op.and]: [orConditions],
-        }
+        },
+        order: [[{ model: Tb_checklistc }, "Ngay", "DESC"]], 
       })
-
       const totalPages = Math.ceil(totalCount / pageSize);
-
       await Tb_checklistchitiet.findAll({
         attributes: [
           "ID_Checklistchitiet",

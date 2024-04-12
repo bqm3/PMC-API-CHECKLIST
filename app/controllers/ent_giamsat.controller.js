@@ -7,7 +7,6 @@ exports.create = (req, res) => {
     if (
       !req.body.ID_Duan ||
       !req.body.Hoten ||
-      !req.body.Sodienthoai ||
       !req.body.ID_Chucvu
     ) {
       res.status(400).json({
