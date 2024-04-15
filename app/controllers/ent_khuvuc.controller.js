@@ -201,15 +201,11 @@ exports.update = async (req, res) => {
       const existingKhuvuc = await Ent_khuvuc.findOne({
         where: {
           [Op.and]: [
-            { 
-              MaQrCode: { [Op.not]: null, [Op.ne]: '' } // MaQrCode is not null and not empty
-            },
-            {
-              ID_Khuvuc: {
-                [Op.ne]: req.params.id, // Loại bỏ bản ghi hiện tại (với ID_Khuvuc = req.params.id)
-              }
-            }
-          ]
+            { MaQrCode: { [Op.not]: null, [Op.ne]: "" } }, // Kiểm tra mã QR Code không rỗng hoặc null
+            { ID_Khuvuc: { [Op.ne]: req.params.id } }, // Kiểm tra ID_Khuvuc khác với ID của khu vực đang cập nhật
+            { MaQrCode: req.body.MaQrCode } // Kiểm tra xem mã QR Code mới có trùng với mã QR Code được gửi trong yêu cầu không
+              
+          ],
         },
         attributes: [
           "ID_Khuvuc",
@@ -223,6 +219,8 @@ exports.update = async (req, res) => {
           "isDelete",
         ],
       });
+
+      console.log('existingKhuvuc',existingKhuvuc)
 
       if (existingKhuvuc) {
         res.status(400).json({

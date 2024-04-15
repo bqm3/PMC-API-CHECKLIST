@@ -39,5 +39,12 @@ module.exports = (app) => {
     tb_checklistchitiet.uploadImages
   )
   
+
+  router.post(
+    "/excel-checklist",
+    [isAuthenticated],
+    tb_checklistchitiet.getWriteExcel
+  );
+  
   app.use("/api/tb_checklistchitiet", router);
 };

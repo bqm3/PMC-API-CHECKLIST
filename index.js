@@ -4,7 +4,7 @@ const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const app = express();
-const cloudinary = require("cloudinary").v2;
+
 
 var corsOptions = {
   origin: ["*"],
@@ -16,14 +16,9 @@ var corsOptions = {
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
-app.use(bodyParser.json({ limit: "50mb" }));
-app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
-
+app.use(bodyParser.json({ limit: "500mb" }));
+app.use(bodyParser.urlencoded({ limit: "500mb", extended: true }));
 app.use(express.urlencoded({ extended: true }));
-app.use("/upload1", express.static("app/public/anh1"));
-app.use("/upload2", express.static("app/public/anh2"));
-app.use("/upload3", express.static("app/public/anh3"));
-app.use("/upload4", express.static("app/public/anh4"));
 
 app.get("/", (req, res) => {
   res.json("Hello World!");
@@ -43,7 +38,7 @@ require("./app/routes/tb_checklistc.route")(app);
 require("./app/routes/tb_checklistchitiet.route")(app);
 require("./app/routes/tb_checklistchitietdone.route")(app);
 
-const PORT = process.env.PORT || 6868;
+const PORT = process.env.PORT || 6969;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}.`);
 });

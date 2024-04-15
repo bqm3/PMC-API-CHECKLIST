@@ -14,6 +14,8 @@ const {
   Ent_toanha,
 } = require("../models/setup.model");
 const { Op } = require("sequelize");
+const ExcelJS = require("exceljs");
+var path = require("path");
 
 exports.createCheckListChiTiet = async (req, res, next) => {
   try {
@@ -65,7 +67,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
         Gioht: Gioht,
         Anh: Anh, // Assuming Anh is the image URL
       });
-      console.log('newRecord',newRecord)
+      console.log("newRecord", newRecord);
 
       await newRecord.save();
     }
@@ -81,7 +83,6 @@ exports.getCheckListChiTiet = async (req, res, next) => {
   try {
     const userData = req.user.data;
     if (userData) {
-     
       await Tb_checklistchitiet.findAll({
         attributes: [
           "ID_Checklistchitiet",
@@ -146,10 +147,16 @@ exports.getCheckListChiTiet = async (req, res, next) => {
                 include: [
                   {
                     model: Ent_toanha,
-                    attributes: ["Toanha", "Sotang"],
+                    attributes: ["Toanha", "Sotang", "ID_Duan"],
                     where: {
                       ID_Toanha: { [Op.or]: [req.body.ID_Toanha, null] }, // Kiểm tra nếu ID_Toanha là giá trị mong muốn hoặc null
                     },
+                    include: [
+                      {
+                        model: Ent_duan,
+                        attributes: ["Duan"],
+                      },
+                    ],
                   },
                 ],
               },
@@ -167,10 +174,6 @@ exports.getCheckListChiTiet = async (req, res, next) => {
             ],
           },
         ],
-      
-        // where: {
-        //     isDelete: 0,
-        // },
       })
         .then((data) => {
           if (data) {
@@ -239,7 +242,19 @@ exports.getDetail = async (req, res) => {
             include: [
               {
                 model: Ent_khuvuc,
-                attributes: ["Tenkhuvuc", "MaQrCode", "Makhuvuc", "Sothutu"],
+                attributes: [
+                  "Tenkhuvuc",
+                  "MaQrCode",
+                  "Makhuvuc",
+                  "Sothutu",
+                  "ID_Khuvuc",
+                ],
+                include: [
+                  {
+                    model: Ent_duan,
+                    attributes: ["Duan"],
+                  },
+                ],
               },
               {
                 model: Ent_tang,
@@ -288,13 +303,13 @@ exports.searchChecklist = async (req, res) => {
     const ID_Tang = req.body.ID_Tang;
     const ID_Toanha = req.body.ID_Toanha;
     // Assuming fromDate and toDate are provided in the request body
-    const fromDate = req.body.fromDate; 
+    const fromDate = req.body.fromDate;
     const toDate = req.body.toDate;
     const orConditions = [];
     if (userData) {
       const page = parseInt(req.query.page) || 0;
       const pageSize = parseInt(req.query.limit) || 100; // Số lượng phần tử trên mỗi trang
-      const offset = (page) * pageSize;
+      const offset = page * pageSize;
 
       if (userData?.ID_KhoiCV !== null) {
         orConditions.push({ "$tb_checklistc.ID_KhoiCV$": userData?.ID_KhoiCV });
@@ -317,7 +332,7 @@ exports.searchChecklist = async (req, res) => {
         });
       }
 
-      const totalCount =  await Tb_checklistchitiet.count({
+      const totalCount = await Tb_checklistchitiet.count({
         attributes: [
           "ID_Checklistchitiet",
           "ID_ChecklistC",
@@ -341,9 +356,8 @@ exports.searchChecklist = async (req, res) => {
             ],
             where: {
               Ngay: { [Op.between]: [fromDate, toDate] }, // Filter by Ngay attribute between fromDate and toDate
-              
             },
-            
+
             include: [
               {
                 model: Ent_khoicv,
@@ -410,8 +424,8 @@ exports.searchChecklist = async (req, res) => {
           isDelete: 0,
           [Op.and]: [orConditions],
         },
-        order: [[{ model: Tb_checklistc }, "Ngay", "DESC"]], 
-      })
+        order: [[{ model: Tb_checklistc }, "Ngay", "DESC"]],
+      });
       const totalPages = Math.ceil(totalCount / pageSize);
       await Tb_checklistchitiet.findAll({
         attributes: [
@@ -437,9 +451,8 @@ exports.searchChecklist = async (req, res) => {
             ],
             where: {
               Ngay: { [Op.between]: [fromDate, toDate] }, // Filter by Ngay attribute between fromDate and toDate
-              
             },
-            
+
             include: [
               {
                 model: Ent_khoicv,
@@ -471,6 +484,8 @@ exports.searchChecklist = async (req, res) => {
               "Checklist",
               "Giatridinhdanh",
               "Giatrinhan",
+              "Tieuchuan",
+              "Ghichu",
             ],
             include: [
               {
@@ -506,7 +521,7 @@ exports.searchChecklist = async (req, res) => {
           isDelete: 0,
           [Op.and]: [orConditions],
         },
-        order: [[{ model: Tb_checklistc }, "Ngay", "DESC"]], 
+        order: [[{ model: Tb_checklistc }, "Ngay", "DESC"]],
         limit: pageSize,
         offset: offset,
       })
@@ -612,7 +627,6 @@ exports.uploadImages = async (req, res) => {
   }
 };
 
-
 exports.getCheckList = async (req, res, next) => {
   try {
     const userData = req.user.data;
@@ -638,28 +652,28 @@ exports.getCheckList = async (req, res, next) => {
         limit: limit,
         offset: offset,
       })
-      .then((result) => {
-        const { count, rows } = result;
-        if (count > 0) {
-          res.status(200).json({
-            message: "Danh sách checklistchitiet!",
-            totalItems: count,
-            totalPages: Math.ceil(count / limit),
-            currentPage: page,
-            data: rows,
+        .then((result) => {
+          const { count, rows } = result;
+          if (count > 0) {
+            res.status(200).json({
+              message: "Danh sách checklistchitiet!",
+              totalItems: count,
+              totalPages: Math.ceil(count / limit),
+              currentPage: page,
+              data: rows,
+            });
+          } else {
+            res.status(404).json({
+              message: "Không tìm thấy bản ghi nào!",
+              data: [],
+            });
+          }
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
           });
-        } else {
-          res.status(404).json({
-            message: "Không tìm thấy bản ghi nào!",
-            data: [],
-          });
-        }
-      })
-      .catch((err) => {
-        res.status(500).json({
-          message: err.message || "Lỗi! Vui lòng thử lại sau.",
         });
-      });
     } else {
       return res.status(401).json({
         message: "Bạn không có quyền truy cập",
@@ -671,3 +685,133 @@ exports.getCheckList = async (req, res, next) => {
     });
   }
 };
+
+function getValue(obj, key) {
+  const keys = key.split(".");
+  let value = obj;
+  keys.forEach((k) => {
+    if (value && typeof value === "object") {
+      value = value[k];
+    } else {
+      value = null;
+    }
+  });
+  return value || "";
+}
+
+exports.getWriteExcel = async (req, res, next) => {
+  try {
+    const data = req.body.data;
+
+    // Define the schema
+    const schema = [
+      {
+        header: "Dự án",
+        key: "tb_checklistc.ent_duan.Duan",
+        
+      },
+      {
+        header: "Tên tòa nhà",
+        key: "ent_checklist.ent_khuvuc.ent_toanha.Toanha",
+      },
+      {
+        header: "Mã khu vực",
+        key: "ent_checklist.ent_khuvuc.ID_Khuvuc",
+      },
+      {
+        header: "Mã QrCode khu vực",
+        key: "ent_checklist.ent_khuvuc.MaQrCode",
+      },
+      {
+        header: "Tên khu vực",
+        key: "ent_checklist.ent_khuvuc.Tenkhuvuc",
+      },
+      {
+        header: "Tên tầng",
+        key: "ent_checklist.ent_tang.Tentang",
+      },
+      {
+        header: "Tên khối công việc",
+        key: "tb_checklistc.ent_khoicv.KhoiCV",
+      },
+      {
+        header: "Số thứ tựu checklist",
+        key: "ent_checklist.Sothutu",
+      },
+      {
+        header: "Mã checklist",
+        key: "ent_checklist.ID_Checklist",
+      },
+      {
+        header: "Tên checklist",
+        key: "ent_checklist.Checklist",
+      },
+      {
+        header: "Tiêu chuẩn checklist",
+        key: "ent_checklist.Tieuchuan",
+      },
+      {
+        header: "Giá trị định danh",
+        key: "ent_checklist.Giatridinhdanh",
+      },
+      {
+        header: "Giá trị nhận",
+        key: "ent_checklist.Giatrinhan",
+      },
+      {
+        header: "Ghi chú",
+        key: "ent_checklist.Ghichu",
+      },
+    ];
+
+    // Create a new workbook
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Sheet1");
+
+    // Set headers
+    worksheet.columns = schema.map((col) => ({
+      header: col.header,
+      key: col.key,
+    }));
+
+    // Add data rows
+    data.forEach((item) => {
+      const rowData = {};
+      schema.forEach((col) => {
+        const value = getValue(item, col.key);
+        rowData[col.key] = value;
+      });
+      worksheet.addRow(rowData);
+    });
+
+    // Generate Excel file
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // Adding leading zero if needed
+    const day = String(date.getDate()).padStart(2, "0"); // Adding leading zero if needed
+    const totalSeconds =
+      date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds(); // Convert time to total seconds
+    const fileName = `${year}-${month}-${day}_${totalSeconds}.xlsx`; // Construct file name with timestamp
+
+    const filePath = path.join(__dirname, "../public", fileName); // Construct file path with timestamp
+
+    await workbook.xlsx.writeFile(filePath);
+
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
+
+    // Stream the file to the client
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res); 
+
+    return res
+      .status(200)
+      .json({ message: "Excel file saved successfully.", filePath: filePath });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: error.message || "Lỗi! Vui lòng thử lại sau." });
+  }
+};
+
+
