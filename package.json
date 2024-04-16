@@ -33,12 +33,16 @@
     "pg-hstore": "2.3.4",
     "rootpath": "^0.1.2",
     "sequelize": "^6.37.1",
-    "sharp": "^0.33.3",
+    "sharp": "0.32.6",
     "stream": "^0.0.2",
     "stripe": "^14.5.0",
     "write-excel-file": "^1.4.30"
   },
-  "name": "api",
+  "optionalDependencies": {
+    "@img/sharp-win32-x64": "^0.33.2",
+    "@img/sharp-linux-arm": "^0.33.2"
+  },
+  "name": "pmc-checklist-api",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
