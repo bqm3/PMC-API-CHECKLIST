@@ -286,24 +286,28 @@ exports.delete = async (req, res) => {
 exports.getKhuVuc = async (req, res) => {
   try {
     const userData = req.user.data;
-    const ID_Toanha = req.body.ID_Toanha;
-    const ID_KhoiCV = req.body.ID_KhoiCV;
 
-    if (userData && (ID_Toanha !== undefined || ID_KhoiCV !== undefined)) {
+    if (userData) {
       // Xây dựng điều kiện where dựa trên các giá trị đã kiểm tra
       const whereCondition = {
-        [Op.or]: [],
+        [Op.and]: [],
       };
-      if (ID_Toanha !== undefined) {
-        whereCondition[Op.or].push({
-          ID_Toanha: ID_Toanha,
-        });
+
+      if (userData.Permission === 3 || userData.UserName === 'PSH') {
+        // Nếu userData.Permission == 1, không cần thêm điều kiện where, lấy tất cả khu vực
+      } else {
+        // Nếu userData.Permission !== 1, thêm điều kiện where theo ID_KhoiCV và ID_Duan
+        if (userData.ID_Duan !== null) {
+          whereCondition["$ent_toanha.ID_Duan$"] = userData.ID_Duan;
+        }
+        if (userData.ID_KhoiCV !== null) {
+          whereCondition[Op.and].push({
+            ID_KhoiCV: userData.ID_KhoiCV,
+          });
+        }
+       
       }
-      if (ID_KhoiCV !== undefined) {
-        whereCondition[Op.or].push({
-          ID_KhoiCV: ID_KhoiCV,
-        });
-      }
+       // Thêm điều kiện isDelete
       whereCondition.isDelete = 0;
 
       Ent_khuvuc.findAll({
@@ -321,7 +325,7 @@ exports.getKhuVuc = async (req, res) => {
         include: [
           {
             model: Ent_toanha,
-            attributes: ["Toanha", "Sotang"],
+            attributes: ["Toanha", "Sotang", "ID_Toanha"],
           },
           {
             model: Ent_khoicv,
