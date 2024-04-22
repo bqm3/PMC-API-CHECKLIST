@@ -204,7 +204,7 @@ exports.update = async (req, res) => {
             { MaQrCode: { [Op.not]: null, [Op.ne]: "" } }, // Kiểm tra mã QR Code không rỗng hoặc null
             { ID_Khuvuc: { [Op.ne]: req.params.id } }, // Kiểm tra ID_Khuvuc khác với ID của khu vực đang cập nhật
             { MaQrCode: req.body.MaQrCode } // Kiểm tra xem mã QR Code mới có trùng với mã QR Code được gửi trong yêu cầu không
-              
+
           ],
         },
         attributes: [
@@ -220,7 +220,7 @@ exports.update = async (req, res) => {
         ],
       });
 
-      console.log('existingKhuvuc',existingKhuvuc)
+      console.log('existingKhuvuc', existingKhuvuc)
 
       if (existingKhuvuc) {
         res.status(400).json({
@@ -305,9 +305,9 @@ exports.getKhuVuc = async (req, res) => {
             ID_KhoiCV: userData.ID_KhoiCV,
           });
         }
-       
+
       }
-       // Thêm điều kiện isDelete
+      // Thêm điều kiện isDelete
       whereCondition.isDelete = 0;
 
       Ent_khuvuc.findAll({
