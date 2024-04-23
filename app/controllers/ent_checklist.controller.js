@@ -37,7 +37,7 @@ exports.create = (req, res) => {
       const data = {
         ID_Khuvuc: req.body.ID_Khuvuc,
         ID_Tang: req.body.ID_Tang,
-        Sothutu: req.body.Sothutu || "",
+        Sothutu: req.body.Sothutu || 0,
         Maso: req.body.Maso || "",
         MaQrCode: req.body.MaQrCode || "",
         Checklist: req.body.Checklist,

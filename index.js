@@ -19,6 +19,7 @@ app.use(express.json());
 app.use(bodyParser.json({ limit: "500mb" }));
 app.use(bodyParser.urlencoded({ limit: "500mb", extended: true }));
 app.use(express.urlencoded({ extended: true }));
+app.use("/upload", express.static("app/public"));
 
 app.get("/", (req, res) => {
   res.json("Hello World!");
