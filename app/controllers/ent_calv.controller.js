@@ -11,30 +11,29 @@ exports.create = async (req, res) => {
   try {
     const userData = req.user.data;
     if (userData) {
+      let giokt = req.body.Gioketthuc;
+      let giobd = req.body.Giobatdau;
       if (!req.body.Tenca) {
         return res.status(400).json({
           message: "Cần nhập đầy đủ thông tin!",
         });
-        
-      } else if (!req.body.Giobatdau || !req.body.Gioketthuc) {
+      } else if (!giobd || !giokt) {
         return res.status(400).json({
           message: "Cần có thời gian bắt đầu và kết thúc!",
         });
-        
       }
-      if (req.body.Gioketthuc <= req.body.Giobatdau) {
+      if (giokt <= giobd && giobd < "20:00" && giokt >= "00:00") {
         return res.status(400).json({
           message: "Giờ kết thúc phải lớn hơn giờ bắt đầu!",
         });
-        
       }
 
       const reqData = {
         ID_Duan: req.body.ID_Duan,
         ID_KhoiCV: req.body.ID_KhoiCV,
         Tenca: req.body.Tenca,
-        Giobatdau: req.body.Giobatdau,
-        Gioketthuc: req.body.Gioketthuc,
+        Giobatdau: giobd,
+        Gioketthuc: giokt,
         ID_User: userData.ID_User,
         isDelete: 0,
       };
@@ -44,7 +43,7 @@ exports.create = async (req, res) => {
         where: {
           ID_KhoiCV: req.body.ID_KhoiCV,
           Tenca: req.body.Tenca,
-          ID_Duan: userData.ID_Duan
+          ID_Duan: userData.ID_Duan,
         },
         attributes: [
           "ID_Calv",
@@ -98,6 +97,73 @@ exports.get = async (req, res) => {
       if (userData.Permission !== 1) {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
       }
+
+      await Ent_calv.findAll({
+        attributes: [
+          "ID_Calv",
+          "ID_KhoiCV",
+          "ID_Duan",
+          "Tenca",
+          "Giobatdau",
+          "Gioketthuc",
+          "ID_User",
+          "isDelete",
+        ],
+        include: [
+          {
+            model: Ent_duan,
+            attributes: ["Duan"],
+          },
+          {
+            model: Ent_khoicv,
+            attributes: ["KhoiCV", "ID_Khoi"],
+          },
+          {
+            model: Ent_user,
+            include: {
+              model: Ent_chucvu,
+              attributes: ["Chucvu"],
+            },
+            attributes: ["UserName", "Emails"],
+          },
+        ],
+        where: whereClause,
+      })
+        .then((data) => {
+          res.status(200).json({
+            message: "Danh sách ca làm việc!",
+            data: data,
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+exports.getFilter = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    const ID_KhoiCV = req.body.ID_KhoiCV;
+    
+    if (userData) {
+      let whereClause = {
+        ID_Duan: userData?.ID_Duan,
+        isDelete: 0,
+      };
+
+      // Nếu quyền là 1 (Permission === 1) thì không cần thêm điều kiện ID_KhoiCV
+      if (ID_KhoiCV !== null) {
+        whereClause.ID_KhoiCV = ID_KhoiCV;
+      }
+      
 
       await Ent_calv.findAll({
         attributes: [
@@ -213,15 +279,17 @@ exports.update = async (req, res) => {
   try {
     const userData = req.user.data;
     if (req.params.id && userData) {
+      let giokt = req.body.Gioketthuc;
+      let giobd = req.body.Giobatdau;
       if (!req.body.Tenca) {
         return res.status(400).json({
           message: "Cần nhập đầy đủ thông tin!",
         });
-      } else if (!req.body.Giobatdau || !req.body.Gioketthuc) {
+      } else if (!giobd || !giokt) {
         return res.status(400).json({
           message: "Cần có thời gian bắt đầu và kết thúc!",
         });
-      } else if (req.body.Gioketthuc <= req.body.Giobatdau) {
+      } else if (giokt <= giobd && giobd < "20:00" && giokt >= "00:00") {
         return res.status(400).json({
           message: "Giờ kết thúc phải lớn hơn giờ bắt đầu!",
         });
@@ -233,8 +301,8 @@ exports.update = async (req, res) => {
           ID_KhoiCV: req.body.ID_KhoiCV,
           Tenca: req.body.Tenca,
           ID_Calv: {
-            [Op.ne]: req.params.id // Loại bỏ bản ghi hiện tại (với ID_Calv = req.params.id)
-          }
+            [Op.ne]: req.params.id, // Loại bỏ bản ghi hiện tại (với ID_Calv = req.params.id)
+          },
         },
         attributes: [
           "ID_Calv",
@@ -286,7 +354,6 @@ exports.update = async (req, res) => {
     });
   }
 };
-
 
 exports.delete = async (req, res) => {
   try {

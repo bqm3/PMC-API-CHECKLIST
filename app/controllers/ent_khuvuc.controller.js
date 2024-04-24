@@ -220,8 +220,6 @@ exports.update = async (req, res) => {
         ],
       });
 
-      console.log('existingKhuvuc', existingKhuvuc)
-
       if (existingKhuvuc) {
         res.status(400).json({
           message: "Mã QR Code đã tồn tại!",

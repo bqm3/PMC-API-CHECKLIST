@@ -1,6 +1,7 @@
 const Ent_duan = require("./ent_duan.model");
 const Ent_toanha = require("./ent_toanha.model");
 const Ent_calv = require("./ent_calv.model");
+const Ent_hangmuc = require("./ent_hangmuc.model");
 const Ent_checklist = require("./ent_checklist.model");
 const Ent_chucvu = require("./ent_chucvu.model");
 const Ent_khoicv = require("./ent_khoicv.model");
@@ -72,6 +73,11 @@ Ent_checklist.belongsTo(Ent_khuvuc, {
   foreignKey: "ID_Khuvuc",
 });
 
+Ent_hangmuc.hasMany(Ent_checklist);
+Ent_checklist.belongsTo(Ent_hangmuc, {
+  foreignKey: "ID_Hangmuc",
+});
+
 Ent_tang.hasMany(Ent_checklist);
 Ent_checklist.belongsTo(Ent_tang, {
   foreignKey: "ID_Tang",
@@ -81,6 +87,13 @@ Ent_user.hasMany(Ent_checklist);
 Ent_checklist.belongsTo(Ent_user, {
   foreignKey: "ID_User",
 });
+
+// Hạng mục
+Ent_khuvuc.hasMany(Ent_hangmuc);
+Ent_hangmuc.belongsTo(Ent_khuvuc, {
+  foreignKey: "ID_Khuvuc",
+});
+
 
 //Giam sat
 Ent_duan.hasMany(Ent_giamsat);
@@ -136,6 +149,7 @@ module.exports = {
   Ent_duan,
   Ent_khuvuc,
   Ent_khoicv,
+  Ent_hangmuc,
   Ent_user,
   Ent_calv,
   Ent_chucvu,

@@ -46,6 +46,9 @@ const Ent_checklist = sequelize.define(
       type: DataTypes.CHAR,
       allowNull: false,
     },
+    sCalv: {
+      type: DataTypes.CHAR,
+    },
     Giatrinhan: {
       type: DataTypes.CHAR,
       allowNull: false,

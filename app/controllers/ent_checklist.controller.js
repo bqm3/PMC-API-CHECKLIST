@@ -8,31 +8,25 @@ const {
   Ent_toanha,
   Ent_khoicv,
   Ent_duan,
+  Ent_hangmuc,
   Tb_checklistchitiet,
   Tb_checklistchitietdone,
 } = require("../models/setup.model");
 const { Op } = require("sequelize");
-const { getDataFormat } = require("./tb_checklistchitietdone.controller");
 
 exports.create = (req, res) => {
   try {
     const userData = req.user.data;
     if (userData) {
-      if (
-        !req.body.ID_Khuvuc ||
-        // !req.body.ID_Tang ||
-        // !req.body.Sothutu ||
-        // !req.body.Maso ||
-        // !req.body.MaQrCode ||
-        !req.body.Checklist ||
-        // !req.body.Giatridinhdanh ||
-        !req.body.Giatrinhan
-      ) {
+      if (!req.body.ID_Khuvuc || !req.body.Checklist || !req.body.Giatrinhan) {
         res.status(400).json({
           message: "Phải nhập đầy đủ dữ liệu!",
         });
         return;
       }
+      // const sCalv = req.body.sCalv;
+      const sCalv = req.body.sCalv;
+      console.log('sCalv',sCalv, sCalv[0])
 
       const data = {
         ID_Khuvuc: req.body.ID_Khuvuc,
@@ -46,6 +40,10 @@ exports.create = (req, res) => {
         Giatridinhdanh: req.body.Giatridinhdanh || "",
         Giatrinhan: req.body.Giatrinhan || "",
         ID_User: userData.ID_User,
+        calv_1: sCalv[0] || null,
+        calv_2: sCalv[1] || null,
+        calv_3: sCalv[2] || null,
+        calv_4: sCalv[3] || null,
         isDelete: 0,
       };
 
@@ -358,6 +356,8 @@ exports.update = async (req, res) => {
         Giatridinhdanh: req.body.Giatridinhdanh,
         Giatrinhan: req.body.Giatrinhan,
         Sothutu: req.body.Sothutu,
+        Ghichu: req.body.Ghichu || "",
+        Tieuchuan: req.body.Tieuchuan || "",
         isDelete: 0,
       };
 
@@ -526,7 +526,7 @@ exports.getFilterQrCode = async (req, res) => {
             "ID_Khuvuc",
             "isDelete",
           ],
-          where: { ID_KhoiCV: ID_KhoiCV , MaQrCode: MaQrCode, isDelete: 0 },
+          where: { ID_KhoiCV: ID_KhoiCV, MaQrCode: MaQrCode, isDelete: 0 },
           include: [
             {
               model: Ent_toanha,
@@ -601,7 +601,7 @@ exports.getFilter = async (req, res) => {
     const ID_KhoiCV = req.params.id;
     const ID_ChecklistC = req.params.idc;
     if (userData) {
-      if ( ID_Khuvuc !== null) {
+      if (ID_Khuvuc !== null) {
         orConditions.push({ ID_Khuvuc: ID_Khuvuc });
       }
 
@@ -807,6 +807,9 @@ exports.getChecklist = async (req, res) => {
     const userData = req.user.data;
     const ID_KhoiCV = req.params.id;
     const ID_ChecklistC = req.params.idc;
+    const ID_Calv = req.params.id_calv;
+    console.log("ID_Calv", ID_Calv);
+    console.log("ID_ChecklistC", ID_ChecklistC);
     if (!userData || !ID_KhoiCV) {
       return res.status(400).json({ message: "Dữ liệu không hợp lệ." });
     }
@@ -820,6 +823,13 @@ exports.getChecklist = async (req, res) => {
       attributes: ["Description"],
       where: { isDelete: 0 },
     });
+
+    const checklisCalv = await Ent_checklist.findAll({
+      attributes: ["sCalv"],
+      where: { isDelete: 0 },
+    });
+
+    console.log('checklisCalv', checklisCalv)
 
     const arrPush = [];
 
@@ -853,12 +863,24 @@ exports.getChecklist = async (req, res) => {
 
     const checklistIds = checklistItems.map((item) => item.ID_Checklist);
     const checklistDoneIds = arrPush.map((item) => item.ID_Checklist);
+    const calvIds = checklisCalv.map((item) => item);
 
     let whereCondition = {
       isDelete: 0,
     };
 
     whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
+
+    whereCondition[Op.or] = [
+      {
+        sCalv: {
+          [Op.like]: `[%${ID_Calv}%]`, // Kiểm tra `id_calv` trong chuỗi `sCalv`
+        },
+      },
+      {
+        sCalv: null, // Nếu `sCalv` là null
+      },
+    ];
 
     if (
       checklistIds &&
@@ -898,6 +920,7 @@ exports.getChecklist = async (req, res) => {
         "Giatridinhdanh",
         "Giatrinhan",
         "ID_User",
+        "sCalv",
         "isDelete",
       ],
       include: [
@@ -976,7 +999,7 @@ exports.getChecklist = async (req, res) => {
 };
 
 // get data all
-exports.getFilterAll = async(req,res) => {
+exports.getFilterAll = async (req, res) => {
   try {
     const userData = req.user.data;
     if (!userData) {
@@ -992,7 +1015,6 @@ exports.getFilterAll = async(req,res) => {
     const pageSize = parseInt(req.query.limit) || 100; // Số lượng phần tử trên mỗi trang
     const offset = (page - 1) * pageSize;
 
-
     const orConditions = [];
     if (userData) {
       orConditions.push({
@@ -1000,13 +1022,13 @@ exports.getFilterAll = async(req,res) => {
       });
     }
 
-    if(ID_Khuvuc !== null) {
+    if (ID_Khuvuc !== null) {
       orConditions.push({
         "$ent_khuvuc.ID_Khuvuc$": ID_Khuvuc,
       });
     }
 
-    if(ID_Tang !== null) {
+    if (ID_Tang !== null) {
       orConditions.push({
         ID_Tang: ID_Tang,
       });
@@ -1174,4 +1196,4 @@ exports.getFilterAll = async(req,res) => {
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
-}
+};

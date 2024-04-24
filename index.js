@@ -31,6 +31,7 @@ require("./app/routes/ent_tang.route")(app);
 require("./app/routes/ent_toanha.route")(app);
 require("./app/routes/ent_khuvuc.route")(app);
 require("./app/routes/ent_duan.route")(app);
+require("./app/routes/ent_hangmuc.route")(app);
 require("./app/routes/ent_khoicv.route")(app);
 require("./app/routes/ent_checklist.route")(app);
 require("./app/routes/ent_chucvu.route")(app);
