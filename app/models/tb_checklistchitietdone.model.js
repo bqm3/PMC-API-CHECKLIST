@@ -8,6 +8,9 @@ const Tb_checklistchitietdone = sequelize.define("tb_checklistchitietdone", {
         autoIncrement: true,
         primaryKey: true
        },
+       ID_ChecklistC: {
+        type: DataTypes.INTEGER,
+      },
        Description: {
          type: DataTypes.JSON,
        },

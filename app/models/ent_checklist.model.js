@@ -12,11 +12,12 @@ const Ent_checklist = sequelize.define(
     },
     ID_Khuvuc: {
       type: DataTypes.INTEGER,
-      allowNull: false,
     },
     ID_Tang: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+    },
+    ID_Hangmuc: {
+      type: DataTypes.INTEGER,
     },
     Sothutu: {
       type: DataTypes.INTEGER,
@@ -24,34 +25,39 @@ const Ent_checklist = sequelize.define(
     },
     Maso: {
       type: DataTypes.CHAR,
-      allowNull: false,
     },
     MaQrCode: {
       type: DataTypes.CHAR,
-      allowNull: false,
     },
     Checklist: {
       type: DataTypes.CHAR,
-      allowNull: false,
     },
     Ghichu: {
       type: DataTypes.TEXT,
-      allowNull: false,
     },
     Tieuchuan: {
       type: DataTypes.TEXT,
-      allowNull: false,
     },
     Giatridinhdanh: {
       type: DataTypes.CHAR,
-      allowNull: false,
     },
     sCalv: {
       type: DataTypes.CHAR,
     },
+    calv_1: {
+      type: DataTypes.CHAR,
+    },
+    calv_2: {
+      type: DataTypes.CHAR,
+    },
+    calv_3: {
+      type: DataTypes.CHAR,
+    },
+    calv_4: {
+      type: DataTypes.CHAR,
+    },
     Giatrinhan: {
       type: DataTypes.CHAR,
-      allowNull: false,
     },
     ID_User: {
       type: DataTypes.INTEGER,

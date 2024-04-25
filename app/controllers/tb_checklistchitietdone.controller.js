@@ -21,6 +21,7 @@ exports.create = (req, res) => {
     // Create a Tb_checklistchitietdone
     const data = {
       Description: descriptions || "",
+      ID_ChecklistC: req.body.ID_ChecklistC || null,
       isDelete: 0,
     };
 

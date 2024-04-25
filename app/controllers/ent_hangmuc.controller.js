@@ -1,4 +1,8 @@
-const { Ent_hangmuc, Ent_toanha, Ent_khoicv } = require("../models/setup.model");
+const {
+  Ent_hangmuc,
+  Ent_toanha,
+  Ent_khoicv,
+} = require("../models/setup.model");
 const { Ent_khuvuc } = require("../models/setup.model");
 const { Op } = require("sequelize");
 
@@ -81,6 +85,11 @@ exports.get = async (req, res) => {
       orConditions.push({
         "$ent_khuvuc.ent_toanha.ID_Duan$": userData?.ID_Duan,
       });
+      if (userData.ID_KhoiCV !== null) {
+        orConditions.push({
+          "$ent_khuvuc.ID_KhoiCV$": userData.ID_KhoiCV,
+        });
+      }
       await Ent_hangmuc.findAll({
         attributes: [
           "ID_Hangmuc",
@@ -241,6 +250,7 @@ exports.filterByKhuvuc = async (req, res) => {
   try {
     const userData = req.user.data;
     const ID_Khuvuc = req.params.id;
+    console.log("ID_Khuvuc", ID_Khuvuc, typeof ID_Khuvuc);
 
     if (userData) {
       // Xây dựng điều kiện where dựa trên các giá trị đã kiểm tra
@@ -256,11 +266,9 @@ exports.filterByKhuvuc = async (req, res) => {
           whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData.ID_Duan;
         }
         if (userData.ID_KhoiCV !== null) {
-          whereCondition[Op.and].push({
-            ID_KhoiCV: userData.ID_KhoiCV,
-          });
+          whereCondition["$ent_khuvuc.ID_KhoiCV$"] = userData.ID_KhoiCV;
         }
-        if (req.body.ID_Khuvuc !== null) {
+        if (ID_Khuvuc !== null && ID_Khuvuc !== "" && ID_Khuvuc !== "null") {
           whereCondition[Op.and].push({
             ID_Khuvuc: ID_Khuvuc,
           });
@@ -320,6 +328,92 @@ exports.filterByKhuvuc = async (req, res) => {
       // Trả về lỗi nếu không có dữ liệu người dùng hoặc không có ID được cung cấp
       return res.status(400).json({
         message: "Vui lòng cung cấp ít nhất một trong hai ID.",
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+exports.filterByQr = async (req, res) => {
+  try {
+    const userData = req.user.data;
+
+    if (userData) {
+      // Xây dựng điều kiện where dựa trên các giá trị đã kiểm tra
+      const whereCondition = {
+        [Op.and]: [],
+      };
+
+      if (userData.Permission === 3 || userData.UserName === "PSH") {
+        // Nếu userData.Permission == 1, không cần thêm điều kiện where, lấy tất cả khu vực
+      } else {
+        // Nếu userData.Permission !== 1, thêm điều kiện where theo ID_KhoiCV và ID_Duan
+        if (userData.ID_Duan !== null) {
+          whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData.ID_Duan;
+        }
+        if (userData.ID_KhoiCV !== null) {
+          whereCondition["$ent_khuvuc.ID_KhoiCV$"] = userData.ID_KhoiCV;
+        }
+       
+      }
+      // Thêm điều kiện isDelete
+      whereCondition.isDelete = 0;
+      whereCondition.MaQrCode = req.body.MaQrCode;
+      Ent_hangmuc.findOne({
+        attributes: [
+          "ID_Hangmuc",
+          "ID_Khuvuc",
+          "MaQrCode",
+          "Hangmuc",
+          "Tieuchuankt",
+          "isDelete",
+        ],
+        include: [
+          {
+            model: Ent_khuvuc,
+            attributes: [
+              "ID_Khuvuc",
+              "ID_Toanha",
+              "ID_KhoiCV",
+              "Sothutu",
+              "Makhuvuc",
+              "MaQrCode",
+              "Tenkhuvuc",
+              "ID_User",
+              "isDelete",
+            ],
+            include: [
+              {
+                model: Ent_toanha,
+                attributes: ["Toanha", "Sotang", "ID_Toanha"],
+              },
+              {
+                model: Ent_khoicv,
+                attributes: ["KhoiCV"],
+              },
+            ],
+          },
+        ],
+        where: whereCondition,
+      })
+        .then((data) => {
+          res.status(200).json({
+            message: "Thông tin hạng mục!",
+            data: [data] || [],
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    } else {
+      // Trả về lỗi nếu không có dữ liệu người dùng hoặc không có ID được cung cấp
+      return res.status(400).json({
+        message: "Vui lòng thử lại sau.",
       });
     }
   } catch (error) {
