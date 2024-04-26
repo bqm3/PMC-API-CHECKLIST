@@ -24,6 +24,12 @@ const Ent_checklistc = sequelize.define(
     ID_Giamsat: {
       type: DataTypes.INTEGER,
     },
+    TongC: {
+      type: DataTypes.INTEGER,
+    },
+    Tong: {
+      type: DataTypes.INTEGER,
+    },
     Ngay: {
       type: DataTypes.TEXT,
     },

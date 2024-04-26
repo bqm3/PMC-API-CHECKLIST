@@ -6,6 +6,13 @@ const {
   Ent_khoicv,
   Tb_checklistc,
   Ent_chucvu,
+  Ent_checklist,
+  Ent_khuvuc,
+  Ent_hangmuc,
+  Ent_user,
+  Ent_toanha,
+  Tb_checklistchitiet,
+  Tb_checklistchitietdone,
 } = require("../models/setup.model");
 const { Op } = require("sequelize");
 const { uploadFile } = require("../middleware/auth_google");
@@ -26,6 +33,94 @@ exports.createFirstChecklist = async (req, res, next) => {
       .startOf("day")
       .format("YYYY-MM-DD");
     const { ID_Giamsat, ID_Calv, ID_KhoiCV } = req.body;
+
+    
+
+    let whereCondition = {
+      isDelete: 0,
+      ID_Hangmuc,
+      [Op.or]: [
+        { calv_1: ID_Calv },
+        { calv_2: ID_Calv },
+        { calv_3: ID_Calv },
+        { calv_4: ID_Calv }
+      ]
+    };
+
+    whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
+
+    const checklistData = await Ent_checklist.findAndCountAll({
+      attributes: [
+        "ID_Checklist",
+        "ID_Khuvuc",
+        "ID_Hangmuc",
+        "ID_Tang",
+        "Sothutu",
+        "Maso",
+        "MaQrCode",
+        "Checklist",
+        "Ghichu",
+        "Tieuchuan",
+        "Giatridinhdanh",
+        "Giatrinhan",
+        "ID_User",
+        "sCalv",
+        "calv_1",
+        "calv_2",
+        "calv_3",
+        "calv_4",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_khuvuc,
+          attributes: [
+            "Tenkhuvuc",
+            "MaQrCode",
+            "Makhuvuc",
+            "Sothutu",
+            "ID_Toanha",
+            "ID_KhoiCV",
+            "ID_Khuvuc",
+          ],
+          where: { ID_KhoiCV },
+          include: [
+            {
+              model: Ent_toanha,
+              attributes: ["Toanha", "Sotang", "ID_Toanha"],
+              include: {
+                model: Ent_duan,
+                attributes: ["ID_Duan", "Duan"],
+                where: { ID_Duan: userData.ID_Duan },
+              },
+            },
+            {
+              model: Ent_khoicv,
+              attributes: ["KhoiCV"],
+            },
+          ],
+        },
+       
+        {
+          model: Ent_hangmuc,
+          attributes: ["Hangmuc", "Tieuchuankt"],
+        },
+        {
+          model: Ent_user,
+          include: {
+            model: Ent_chucvu,
+            attributes: ["Chucvu"],
+          },
+          attributes: ["UserName", "Emails"],
+        },
+      ],
+      where: whereCondition,
+      order: [
+        ["ID_Khuvuc", "ASC"],
+        ["Sothutu", "ASC"],
+      ],
+    });
+
 
     // Kiểm tra sự tồn tại của Ngay, ID_Giamsat, ID_KhoiCV trong cơ sở dữ liệu
     Tb_checklistc.findAndCountAll({
@@ -59,6 +154,8 @@ exports.createFirstChecklist = async (req, res, next) => {
             ID_KhoiCV: req.body.ID_KhoiCV,
             Giobd: req.body.Giobd,
             Ngay: formattedDate,
+            TongC: 0,
+            Tong: checklistData.count || 0,
             Tinhtrang: 0,
             isDelete: 0,
           };
@@ -95,6 +192,8 @@ exports.createFirstChecklist = async (req, res, next) => {
                 ID_Duan: req.body.ID_Duan,
                 ID_KhoiCV: req.body.ID_KhoiCV,
                 Giobd: req.body.Giobd,
+                TongC: 0,
+                Tong: checklistData.count || 0,
                 Ngay: formattedDate,
                 Tinhtrang: 0,
                 isDelete: 0,
@@ -214,6 +313,8 @@ exports.getCheckListc = async (req, res, next) => {
           "ID_Calv",
           "ID_Giamsat",
           "Ngay",
+          "Tong",
+          "TongC",
           "Giobd",
           "Giochupanh1",
           "Anh1",

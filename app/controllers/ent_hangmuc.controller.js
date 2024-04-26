@@ -139,7 +139,7 @@ exports.get = async (req, res) => {
       })
         .then((data) => {
           res.status(200).json({
-            message: "Danh sách khu vực!",
+            message: "Danh sách hạng mục!",
             data: data,
           });
         })
@@ -250,7 +250,6 @@ exports.filterByKhuvuc = async (req, res) => {
   try {
     const userData = req.user.data;
     const ID_Khuvuc = req.params.id;
-    console.log("ID_Khuvuc", ID_Khuvuc, typeof ID_Khuvuc);
 
     if (userData) {
       // Xây dựng điều kiện where dựa trên các giá trị đã kiểm tra
@@ -402,7 +401,7 @@ exports.filterByQr = async (req, res) => {
         .then((data) => {
           res.status(200).json({
             message: "Thông tin hạng mục!",
-            data: [data] || [],
+            data: data ?  [data] : [],
           });
         })
         .catch((err) => {

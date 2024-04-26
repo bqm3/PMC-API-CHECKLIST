@@ -13,7 +13,7 @@ const {
   Ent_tang,
   Ent_toanha,
 } = require("../models/setup.model");
-const { Op } = require("sequelize");
+const { Op, where, Sequelize } = require("sequelize");
 const ExcelJS = require("exceljs");
 var path = require("path");
 
@@ -41,6 +41,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       uploadedFileIds.push(fileId); // Push id to array
     }
 
+    console.log('records',records)
     // Assuming all arrays in records have the same length
     const arrayLength = records.ID_ChecklistC.length;
 
@@ -67,10 +68,19 @@ exports.createCheckListChiTiet = async (req, res, next) => {
         Gioht: Gioht,
         Anh: Anh, // Assuming Anh is the image URL
       });
-      console.log("newRecord", newRecord);
 
       await newRecord.save();
     }
+    Tb_checklistc.update(
+      {
+        TongC: Sequelize.literal(`TongC + ${checklistLength}`),
+      },
+      {
+        where: {
+          ID_ChecklistC: records.ID_ChecklistC[0],
+        },
+      }
+    );
 
     // Respond with success message
     res.status(200).json({ message: "Records created successfully" });
@@ -708,7 +718,6 @@ exports.getWriteExcel = async (req, res, next) => {
       {
         header: "Dự án",
         key: "tb_checklistc.ent_duan.Duan",
-        
       },
       {
         header: "Tên tòa nhà",
@@ -797,12 +806,15 @@ exports.getWriteExcel = async (req, res, next) => {
 
     await workbook.xlsx.writeFile(filePath);
 
-    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
 
     // Stream the file to the client
     const fileStream = fs.createReadStream(filePath);
-    fileStream.pipe(res); 
+    fileStream.pipe(res);
 
     return res
       .status(200)
@@ -813,5 +825,3 @@ exports.getWriteExcel = async (req, res, next) => {
       .json({ message: error.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
-
-

@@ -10,6 +10,7 @@ module.exports = (app) => {
   router.get("/:id", isAuthenticated, ent_khuvuc.getDetail);
   router.put("/delete/:id",isAuthenticated, ent_khuvuc.delete);
   router.put("/update/:id",isAuthenticated, ent_khuvuc.update);
+  router.post("/filter_qr", isAuthenticated, ent_khuvuc.filterByQr)
 
   app.use("/api/ent_khuvuc", router);
 };

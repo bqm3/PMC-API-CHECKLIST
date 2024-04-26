@@ -85,8 +85,14 @@ exports.get = async (req, res) => {
   try {
     const userData = req.user.data;
     const orConditions = [];
+    let whereCondition = {
+      isDelete: 0,
+    };
     if (userData) {
       orConditions.push({ "$ent_toanha.ID_Duan$": userData?.ID_Duan });
+      if (userData?.ID_KhoiCV !== null) {
+        whereCondition.ID_KhoiCV = userData?.ID_KhoiCV;
+      }
       await Ent_khuvuc.findAll({
         attributes: [
           "ID_Khuvuc",
@@ -109,10 +115,12 @@ exports.get = async (req, res) => {
             attributes: ["KhoiCV"],
           },
         ],
-        where: {
-          isDelete: 0,
-          [Op.and]: [orConditions],
-        },
+        where: [
+          whereCondition,
+          {
+            [Op.and]: [orConditions],
+          },
+        ],
       })
         .then((data) => {
           res.status(200).json({
@@ -203,8 +211,7 @@ exports.update = async (req, res) => {
           [Op.and]: [
             { MaQrCode: { [Op.not]: null, [Op.ne]: "" } }, // Kiểm tra mã QR Code không rỗng hoặc null
             { ID_Khuvuc: { [Op.ne]: req.params.id } }, // Kiểm tra ID_Khuvuc khác với ID của khu vực đang cập nhật
-            { MaQrCode: req.body.MaQrCode } // Kiểm tra xem mã QR Code mới có trùng với mã QR Code được gửi trong yêu cầu không
-
+            { MaQrCode: req.body.MaQrCode }, // Kiểm tra xem mã QR Code mới có trùng với mã QR Code được gửi trong yêu cầu không
           ],
         },
         attributes: [
@@ -291,7 +298,7 @@ exports.getKhuVuc = async (req, res) => {
         [Op.and]: [],
       };
 
-      if (userData.Permission === 3 || userData.UserName === 'PSH') {
+      if (userData.Permission === 3 || userData.UserName === "PSH") {
         // Nếu userData.Permission == 1, không cần thêm điều kiện where, lấy tất cả khu vực
       } else {
         // Nếu userData.Permission !== 1, thêm điều kiện where theo ID_KhoiCV và ID_Duan
@@ -303,7 +310,6 @@ exports.getKhuVuc = async (req, res) => {
             ID_KhoiCV: userData.ID_KhoiCV,
           });
         }
-
       }
       // Thêm điều kiện isDelete
       whereCondition.isDelete = 0;
@@ -347,6 +353,79 @@ exports.getKhuVuc = async (req, res) => {
       // Trả về lỗi nếu không có dữ liệu người dùng hoặc không có ID được cung cấp
       return res.status(400).json({
         message: "Vui lòng cung cấp ít nhất một trong hai ID.",
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+exports.filterByQr = async (req, res) => {
+  try {
+    const userData = req.user.data;
+
+    if (userData) {
+      // Xây dựng điều kiện where dựa trên các giá trị đã kiểm tra
+      const whereCondition = {
+        [Op.and]: [],
+      };
+
+      if (userData.Permission === 3 || userData.UserName === "PSH") {
+        // Nếu userData.Permission == 1, không cần thêm điều kiện where, lấy tất cả khu vực
+      } else {
+        // Nếu userData.Permission !== 1, thêm điều kiện where theo ID_KhoiCV và ID_Duan
+        if (userData.ID_Duan !== null) {
+          whereCondition["$ent_toanha.ID_Duan$"] = userData.ID_Duan;
+        }
+        if (userData.ID_KhoiCV !== null) {
+          whereCondition["$ID_KhoiCV$"] = userData.ID_KhoiCV;
+        }
+       
+      }
+      // Thêm điều kiện isDelete
+      whereCondition.isDelete = 0;
+      whereCondition.MaQrCode = req.body.MaQrCode;
+      Ent_khuvuc.findOne({
+        attributes: [
+          "ID_Khuvuc",
+          "ID_Toanha",
+          "ID_KhoiCV",
+          "MaQrCode",
+          "Sothutu",
+          "Makhuvuc",
+          "Tenkhuvuc",
+          "ID_User",
+          "isDelete",
+        ],
+        include: [
+          {
+            model: Ent_toanha,
+            attributes: ["Toanha", "Sotang", "ID_Toanha"],
+          },
+          {
+            model: Ent_khoicv,
+            attributes: ["KhoiCV"],
+          },
+        ],
+        where: whereCondition,
+      })
+        .then((data) => {
+          res.status(200).json({
+            message: "Thông tin tòa nhà!",
+            data: data ?  [data] : [],
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    } else {
+      // Trả về lỗi nếu không có dữ liệu người dùng hoặc không có ID được cung cấp
+      return res.status(400).json({
+        message: "Vui lòng thử lại sau.",
       });
     }
   } catch (error) {
