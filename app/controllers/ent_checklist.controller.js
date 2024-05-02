@@ -11,10 +11,11 @@ const {
   Ent_hangmuc,
   Tb_checklistchitiet,
   Tb_checklistchitietdone,
+  Tb_checklistc,
 } = require("../models/setup.model");
-const { Op } = require("sequelize");
+const { Op, Sequelize } = require("sequelize");
 
-exports.create = (req, res) => {
+exports.create = async (req, res) => {
   try {
     const userData = req.user.data;
     if (userData) {
@@ -48,12 +49,16 @@ exports.create = (req, res) => {
         isDelete: 0,
       };
 
+      
+
       Ent_checklist.create(data)
-        .then((data) => {
+        .then(async(data) => {
           res.status(200).json({
             message: "Tạo checklist thành công!",
             data: data,
           });
+
+         
         })
         .catch((err) => {
           res.status(500).json({
@@ -615,11 +620,11 @@ exports.getFilter = async (req, res) => {
     const userData = req.user.data;
     const ID_Khuvuc = req.body.ID_Khuvuc;
     const ID_Tang = req.body.ID_Tang;
-    const ID_Calv = req.params.id_calv;
     const ID_Toanha = req.body.ID_Toanha;
     const orConditions = [];
 
     const ID_KhoiCV = req.params.id;
+    const ID_Calv = req.params.id_calv;
     const ID_ChecklistC = req.params.idc;
     const ID_Hangmuc = req.params.id_hm;
 
@@ -628,8 +633,8 @@ exports.getFilter = async (req, res) => {
         orConditions.push({ ID_Khuvuc: ID_Khuvuc });
       }
 
-      if (ID_Khuvuc !== null) {
-        orConditions.push({ ID_Khuvuc: ID_Khuvuc });
+      if (ID_Hangmuc !== null) {
+        orConditions.push({ ID_Hangmuc: ID_Hangmuc });
       }
 
       if (ID_Tang !== null) {
@@ -690,6 +695,7 @@ exports.getFilter = async (req, res) => {
         ],
       };
       whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
+      whereCondition["$ent_khuvuc.ID_KhoiCV$"] = ID_KhoiCV;
 
       if (
         checklistIds &&
@@ -744,9 +750,7 @@ exports.getFilter = async (req, res) => {
               "ID_KhoiCV",
             ],
             required: false,
-            where: {
-              ID_KhoiCV: ID_KhoiCV,
-            },
+           
             include: [
               {
                 model: Ent_toanha,
@@ -897,8 +901,6 @@ exports.getChecklist = async (req, res) => {
 
     const checklistIds = checklistItems.map((item) => item?.ID_Checklist) || [];
     const checklistDoneIds = arrPush.map((item) => item?.ID_Checklist) || [];
-    console.log("checklistIds", checklistIds);
-    console.log("checklistDoneIds", checklistDoneIds);
 
     let whereCondition = {
       isDelete: 0,
@@ -1025,7 +1027,7 @@ exports.getChecklist = async (req, res) => {
     }
 
     const filteredData = checklistData.filter(
-      (item) => item.ent_khuvuc !== null
+      (item) => item.ent_hangmuc !== null
     );
 
     return res.status(200).json({

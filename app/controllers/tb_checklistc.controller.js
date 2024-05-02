@@ -38,7 +38,6 @@ exports.createFirstChecklist = async (req, res, next) => {
 
     let whereCondition = {
       isDelete: 0,
-      ID_Hangmuc,
       [Op.or]: [
         { calv_1: ID_Calv },
         { calv_2: ID_Calv },
@@ -48,6 +47,7 @@ exports.createFirstChecklist = async (req, res, next) => {
     };
 
     whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
+    whereCondition["$ent_khuvuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
 
     const checklistData = await Ent_checklist.findAndCountAll({
       attributes: [
@@ -83,7 +83,6 @@ exports.createFirstChecklist = async (req, res, next) => {
             "ID_KhoiCV",
             "ID_Khuvuc",
           ],
-          where: { ID_KhoiCV },
           include: [
             {
               model: Ent_toanha,
@@ -103,7 +102,7 @@ exports.createFirstChecklist = async (req, res, next) => {
        
         {
           model: Ent_hangmuc,
-          attributes: ["Hangmuc", "Tieuchuankt"],
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Hangmuc"],
         },
         {
           model: Ent_user,
@@ -136,7 +135,7 @@ exports.createFirstChecklist = async (req, res, next) => {
       where: {
         [Op.and]: [
           { Ngay: req.body.Ngay },
-          { ID_KhoiCV: ID_KhoiCV },
+          { ID_KhoiCV: userData?.ID_KhoiCV },
           { ID_Duan: userData.ID_Duan },
         ],
       },
