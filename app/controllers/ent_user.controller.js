@@ -318,6 +318,7 @@ exports.getUserOnline = async (req, res, next) => {
         "ID_KhoiCV",
         "Permission",
       ],
+      order: [["ID_Duan", "ASC"] , ["Permission", "ASC"]],
       include: [
         {
           association: "ent_duan",
@@ -335,6 +336,7 @@ exports.getUserOnline = async (req, res, next) => {
       where: {
         isDelete: 0,
       },
+     
     })
       .then((data) => {
         res.status(200).json({
