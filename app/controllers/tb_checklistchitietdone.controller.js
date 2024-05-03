@@ -25,16 +25,12 @@ exports.create = (req, res) => {
     }
     const descriptions = JSON.parse(Description);
 
-    console.log('descriptions',descriptions)
-
     // Create a Tb_checklistchitietdone
     const data = {
       Description: descriptions || "",
       ID_ChecklistC:  ID_ChecklistC|| null,
       isDelete: 0,
     };
-
-    console.log("Tb_checklistchitietdone", checklistLength);
     
     // Save Tb_checklistchitietdone in the database
     Tb_checklistchitietdone.create(data)

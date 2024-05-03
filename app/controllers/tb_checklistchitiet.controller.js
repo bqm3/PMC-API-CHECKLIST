@@ -22,8 +22,6 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     // Extract data from the request body and files
     const records = req.body;
     const images = req.files;
-    console.log("images", images);
-    console.log("records", records);
 
     // Ensure records.ID_ChecklistC and records.ID_Checklist are arrays
     const ensureArray = (data) => {
@@ -54,9 +52,6 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       uploadedFileIds.push({ id: fileId, name: image.originalname });
     }
 
-    console.log("records", records);
-    console.log("uploadedFileIds", uploadedFileIds);
-
     // Prepare records for bulk creation
     const newRecords = records.ID_ChecklistC.map((ID_ChecklistC, index) => {
       const ID_Checklist = records.ID_Checklist[index];
@@ -70,7 +65,6 @@ exports.createCheckListChiTiet = async (req, res, next) => {
 
       if (inputAnh) {
         
-        console.log('inputAnh',inputAnh)
         // Kiểm tra tệp ảnh đã tải lên
         const matchingImage = uploadedFileIds.find(
           (file) => file.name === inputAnh

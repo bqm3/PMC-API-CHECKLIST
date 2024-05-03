@@ -1,49 +1,79 @@
-const { Ent_giamsat, Ent_duan, Ent_chucvu, Ent_khoicv } = require("../models/setup.model");
+const {
+  Ent_giamsat,
+  Ent_duan,
+  Ent_chucvu,
+  Ent_khoicv,
+} = require("../models/setup.model");
 const { Op } = require("sequelize");
 
-exports.create = (req, res) => {
+exports.create = async (req, res) => {
   // Validate request
   try {
-    if (
-      !req.body.ID_Duan ||
-      !req.body.Hoten ||
-      !req.body.ID_Chucvu
-    ) {
+    if (!req.body.ID_Duan || !req.body.Hoten || !req.body.ID_Chucvu) {
       res.status(400).json({
         message: "Phải nhập đầy đủ dữ liệu!",
       });
       return;
     }
+
     const userData = req.user.data;
     if (userData) {
+      const {
+        ID_Duan,
+        Hoten,
+        Gioitinh,
+        Sodienthoai,
+        Ngaysinh,
+        ID_Chucvu,
+        ID_KhoiCV,
+        iQuyen,
+      } = req.body;
+
+      // Kiểm tra xem số điện thoại đã tồn tại trong cơ sở dữ liệu hay chưa
+      const existingEntry = await Ent_giamsat.findOne({
+        attributes: [
+          "ID_Giamsat",
+          "ID_Duan",
+          "ID_Chucvu",
+          "ID_KhoiCV",
+          "Hoten",
+          "Ngaysinh",
+          "Sodienthoai",
+          "Gioitinh",
+          "iQuyen",
+          "isDelete",
+        ],
+        where: { Sodienthoai },
+      });
+      if (existingEntry) {
+        return res.status(400).json({
+          message: "Số điện thoại đã tồn tại!",
+        });
+      }
+
+      // Nếu số điện thoại chưa tồn tại, tạo bản ghi mới
       const data = {
-        ID_Duan: req.body.ID_Duan || null,
-        Hoten: req.body.Hoten || null,
-        Gioitinh: req.body.Gioitinh || null,
-        Sodienthoai: req.body.Sodienthoai || null,
-        Ngaysinh: req.body.Ngaysinh || null,
-        ID_Chucvu: req.body.ID_Chucvu || null,
-        ID_KhoiCV: req.body.ID_KhoiCV || null,
-        iQuyen: req.body.iQuyen || null,
+        ID_Duan: ID_Duan || null,
+        Hoten: Hoten || null,
+        Gioitinh: Gioitinh || null,
+        Sodienthoai: Sodienthoai || null,
+        Ngaysinh: Ngaysinh || null,
+        ID_Chucvu: ID_Chucvu || null,
+        ID_KhoiCV: ID_KhoiCV || null,
+        iQuyen: iQuyen || null,
         isDelete: 0,
       };
 
-      Ent_giamsat.create(data)
-        .then((data) => {
-          res.status(200).json({
-            message: "Tạo giám sát thành công!",
-            data: data,
-          });
-        })
-        .catch((err) => {
-          console.log("err", err);
-          res.status(500).json({
-            message: err.message || "Lỗi! Vui lòng thử lại sau.",
-          });
-        });
+      // Tạo bản ghi mới
+      const newRecord = await Ent_giamsat.create(data);
+      res.status(201).json({
+        message: "Tạo giám sát thành công!",
+        data: newRecord,
+      });
     }
   } catch (err) {
-    return res.status(500).json({
+    console.log("Error:", err);
+    res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
@@ -65,7 +95,7 @@ exports.get = async (req, res) => {
       if (userData.Permission !== 1) {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
         whereClause.ID_Chucvu = {
-          [Op.not]: 1 // Exclude records where ID_Chucvu is 1
+          [Op.not]: 1, // Exclude records where ID_Chucvu is 1
         };
       }
 
@@ -181,34 +211,58 @@ exports.update = async (req, res) => {
         });
         return;
       }
+      console.log("req.body", req.body, req.params.id);
+      // Kiểm tra xem số điện thoại đã tồn tại trong cơ sở dữ liệu hay chưa, ngoại trừ bản ghi hiện tại đang được cập nhật
+      const existingEntry = await Ent_giamsat.findOne({
+        attributes: [
+          "ID_Giamsat",
+          "ID_Duan",
+          "ID_Chucvu",
+          "ID_KhoiCV",
+          "Hoten",
+          "Ngaysinh",
+          "Sodienthoai",
+          "Gioitinh",
+          "iQuyen",
+          "isDelete",
+        ],
+        where: {
+          Sodienthoai: req.body.Sodienthoai,
+          ID_Giamsat: {
+            [Op.ne]: req.params.id, // Loại trừ bản ghi hiện tại đang được cập nhật
+          },
+        },
+      });
+      console.log("existingEntry", existingEntry);
+
+      if (existingEntry) {
+        return res.status(400).json({
+          message: "Số điện thoại đã tồn tại!",
+        });
+      }
+
+      // Nếu kiểm tra không phát hiện số điện thoại trùng, tiếp tục cập nhật bản ghi
       const reqData = {
-        ID_Duan: req.body.ID_Duan,
-        Hoten: req.body.Hoten,
-        Gioitinh: req.body.Gioitinh,
-        Sodienthoai: req.body.Sodienthoai,
-        Ngaysinh: req.body.Ngaysinh,
-        ID_Chucvu: req.body.ID_Chucvu,
-        ID_KhoiCV: req.body.ID_KhoiCV,
-        iQuyen: req.body.iQuyen,
+        ID_Duan: req.body.ID_Duan || null,
+        Hoten: req.body.Hoten || null,
+        Gioitinh: req.body.Gioitinh || null,
+        Sodienthoai: req.body.Sodienthoai || null,
+        Ngaysinh: req.body.Ngaysinh || null,
+        ID_Chucvu: req.body.ID_Chucvu || null,
+        ID_KhoiCV: req.body.ID_KhoiCV || null,
+        iQuyen: req.body.iQuyen || null,
         isDelete: 0,
       };
-      console.log('reqData',reqData, req.params.id)
 
-      Ent_giamsat.update(reqData, {
+      await Ent_giamsat.update(reqData, {
         where: {
           ID_Giamsat: req.params.id,
         },
-      })
-        .then((data) => {
-          res.status(200).json({
-            message: "Cập nhật ca làm việc thành công!",
-          });
-        })
-        .catch((err) => {
-          res.status(500).json({
-            message: err.message || "Lỗi! Vui lòng thử lại sau.",
-          });
-        });
+      });
+
+      res.status(200).json({
+        message: "Cập nhật ca làm việc thành công!",
+      });
     }
   } catch (error) {
     res.status(500).json({
