@@ -52,12 +52,15 @@ exports.get = async (req, res) => {
           attributes: ["Duan"],
         },
         where: whereClause,
+        order: [
+          ["ID_Duan", "ASC"],
+        ]
       })
         .then((data) => {
           res.status(200).json({
             message: "Danh sách tòa nhà!",
             data: data,
-          });
+          });  
         })
         .catch((err) => {
           res.status(500).json({

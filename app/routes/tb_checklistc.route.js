@@ -18,8 +18,8 @@ module.exports = (app) => {
   router.get("/:id", [isAuthenticated], tb_checklistc.getDetail);
   router.put("/close/:id", [isAuthenticated], tb_checklistc.close);
 
-  router.put(
-    "/update-images/:id",
+  router.post(
+    "/update_images/:id",
     [isAuthenticated, upload.any()],
     tb_checklistc.checklistImages
   );

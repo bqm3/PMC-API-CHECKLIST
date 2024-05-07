@@ -548,6 +548,7 @@ exports.checklistImages = async (req, res) => {
           }
         }
       }
+      console.log('reqData',reqData)
 
       // Perform update only if reqData contains any data
       if (Object.keys(reqData).length > 0) {

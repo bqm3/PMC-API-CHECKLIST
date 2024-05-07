@@ -873,6 +873,7 @@ exports.getFilterSearch = async (req, res) => {
 
     const ID_Khuvuc = req.body.ID_Khuvuc;
     const ID_Tang = req.body.ID_Tang;
+    const ID_Hangmuc = req.body.ID_Hangmuc;
 
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.limit) || 100; // Số lượng phần tử trên mỗi trang
@@ -894,6 +895,12 @@ exports.getFilterSearch = async (req, res) => {
     if (ID_Tang !== null) {
       orConditions.push({
         ID_Tang: ID_Tang,
+      });
+    }
+
+    if (ID_Hangmuc !== null) {
+      orConditions.push({
+        ID_Hangmuc: ID_Hangmuc,
       });
     }
 

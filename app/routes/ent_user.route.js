@@ -5,6 +5,7 @@ module.exports = (app) => {
     var router = require("express").Router();
   
     router.post("/login", ent_user.login);
+    router.get("/check-auth",[isAuthenticated], ent_user.checkAuth);
     router.post("/register", [isAuthenticated, isAdmin],ent_user.register);
     router.post("/change-password",[isAuthenticated], ent_user.changePassword);
     router.put("/delete/:id",[isAuthenticated, isAdmin], ent_user.deleteUser);

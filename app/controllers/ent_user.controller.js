@@ -222,7 +222,6 @@ exports.changePassword = async (req, res, next) => {
 };
 
 // Update user
-
 exports.updateUser = async (req, res) => {
   try {
     if (!req.body) {
@@ -318,7 +317,7 @@ exports.getUserOnline = async (req, res, next) => {
         "ID_KhoiCV",
         "Permission",
       ],
-      order: [["ID_Duan", "ASC"] , ["Permission", "ASC"]],
+      order: [["ID_Duan", "ASC"], ["Permission", "ASC"]],
       include: [
         {
           association: "ent_duan",
@@ -336,7 +335,7 @@ exports.getUserOnline = async (req, res, next) => {
       where: {
         isDelete: 0,
       },
-     
+
     })
       .then((data) => {
         res.status(200).json({
@@ -355,3 +354,19 @@ exports.getUserOnline = async (req, res, next) => {
     });
   }
 };
+
+//get Check auth
+exports.checkAuth = async (req, res, next) => {
+  try {
+    const userData = req.user.data;
+    // console.log('userData', userData)
+    res.status(200).json({
+      message: "Danh sách nhân viên!",
+      user: userData,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+}

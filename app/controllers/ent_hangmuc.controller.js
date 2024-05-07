@@ -156,6 +156,85 @@ exports.get = async (req, res) => {
   }
 };
 
+exports.getDetail = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    const orConditions = [];
+    if (userData) {
+      orConditions.push({
+        "$ent_khuvuc.ent_toanha.ID_Duan$": userData?.ID_Duan,
+      });
+      if (userData.ID_KhoiCV !== null) {
+        orConditions.push({
+          "$ent_khuvuc.ID_KhoiCV$": userData.ID_KhoiCV,
+        });
+      }
+      await Ent_hangmuc.findByPk(req.params.id, {
+        attributes: [
+          "ID_Hangmuc",
+          "ID_Khuvuc",
+          "MaQrCode",
+          "Hangmuc",
+          "Tieuchuankt",
+          "isDelete",
+        ],
+        include: [
+          {
+            model: Ent_khuvuc,
+            attributes: [
+              "ID_Toanha",
+              "ID_Khuvuc",
+              "ID_KhoiCV",
+              "Sothutu",
+              "MaQrCode",
+              "Tenkhuvuc",
+              "ID_User",
+              "isDelete",
+            ],
+            where: {
+              isDelete: 0,
+            },
+            include: [
+              {
+                model: Ent_toanha,
+                attributes: [
+                  "ID_Toanha",
+                  "ID_Duan",
+                  "Toanha",
+                  "Sotang",
+                  "isDelete",
+                ],
+                where: {
+                  isDelete: 0,
+                },
+              },
+            ],
+          },
+        ],
+        where: {
+          isDelete: 0,
+          [Op.and]: [orConditions],
+        },
+      })
+        .then((data) => {
+          res.status(200).json({
+            message: "Hạng mục cần tìm!",
+            data: data,
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
 exports.update = async (req, res) => {
   try {
     const userData = req.user.data;
