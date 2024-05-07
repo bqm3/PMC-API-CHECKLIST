@@ -13,6 +13,7 @@ var corsOptions = {
     "https://dawndev.io.vn",
     "https://master-nu-pied.vercel.app/",
     "checklist.pmcweb.vn",
+    "https://pmc-rho.vercel.app"
   ],
 
   credentials: true, //access-control-allow-credentials:true
