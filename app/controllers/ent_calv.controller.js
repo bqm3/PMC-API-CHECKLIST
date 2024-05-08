@@ -160,7 +160,7 @@ exports.getFilter = async (req, res) => {
       };
 
       // Nếu quyền là 1 (Permission === 1) thì không cần thêm điều kiện ID_KhoiCV
-      if (ID_KhoiCV !== null) {
+      if (ID_KhoiCV !== null && ID_KhoiCV !== undefined) {
         whereClause.ID_KhoiCV = ID_KhoiCV;
       }
       
