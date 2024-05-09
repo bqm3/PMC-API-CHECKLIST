@@ -19,7 +19,7 @@ exports.create = async (req, res) => {
   try {
     const userData = req.user.data;
     if (userData) {
-      if (!req.body.ID_Khuvuc || !req.body.Checklist || !req.body.Giatrinhan) {
+      if (!req.body.Checklist || !req.body.Giatrinhan) {
         res.status(400).json({
           message: "Phải nhập đầy đủ dữ liệu!",
         });
@@ -85,7 +85,7 @@ exports.get = async (req, res) => {
     const orConditions = [];
     if (userData) {
       orConditions.push({
-        "$ent_khuvuc.ent_toanha.ID_Duan$": userData?.ID_Duan,
+        "$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$": userData?.ID_Duan,
       });
     }
 
@@ -107,29 +107,36 @@ exports.get = async (req, res) => {
       ],
       include: [
         {
-          model: Ent_khuvuc,
-          attributes: [
-            "Tenkhuvuc",
-            "MaQrCode",
-            "Makhuvuc",
-            "Sothutu",
-            "ID_Toanha",
-            "ID_KhoiCV",
-            "ID_Khuvuc",
-          ],
+          model: Ent_hangmuc,
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc"],
           include: [
             {
-              model: Ent_toanha,
-              attributes: ["Toanha", "Sotang", "ID_Toanha"],
-              include: {
-                model: Ent_duan,
-                attributes: ["ID_Duan", "Duan"],
-                where: { ID_Duan: userData.ID_Duan },
-              },
-            },
-            {
-              model: Ent_khoicv,
-              attributes: ["KhoiCV"],
+              model: Ent_khuvuc,
+              attributes: [
+                "Tenkhuvuc",
+                "MaQrCode",
+                "Makhuvuc",
+                "Sothutu",
+                "ID_Toanha",
+                "ID_KhoiCV",
+                "ID_Khuvuc",
+              ],
+              include: [
+                {
+                  model: Ent_toanha,
+                  attributes: ["Toanha", "Sotang", "ID_Toanha"],
+                  include: {
+                    model: Ent_duan,
+                    attributes: ["ID_Duan", "Duan"],
+                    where: { ID_Duan: userData.ID_Duan },
+                  },
+                },
+
+                {
+                  model: Ent_khoicv,
+                  attributes: ["KhoiCV"],
+                },
+              ],
             },
           ],
         },
@@ -168,41 +175,48 @@ exports.get = async (req, res) => {
         "Tieuchuan",
         "Giatridinhdanh",
         "Giatrinhan",
+        "sCalv",
+        "calv_1",
+        "calv_2",
+        "calv_3",
+        "calv_4",
         "ID_User",
         "isDelete",
       ],
       include: [
         {
-          model: Ent_khuvuc,
-          attributes: [
-            "Tenkhuvuc",
-            "MaQrCode",
-            "Makhuvuc",
-            "Sothutu",
-            "ID_Toanha",
-            "ID_KhoiCV",
-            "ID_Khuvuc",
-          ],
+          model: Ent_hangmuc,
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc"],
           include: [
             {
-              model: Ent_toanha,
-              attributes: ["Toanha", "Sotang", "ID_Toanha"],
-              include: {
-                model: Ent_duan,
-                attributes: ["ID_Duan", "Duan"],
-                where: { ID_Duan: userData.ID_Duan },
-              },
-            },
+              model: Ent_khuvuc,
+              attributes: [
+                "Tenkhuvuc",
+                "MaQrCode",
+                "Makhuvuc",
+                "Sothutu",
+                "ID_Toanha",
+                "ID_KhoiCV",
+                "ID_Khuvuc",
+              ],
+              include: [
+                {
+                  model: Ent_toanha,
+                  attributes: ["Toanha", "Sotang", "ID_Toanha"],
+                  include: {
+                    model: Ent_duan,
+                    attributes: ["ID_Duan", "Duan"],
+                    where: { ID_Duan: userData.ID_Duan },
+                  },
+                },
 
-            {
-              model: Ent_khoicv,
-              attributes: ["KhoiCV"],
+                {
+                  model: Ent_khoicv,
+                  attributes: ["KhoiCV"],
+                },
+              ],
             },
           ],
-        },
-        {
-          model: Ent_hangmuc,
-          attributes: ["Hangmuc", "Tieuchuankt"],
         },
         {
           model: Ent_tang,
@@ -244,6 +258,7 @@ exports.get = async (req, res) => {
         page: page,
         pageSize: pageSize,
         totalPages: totalPages,
+        totalCount: totalCount,
         data: filteredData,
       });
     } else {
@@ -268,36 +283,55 @@ exports.getDetail = async (req, res) => {
           "ID_Checklist",
           "ID_Khuvuc",
           "ID_Tang",
+          "ID_Hangmuc",
           "Sothutu",
           "Maso",
           "MaQrCode",
           "Checklist",
           "Ghichu",
+          "Tieuchuan",
           "Giatridinhdanh",
           "Giatrinhan",
+          "sCalv",
+          "calv_1",
+          "calv_2",
+          "calv_3",
+          "calv_4",
           "ID_User",
           "isDelete",
         ],
         include: [
           {
-            model: Ent_khuvuc,
-            attributes: [
-              "Tenkhuvuc",
-              "MaQrCode",
-              "Makhuvuc",
-              "Sothutu",
-              "ID_Toanha",
-              "ID_KhoiCV",
-            ],
-            required: false,
+            model: Ent_hangmuc,
+            attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc"],
             include: [
               {
-                model: Ent_toanha,
-                attributes: ["Toanha", "Sotang"],
-              },
-              {
-                model: Ent_khoicv,
-                attributes: ["KhoiCV"],
+                model: Ent_khuvuc,
+                attributes: [
+                  "Tenkhuvuc",
+                  "MaQrCode",
+                  "Makhuvuc",
+                  "Sothutu",
+                  "ID_Toanha",
+                  "ID_KhoiCV",
+                  "ID_Khuvuc",
+                ],
+                include: [
+                  {
+                    model: Ent_toanha,
+                    attributes: ["Toanha", "Sotang", "ID_Toanha"],
+                    include: {
+                      model: Ent_duan,
+                      attributes: ["ID_Duan", "Duan"],
+                      where: { ID_Duan: userData.ID_Duan },
+                    },
+                  },
+  
+                  {
+                    model: Ent_khoicv,
+                    attributes: ["KhoiCV"],
+                  },
+                ],
               },
             ],
           },
