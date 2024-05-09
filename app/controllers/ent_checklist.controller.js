@@ -818,32 +818,7 @@ exports.getChecklist = async (req, res) => {
         "isDelete",
       ],
       include: [
-        {
-          model: Ent_khuvuc,
-          attributes: [
-            "Tenkhuvuc",
-            "MaQrCode",
-            "Makhuvuc",
-            "Sothutu",
-            "ID_Toanha",
-            "ID_KhoiCV",
-            "ID_Khuvuc",
-          ],
-          include: [
-            {
-              model: Ent_toanha,
-              attributes: ["Toanha", "Sotang", "ID_Toanha"],
-              include: {
-                model: Ent_duan,
-                attributes: ["ID_Duan", "Duan"],
-              },
-            },
-            {
-              model: Ent_khoicv,
-              attributes: ["KhoiCV"],
-            },
-          ],
-        },
+      
         {
           model: Ent_tang,
           attributes: ["Tentang", "Sotang"],
@@ -851,6 +826,34 @@ exports.getChecklist = async (req, res) => {
         {
           model: Ent_hangmuc,
           attributes: ["Hangmuc", "Tieuchuankt"],
+          include: [
+            {
+              model: Ent_khuvuc,
+              attributes: [
+                "Tenkhuvuc",
+                "MaQrCode",
+                "Makhuvuc",
+                "Sothutu",
+                "ID_Toanha",
+                "ID_KhoiCV",
+                "ID_Khuvuc",
+              ],
+              include: [
+                {
+                  model: Ent_toanha,
+                  attributes: ["Toanha", "Sotang", "ID_Toanha"],
+                  include: {
+                    model: Ent_duan,
+                    attributes: ["ID_Duan", "Duan"],
+                  },
+                },
+                {
+                  model: Ent_khoicv,
+                  attributes: ["KhoiCV"],
+                },
+              ],
+            },
+          ]
         },
         {
           model: Ent_user,
