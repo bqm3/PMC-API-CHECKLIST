@@ -920,13 +920,13 @@ exports.getFilterSearch = async (req, res) => {
     const orConditions = [];
     if (userData) {
       orConditions.push({
-        "$ent_khuvuc.ent_toanha.ID_Duan$": userData.ID_Duan,
+        "$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$": userData.ID_Duan,
       });
     }
 
     if (ID_Khuvuc !== null) {
       orConditions.push({
-        "$ent_khuvuc.ID_Khuvuc$": ID_Khuvuc,
+        "$ent_hangmuc.ent_khuvuc.ID_Khuvuc$": ID_Khuvuc,
       });
     }
 
@@ -960,36 +960,42 @@ exports.getFilterSearch = async (req, res) => {
         "isDelete",
       ],
       include: [
-        {
-          model: Ent_khuvuc,
-          attributes: [
-            "Tenkhuvuc",
-            "MaQrCode",
-            "Makhuvuc",
-            "Sothutu",
-            "ID_Toanha",
-            "ID_KhoiCV",
-            "ID_Khuvuc",
-          ],
-          include: [
-            {
-              model: Ent_toanha,
-              attributes: ["Toanha", "Sotang", "ID_Toanha"],
-              include: {
-                model: Ent_duan,
-                attributes: ["ID_Duan", "Duan"],
-                where: { ID_Duan: userData.ID_Duan },
-              },
-            },
-            {
-              model: Ent_khoicv,
-              attributes: ["KhoiCV"],
-            },
-          ],
-        },
+      
         {
           model: Ent_tang,
           attributes: ["Tentang", "Sotang"],
+        },
+        {
+          model: Ent_hangmuc,
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc"],
+          include: [
+            {
+              model: Ent_khuvuc,
+              attributes: [
+                "Tenkhuvuc",
+                "MaQrCode",
+                "Makhuvuc",
+                "Sothutu",
+                "ID_Toanha",
+                "ID_KhoiCV",
+                "ID_Khuvuc",
+              ],
+              include: [
+                {
+                  model: Ent_toanha,
+                  attributes: ["Toanha", "Sotang", "ID_Toanha"],
+                  include: {
+                    model: Ent_duan,
+                    attributes: ["ID_Duan", "Duan"],
+                  },
+                },
+                {
+                  model: Ent_khoicv,
+                  attributes: ["KhoiCV"],
+                },
+              ],
+            },
+          ]
         },
         {
           model: Ent_user,
@@ -1026,40 +1032,42 @@ exports.getFilterSearch = async (req, res) => {
         "isDelete",
       ],
       include: [
-        {
-          model: Ent_khuvuc,
-          attributes: [
-            "Tenkhuvuc",
-            "MaQrCode",
-            "Makhuvuc",
-            "Sothutu",
-            "ID_Toanha",
-            "ID_KhoiCV",
-            "ID_Khuvuc",
-          ],
-          include: [
-            {
-              model: Ent_toanha,
-              attributes: ["Toanha", "Sotang", "ID_Toanha"],
-              include: {
-                model: Ent_duan,
-                attributes: ["ID_Duan", "Duan"],
-                where: { ID_Duan: userData.ID_Duan },
-              },
-            },
-            {
-              model: Ent_khoicv,
-              attributes: ["KhoiCV"],
-            },
-          ],
-        },
-        {
-          model: Ent_hangmuc,
-          attributes: ["Hangmuc", "Tieuchuankt"],
-        },
+      
         {
           model: Ent_tang,
           attributes: ["Tentang", "Sotang"],
+        },
+        {
+          model: Ent_hangmuc,
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc"],
+          include: [
+            {
+              model: Ent_khuvuc,
+              attributes: [
+                "Tenkhuvuc",
+                "MaQrCode",
+                "Makhuvuc",
+                "Sothutu",
+                "ID_Toanha",
+                "ID_KhoiCV",
+                "ID_Khuvuc",
+              ],
+              include: [
+                {
+                  model: Ent_toanha,
+                  attributes: ["Toanha", "Sotang", "ID_Toanha"],
+                  include: {
+                    model: Ent_duan,
+                    attributes: ["ID_Duan", "Duan"],
+                  },
+                },
+                {
+                  model: Ent_khoicv,
+                  attributes: ["KhoiCV"],
+                },
+              ],
+            },
+          ]
         },
         {
           model: Ent_user,

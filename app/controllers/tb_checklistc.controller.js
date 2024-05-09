@@ -46,8 +46,8 @@ exports.createFirstChecklist = async (req, res, next) => {
       ]
     };
 
-    whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
-    whereCondition["$ent_khuvuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
+    whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
+    whereCondition["$ent_hangmuc.ent_khuvuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
 
     const checklistData = await Ent_checklist.findAndCountAll({
       attributes: [
@@ -73,36 +73,37 @@ exports.createFirstChecklist = async (req, res, next) => {
       ],
       include: [
         {
-          model: Ent_khuvuc,
-          attributes: [
-            "Tenkhuvuc",
-            "MaQrCode",
-            "Makhuvuc",
-            "Sothutu",
-            "ID_Toanha",
-            "ID_KhoiCV",
-            "ID_Khuvuc",
-          ],
+          model: Ent_hangmuc,
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Hangmuc", "ID_Khuvuc"],
           include: [
             {
-              model: Ent_toanha,
-              attributes: ["Toanha", "Sotang", "ID_Toanha"],
-              include: {
-                model: Ent_duan,
-                attributes: ["ID_Duan", "Duan"],
-                where: { ID_Duan: userData.ID_Duan },
-              },
-            },
-            {
-              model: Ent_khoicv,
-              attributes: ["KhoiCV"],
-            },
-          ],
-        },
-       
-        {
-          model: Ent_hangmuc,
-          attributes: ["Hangmuc", "Tieuchuankt", "ID_Hangmuc"],
+              model: Ent_khuvuc,
+              attributes: [
+                "Tenkhuvuc",
+                "MaQrCode",
+                "Makhuvuc",
+                "Sothutu",
+                "ID_Toanha",
+                "ID_KhoiCV",
+                "ID_Khuvuc",
+              ],
+              include: [
+                {
+                  model: Ent_toanha,
+                  attributes: ["Toanha", "Sotang", "ID_Toanha"],
+                  include: {
+                    model: Ent_duan,
+                    attributes: ["ID_Duan", "Duan"],
+                    where: { ID_Duan: userData.ID_Duan },
+                  },
+                },
+                {
+                  model: Ent_khoicv,
+                  attributes: ["KhoiCV"],
+                },
+              ],
+            }
+          ]
         },
         {
           model: Ent_user,
@@ -548,7 +549,6 @@ exports.checklistImages = async (req, res) => {
           }
         }
       }
-      console.log('reqData',reqData)
 
       // Perform update only if reqData contains any data
       if (Object.keys(reqData).length > 0) {
