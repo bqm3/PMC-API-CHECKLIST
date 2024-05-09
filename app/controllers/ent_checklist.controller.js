@@ -544,8 +544,8 @@ exports.getFilter = async (req, res) => {
           { calv_4: ID_Calv },
         ],
       };
-      whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
-      whereCondition["$ent_khuvuc.ID_KhoiCV$"] = ID_KhoiCV;
+      whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
+      whereCondition["$ent_hangmuc.ent_khuvuc.ID_KhoiCV$"] = ID_KhoiCV;
 
       if (
         checklistIds &&
@@ -589,32 +589,33 @@ exports.getFilter = async (req, res) => {
           "isDelete",
         ],
         include: [
-          {
-            model: Ent_khuvuc,
-            attributes: [
-              "Tenkhuvuc",
-              "MaQrCode",
-              "Makhuvuc",
-              "Sothutu",
-              "ID_Toanha",
-              "ID_KhoiCV",
-            ],
-            required: false,
-
-            include: [
-              {
-                model: Ent_toanha,
-                attributes: ["Toanha", "Sotang"],
-              },
-              {
-                model: Ent_khoicv,
-                attributes: ["KhoiCV"],
-              },
-            ],
-          },
+          
           {
             model: Ent_hangmuc,
-            attributes: ["Hangmuc", "Tieuchuankt"],
+            attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc"],
+            include: [
+              {
+                model: Ent_khuvuc,
+                attributes: [
+                  "Tenkhuvuc",
+                  "MaQrCode",
+                  "Makhuvuc",
+                  "Sothutu",
+                  "ID_Toanha",
+                  "ID_KhoiCV",
+                ],
+                include: [
+                  {
+                    model: Ent_toanha,
+                    attributes: ["Toanha", "Sotang"],
+                  },
+                  {
+                    model: Ent_khoicv,
+                    attributes: ["KhoiCV"],
+                  },
+                ],
+              },
+            ]
           },
           {
             model: Ent_tang,
