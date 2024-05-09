@@ -13,14 +13,15 @@ var corsOptions = {
     "https://dawndev.io.vn",
     "https://master-nu-pied.vercel.app/",
     "https://checklist.pmcweb.vn",
-    "https://pmc-rho.vercel.app"
+   "https://be-nodejs-project.vercel.app"
+	  "https://pmc-rho.vercel.app"
   ],
 
   credentials: true, //access-control-allow-credentials:true
   optionSuccessStatus: 200,
 };
 
-app.use(cors(corsOptions)
+app.use(cors(corsOptions))
 
 app.use(cookieParser());
 app.use(express.json());
