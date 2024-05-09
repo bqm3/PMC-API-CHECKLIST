@@ -13,7 +13,7 @@ var corsOptions = {
     "https://dawndev.io.vn",
     "https://master-nu-pied.vercel.app/",
     "https://checklist.pmcweb.vn",
-   "https://be-nodejs-project.vercel.app"
+   "https://be-nodejs-project.vercel.app",
 	  "https://pmc-rho.vercel.app"
   ],
 
