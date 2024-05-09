@@ -760,9 +760,10 @@ exports.getChecklist = async (req, res) => {
       ],
     };
 
-    whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
-    whereCondition["$ent_khuvuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
+    whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
+    whereCondition["$ent_hangmuc.ent_khuvuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
 
+    console.log('where', whereCondition)
     if (
       checklistIds &&
       Array.isArray(checklistIds) &&
@@ -825,7 +826,7 @@ exports.getChecklist = async (req, res) => {
         },
         {
           model: Ent_hangmuc,
-          attributes: ["Hangmuc", "Tieuchuankt"],
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc"],
           include: [
             {
               model: Ent_khuvuc,
