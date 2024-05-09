@@ -9,10 +9,10 @@ var corsOptions = {
   origin: [
     "*",
     "http://localhost:3000",
-    "localhost:3000",
+    "http://localhost:3000",
     "https://dawndev.io.vn",
     "https://master-nu-pied.vercel.app/",
-    "checklist.pmcweb.vn",
+    "https://checklist.pmcweb.vn",
     "https://pmc-rho.vercel.app"
   ],
 
@@ -21,7 +21,7 @@ var corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(cors());
+//app.use(cors());
 app.use(cookieParser());
 app.use(express.json());
 app.use(bodyParser.json({ limit: "500mb" }));
