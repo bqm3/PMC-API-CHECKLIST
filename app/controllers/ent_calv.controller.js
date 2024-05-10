@@ -323,7 +323,7 @@ exports.update = async (req, res) => {
       }
 
       const reqData = {
-        ID_Duan: req.body.ID_Duan,
+        ID_Duan: userData.ID_Duan,
         ID_KhoiCV: req.body.ID_KhoiCV,
         Tenca: req.body.Tenca,
         Giobatdau: req.body.Giobatdau,
