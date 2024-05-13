@@ -38,10 +38,10 @@ exports.get = async (req, res) => {
     const userData = req.user.data;
     if (userData) {
       let whereClause = {
-        isDelete: 0
+        isDelete: 0,
       };
 
-      if (userData.Permission !== 3 || userData.ent_chucvu.Chucvu !== 'PSH') {
+      if (userData.Permission !== 3 || userData.ent_chucvu.Chucvu !== "PSH") {
         whereClause.ID_Duan = userData.ID_Duan;
       }
 
@@ -52,15 +52,13 @@ exports.get = async (req, res) => {
           attributes: ["Duan"],
         },
         where: whereClause,
-        order: [
-          ["ID_Duan", "ASC"],
-        ]
+        order: [["ID_Duan", "ASC"]],
       })
         .then((data) => {
           res.status(200).json({
             message: "Danh sách tòa nhà!",
             data: data,
-          });  
+          });
         })
         .catch((err) => {
           res.status(500).json({
@@ -75,6 +73,45 @@ exports.get = async (req, res) => {
   }
 };
 
+exports.getDetail = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    if (userData) {
+      let whereClause = {
+        isDelete: 0,
+      };
+
+      if (userData.Permission !== 3 || userData.ent_chucvu.Chucvu !== "PSH") {
+        whereClause.ID_Duan = userData.ID_Duan;
+      }
+
+      await Ent_toanha.findByPk(req.params.id, {
+        attributes: ["ID_Toanha", "ID_Duan", "Toanha", "Sotang", "isDelete"],
+        include: {
+          model: Ent_duan,
+          attributes: ["Duan"],
+        },
+        where: whereClause,
+        order: [["ID_Duan", "ASC"]],
+      })
+        .then((data) => {
+          res.status(200).json({
+            message: "Danh sách tòa nhà!",
+            data: data,
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
 
 exports.update = async (req, res) => {
   try {

@@ -6,6 +6,7 @@ module.exports = (app) => {
   
     router.post("/create",[isAuthenticated, isAdmin],ent_toanha.create);
     router.get("/", isAuthenticated,ent_toanha.get);
+    router.get("/:id", isAuthenticated,ent_toanha.getDetail);
     router.put("/update/:id",[isAuthenticated], ent_toanha.update);
     router.put("/delete/:id",[isAuthenticated], ent_toanha.delete);
     

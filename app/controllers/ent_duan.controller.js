@@ -96,6 +96,58 @@ exports.get = async (req, res) => {
   }
 };
 
+exports.getDetail = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    if (userData && userData.ent_chucvu.Chucvu === "PSH") {
+      await Ent_duan.findByPk(req.params.id, {
+        where: {
+          isDelete: 0,
+        },
+      })
+        .then((data) => {
+          res.status(200).json({
+            message: "Danh sách dự án!",
+            data: data,
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    } else if (userData && userData.ent_chucvu.Chucvu !== "PSH") {
+      await Ent_duan.findAll({
+        where: {
+          [Op.and]: {
+            isDelete: 0,
+            ID_Duan: userData.ID_Duan,
+          },
+        },
+      })
+        .then((data) => {
+          res.status(200).json({
+            message: "Danh sách dự án!",
+            data: data,
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    } else {
+      return res.status(401).json({
+        message: "Bạn không có quyền truy cập",
+      });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
 exports.update = async (req, res) => {
   try {
     const userData = req.user.data;
