@@ -87,9 +87,6 @@ exports.get = async (req, res) => {
         ID_Duan: userData?.ID_Duan,
         isDelete: 0,
       };
-      // whereClause.ID_Chucvu = {
-      //   [Op.not]: 1 // Exclude records where ID_Chucvu is 1
-      // };
 
       // Nếu quyền là 1 (Permission === 1) thì không cần thêm điều kiện ID_KhoiCV
       if (userData.Permission !== 1) {
@@ -211,7 +208,6 @@ exports.update = async (req, res) => {
         });
         return;
       }
-      console.log("req.body", req.body, req.params.id);
       // Kiểm tra xem số điện thoại đã tồn tại trong cơ sở dữ liệu hay chưa, ngoại trừ bản ghi hiện tại đang được cập nhật
       const existingEntry = await Ent_giamsat.findOne({
         attributes: [
@@ -233,7 +229,6 @@ exports.update = async (req, res) => {
           },
         },
       });
-      console.log("existingEntry", existingEntry);
 
       if (existingEntry) {
         return res.status(400).json({
@@ -243,14 +238,14 @@ exports.update = async (req, res) => {
 
       // Nếu kiểm tra không phát hiện số điện thoại trùng, tiếp tục cập nhật bản ghi
       const reqData = {
-        ID_Duan: req.body.ID_Duan || null,
+        ID_Duan: userData?.ID_Duan || null,
         Hoten: req.body.Hoten || null,
         Gioitinh: req.body.Gioitinh || null,
         Sodienthoai: req.body.Sodienthoai || null,
         Ngaysinh: req.body.Ngaysinh || null,
         ID_Chucvu: req.body.ID_Chucvu || null,
         ID_KhoiCV: req.body.ID_KhoiCV || null,
-        iQuyen: req.body.iQuyen || null,
+        iQuyen: req.body.iQuyen || 1,
         isDelete: 0,
       };
 
