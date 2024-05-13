@@ -53,14 +53,14 @@ exports.create = async (req, res) => {
 
       // Nếu số điện thoại chưa tồn tại, tạo bản ghi mới
       const data = {
-        ID_Duan: ID_Duan || null,
+        ID_Duan: userData.ID_Duan || null,
         Hoten: Hoten || null,
         Gioitinh: Gioitinh || null,
         Sodienthoai: Sodienthoai || null,
         Ngaysinh: Ngaysinh || null,
         ID_Chucvu: ID_Chucvu || null,
         ID_KhoiCV: ID_KhoiCV || null,
-        iQuyen: iQuyen || null,
+        iQuyen: iQuyen || 1,
         isDelete: 0,
       };
 
