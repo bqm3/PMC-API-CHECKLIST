@@ -31,6 +31,7 @@
     "paypal-rest-sdk": "^1.8.1",
     "pg": "8.7.1",
     "pg-hstore": "2.3.4",
+    "read-excel-file": "^5.8.1",
     "rootpath": "^0.1.2",
     "sequelize": "^6.37.1",
     "sharp": "0.32.6",
@@ -39,8 +40,8 @@
     "write-excel-file": "^1.4.30"
   },
   "optionalDependencies": {
-    "@img/sharp-win32-x64": "^0.33.2",
-    "@img/sharp-linux-arm": "^0.33.2"
+    "@img/sharp-linux-arm": "^0.33.2",
+    "@img/sharp-win32-x64": "^0.33.2"
   },
   "name": "pmc-checklist-api",
   "version": "1.0.0",

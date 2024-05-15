@@ -479,7 +479,7 @@ exports.getFilter = async (req, res) => {
     const ID_Hangmuc = req.params.id_hm;
 
     if (userData) {
-      if (ID_Khuvuc !== null) {
+      if (ID_Khuvuc !== null  && ID_Khuvuc !== undefined) {
         orConditions.push({ ID_Khuvuc: ID_Khuvuc });
       }
 
@@ -497,7 +497,7 @@ exports.getFilter = async (req, res) => {
 
       const checklistItems = await Tb_checklistchitiet.findAll({
         attributes: ["ID_Checklist", "isDelete", "ID_ChecklistC"],
-        where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC },
+        where: { isDelete: 0 },
       });
 
       const checklistDoneItems = await Tb_checklistchitietdone.findAll({

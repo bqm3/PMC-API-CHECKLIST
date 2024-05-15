@@ -346,7 +346,7 @@ exports.filterByKhuvuc = async (req, res) => {
         if (userData.ID_KhoiCV !== null) {
           whereCondition["$ent_khuvuc.ID_KhoiCV$"] = userData.ID_KhoiCV;
         }
-        if (ID_Khuvuc !== null && ID_Khuvuc !== "" && ID_Khuvuc !== "null") {
+        if (ID_Khuvuc !== null  && ID_Khuvuc !== undefined&& ID_Khuvuc !== "" && ID_Khuvuc !== "null") {
           whereCondition[Op.and].push({
             ID_Khuvuc: ID_Khuvuc,
           });
