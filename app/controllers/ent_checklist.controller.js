@@ -1122,182 +1122,204 @@ exports.getFilterSearch = async (req, res) => {
   }
 };
 
-// filter by qr code
-// exports.getFilterQrCode = async (req, res) => {
-//   try {
-//     const userData = req.user.data;
-//     const ID_KhoiCV = req.params.id;
-//     const ID_ChecklistC = req.params.idc;
 
-//     const MaQrCode = req.body.MaQrCode;
-//     if (!userData || !ID_KhoiCV) {
-//       return res.status(400).json({ message: "Dữ liệu không hợp lệ." });
-//     }
-//     // const pageMaxSize =
-//     const checklistItems = await Tb_checklistchitiet.findAll({
-//       attributes: ["ID_Checklist", "isDelete", "ID_ChecklistC"],
-//       where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC },
-//     });
+exports.filterChecklists = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    const ID_ChecklistC = req.params.idc;
+    const ID_Calv = req.params.id_calv;
+    const ID_Hangmuc = req.body.ID_Hangmuc;
+    
+    // const pageMaxSize =
+    const checklistItems = await Tb_checklistchitiet.findAll({
+      attributes: ["isDelete", "ID_Checklist", "ID_ChecklistC"],
+      where: { isDelete: 0},
+    });
 
-//     const checklistDoneItems = await Tb_checklistchitietdone.findAll({
-//       attributes: ["Description"],
-//       where: { isDelete: 0 },
-//     });
+    const checklistDoneItems = await Tb_checklistchitietdone.findAll({
+      attributes: ["Description", "isDelete", "ID_ChecklistC"],
+      where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC },
+    });
 
-//     const arrPush = [];
+    const arrPush = [];
 
-//     // Duyệt qua từng phần tử trong mảng checklistDoneItems
-//     checklistDoneItems.forEach((item) => {
-//       // Chuyển đổi chuỗi JSON thành một đối tượng JavaScript
-//       const descriptionArray = JSON.parse(item.dataValues.Description);
+    // Duyệt qua từng phần tử trong mảng checklistDoneItems
+    if (checklistDoneItems.length > 0) {
+      checklistDoneItems.forEach((item) => {
+        // Chuyển đổi chuỗi JSON thành một đối tượng JavaScript
+        const descriptionArray = JSON.parse(item.dataValues.Description);
 
-//       // Lặp qua mỗi phần tử của mảng descriptionArray
-//       descriptionArray.forEach((description) => {
-//         // Tách các mục dữ liệu trước dấu phẩy (,)
-//         const splitByComma = description.split(",");
+        // Kiểm tra xem descriptionArray có phải là mảng hay không
+        if (Array.isArray(descriptionArray)) {
+          // Nếu là mảng, thực hiện xử lý như trong mã của bạn
+          descriptionArray.forEach((description) => {
+            // Tách các mục dữ liệu trước dấu phẩy (,)
+            const splitByComma = description.split(",");
 
-//         // Lặp qua mỗi phần tử sau khi tách
-//         splitByComma.forEach((splitItem) => {
-//           // Trích xuất thông tin từ mỗi chuỗi
-//           const [ID_ChecklistC, ID_Checklist, valueCheck, gioht] =
-//             splitItem.split("/");
-//           // Kiểm tra điều kiện và thêm vào mảng arrPush nếu điều kiện đúng
-//           if (parseInt(ID_ChecklistC) === parseInt(req.params.idc)) {
-//             arrPush.push({
-//               ID_ChecklistC: parseInt(ID_ChecklistC),
-//               ID_Checklist: parseInt(ID_Checklist),
-//               valueCheck: valueCheck,
-//               gioht: gioht,
-//             });
-//           }
-//         });
-//       });
-//     });
+            // Lặp qua mỗi phần tử sau khi tách
+            splitByComma.forEach((splitItem) => {
+              // Trích xuất thông tin từ mỗi chuỗi
+              const [ID_Checklist, valueCheck, gioht] = splitItem.split("/");
 
-//     const checklistIds = checklistItems.map((item) => item.ID_Checklist);
-//     const checklistDoneIds = arrPush.map((item) => item.ID_Checklist);
+              // Kiểm tra điều kiện và thêm vào mảng arrPush nếu điều kiện đúng
+              arrPush.push({
+                ID_Checklist: parseInt(ID_Checklist),
+                valueCheck: valueCheck,
+                gioht: gioht,
+              });
+            });
+          });
+        } else {
+          console.log("descriptionArray không phải là một mảng.");
+        }
+      });
+    }
 
-//     let whereCondition = {
-//       isDelete: 0,
-//     };
+    const checklistIds = checklistItems.map((item) => item?.ID_Checklist) || [];
+    const checklistDoneIds = arrPush.map((item) => item?.ID_Checklist) || [];
 
-//     if (
-//       checklistIds &&
-//       Array.isArray(checklistIds) &&
-//       checklistIds.length > 0 &&
-//       checklistDoneIds &&
-//       checklistDoneIds.length > 0
-//     ) {
-//       whereCondition.ID_Checklist = {
-//         [Op.notIn]: [...checklistIds, ...checklistDoneIds],
-//       };
-//     } else if (
-//       checklistIds &&
-//       Array.isArray(checklistIds) &&
-//       checklistIds.length > 0
-//     ) {
-//       whereCondition.ID_Checklist = {
-//         [Op.notIn]: checklistIds,
-//       };
-//     } else if (checklistDoneIds && checklistDoneIds.length > 0) {
-//       whereCondition.ID_Checklist = {
-//         [Op.notIn]: checklistDoneIds,
-//       };
-//     }
+    let whereCondition = {
+      isDelete: 0,
+      ID_Hangmuc,
+      [Op.or]: [
+        { calv_1: ID_Calv },
+        { calv_2: ID_Calv },
+        { calv_3: ID_Calv },
+        { calv_4: ID_Calv },
+      ],
+    };
 
-//     const checklistData = await Ent_checklist.findAll({
-//       attributes: [
-//         "ID_Checklist",
-//         "ID_Khuvuc",
-//         "ID_Hangmuc",
-//         "ID_Tang",
-//         "Sothutu",
-//         "Maso",
-//         "MaQrCode",
-//         "Checklist",
-//         "Ghichu",
-//         "Tieuchuan",
-//         "Giatridinhdanh",
-//         "Giatrinhan",
-//         "ID_User",
-//         "isDelete",
-//       ],
-//       include: [
-//         {
-//           model: Ent_khuvuc,
-//           attributes: [
-//             "Tenkhuvuc",
-//             "MaQrCode",
-//             "Makhuvuc",
-//             "Sothutu",
-//             "ID_Toanha",
-//             "ID_KhoiCV",
-//             "ID_Khuvuc",
-//             "isDelete",
-//           ],
-//           where: { ID_KhoiCV: ID_KhoiCV, MaQrCode: MaQrCode, isDelete: 0 },
-//           include: [
-//             {
-//               model: Ent_toanha,
-//               attributes: ["Toanha", "Sotang", "ID_Toanha"],
-//               include: {
-//                 model: Ent_duan,
-//                 attributes: ["ID_Duan", "Duan"],
-//                 where: { ID_Duan: userData.ID_Duan },
-//               },
-//             },
-//             {
-//               model: Ent_khoicv,
-//               attributes: ["KhoiCV"],
-//             },
-//           ],
-//         },
-//         {
-//           model: Ent_hangmuc,
-//           attributes: ["Hangmuc", "Tieuchuankt"],
-//         },
-//         {
-//           model: Ent_tang,
-//           attributes: ["Tentang", "Sotang"],
-//         },
-//         {
-//           model: Ent_user,
-//           include: {
-//             model: Ent_chucvu,
-//             attributes: ["Chucvu"],
-//           },
-//           attributes: ["UserName", "Emails"],
-//         },
-//       ],
-//       where: whereCondition,
-//       order: [
-//         ["ID_Khuvuc", "ASC"],
-//         ["Sothutu", "ASC"],
-//       ],
-//     });
+    whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
+    whereCondition["$ent_hangmuc.ent_khuvuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
 
-//     if (!checklistData || checklistData.length === 0) {
-//       return res.status(200).json({
-//         message: "Không còn checklist cho ca làm việc này!",
-//         data: [],
-//       });
-//     }
+    if (
+      checklistIds &&
+      Array.isArray(checklistIds) &&
+      checklistIds.length > 0 &&
+      checklistDoneIds &&
+      checklistDoneIds.length > 0
+    ) {
+      whereCondition.ID_Checklist = {
+        [Op.notIn]: [...checklistIds, ...checklistDoneIds],
+      };
+    } else if (
+      checklistIds &&
+      Array.isArray(checklistIds) &&
+      checklistIds.length > 0 &&
+      checklistDoneIds.length === 0
+    ) {
+      whereCondition.ID_Checklist = {
+        [Op.notIn]: checklistIds,
+      };
+    } else if (
+      checklistDoneIds &&
+      checklistDoneIds.length > 0 &&
+      checklistIds.length == 0
+    ) {
+      whereCondition.ID_Checklist = {
+        [Op.notIn]: checklistDoneIds,
+      };
+    }
 
-//     const filteredData = checklistData.filter(
-//       (item) => item.ent_khuvuc !== null
-//     );
+    const checklistData = await Ent_checklist.findAll({
+      attributes: [
+        "ID_Checklist",
+        "ID_Khuvuc",
+        "ID_Hangmuc",
+        "ID_Tang",
+        "Sothutu",
+        "Maso",
+        "MaQrCode",
+        "Checklist",
+        "Ghichu",
+        "Tieuchuan",
+        "Giatridinhdanh",
+        "Giatrinhan",
+        "ID_User",
+        "sCalv",
+        "calv_1",
+        "calv_2",
+        "calv_3",
+        "calv_4",
+        "isDelete",
+      ],
+      include: [
+      
+        {
+          model: Ent_tang,
+          attributes: ["Tentang", "Sotang"],
+        },
+        {
+          model: Ent_hangmuc,
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc"],
+          include: [
+            {
+              model: Ent_khuvuc,
+              attributes: [
+                "Tenkhuvuc",
+                "MaQrCode",
+                "Makhuvuc",
+                "Sothutu",
+                "ID_Toanha",
+                "ID_KhoiCV",
+                "ID_Khuvuc",
+              ],
+              include: [
+                {
+                  model: Ent_toanha,
+                  attributes: ["Toanha", "Sotang", "ID_Toanha"],
+                  include: {
+                    model: Ent_duan,
+                    attributes: ["ID_Duan", "Duan"],
+                  },
+                },
+                {
+                  model: Ent_khoicv,
+                  attributes: ["KhoiCV"],
+                },
+              ],
+            },
+          ]
+        },
+        {
+          model: Ent_user,
+          include: {
+            model: Ent_chucvu,
+            attributes: ["Chucvu"],
+          },
+          attributes: ["UserName", "Emails"],
+        },
+      ],
+      where: whereCondition,
+      order: [
+        ["ID_Khuvuc", "ASC"],
+        ["Sothutu", "ASC"],
+        ["ID_Checklist", "ASC"],
+      ],
+    });
 
-//     return res.status(200).json({
-//       message:
-//         filteredData.length > 0
-//           ? "Danh sách checklist!"
-//           : "Không còn checklist cho ca làm việc này!",
-//       length: filteredData.length,
-//       data: filteredData,
-//     });
-//   } catch (err) {
-//     return res.status(500).json({
-//       message: err.message || "Lỗi! Vui lòng thử lại sau.",
-//     });
-//   }
-// };
+    if (!checklistData || checklistData.length === 0) {
+      return res.status(200).json({
+        message: "Không còn checklist cho ca làm việc này!",
+        data: [],
+      });
+    }
+
+    const filteredData = checklistData.filter(
+      (item) => item.ent_hangmuc !== null
+    );
+
+    return res.status(200).json({
+      message:
+        filteredData.length > 0
+          ? "Danh sách checklist!"
+          : "Không còn checklist cho ca làm việc này!",
+      length: filteredData.length,
+      data: filteredData,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+}
