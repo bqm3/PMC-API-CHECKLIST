@@ -93,7 +93,7 @@ exports.createFirstChecklist = async (req, res, next) => {
                   attributes: ["Toanha", "Sotang", "ID_Toanha"],
                   include: {
                     model: Ent_duan,
-                    attributes: ["ID_Duan", "Duan"],
+                    attributes: ["ID_Duan", "Duan", "Diachi","Vido", "Kinhdo"],
                     where: { ID_Duan: userData.ID_Duan },
                   },
                 },
@@ -281,7 +281,7 @@ exports.getCheckListc = async (req, res, next) => {
         include: [
           {
             model: Ent_duan,
-            attributes: ["ID_Duan", "Duan"],
+            attributes: ["ID_Duan", "Duan", "Diachi","Vido", "Kinhdo"],
           },
           {
             model: Ent_khoicv,
@@ -332,7 +332,7 @@ exports.getCheckListc = async (req, res, next) => {
         include: [
           {
             model: Ent_duan,
-            attributes: ["ID_Duan", "Duan"],
+            attributes: ["ID_Duan", "Duan", "Diachi","Vido", "Kinhdo"],
           },
           {
             model: Ent_khoicv,
@@ -420,7 +420,7 @@ exports.getDetail = async (req, res) => {
         include: [
           {
             model: Ent_duan,
-            attributes: ["ID_Duan", "Duan"],
+            attributes: ["ID_Duan", "Duan", "Diachi","Vido", "Kinhdo"],
           },
           {
             model: Ent_khoicv,
