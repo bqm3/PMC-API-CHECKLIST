@@ -21,6 +21,9 @@ exports.create = (req, res) => {
     // Create a Ent_duan
     const data = {
       Duan: req.body.Duan,
+      Diachi: req.body.Diachi,
+      Vido: req.body.Vido,
+      Kinhdo: req.body.Kinhdo,
       isDelete: 0,
     };
 
@@ -153,7 +156,10 @@ exports.update = async (req, res) => {
     const userData = req.user.data;
     if (req.params.id && userData) {
       Ent_duan.update(
-        { Duan: req.body.Duan },
+        { Duan: req.body.Duan,  
+          Diachi: req.body.Diachi,
+          Vido: req.body.Vido,
+          Kinhdo: req.body.Kinhdo },
         {
           where: {
             ID_Duan: req.params.id,

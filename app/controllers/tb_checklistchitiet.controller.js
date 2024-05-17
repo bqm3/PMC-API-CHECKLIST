@@ -22,6 +22,8 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     // Extract data from the request body and files
     const records = req.body;
     const images = req.files;
+    console.log('images',images)
+    console.log('records',records)
 
     // Ensure records.ID_ChecklistC and records.ID_Checklist are arrays
     const ensureArray = (data) => {
@@ -33,7 +35,6 @@ exports.createCheckListChiTiet = async (req, res, next) => {
 
     records.ID_ChecklistC = ensureArray(records.ID_ChecklistC);
     records.ID_Checklist = ensureArray(records.ID_Checklist);
-    records.Anh = ensureArray(records.Anh);
     records.Ketqua = ensureArray(records.Ketqua);
     records.Ghichu = ensureArray(records.Ghichu);
     records.Gioht = ensureArray(records.Gioht);
@@ -52,6 +53,9 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       uploadedFileIds.push({ id: fileId, name: image.originalname });
     }
 
+    console.log('records', records)
+    console.log('uploadedFileIds',uploadedFileIds)
+
     // Prepare records for bulk creation
     const newRecords = records.ID_ChecklistC.map((ID_ChecklistC, index) => {
       const ID_Checklist = records.ID_Checklist[index];
@@ -64,21 +68,25 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       const inputAnh = records.Anh ? records.Anh[index] : null;
 
       if (inputAnh) {
-        
-        // Kiểm tra tệp ảnh đã tải lên
-        const matchingImage = uploadedFileIds.find(
-          (file) => file.name === inputAnh
-        );
-
-        if (matchingImage) {
-          // Sử dụng ID của tệp ảnh đã tải lên làm giá trị cho Anh
-          Anh = matchingImage.id.id;
-        } else {
-          console.warn(`No matching image found for Anh: ${inputAnh}`);
+        // Xác định `inputAnh` có phải là đối tượng hay không
+        if (typeof inputAnh === 'object') {
+            // Nếu `inputAnh` là đối tượng, lấy tên của đối tượng để so sánh
+            inputAnh = inputAnh.name;
         }
-      } else {
+    
+        // Kiểm tra tệp ảnh đã tải lên
+        const matchingImage = uploadedFileIds.find((file) => file.name === inputAnh);
+    
+        if (matchingImage) {
+            // Sử dụng ID của tệp ảnh đã tải lên làm giá trị cho Anh
+            Anh = matchingImage.id.id;
+        } else {
+            console.warn(`No matching image found for Anh: ${inputAnh}`);
+        }
+    } else {
         console.warn(`Unexpected Anh format: ${JSON.stringify(inputAnh)}`);
-      }
+    }
+    
 
       // Create the record object
       return {
@@ -342,7 +350,7 @@ exports.searchChecklist = async (req, res) => {
       const pageSize = parseInt(req.query.limit) || 100; // Số lượng phần tử trên mỗi trang
       const offset = page * pageSize;
 
-      if (userData.ID_KhoiCV) {
+      if (userData?.ID_KhoiCV !== null) {
         orConditions.push({ "$tb_checklistc.ID_KhoiCV$": userData?.ID_KhoiCV });
       }
 
