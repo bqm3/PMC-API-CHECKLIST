@@ -121,6 +121,9 @@ exports.get = async (req, res) => {
             [Op.and]: [orConditions],
           },
         ],
+        order: [
+          ["ID_Toanha", "ASC"],
+        ],
       })
         .then((data) => {
           res.status(200).json({
@@ -345,6 +348,7 @@ exports.getKhuVuc = async (req, res) => {
         ],
         where: whereCondition,
         order: [
+          ["ID_Toanha", "ASC"],
           ["ID_KhoiCV", "ASC"],
         ]
       })
