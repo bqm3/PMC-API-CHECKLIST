@@ -136,6 +136,9 @@ exports.get = async (req, res) => {
           isDelete: 0,
           [Op.and]: [orConditions],
         },
+        order: [
+          ["ID_Khuvuc", "ASC"],
+        ],
       })
         .then((data) => {
           res.status(200).json({
@@ -390,6 +393,9 @@ exports.filterByKhuvuc = async (req, res) => {
           },
         ],
         where: whereCondition,
+        order: [
+          ["ID_Khuvuc", "ASC"],
+        ],
       })
         .then((data) => {
           res.status(200).json({
