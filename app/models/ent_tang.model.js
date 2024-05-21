@@ -18,7 +18,9 @@ const Ent_tang = sequelize.define("ent_tang", {
        },
        ID_User: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+       },
+       ID_Duan: {
+        type: DataTypes.INTEGER,
        },
        isDelete: {
         type: DataTypes.INTEGER,

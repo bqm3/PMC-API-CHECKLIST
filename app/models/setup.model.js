@@ -19,6 +19,17 @@ Ent_toanha.belongsTo(Ent_duan, {
   foreignKey: "ID_Duan",
 });
 
+// Tang
+Ent_duan.hasMany(Ent_tang, { as: "ent_tang" });
+Ent_tang.belongsTo(Ent_duan, {
+  foreignKey: "ID_Duan",
+});
+
+Ent_user.hasMany(Ent_tang, { as: "ent_tang" });
+Ent_tang.belongsTo(Ent_user, {
+  foreignKey: "ID_User",
+});
+
 // Khu vuc
 Ent_user.hasMany(Ent_khuvuc);
 Ent_khuvuc.belongsTo(Ent_user, {
@@ -82,6 +93,8 @@ Ent_tang.hasMany(Ent_checklist);
 Ent_checklist.belongsTo(Ent_tang, {
   foreignKey: "ID_Tang",
 });
+
+
 
 Ent_user.hasMany(Ent_checklist);
 Ent_checklist.belongsTo(Ent_user, {
