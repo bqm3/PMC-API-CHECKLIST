@@ -319,8 +319,8 @@ exports.getUserOnline = async (req, res, next) => {
       order: [["ID_Duan", "ASC"], ["Permission", "ASC"]],
       include: [
         {
-          association: "ent_duan",
-          required: true,
+          model: Ent_chucvu,
+          attributes: ["Duan", "Diachi"],
         },
         {
           model: Ent_chucvu,
@@ -396,8 +396,8 @@ exports.getDetail = async (req, res) => {
         order: [["ID_Duan", "ASC"], ["Permission", "ASC"]],
         include: [
           {
-            association: "ent_duan",
-            required: true,
+            model: Ent_chucvu,
+            attributes: ["Duan", "Diachi"],
           },
           {
             model: Ent_chucvu,
