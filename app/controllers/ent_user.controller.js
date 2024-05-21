@@ -315,11 +315,11 @@ exports.getUserOnline = async (req, res, next) => {
         "ID_Duan",
         "ID_KhoiCV",
         "Permission",
+        "isDelete",
       ],
-      order: [["ID_Duan", "ASC"], ["Permission", "ASC"]],
       include: [
         {
-          model: Ent_chucvu,
+          model: Ent_duan,
           attributes: ["Duan", "Diachi"],
         },
         {
@@ -334,6 +334,7 @@ exports.getUserOnline = async (req, res, next) => {
       where: {
         isDelete: 0,
       },
+      order: [["ID_Duan", "ASC"], ["Permission", "ASC"]],
 
     })
       .then((data) => {
@@ -353,23 +354,6 @@ exports.getUserOnline = async (req, res, next) => {
     });
   }
 };
-
-//get Check auth
-exports.checkAuth = async (req, res, next) => {
-  try {
-    const userData = req.user.data;
-    // console.log('userData', userData)
-    res.status(200).json({
-      message: "Danh sách nhân viên!",
-      user: userData,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      message: error.message || "Lỗi! Vui lòng thử lại sau.",
-    });
-  }
-}
-
 
 exports.getDetail = async (req, res) => {
   try {
@@ -396,7 +380,7 @@ exports.getDetail = async (req, res) => {
         order: [["ID_Duan", "ASC"], ["Permission", "ASC"]],
         include: [
           {
-            model: Ent_chucvu,
+            model: Ent_duan,
             attributes: ["Duan", "Diachi"],
           },
           {
@@ -430,3 +414,20 @@ exports.getDetail = async (req, res) => {
     });
   }
 };
+
+//get Check auth
+exports.checkAuth = async (req, res, next) => {
+  try {
+    const userData = req.user.data;
+    res.status(200).json({
+      message: "Danh sách nhân viên!",
+      user: userData,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+}
+
+
