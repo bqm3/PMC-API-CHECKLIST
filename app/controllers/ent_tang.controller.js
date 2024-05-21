@@ -1,4 +1,5 @@
 const { Ent_tang, Ent_duan, Ent_user } = require("../models/setup.model");
+const { Op, Sequelize } = require("sequelize");
 
 // Create and Save a new Ent_tang
 exports.create = async (req, res, next) => {
@@ -47,105 +48,9 @@ exports.create = async (req, res, next) => {
   }
 };
 
-// exports.get = async (req, res) => {
-//   try {
-//     const userData = req.user.data;
-//     if (userData && userData.ent_chucvu.Chucvu === "PSH") {
-//       await Ent_duan.findAll({
-//         where: {
-//           isDelete: 0,
-//         },
-//       })
-//         .then((data) => {
-//           res.status(200).json({
-//             message: "Danh sách dự án!",
-//             data: data,
-//           });
-//         })
-//         .catch((err) => {
-//           res.status(500).json({
-//             message: err.message || "Lỗi! Vui lòng thử lại sau.",
-//           });
-//         });
-//     } else if (userData && userData.ent_chucvu.Chucvu !== "PSH") {
-//       await Ent_duan.findAll({
-//         where: {
-//           [Op.and]: {
-//             isDelete: 0,
-//             ID_Duan: userData.ID_Duan,
-//           },
-//         },
-//       })
-//         .then((data) => {
-//           res.status(200).json({
-//             message: "Danh sách dự án!",
-//             data: data,
-//           });
-//         })
-//         .catch((err) => {
-//           res.status(500).json({
-//             message: err.message || "Lỗi! Vui lòng thử lại sau.",
-//           });
-//         });
-//     } else {
-//       return res.status(401).json({
-//         message: "Bạn không có quyền truy cập",
-//       });
-//     }
-//   } catch (err) {
-//     return res.status(500).json({
-//       message: err.message || "Lỗi! Vui lòng thử lại sau.",
-//     });
-//   }
-// };
 exports.get = async (req, res) => {
   try {
     const userData = req.user.data;
-    // if (userData) {
-
-    //   if (userData.ID_Duan !== null && userData.ID_Duan !== undefined) {
-    //     orConditions.push({
-    //       ID_Duan: userData?.ID_Duan,
-    //     });
-    //   }
-    //   console.log('orConditions',orConditions)
-    //   await Ent_tang.findAll({
-    //     attributes: [
-    //       "ID_Tang",
-    //       "Tentang",
-    //       "Sotang",
-    //       "ID_User",
-    //       "ID_Duan",
-    //       "isDelete",
-    //     ],
-    //     include: [
-    //       {
-    //         model: Ent_duan,
-    //         attributes: ["Duan", "Diachi"],
-    //       },
-    //       {
-    //         model: Ent_user,
-    //         attributes: ["Username", "Emails"],
-    //       },
-    //     ],
-    //     where: {
-    //       isDelete: 0,
-    //       [Op.and]: [orConditions],
-    //     },
-    //   })
-    //     .then((data) => {
-    //       res.status(200).json({
-    //         message: "Danh sách tầng!",
-    //         data: data,
-    //       });
-    //     })
-    //     .catch((err) => {
-    //       res.status(500).json({
-    //         message: err.message || "Lỗi! Vui lòng thử lại sau.",
-    //       });
-    //     });
-    // }
-
     if (userData && userData.ent_chucvu.Chucvu === "PSH") {
       await Ent_tang.findAll({
         attributes: [
