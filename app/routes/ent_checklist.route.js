@@ -6,6 +6,7 @@ module.exports = (app) => {
 
   router.post("/create", [isAuthenticated], ent_checklist.create);
   router.get("/", [isAuthenticated], ent_checklist.get);
+  router.get("/web", [isAuthenticated], ent_checklist.getListChecklistWeb)
   router.get("/:id", [isAuthenticated], ent_checklist.getDetail);
   router.get("/:id/:idc/:id_calv/:id_hm", [isAuthenticated], ent_checklist.getChecklist);
   router.post("/filter/:id/:idc/:id_calv/:id_hm", [isAuthenticated], ent_checklist.getFilter);

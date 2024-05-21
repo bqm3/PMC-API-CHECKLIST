@@ -109,7 +109,7 @@ exports.get = async (req, res) => {
       include: [
         {
           model: Ent_hangmuc,
-          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc"],
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode"],
           include: [
             {
               model: Ent_khuvuc,
@@ -187,7 +187,7 @@ exports.get = async (req, res) => {
       include: [
         {
           model: Ent_hangmuc,
-          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc"],
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode"],
           include: [
             {
               model: Ent_khuvuc,
@@ -304,7 +304,7 @@ exports.getDetail = async (req, res) => {
         include: [
           {
             model: Ent_hangmuc,
-            attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc"],
+            attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode"],
             include: [
               {
                 model: Ent_khuvuc,
@@ -593,7 +593,7 @@ exports.getFilter = async (req, res) => {
           
           {
             model: Ent_hangmuc,
-            attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc"],
+            attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode"],
             include: [
               {
                 model: Ent_khuvuc,
@@ -828,7 +828,7 @@ exports.getChecklist = async (req, res) => {
         },
         {
           model: Ent_hangmuc,
-          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc"],
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode"],
           include: [
             {
               model: Ent_khuvuc,
@@ -970,7 +970,7 @@ exports.getFilterSearch = async (req, res) => {
         },
         {
           model: Ent_hangmuc,
-          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc"],
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode"],
           include: [
             {
               model: Ent_khuvuc,
@@ -1042,7 +1042,7 @@ exports.getFilterSearch = async (req, res) => {
         },
         {
           model: Ent_hangmuc,
-          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc"],
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode"],
           include: [
             {
               model: Ent_khuvuc,
@@ -1253,7 +1253,7 @@ exports.filterChecklists = async (req, res) => {
         },
         {
           model: Ent_hangmuc,
-          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc"],
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode"],
           include: [
             {
               model: Ent_khuvuc,
@@ -1325,3 +1325,129 @@ exports.filterChecklists = async (req, res) => {
     });
   }
 }
+
+
+exports.getListChecklistWeb = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    if (!userData) {
+      return res
+        .status(401)
+        .json({ message: "Không tìm thấy thông tin người dùng." });
+    }
+
+    const orConditions = [];
+    if (userData) {
+      orConditions.push({
+        "$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$": userData?.ID_Duan,
+      });
+    }
+
+
+    const data = await Ent_checklist.findAll({
+      attributes: [
+        "ID_Checklist",
+        "ID_Khuvuc",
+        "ID_Tang",
+        "ID_Hangmuc",
+        "Sothutu",
+        "Maso",
+        "MaQrCode",
+        "Checklist",
+        "Ghichu",
+        "Tieuchuan",
+        "Giatridinhdanh",
+        "Giatrinhan",
+        "sCalv",
+        "calv_1",
+        "calv_2",
+        "calv_3",
+        "calv_4",
+        "ID_User",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_hangmuc,
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode"],
+          include: [
+            {
+              model: Ent_khuvuc,
+              attributes: [
+                "Tenkhuvuc",
+                "MaQrCode",
+                "Makhuvuc",
+                "Sothutu",
+                "ID_Toanha",
+                "ID_KhoiCV",
+                "ID_Khuvuc",
+              ],
+              include: [
+                {
+                  model: Ent_toanha,
+                  attributes: ["Toanha", "Sotang", "ID_Toanha"],
+                  include: {
+                    model: Ent_duan,
+                    attributes: ["ID_Duan", "Duan", "Diachi","Vido", "Kinhdo"],
+                    where: { ID_Duan: userData.ID_Duan },
+                  },
+                },
+
+                {
+                  model: Ent_khoicv,
+                  attributes: ["KhoiCV"],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          model: Ent_tang,
+          attributes: ["Tentang", "Sotang"],
+        },
+        {
+          model: Ent_user,
+          include: {
+            model: Ent_chucvu,
+            attributes: ["Chucvu"],
+          },
+          attributes: ["UserName", "Emails"],
+        },
+      ],
+      where: {
+        isDelete: 0,
+        [Op.and]: [orConditions],
+      },
+      order: [
+        ["ID_Khuvuc", "ASC"],
+        ["Sothutu", "ASC"],
+      ],
+     
+    });
+
+    if (!data || data.length === 0) {
+      return res.status(200).json({
+        message: "Không còn checklist cho ca làm việc này!",
+        data: [],
+      });
+    }
+
+    const filteredData = data.filter((item) => item.ent_khuvuc !== null);
+
+    if (filteredData.length > 0) {
+      return res.status(200).json({
+        message: "Danh sách checklist!",
+        data: filteredData,
+      });
+    } else {
+      return res.status(200).json({
+        message: "Không còn checklist cho ca làm việc này!",
+        data: [],
+      });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};

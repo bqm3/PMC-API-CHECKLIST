@@ -22,8 +22,6 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     // Extract data from the request body and files
     const records = req.body;
     const images = req.files;
-    console.log('images',images)
-    console.log('records',records)
 
     // Ensure records.ID_ChecklistC and records.ID_Checklist are arrays
     const ensureArray = (data) => {
@@ -53,8 +51,6 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       uploadedFileIds.push({ id: fileId, name: image.originalname });
     }
 
-    console.log('records', records)
-    console.log('uploadedFileIds',uploadedFileIds)
 
     // Prepare records for bulk creation
     const newRecords = records.ID_ChecklistC.map((ID_ChecklistC, index) => {
@@ -65,7 +61,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
 
       // Handle Anh from records
       let Anh = null; // Default to null if no image is provided
-      const inputAnh = records.Anh ? records.Anh[index] : null;
+      let inputAnh = Array.isArray(records.Anh) ? records.Anh[index] : records.Anh;
 
       if (inputAnh) {
         // Xác định `inputAnh` có phải là đối tượng hay không
