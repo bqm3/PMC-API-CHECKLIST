@@ -10,6 +10,7 @@ module.exports = (app) => {
     router.post("/change-password",[isAuthenticated], ent_user.changePassword);
     router.put("/delete/:id",[isAuthenticated, isAdmin], ent_user.deleteUser);
     router.put("/update/:id",[isAuthenticated, isAdmin], ent_user.updateUser);
+    router.get("/:id",[isAuthenticated, isAdmin], ent_user.getDetail);
    
     router.get("/get-online",[isAuthenticated,isAdmin], ent_user.getUserOnline);
     

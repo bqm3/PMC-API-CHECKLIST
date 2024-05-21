@@ -254,7 +254,6 @@ exports.updateUser = async (req, res) => {
       const hashedNewPassword = await hashSync(Password, 10);
       updateData.Password = hashedNewPassword;
     }
-    console.log("updateData", updateData, req.params.id);
 
     await Ent_user.update(updateData, {
       where: {
@@ -370,3 +369,64 @@ exports.checkAuth = async (req, res, next) => {
     });
   }
 }
+
+
+exports.getDetail = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    if (userData) {
+      let whereClause = {
+        isDelete: 0,
+      };
+
+      if (userData.Permission !== 3 || userData.ent_chucvu.Chucvu !== "PSH") {
+        whereClause.ID_Duan = userData.ID_Duan;
+      }
+
+      await Ent_user.findByPk(req.params.id, {
+        attributes: [
+          "ID_User",
+          "UserName",
+          "Emails",
+          "Password",
+          "ID_Duan",
+          "ID_KhoiCV",
+          "Permission",
+        ],
+        order: [["ID_Duan", "ASC"], ["Permission", "ASC"]],
+        include: [
+          {
+            association: "ent_duan",
+            required: true,
+          },
+          {
+            model: Ent_chucvu,
+            attributes: ["Chucvu"],
+          },
+          {
+            model: Ent_khoicv,
+            attributes: ["KhoiCV"],
+          },
+        ],
+        where: {
+          isDelete: 0,
+        },
+      })
+        .then((data) => {
+          res.status(200).json({
+            message: "Thông tin User!",
+            data: data,
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
