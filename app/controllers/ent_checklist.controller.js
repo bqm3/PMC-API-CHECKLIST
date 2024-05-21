@@ -79,7 +79,8 @@ exports.get = async (req, res) => {
     }
 
     const page = parseInt(req.query.page) || 1;
-    const pageSize = 500; // Số lượng phần tử trên mỗi trang
+    // const pageSize = 500;
+    const pageSize = parseInt(req.query.limit) || 100; // Số lượng phần tử trên mỗi trang
     const offset = (page - 1) * pageSize;
 
     const orConditions = [];
@@ -915,7 +916,8 @@ exports.getFilterSearch = async (req, res) => {
     const ID_Hangmuc = req.body.ID_Hangmuc;
 
     const page = parseInt(req.query.page) || 1;
-    const pageSize = 500; // Số lượng phần tử trên mỗi trang
+    // const pageSize = 500;
+    const pageSize = parseInt(req.query.limit) || 100; // Số lượng phần tử trên mỗi trang
     const offset = (page - 1) * pageSize;
 
     const orConditions = [];
