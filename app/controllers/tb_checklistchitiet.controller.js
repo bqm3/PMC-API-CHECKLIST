@@ -48,7 +48,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     const uploadedFileIds = [];
     for (const image of images) {
       const fileId = await uploadFile(image);
-      uploadedFileIds.push({ id: fileId, name: image.originalname });
+      await uploadedFileIds.push({ id: fileId, name: image.originalname });
     }
 
 
@@ -77,10 +77,10 @@ exports.createCheckListChiTiet = async (req, res, next) => {
             // Sử dụng ID của tệp ảnh đã tải lên làm giá trị cho Anh
             Anh = matchingImage.id.id;
         } else {
-            console.warn(`No matching image found for Anh: ${inputAnh}`);
+            console.log(`No matching image found for Anh: ${inputAnh}`);
         }
     } else {
-        console.warn(`Unexpected Anh format: ${JSON.stringify(inputAnh)}`);
+        console.log(`Unexpected Anh format: ${JSON.stringify(inputAnh)}`);
     }
     
 
