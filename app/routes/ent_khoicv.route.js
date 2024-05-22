@@ -4,8 +4,8 @@ module.exports = (app) => {
 
     var router = require("express").Router();
   
-    router.get("/",[isAuthenticated], ent_khoicv.get);
-    router.get("/:id",[isAuthenticated], ent_khoicv.getDetail);
+    router.get("/", ent_khoicv.get);
+    router.get("/:id", ent_khoicv.getDetail);
   
     app.use("/api/ent_khoicv", router);
   };
