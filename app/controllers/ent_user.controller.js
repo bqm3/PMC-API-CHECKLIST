@@ -334,8 +334,10 @@ exports.getUserOnline = async (req, res, next) => {
       where: {
         isDelete: 0,
       },
-      order: [["ID_Duan", "ASC"], ["Permission", "ASC"]],
-
+      order: [
+        ["ID_Duan", "ASC"],
+        ["Permission", "ASC"],
+      ],
     })
       .then((data) => {
         res.status(200).json({
@@ -377,7 +379,10 @@ exports.getDetail = async (req, res) => {
           "ID_KhoiCV",
           "Permission",
         ],
-        order: [["ID_Duan", "ASC"], ["Permission", "ASC"]],
+        order: [
+          ["ID_Duan", "ASC"],
+          ["Permission", "ASC"],
+        ],
         include: [
           {
             model: Ent_duan,
@@ -419,15 +424,48 @@ exports.getDetail = async (req, res) => {
 exports.checkAuth = async (req, res, next) => {
   try {
     const userData = req.user.data;
-    res.status(200).json({
-      message: "Danh sách nhân viên!",
-      user: userData,
-    });
+    await Ent_user.findByPk(userData.ID_User, {
+      attributes: [
+        "ID_User",
+        "UserName",
+        "Emails",
+        "Password",
+        "ID_Duan",
+        "ID_KhoiCV",
+        "Permission",
+      ],
+      include: [
+        {
+          model: Ent_duan,
+          attributes: ["Duan", "Diachi"],
+        },
+        {
+          model: Ent_chucvu,
+          attributes: ["Chucvu"],
+        },
+        {
+          model: Ent_khoicv,
+          attributes: ["KhoiCV"],
+        },
+      ],
+      where: {
+        isDelete: 0,
+      },
+    })
+      .then((data) => {
+        res.status(200).json({
+          message: "Thông tin User!",
+          data: data,
+        });
+      })
+      .catch((err) => {
+        res.status(500).json({
+          message: err.message || "Lỗi! Vui lòng thử lại sau.",
+        });
+      });
   } catch (error) {
     return res.status(500).json({
       message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
-}
-
-
+};
