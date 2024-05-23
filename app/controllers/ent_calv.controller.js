@@ -296,31 +296,31 @@ exports.update = async (req, res) => {
       }
 
       // Kiểm tra xem có ca làm việc nào đã tồn tại với ID_KhoiCV và Tenca tương tự không
-      const existingCalv = await Ent_calv.findOne({
-        where: {
-          ID_KhoiCV: req.body.ID_KhoiCV,
-          Tenca: req.body.Tenca,
-          ID_Calv: {
-            [Op.ne]: req.params.id, // Loại bỏ bản ghi hiện tại (với ID_Calv = req.params.id)
-          },
-        },
-        attributes: [
-          "ID_Calv",
-          "ID_KhoiCV",
-          "ID_Duan",
-          "Tenca",
-          "Giobatdau",
-          "Gioketthuc",
-          "ID_User",
-          "isDelete",
-        ],
-      });
+      // const existingCalv = await Ent_calv.findOne({
+      //   where: {
+      //     ID_KhoiCV: req.body.ID_KhoiCV,
+      //     Tenca: req.body.Tenca,
+      //     ID_Calv: {
+      //       [Op.ne]: req.params.id, // Loại bỏ bản ghi hiện tại (với ID_Calv = req.params.id)
+      //     },
+      //   },
+      //   attributes: [
+      //     "ID_Calv",
+      //     "ID_KhoiCV",
+      //     "ID_Duan",
+      //     "Tenca",
+      //     "Giobatdau",
+      //     "Gioketthuc",
+      //     "ID_User",
+      //     "isDelete",
+      //   ],
+      // });
 
-      if (existingCalv) {
-        return res.status(400).json({
-          message: "Ca làm việc đã tồn tại!",
-        });
-      }
+      // if (existingCalv) {
+      //   return res.status(400).json({
+      //     message: "Ca làm việc đã tồn tại!",
+      //   });
+      // }
 
       const reqData = {
         ID_Duan: userData.ID_Duan,

@@ -23,7 +23,7 @@ exports.create = async (req, res) => {
         ID_User: ID_User,
         isDelete: 0,
       };
-      if (req.body.MaQrCode) {
+      if (req.body.MaQrCode !== "") {
         const dataRes = await Ent_khuvuc.findOne({
           where: {
             MaQrCode: req.body.MaQrCode,
@@ -208,35 +208,39 @@ exports.update = async (req, res) => {
         isDelete: 0,
       };
 
-      // Kiểm tra xem mã QR Code mới có trùng với bất kỳ bản ghi nào khác trong cơ sở dữ liệu không
-      const existingKhuvuc = await Ent_khuvuc.findOne({
-        where: {
-          [Op.and]: [
-            { MaQrCode: { [Op.not]: null, [Op.ne]: "" } }, // Kiểm tra mã QR Code không rỗng hoặc null
-            { ID_Khuvuc: { [Op.ne]: req.params.id } }, // Kiểm tra ID_Khuvuc khác với ID của khu vực đang cập nhật
-            { MaQrCode: req.body.MaQrCode }, // Kiểm tra xem mã QR Code mới có trùng với mã QR Code được gửi trong yêu cầu không
+      // Kiểm tra xem mã QR Code có rỗng không
+      if (req.body.MaQrCode && req.body.MaQrCode.trim() !== "") {
+        // Kiểm tra xem mã QR Code mới có trùng với bất kỳ bản ghi nào khác trong cơ sở dữ liệu không
+        const existingKhuvuc = await Ent_khuvuc.findOne({
+          where: {
+            [Op.and]: [
+              { MaQrCode: { [Op.not]: null, [Op.ne]: "" } }, // Kiểm tra mã QR Code không rỗng hoặc null
+              { ID_Khuvuc: { [Op.ne]: req.params.id } }, // Kiểm tra ID_Khuvuc khác với ID của khu vực đang cập nhật
+              { MaQrCode: req.body.MaQrCode }, // Kiểm tra xem mã QR Code mới có trùng với mã QR Code được gửi trong yêu cầu không
+            ],
+          },
+          attributes: [
+            "ID_Khuvuc",
+            "ID_Toanha",
+            "ID_KhoiCV",
+            "Sothutu",
+            "Makhuvuc",
+            "MaQrCode",
+            "Tenkhuvuc",
+            "ID_User",
+            "isDelete",
           ],
-        },
-        attributes: [
-          "ID_Khuvuc",
-          "ID_Toanha",
-          "ID_KhoiCV",
-          "Sothutu",
-          "Makhuvuc",
-          "MaQrCode",
-          "Tenkhuvuc",
-          "ID_User",
-          "isDelete",
-        ],
-      });
-
-      if (existingKhuvuc) {
-        res.status(400).json({
-          message: "Mã QR Code đã tồn tại!",
         });
-        return;
+
+        if (existingKhuvuc) {
+          res.status(400).json({
+            message: "Mã QR Code đã tồn tại!",
+          });
+          return;
+        }
       }
 
+      // Thực hiện cập nhật khu vực
       Ent_khuvuc.update(reqData, {
         where: {
           ID_Khuvuc: req.params.id,
@@ -260,6 +264,7 @@ exports.update = async (req, res) => {
     });
   }
 };
+
 
 exports.delete = async (req, res) => {
   try {
