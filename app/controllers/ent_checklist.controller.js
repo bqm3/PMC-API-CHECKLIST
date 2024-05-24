@@ -1135,7 +1135,7 @@ exports.filterChecklists = async (req, res) => {
     // const pageMaxSize =
     const checklistItems = await Tb_checklistchitiet.findAll({
       attributes: ["isDelete", "ID_Checklist", "ID_ChecklistC"],
-      where: { isDelete: 0},
+      where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC},
     });
 
     const checklistDoneItems = await Tb_checklistchitietdone.findAll({
