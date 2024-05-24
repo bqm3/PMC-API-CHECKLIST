@@ -289,10 +289,6 @@ exports.update = async (req, res) => {
         return res.status(400).json({
           message: "Cần có thời gian bắt đầu và kết thúc!",
         });
-      } else if (giokt <= giobd && giobd < "20:00" && giokt >= "00:00") {
-        return res.status(400).json({
-          message: "Giờ kết thúc phải lớn hơn giờ bắt đầu!",
-        });
       }
 
       // Kiểm tra xem có ca làm việc nào đã tồn tại với ID_KhoiCV và Tenca tương tự không
