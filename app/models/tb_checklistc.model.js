@@ -15,9 +15,12 @@ const Ent_checklistc = sequelize.define(
     ID_KhoiCV: {
       type: DataTypes.INTEGER,
     },
-    // ID_Khuvuc: {
-    //   type: DataTypes.INTEGER,
-    // },
+    ID_User: {
+      type: DataTypes.INTEGER,
+    },
+    ID_Toanha: {
+      type: DataTypes.TEXT,
+    },
     ID_Calv: {
       type: DataTypes.INTEGER,
     },

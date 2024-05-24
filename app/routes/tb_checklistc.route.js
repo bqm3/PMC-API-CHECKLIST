@@ -9,9 +9,21 @@ module.exports = (app) => {
   var router = require("express").Router();
 
   router.post(
-    "/create-first",
+    "/create",
     [isAuthenticated],
     tb_checklistc.createFirstChecklist
+  );
+
+  router.post(
+    "/toanha",
+    [isAuthenticated],
+    tb_checklistc.createChecklistInToanha
+  );
+
+  router.get(
+    "/ca/:id",
+    [isAuthenticated],
+    tb_checklistc.checklistCalv
   );
 
   router.get("/", [isAuthenticated], tb_checklistc.getCheckListc);
