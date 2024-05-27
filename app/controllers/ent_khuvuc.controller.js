@@ -299,7 +299,6 @@ exports.delete = async (req, res) => {
 exports.getKhuVuc = async (req, res) => {
   try {
     const userData = req.user.data;
-    console.log('req.body.ID_Toanha',req.body.ID_Toanha)
 
     if (userData) {
       // Xây dựng điều kiện where dựa trên các giá trị đã kiểm tra
@@ -314,7 +313,7 @@ exports.getKhuVuc = async (req, res) => {
         if (userData.ID_Duan !== null) {
           whereCondition["$ent_toanha.ID_Duan$"] = userData.ID_Duan;
         }
-        if (userData.ID_KhoiCV !== null) {
+        if (userData.ID_KhoiCV !== null  && userData.ID_KhoiCV !== undefined) {
           whereCondition[Op.and].push({
             ID_KhoiCV: userData.ID_KhoiCV,
           });
