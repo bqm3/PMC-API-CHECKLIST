@@ -47,6 +47,7 @@ exports.create = async (req, res) => {
         calv_3: JSON.stringify(sCalv[2]) || null,
         calv_4: JSON.stringify(sCalv[3]) || null,
         isDelete: 0,
+        Tinhtrang: 0,
       };
 
       Ent_checklist.create(data)
@@ -176,7 +177,7 @@ exports.get = async (req, res) => {
         "Tieuchuan",
         "Giatridinhdanh",
         "Giatrinhan",
-        "sCalv",
+        "sCalv","Tinhtrang",
         "calv_1",
         "calv_2",
         "calv_3",
@@ -300,6 +301,7 @@ exports.getDetail = async (req, res) => {
           "calv_4",
           "ID_User",
           "isDelete",
+          "Tinhtrang",
         ],
         include: [
           {
@@ -1237,6 +1239,7 @@ exports.filterChecklists = async (req, res) => {
         "Tieuchuan",
         "Giatridinhdanh",
         "Giatrinhan",
+        "Tinhtrang",
         "ID_User",
         "sCalv",
         "calv_1",
@@ -1358,7 +1361,7 @@ exports.getListChecklistWeb = async (req, res) => {
         "Tieuchuan",
         "Giatridinhdanh",
         "Giatrinhan",
-        "sCalv",
+        "sCalv","Tinhtrang",
         "calv_1",
         "calv_2",
         "calv_3",

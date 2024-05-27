@@ -13,100 +13,130 @@ const {
   Ent_tang,
   Ent_toanha,
 } = require("../models/setup.model");
+const sequelize = require('../config/db.config');
 const { Op, where, Sequelize } = require("sequelize");
 const ExcelJS = require("exceljs");
 var path = require("path");
 
 exports.createCheckListChiTiet = async (req, res, next) => {
   try {
-    // Extract data from the request body and files
-    const records = req.body;
-    const images = req.files;
+     // Extract data from the request body and files
+     const records = req.body;
+     const images = req.files;
+ 
+     // Ensure records.ID_ChecklistC and records.ID_Checklist are arrays
+     const ensureArray = (data) => {
+       if (!Array.isArray(data)) {
+         return [data];
+       }
+       return data;
+     };
+ 
+     records.ID_ChecklistC = ensureArray(records.ID_ChecklistC);
+     records.ID_Checklist = ensureArray(records.ID_Checklist);
+     records.Ketqua = ensureArray(records.Ketqua);
+     records.Ghichu = ensureArray(records.Ghichu);
+     records.Gioht = ensureArray(records.Gioht);
+ 
+     // Validate records and images as arrays
+     if (records.ID_ChecklistC.length !== records.ID_Checklist.length) {
+       return res.status(400).json({
+         error: "ID_ChecklistC and ID_Checklist must have the same length.",
+       });
+     }
+ 
+     // Upload images and collect file details (id and original name)
+     const uploadedFileIds = [];
+     for (const image of images) {
+       const fileId = await uploadFile(image);
+       await uploadedFileIds.push({ id: fileId, name: image.originalname });
+     }
+ 
+ 
+     // Prepare records for bulk creation
+     const newRecords = records.ID_ChecklistC.map((ID_ChecklistC, index) => {
+       const ID_Checklist = records.ID_Checklist[index];
+       const Ketqua = records.Ketqua[index];
+       const Gioht = records.Gioht[index];
+       const Ghichu = records.Ghichu[index];
+ 
+       // Handle Anh from records
+       let Anh = null; // Default to null if no image is provided
+       let inputAnh = Array.isArray(records.Anh) ? records.Anh[index] : records.Anh;
+ 
+       if (inputAnh) {
+         // Xác định `inputAnh` có phải là đối tượng hay không
+         if (typeof inputAnh === 'object') {
+             // Nếu `inputAnh` là đối tượng, lấy tên của đối tượng để so sánh
+             inputAnh = inputAnh.name;
+         }
+     
+         // Kiểm tra tệp ảnh đã tải lên
+         const matchingImage = uploadedFileIds.find((file) => file.name === inputAnh);
+     
+         if (matchingImage) {
+             // Sử dụng ID của tệp ảnh đã tải lên làm giá trị cho Anh
+             Anh = matchingImage.id.id;
+         } else {
+             console.log(`No matching image found for Anh: ${inputAnh}`);
+         }
+     } else {
+         console.log(`Unexpected Anh format: ${JSON.stringify(inputAnh)}`);
+     }
+     
+ 
+       // Create the record object
+       return {
+         ID_ChecklistC,
+         ID_Checklist,
+         Ketqua,
+         Gioht,
+         Ghichu,
+         Anh,
+       };
+     });
 
-    // Ensure records.ID_ChecklistC and records.ID_Checklist are arrays
-    const ensureArray = (data) => {
-      if (!Array.isArray(data)) {
-        return [data];
-      }
-      return data;
-    };
+    // Start transaction
+    const transaction = await sequelize.transaction();
 
-    records.ID_ChecklistC = ensureArray(records.ID_ChecklistC);
-    records.ID_Checklist = ensureArray(records.ID_Checklist);
-    records.Ketqua = ensureArray(records.Ketqua);
-    records.Ghichu = ensureArray(records.Ghichu);
-    records.Gioht = ensureArray(records.Gioht);
+    try {
+      // Bulk create new records
+      await Tb_checklistchitiet.bulkCreate(newRecords, { transaction });
 
-    // Validate records and images as arrays
-    if (records.ID_ChecklistC.length !== records.ID_Checklist.length) {
-      return res.status(400).json({
-        error: "ID_ChecklistC and ID_Checklist must have the same length.",
-      });
-    }
-
-    // Upload images and collect file details (id and original name)
-    const uploadedFileIds = [];
-    for (const image of images) {
-      const fileId = await uploadFile(image);
-      await uploadedFileIds.push({ id: fileId, name: image.originalname });
-    }
-
-
-    // Prepare records for bulk creation
-    const newRecords = records.ID_ChecklistC.map((ID_ChecklistC, index) => {
-      const ID_Checklist = records.ID_Checklist[index];
-      const Ketqua = records.Ketqua[index];
-      const Gioht = records.Gioht[index];
-      const Ghichu = records.Ghichu[index];
-
-      // Handle Anh from records
-      let Anh = null; // Default to null if no image is provided
-      let inputAnh = Array.isArray(records.Anh) ? records.Anh[index] : records.Anh;
-
-      if (inputAnh) {
-        // Xác định `inputAnh` có phải là đối tượng hay không
-        if (typeof inputAnh === 'object') {
-            // Nếu `inputAnh` là đối tượng, lấy tên của đối tượng để so sánh
-            inputAnh = inputAnh.name;
+      // Update `TongC` in `Tb_checklistc`
+      await Tb_checklistc.update(
+        { TongC: Sequelize.literal(`TongC + ${records.ID_ChecklistC.length}`) },
+        {
+          where: { ID_ChecklistC: records.ID_ChecklistC[0] },
+          transaction,
         }
-    
-        // Kiểm tra tệp ảnh đã tải lên
-        const matchingImage = uploadedFileIds.find((file) => file.name === inputAnh);
-    
-        if (matchingImage) {
-            // Sử dụng ID của tệp ảnh đã tải lên làm giá trị cho Anh
-            Anh = matchingImage.id.id;
-        } else {
-            console.log(`No matching image found for Anh: ${inputAnh}`);
+      );
+
+      // Extract unique ID_Checklist values
+      const uniqueIDChecklists = [...new Set(records.ID_Checklist)];
+
+      // Update Tinhtrang = 1 for each ID_Checklist in ent_checklist
+      await Ent_checklist.update(
+        { Tinhtrang: 1 },
+        {
+          where: {
+            ID_Checklist: {
+              [Op.in]: uniqueIDChecklists,
+            },
+          },
+          transaction,
         }
-    } else {
-        console.log(`Unexpected Anh format: ${JSON.stringify(inputAnh)}`);
+      );
+
+      // Commit transaction
+      await transaction.commit();
+
+      res.status(200).json({ message: "Records created and updated successfully" });
+    } catch (error) {
+      // Rollback transaction
+      await transaction.rollback();
+      throw error;
     }
-    
-
-      // Create the record object
-      return {
-        ID_ChecklistC,
-        ID_Checklist,
-        Ketqua,
-        Gioht,
-        Ghichu,
-        Anh,
-      };
-    });
-
-    // Bulk create new records
-    await Tb_checklistchitiet.bulkCreate(newRecords);
-
-    // Update `TongC` in `Tb_checklistc`
-    await Tb_checklistc.update(
-      { TongC: Sequelize.literal(`TongC + ${records.ID_ChecklistC.length}`) },
-      {
-        where: { ID_ChecklistC: records.ID_ChecklistC[0] },
-      }
-    );
-
-    res.status(200).json({ message: "Records created successfully" });
   } catch (error) {
     // Log error and respond with internal server error
     console.error("Error creating checklist details:", error);

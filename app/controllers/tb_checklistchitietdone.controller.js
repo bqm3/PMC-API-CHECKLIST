@@ -1,6 +1,7 @@
 const {
   Tb_checklistchitietdone,
   Tb_checklistc,
+  Ent_checklist,
 } = require("../models/setup.model");
 const { Op, Sequelize } = require("sequelize");
 
@@ -14,9 +15,8 @@ exports.create = (req, res) => {
       });
       return;
     }
-    const Description = req.body.Description;
-    const checklistLength = req.body.checklistLength;
-    const ID_ChecklistC =req.body.ID_ChecklistC;
+    const {ID_Checklists,Description, checklistLength, ID_ChecklistC } = req.body;
+
     if (!Description) {
       res.status(400).json({
         message: "Không thể checklist dữ liệu!",
@@ -34,12 +34,12 @@ exports.create = (req, res) => {
     
     // Save Tb_checklistchitietdone in the database
     Tb_checklistchitietdone.create(data)
-      .then((data) => {
+      .then(async (data) => {
         res.status(200).json({
           message: "Checklist thành công!",
           data: data,
         });
-        Tb_checklistc.update(
+       await  Tb_checklistc.update(
           {
             TongC: Sequelize.literal(`TongC + ${checklistLength}`),
           },
@@ -47,6 +47,17 @@ exports.create = (req, res) => {
             where: {
               ID_ChecklistC: ID_ChecklistC,
             },
+          }
+        );
+
+        await Ent_checklist.update(
+          { Tinhtrang: 0 },
+          {
+            where: {
+              ID_Checklist: {
+                [Op.in]: ID_Checklists,
+              },
+            }
           }
         );
       })
