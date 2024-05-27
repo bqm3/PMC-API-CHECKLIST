@@ -90,7 +90,7 @@ exports.get = async (req, res) => {
     };
     if (userData) {
       orConditions.push({ "$ent_toanha.ID_Duan$": userData?.ID_Duan });
-      if (userData?.ID_KhoiCV !== null) {
+      if (userData?.ID_KhoiCV !== null && userData?.ID_KhoiCV !== undefined ) {
         whereCondition.ID_KhoiCV = userData?.ID_KhoiCV;
       }
       await Ent_khuvuc.findAll({
