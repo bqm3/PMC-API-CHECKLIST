@@ -1,3 +1,6 @@
+const multer = require("multer");
+const upload = multer();
+
 module.exports = (app) => {
   const ent_checklist = require("../controllers/ent_checklist.controller.js");
   const { isAuthenticated } = require("../middleware/auth_middleware.js");
@@ -25,6 +28,8 @@ module.exports = (app) => {
     isAuthenticated,
     ent_checklist.filterChecklists
   );
+
+  router.post('/uploads', [isAuthenticated, upload.single('files')], ent_checklist.uploadFiles)
 
   app.use("/api/ent_checklist", router);
 };

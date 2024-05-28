@@ -1,4 +1,5 @@
 const sequelize = require("../config/db.config");
+const xlsx = require("xlsx");
 const {
   Ent_checklist,
   Ent_khuvuc,
@@ -12,6 +13,7 @@ const {
   Tb_checklistchitiet,
   Tb_checklistchitietdone,
   Tb_checklistc,
+  Ent_calv,
 } = require("../models/setup.model");
 const { Op, Sequelize } = require("sequelize");
 
@@ -1518,7 +1520,8 @@ exports.getChecklistTotal = async (req, res) => {
       isDelete: 0,
     };
 
-    whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
+    whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] =
+      userData?.ID_Duan;
 
     const checklistData = await Ent_checklist.findAll({
       attributes: [
@@ -1606,11 +1609,13 @@ exports.getChecklistTotal = async (req, res) => {
     }
 
     // Filter data
-    const filteredData = checklistData.filter(item => item.ent_hangmuc !== null);
+    const filteredData = checklistData.filter(
+      (item) => item.ent_hangmuc !== null
+    );
 
     // Count checklists by ID_KhoiCV
     const checklistCounts = {};
-    filteredData.forEach(item => {
+    filteredData.forEach((item) => {
       const khoiCV = item.ent_hangmuc.ent_khuvuc.ent_khoicv.KhoiCV;
       if (!checklistCounts[khoiCV]) {
         checklistCounts[khoiCV] = 0;
@@ -1619,13 +1624,16 @@ exports.getChecklistTotal = async (req, res) => {
     });
 
     // Convert counts to desired format
-    const result = Object.keys(checklistCounts).map(khoiCV => ({
+    const result = Object.keys(checklistCounts).map((khoiCV) => ({
       label: khoiCV,
-      value: checklistCounts[khoiCV]
+      value: checklistCounts[khoiCV],
     }));
 
     return res.status(200).json({
-      message: result.length > 0 ? "Danh sách checklist!" : "Không còn checklist cho ca làm việc này!",
+      message:
+        result.length > 0
+          ? "Danh sách checklist!"
+          : "Không còn checklist cho ca làm việc này!",
       length: result.length,
       data: result,
     });
@@ -1634,5 +1642,142 @@ exports.getChecklistTotal = async (req, res) => {
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
-}
+};
 
+exports.uploadFiles = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).send("No file uploaded.");
+    }
+
+    const userData = req.user.data;
+
+    // Read the uploaded Excel file from buffer
+    const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
+
+    // Extract data from the first sheet
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const data = xlsx.utils.sheet_to_json(worksheet);
+
+    const commonDetailsMap = {};
+
+    data.forEach((item) => {
+      const maChecklist = item["mã checklist"];
+      if (!commonDetailsMap[maChecklist]) {
+        commonDetailsMap[maChecklist] = {
+          "Tên dự án": item["Tên dự án"],
+          "Tên tòa nhà": item["Tên tòa nhà"],
+          "Mã khu vực": item["Mã khu vực"],
+          "Mã QrCode khu vực": item["Mã QrCode khu vực"],
+          "Tên khu vực": item["Tên khu vực"],
+          "Mã QrCode hạng mục": item["Mã QrCode hạng mục"],
+          "Tên Hạng Mục": item["Tên Hạng Mục"],
+          "Tên tầng": item["Tên tầng"],
+          "Tên khối công việc": item["Tên khối công việc"],
+        };
+      }
+    });
+
+    // Step 2: Update objects with common details
+    const updatedData = data.map((item) => {
+      const maChecklist = item["mã checklist"];
+      return {
+        ...item,
+        ...commonDetailsMap[maChecklist],
+      };
+    });
+
+    await sequelize.transaction(async (transaction) => {
+      for (const item of updatedData) {
+        const maQrCodeHangMuc = item["Mã QrCode hạng mục"];
+        const tenTang = item["Tên tầng"];
+        const tenKhoiCongViec = item["Tên khối công việc"];
+        const caChecklist = item["Ca checklist"];
+        const maChecklist = item["Mã checklist"];
+        const qrChecklist = item["Mã QrCode checklist"];
+        const tenChecklist = item["Tên checklist"];
+        const tieuChuanChecklist = item["Tiêu chuẩn checklist"];
+        const giaTriDanhDinh = item["Giá trị danh định"];
+        const cacGiaTriNhan = item["Các giá trị nhận"];
+        const ghiChu = item["Ghi chú"];
+
+        const hangmuc = await Ent_hangmuc.findOne({
+          attributes: [
+            "Hangmuc",
+            "Tieuchuankt",
+            "ID_Khuvuc",
+            "MaQrCode",
+            "ID_Hangmuc",
+          ],
+          where: { MaQrCode: maQrCodeHangMuc },
+          transaction,
+        });
+
+        const tang = await Ent_tang.findOne({
+          attributes: ["Tentang", "Sotang", "ID_Tang", "ID_Duan"],
+          where: {
+            Tentang: sequelize.where(
+              sequelize.fn("UPPER", sequelize.col("Tentang")),
+              "LIKE",
+              "%" + tenTang.toUpperCase() + "%"
+            ),
+            ID_Duan: userData.ID_Duan,
+          },
+          transaction,
+        });
+
+        const khoiCV = await Ent_khoicv.findOne({
+          attributes: ["ID_Khoi", "KhoiCV"],
+          where: { KhoiCV: tenKhoiCongViec },
+          transaction,
+        });
+
+        const caChecklistArray = caChecklist.split(",").map((ca) => ca.trim());
+        const calv = await Ent_calv.findAll({
+          attributes: ["ID_Calv", "ID_Duan", "ID_KhoiCV", "Tenca"],
+          where: {
+            TenCa: caChecklistArray,
+            ID_Duan: userData.ID_Duan,
+            ID_KhoiCV: khoiCV.ID_Khoi,
+          },
+          transaction,
+        });
+        const sCalv = calv.map((calvItem) => calvItem.ID_Calv);
+
+        const data = {
+          ID_Khuvuc: hangmuc.ID_Khuvuc,
+          ID_Tang: tang.ID_Tang,
+          ID_Hangmuc: hangmuc.ID_Hangmuc,
+          Sothutu: 1,
+          Maso: maChecklist || "",
+          MaQrCode: qrChecklist || "",
+          Checklist: tenChecklist,
+          Ghichu: ghiChu || "",
+          Tieuchuan: tieuChuanChecklist || "",
+          Giatridinhdanh: giaTriDanhDinh || "",
+          Giatrinhan: cacGiaTriNhan || "",
+          ID_User: userData.ID_User,
+          sCalv: JSON.stringify(sCalv) || null,
+          calv_1: JSON.stringify(sCalv[0]) || null,
+          calv_2: JSON.stringify(sCalv[1]) || null,
+          calv_3: JSON.stringify(sCalv[2]) || null,
+          calv_4: JSON.stringify(sCalv[3]) || null,
+          isDelete: 0,
+          Tinhtrang: 0,
+        };
+
+        await Ent_checklist.create(data, { transaction });
+      }
+    });
+
+    res.send({
+      message: "File uploaded and data extracted successfully",
+      data,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
