@@ -1663,7 +1663,7 @@ exports.uploadFiles = async (req, res) => {
     const commonDetailsMap = {};
 
     data.forEach((item) => {
-      const maChecklist = item["mã checklist"];
+      const maChecklist = item["Mã checklist"];
       if (!commonDetailsMap[maChecklist]) {
         commonDetailsMap[maChecklist] = {
           "Tên dự án": item["Tên dự án"],
@@ -1681,7 +1681,7 @@ exports.uploadFiles = async (req, res) => {
 
     // Step 2: Update objects with common details
     const updatedData = data.map((item) => {
-      const maChecklist = item["mã checklist"];
+      const maChecklist = item["Mã checklist"];
       return {
         ...item,
         ...commonDetailsMap[maChecklist],
