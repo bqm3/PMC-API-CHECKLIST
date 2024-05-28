@@ -16,6 +16,7 @@ module.exports = (app) => {
   router.get("/:id/:idc/:id_calv/:id_hm", [isAuthenticated], ent_checklist.getChecklist);
   router.post("/filter/:id/:idc/:id_calv/:id_hm", [isAuthenticated], ent_checklist.getFilter);
   router.post("/filter/", [isAuthenticated], ent_checklist.getFilterSearch);
+  
   router.put("/update/:id", [isAuthenticated], ent_checklist.update);
   router.put("/delete/:id", [isAuthenticated], ent_checklist.delete);
   router.put(
@@ -29,7 +30,7 @@ module.exports = (app) => {
     ent_checklist.filterChecklists
   );
 
-  router.post('/uploads', [isAuthenticated, upload.single('files')], ent_checklist.uploadFiles)
+  router.post("/uploads", [isAuthenticated, upload.single('files')], ent_checklist.uploadFiles)
 
   app.use("/api/ent_checklist", router);
 };
