@@ -24,6 +24,7 @@ exports.create = (req, res) => {
       Diachi: req.body.Diachi,
       Vido: req.body.Vido,
       Kinhdo: req.body.Kinhdo,
+      Logo: req.body.Logo,
       isDelete: 0,
     };
 
@@ -159,7 +160,9 @@ exports.update = async (req, res) => {
         { Duan: req.body.Duan,  
           Diachi: req.body.Diachi,
           Vido: req.body.Vido,
-          Kinhdo: req.body.Kinhdo },
+          Kinhdo: req.body.Kinhdo ,
+          Logo: req.body.Logo ,
+        },
         {
           where: {
             ID_Duan: req.params.id,

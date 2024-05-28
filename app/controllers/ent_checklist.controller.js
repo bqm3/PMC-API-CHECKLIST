@@ -129,7 +129,14 @@ exports.get = async (req, res) => {
                   attributes: ["Toanha", "Sotang", "ID_Toanha"],
                   include: {
                     model: Ent_duan,
-                    attributes: ["ID_Duan", "Duan", "Diachi","Vido", "Kinhdo"],
+                    attributes: [
+                      "ID_Duan",
+                      "Duan",
+                      "Diachi",
+                      "Vido",
+                      "Kinhdo",
+                      "Logo",
+                    ],
                     where: { ID_Duan: userData.ID_Duan },
                   },
                 },
@@ -177,7 +184,8 @@ exports.get = async (req, res) => {
         "Tieuchuan",
         "Giatridinhdanh",
         "Giatrinhan",
-        "sCalv","Tinhtrang",
+        "sCalv",
+        "Tinhtrang",
         "calv_1",
         "calv_2",
         "calv_3",
@@ -207,7 +215,14 @@ exports.get = async (req, res) => {
                   attributes: ["Toanha", "Sotang", "ID_Toanha"],
                   include: {
                     model: Ent_duan,
-                    attributes: ["ID_Duan", "Duan", "Diachi","Vido", "Kinhdo"],
+                    attributes: [
+                      "ID_Duan",
+                      "Duan",
+                      "Diachi",
+                      "Vido",
+                      "Kinhdo",
+                      "Logo",
+                    ],
                     where: { ID_Duan: userData.ID_Duan },
                   },
                 },
@@ -325,11 +340,18 @@ exports.getDetail = async (req, res) => {
                     attributes: ["Toanha", "Sotang", "ID_Toanha"],
                     include: {
                       model: Ent_duan,
-                      attributes: ["ID_Duan", "Duan", "Diachi","Vido", "Kinhdo"],
+                      attributes: [
+                        "ID_Duan",
+                        "Duan",
+                        "Diachi",
+                        "Vido",
+                        "Kinhdo",
+                        "Logo",
+                      ],
                       where: { ID_Duan: userData.ID_Duan },
                     },
                   },
-  
+
                   {
                     model: Ent_khoicv,
                     attributes: ["KhoiCV"],
@@ -482,7 +504,7 @@ exports.getFilter = async (req, res) => {
     const ID_Hangmuc = req.params.id_hm;
 
     if (userData) {
-      if (ID_Khuvuc !== null  && ID_Khuvuc !== undefined) {
+      if (ID_Khuvuc !== null && ID_Khuvuc !== undefined) {
         orConditions.push({ ID_Khuvuc: ID_Khuvuc });
       }
 
@@ -547,7 +569,8 @@ exports.getFilter = async (req, res) => {
           { calv_4: ID_Calv },
         ],
       };
-      whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
+      whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] =
+        userData?.ID_Duan;
       whereCondition["$ent_hangmuc.ent_khuvuc.ID_KhoiCV$"] = ID_KhoiCV;
 
       if (
@@ -592,7 +615,6 @@ exports.getFilter = async (req, res) => {
           "isDelete",
         ],
         include: [
-          
           {
             model: Ent_hangmuc,
             attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode"],
@@ -618,7 +640,7 @@ exports.getFilter = async (req, res) => {
                   },
                 ],
               },
-            ]
+            ],
           },
           {
             model: Ent_tang,
@@ -764,10 +786,11 @@ exports.getChecklist = async (req, res) => {
       ],
     };
 
-    whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
+    whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] =
+      userData?.ID_Duan;
     whereCondition["$ent_hangmuc.ent_khuvuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
 
-    console.log('where', whereCondition)
+    console.log("where", whereCondition);
     if (
       checklistIds &&
       Array.isArray(checklistIds) &&
@@ -823,7 +846,6 @@ exports.getChecklist = async (req, res) => {
         "isDelete",
       ],
       include: [
-      
         {
           model: Ent_tang,
           attributes: ["Tentang", "Sotang"],
@@ -849,7 +871,14 @@ exports.getChecklist = async (req, res) => {
                   attributes: ["Toanha", "Sotang", "ID_Toanha"],
                   include: {
                     model: Ent_duan,
-                    attributes: ["ID_Duan", "Duan", "Diachi","Vido", "Kinhdo"],
+                    attributes: [
+                      "ID_Duan",
+                      "Duan",
+                      "Diachi",
+                      "Vido",
+                      "Kinhdo",
+                      "Logo",
+                    ],
                   },
                 },
                 {
@@ -858,7 +887,7 @@ exports.getChecklist = async (req, res) => {
                 },
               ],
             },
-          ]
+          ],
         },
         {
           model: Ent_user,
@@ -965,7 +994,6 @@ exports.getFilterSearch = async (req, res) => {
         "isDelete",
       ],
       include: [
-      
         {
           model: Ent_tang,
           attributes: ["Tentang", "Sotang"],
@@ -991,7 +1019,14 @@ exports.getFilterSearch = async (req, res) => {
                   attributes: ["Toanha", "Sotang", "ID_Toanha"],
                   include: {
                     model: Ent_duan,
-                    attributes: ["ID_Duan", "Duan", "Diachi","Vido", "Kinhdo"],
+                    attributes: [
+                      "ID_Duan",
+                      "Duan",
+                      "Diachi",
+                      "Vido",
+                      "Kinhdo",
+                      "Logo",
+                    ],
                   },
                 },
                 {
@@ -1000,7 +1035,7 @@ exports.getFilterSearch = async (req, res) => {
                 },
               ],
             },
-          ]
+          ],
         },
         {
           model: Ent_user,
@@ -1037,7 +1072,6 @@ exports.getFilterSearch = async (req, res) => {
         "isDelete",
       ],
       include: [
-      
         {
           model: Ent_tang,
           attributes: ["Tentang", "Sotang"],
@@ -1063,7 +1097,14 @@ exports.getFilterSearch = async (req, res) => {
                   attributes: ["Toanha", "Sotang", "ID_Toanha"],
                   include: {
                     model: Ent_duan,
-                    attributes: ["ID_Duan", "Duan", "Diachi","Vido", "Kinhdo"],
+                    attributes: [
+                      "ID_Duan",
+                      "Duan",
+                      "Diachi",
+                      "Vido",
+                      "Kinhdo",
+                      "Logo",
+                    ],
                   },
                 },
                 {
@@ -1072,7 +1113,7 @@ exports.getFilterSearch = async (req, res) => {
                 },
               ],
             },
-          ]
+          ],
         },
         {
           model: Ent_user,
@@ -1126,18 +1167,17 @@ exports.getFilterSearch = async (req, res) => {
   }
 };
 
-
 exports.filterChecklists = async (req, res) => {
   try {
     const userData = req.user.data;
     const ID_ChecklistC = req.params.idc;
     const ID_Calv = req.params.id_calv;
     const ID_Hangmuc = req.body.ID_Hangmuc;
-    
+
     // const pageMaxSize =
     const checklistItems = await Tb_checklistchitiet.findAll({
       attributes: ["isDelete", "ID_Checklist", "ID_ChecklistC"],
-      where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC},
+      where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC },
     });
 
     const checklistDoneItems = await Tb_checklistchitietdone.findAll({
@@ -1193,7 +1233,8 @@ exports.filterChecklists = async (req, res) => {
       ],
     };
 
-    whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
+    whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] =
+      userData?.ID_Duan;
     whereCondition["$ent_hangmuc.ent_khuvuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
 
     if (
@@ -1249,7 +1290,6 @@ exports.filterChecklists = async (req, res) => {
         "isDelete",
       ],
       include: [
-      
         {
           model: Ent_tang,
           attributes: ["Tentang", "Sotang"],
@@ -1275,7 +1315,14 @@ exports.filterChecklists = async (req, res) => {
                   attributes: ["Toanha", "Sotang", "ID_Toanha"],
                   include: {
                     model: Ent_duan,
-                    attributes: ["ID_Duan", "Duan", "Diachi","Vido", "Kinhdo"],
+                    attributes: [
+                      "ID_Duan",
+                      "Duan",
+                      "Diachi",
+                      "Vido",
+                      "Kinhdo",
+                      "Logo",
+                    ],
                   },
                 },
                 {
@@ -1284,7 +1331,7 @@ exports.filterChecklists = async (req, res) => {
                 },
               ],
             },
-          ]
+          ],
         },
         {
           model: Ent_user,
@@ -1327,8 +1374,7 @@ exports.filterChecklists = async (req, res) => {
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
-}
-
+};
 
 exports.getListChecklistWeb = async (req, res) => {
   try {
@@ -1346,7 +1392,6 @@ exports.getListChecklistWeb = async (req, res) => {
       });
     }
 
-
     const data = await Ent_checklist.findAll({
       attributes: [
         "ID_Checklist",
@@ -1361,7 +1406,8 @@ exports.getListChecklistWeb = async (req, res) => {
         "Tieuchuan",
         "Giatridinhdanh",
         "Giatrinhan",
-        "sCalv","Tinhtrang",
+        "sCalv",
+        "Tinhtrang",
         "calv_1",
         "calv_2",
         "calv_3",
@@ -1391,7 +1437,14 @@ exports.getListChecklistWeb = async (req, res) => {
                   attributes: ["Toanha", "Sotang", "ID_Toanha"],
                   include: {
                     model: Ent_duan,
-                    attributes: ["ID_Duan", "Duan", "Diachi","Vido", "Kinhdo"],
+                    attributes: [
+                      "ID_Duan",
+                      "Duan",
+                      "Diachi",
+                      "Vido",
+                      "Kinhdo",
+                      "Logo",
+                    ],
                     where: { ID_Duan: userData.ID_Duan },
                   },
                 },
@@ -1425,7 +1478,6 @@ exports.getListChecklistWeb = async (req, res) => {
         ["ID_Khuvuc", "ASC"],
         ["Sothutu", "ASC"],
       ],
-     
     });
 
     if (!data || data.length === 0) {
@@ -1454,3 +1506,133 @@ exports.getListChecklistWeb = async (req, res) => {
     });
   }
 };
+
+exports.getChecklistTotal = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    if (!userData) {
+      return res.status(400).json({ message: "Dữ liệu không hợp lệ." });
+    }
+
+    let whereCondition = {
+      isDelete: 0,
+    };
+
+    whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
+
+    const checklistData = await Ent_checklist.findAll({
+      attributes: [
+        "ID_Checklist",
+        "ID_Khuvuc",
+        "ID_Hangmuc",
+        "ID_Tang",
+        "Sothutu",
+        "Maso",
+        "MaQrCode",
+        "Checklist",
+        "Ghichu",
+        "Tieuchuan",
+        "Giatridinhdanh",
+        "Giatrinhan",
+        "ID_User",
+        "sCalv",
+        "calv_1",
+        "calv_2",
+        "calv_3",
+        "calv_4",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_tang,
+          attributes: ["Tentang", "Sotang"],
+        },
+        {
+          model: Ent_hangmuc,
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode"],
+          include: [
+            {
+              model: Ent_khuvuc,
+              attributes: [
+                "Tenkhuvuc",
+                "MaQrCode",
+                "Makhuvuc",
+                "Sothutu",
+                "ID_Toanha",
+                "ID_KhoiCV",
+                "ID_Khuvuc",
+              ],
+              include: [
+                {
+                  model: Ent_toanha,
+                  attributes: ["Toanha", "Sotang", "ID_Toanha"],
+                  include: {
+                    model: Ent_duan,
+                    attributes: [
+                      "ID_Duan",
+                      "Duan",
+                      "Diachi",
+                      "Vido",
+                      "Kinhdo",
+                      "Logo",
+                    ],
+                  },
+                },
+                {
+                  model: Ent_khoicv,
+                  attributes: ["KhoiCV"],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          model: Ent_user,
+          include: {
+            model: Ent_chucvu,
+            attributes: ["Chucvu"],
+          },
+          attributes: ["UserName", "Emails"],
+        },
+      ],
+      where: whereCondition,
+    });
+
+    if (!checklistData || checklistData.length === 0) {
+      return res.status(200).json({
+        message: "Không còn checklist cho ca làm việc này!",
+        data: [],
+      });
+    }
+
+    // Filter data
+    const filteredData = checklistData.filter(item => item.ent_hangmuc !== null);
+
+    // Count checklists by ID_KhoiCV
+    const checklistCounts = {};
+    filteredData.forEach(item => {
+      const khoiCV = item.ent_hangmuc.ent_khuvuc.ent_khoicv.KhoiCV;
+      if (!checklistCounts[khoiCV]) {
+        checklistCounts[khoiCV] = 0;
+      }
+      checklistCounts[khoiCV]++;
+    });
+
+    // Convert counts to desired format
+    const result = Object.keys(checklistCounts).map(khoiCV => ({
+      label: khoiCV,
+      value: checklistCounts[khoiCV]
+    }));
+
+    return res.status(200).json({
+      message: result.length > 0 ? "Danh sách checklist!" : "Không còn checklist cho ca làm việc này!",
+      length: result.length,
+      data: result,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+}
+

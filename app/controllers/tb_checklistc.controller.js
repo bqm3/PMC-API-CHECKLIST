@@ -15,7 +15,7 @@ const {
   Tb_checklistchitietdone,
   Ent_tang,
 } = require("../models/setup.model");
-const { Op } = require("sequelize");
+const { Op, Sequelize } = require("sequelize");
 const { uploadFile } = require("../middleware/auth_google");
 const Ent_checklistc = require("../models/tb_checklistc.model");
 
@@ -874,6 +874,79 @@ exports.checklistCalv = async (req, res) => {
   }
 };
 
+exports.checklistYear = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    const year = req.query.year || new Date().getFullYear(); // Get the year from the request, default to current year
+    const khoi = req.query.khoi;
+    if (!userData) {
+      return res.status(400).json({ message: "Dữ liệu không hợp lệ." });
+    }
+
+    // Define the where clause for the query
+    let whereClause = {
+      isDelete: 0,
+      ID_Duan: userData.ID_Duan,
+      Ngay: {
+        [Op.gte]: `${year}-01-01`,
+        [Op.lte]: `${year}-12-31`
+      }
+    };
+
+    if (khoi !== 'all') {
+      whereClause.ID_KhoiCV = khoi;
+    }
+
+    // Fetch related checklist data
+    const relatedChecklists = await Tb_checklistc.findAll({
+      attributes: [
+        [Sequelize.fn('MONTH', Sequelize.col('Ngay')), 'month'],
+        [Sequelize.fn('SUM', Sequelize.col('TongC')), 'totalChecklist'],
+        [Sequelize.fn('SUM', Sequelize.col('Tong')), 'total']
+      ],
+      where: whereClause,
+      group: [Sequelize.fn('MONTH', Sequelize.col('Ngay'))],
+      raw: true
+    });
+
+    // Process the data to match the required format
+    let totalChecklistData = Array(12).fill(0);
+    let totalData = Array(12).fill(0);
+
+    relatedChecklists.forEach(item => {
+      const month = item.month - 1; // Adjust for zero-based index
+      totalChecklistData[month] = item.totalChecklist;
+      totalData[month] = item.total;
+    });
+
+    // Format the result as required
+    const result = {
+      categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      series: [
+        {
+          type: String(year),
+          data: [
+            {
+              name: 'Kiểm tra',
+              data: totalChecklistData,
+            },
+            {
+              name: 'Tổng',
+              data: totalData,
+            }
+          ],
+        },
+      ],
+    };
+
+    res.status(200).json({
+      message: "Danh sách checklist",
+      data: result,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+  }
+}
 
 
 

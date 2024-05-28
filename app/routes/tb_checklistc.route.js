@@ -26,6 +26,7 @@ module.exports = (app) => {
     tb_checklistc.checklistCalv
   );
 
+  router.get("/year", [isAuthenticated], tb_checklistc.checklistYear);
   router.get("/", [isAuthenticated], tb_checklistc.getCheckListc);
   router.get("/:id", [isAuthenticated], tb_checklistc.getDetail);
   router.put("/close/:id", [isAuthenticated], tb_checklistc.close);
