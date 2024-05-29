@@ -117,7 +117,7 @@ exports.get = async (req, res) => {
             },
             include: [
               {
-                model: Ent_toanha, as: "ent_toanha",
+                model: Ent_toanha,
                 attributes: [
                   "ID_Toanha",
                   "ID_Duan",
@@ -199,7 +199,7 @@ exports.getDetail = async (req, res) => {
             },
             include: [
               {
-                model: Ent_toanha, as: "ent_toanha",
+                model: Ent_toanha,
                 attributes: [
                   "ID_Toanha",
                   "ID_Duan",
@@ -382,7 +382,7 @@ exports.filterByKhuvuc = async (req, res) => {
             ],
             include: [
               {
-                model: Ent_toanha, as: "ent_toanha",
+                model: Ent_toanha,
                 attributes: ["Toanha", "Sotang", "ID_Toanha"],
               },
               {
@@ -471,7 +471,7 @@ exports.filterByQr = async (req, res) => {
             ],
             include: [
               {
-                model: Ent_toanha, as: "ent_toanha",
+                model: Ent_toanha,
                 attributes: ["Toanha", "Sotang", "ID_Toanha"],
               },
               {

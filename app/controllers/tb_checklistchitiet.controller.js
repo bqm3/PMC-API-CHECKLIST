@@ -211,7 +211,7 @@ exports.getCheckListChiTiet = async (req, res, next) => {
                 },
                 include: [
                   {
-                    model: Ent_toanha, as: "ent_toanha",
+                    model: Ent_toanha,
                     attributes: ["Toanha", "Sotang", "ID_Duan"],
                     where: {
                       ID_Toanha: { [Op.or]: [req.body.ID_Toanha, null] }, // Kiểm tra nếu ID_Toanha là giá trị mong muốn hoặc null
@@ -469,7 +469,7 @@ exports.searchChecklist = async (req, res) => {
 
                 include: [
                   {
-                    model: Ent_toanha, as: "ent_toanha",
+                    model: Ent_toanha,
                     attributes: ["Toanha", "Sotang"],
                   },
                 ],
@@ -566,7 +566,7 @@ exports.searchChecklist = async (req, res) => {
 
                 include: [
                   {
-                    model: Ent_toanha, as: "ent_toanha",
+                    model: Ent_toanha,
                     attributes: ["Toanha", "Sotang"],
                   },
                 ],

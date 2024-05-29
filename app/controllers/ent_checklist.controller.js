@@ -127,7 +127,7 @@ exports.get = async (req, res) => {
               ],
               include: [
                 {
-                  model: Ent_toanha, as: "ent_toanha",
+                  model: Ent_toanha,
                   attributes: ["Toanha", "Sotang", "ID_Toanha"],
                   include: {
                     model: Ent_duan,
@@ -213,7 +213,7 @@ exports.get = async (req, res) => {
               ],
               include: [
                 {
-                  model: Ent_toanha, as: "ent_toanha",
+                  model: Ent_toanha,
                   attributes: ["Toanha", "Sotang", "ID_Toanha"],
                   include: {
                     model: Ent_duan,
@@ -338,7 +338,7 @@ exports.getDetail = async (req, res) => {
                 ],
                 include: [
                   {
-                    model: Ent_toanha, as: "ent_toanha",
+                    model: Ent_toanha,
                     attributes: ["Toanha", "Sotang", "ID_Toanha"],
                     include: {
                       model: Ent_duan,
@@ -633,7 +633,7 @@ exports.getFilter = async (req, res) => {
                 ],
                 include: [
                   {
-                    model: Ent_toanha, as: "ent_toanha",
+                    model: Ent_toanha,
                     attributes: ["Toanha", "Sotang"],
                   },
                   {
@@ -869,7 +869,7 @@ exports.getChecklist = async (req, res) => {
               ],
               include: [
                 {
-                  model: Ent_toanha, as: "ent_toanha",
+                  model: Ent_toanha,
                   attributes: ["Toanha", "Sotang", "ID_Toanha"],
                   include: {
                     model: Ent_duan,
@@ -1017,7 +1017,7 @@ exports.getFilterSearch = async (req, res) => {
               ],
               include: [
                 {
-                  model: Ent_toanha, as: "ent_toanha",
+                  model: Ent_toanha,
                   attributes: ["Toanha", "Sotang", "ID_Toanha"],
                   include: {
                     model: Ent_duan,
@@ -1095,7 +1095,7 @@ exports.getFilterSearch = async (req, res) => {
               ],
               include: [
                 {
-                  model: Ent_toanha, as: "ent_toanha",
+                  model: Ent_toanha,
                   attributes: ["Toanha", "Sotang", "ID_Toanha"],
                   include: {
                     model: Ent_duan,
@@ -1313,7 +1313,7 @@ exports.filterChecklists = async (req, res) => {
               ],
               include: [
                 {
-                  model: Ent_toanha, as: "ent_toanha",
+                  model: Ent_toanha,
                   attributes: ["Toanha", "Sotang", "ID_Toanha"],
                   include: {
                     model: Ent_duan,
@@ -1435,7 +1435,7 @@ exports.getListChecklistWeb = async (req, res) => {
               ],
               include: [
                 {
-                  model: Ent_toanha, as: "ent_toanha",
+                  model: Ent_toanha,
                   attributes: ["Toanha", "Sotang", "ID_Toanha"],
                   include: {
                     model: Ent_duan,
@@ -1567,7 +1567,7 @@ exports.getChecklistTotal = async (req, res) => {
               ],
               include: [
                 {
-                  model: Ent_toanha, as: "ent_toanha",
+                  model: Ent_toanha,
                   attributes: ["Toanha", "Sotang", "ID_Toanha"],
                   include: {
                     model: Ent_duan,
