@@ -233,8 +233,7 @@ exports.getKhuvucByDuan = async (req, res) => {
       ],
       include: [
         {
-          model: Ent_toanha,
-          as: "ent_toanha",
+          model: Ent_toanha, as: "ent_toanha",
           attributes: ["Toanha", "Sotang", "ID_Duan", "ID_Toanha", "Vido", "Kinhdo"],
           where: { isDelete: 0 }, // Điều kiện nếu cần, có thể bỏ nếu không cần thiết
         },

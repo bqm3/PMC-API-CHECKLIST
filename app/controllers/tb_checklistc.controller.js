@@ -235,7 +235,7 @@ exports.createChecklistInToanha = async (req, res, next) => {
                 ],
                 include: [
                   {
-                    model: Ent_toanha,
+                    model: Ent_toanha, as: "ent_toanha",
                     attributes: ["Toanha", "Sotang", "ID_Toanha"],
                     include: {
                       model: Ent_duan,
@@ -705,7 +705,7 @@ exports.checklistCalv = async (req, res) => {
                     ],
                     include: [
                       {
-                        model: Ent_toanha,
+                        model: Ent_toanha, as: "ent_toanha",
                         attributes: ["Toanha", "Sotang", "ID_Toanha"],
                         include: {
                           model: Ent_duan,
@@ -808,7 +808,7 @@ exports.checklistCalv = async (req, res) => {
                 ],
                 include: [
                   {
-                    model: Ent_toanha,
+                    model: Ent_toanha, as: "ent_toanha",
                     attributes: ["Toanha", "Sotang", "ID_Toanha"],
                     include: {
                       model: Ent_duan,
