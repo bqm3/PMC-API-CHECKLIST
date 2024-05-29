@@ -129,6 +129,15 @@ exports.get = async (req, res) => {
                   isDelete: 0,
                 },
               },
+              {
+                model: Ent_khoicv,
+                attributes: [
+                  "KhoiCV"
+                ],
+                where: {
+                  isDelete: 0,
+                },
+              },
             ],
           },
         ],

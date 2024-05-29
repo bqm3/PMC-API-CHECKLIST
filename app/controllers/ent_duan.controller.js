@@ -221,7 +221,7 @@ exports.delete = async (req, res) => {
 
 exports.getKhuvucByDuan = async (req, res) => {
   try {
-    await Ent_duan.findAll({
+    const data = await Ent_duan.findAll({
       attributes: [
         "ID_Duan",
         "Duan",
@@ -234,42 +234,41 @@ exports.getKhuvucByDuan = async (req, res) => {
       include: [
         {
           model: Ent_toanha,
-          attributes: ["Toanha", "Sotang", "ID_Duan", "ID_Toanha", "Vido", "Kinhdo"],
-          where: { isDelete: 0 }, // Điều kiện nếu cần, có thể bỏ nếu không cần thiết
+          as: "ent_toanha", // Ensure this matches the alias used in your model definition
+          attributes: ["Toanha", "Sotang", "ID_Duan", "Vido", "Kinhdo"],
+          where: { isDelete: 0 },
+          required: false, // Use this to include projects without buildings
         },
       ],
       where: {
         isDelete: 0,
       },
-    })
-      .then((data) => {
-        const result = data.map((duan) => ({
-          ID_Duan: duan.ID_Duan,
-          Duan: duan.Duan,
-          Diachi: duan.Diachi,
-          Vido: duan.Vido,
-          Logo: duan.Logo,
-          toanhas: duan.ent_toanha.map((khuvuc) => ({
-            ID_Toanha: khuvuc.ID_Toanha,
-            Toanha: khuvuc.Toanha,
-            Sotang: khuvuc.Sotang,
-            Vido: khuvuc.Vido,
-            Kinhdo: khuvuc.Kinhdo,
-          })),
-        }));
-        res.status(200).json({
-          message: "Danh sách dự án với khu vực!",
-          data: result,
-        });
-      })
-      .catch((err) => {
-        res.status(500).json({
-          message: err.message || "Lỗi! Vui lòng thử lại sau.",
-        });
-      });
+    });
+
+    const result = data.map((duan) => ({
+      ID_Duan: duan.ID_Duan,
+      Duan: duan.Duan,
+      Diachi: duan.Diachi,
+      Vido: duan.Vido,
+      Kinhdo: duan.Kinhdo,
+      Logo: duan.Logo,
+      toanhas: duan.ent_toanha.map((khuvuc) => ({
+        ID_Toanha: khuvuc.ID_Toanha,
+        Toanha: khuvuc.Toanha,
+        Sotang: khuvuc.Sotang,
+        Vido: khuvuc.Vido,
+        Kinhdo: khuvuc.Kinhdo,
+      })),
+    }));
+
+    res.status(200).json({
+      message: "Danh sách dự án với khu vực!",
+      data: result,
+    });
   } catch (err) {
-    return res.status(500).json({
+    res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
 };
+

@@ -15,7 +15,7 @@ const Tb_checklistchitietdone = require("./tb_checklistchitietdone.model");
 
 
 // Toa nha
-Ent_duan.hasMany(Ent_toanha, { as: 'ent_toanha' });
+Ent_duan.hasMany(Ent_toanha, { as: 'ent_toanha', foreignKey: 'ID_Duan' });
 Ent_toanha.belongsTo(Ent_duan, { foreignKey: 'ID_Duan'});
 
 // Tang
