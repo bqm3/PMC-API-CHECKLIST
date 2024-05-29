@@ -864,9 +864,55 @@ exports.checklistCalv = async (req, res) => {
         }
       });
 
+      const dataChecklistC = await Tb_checklistc.findByPk(ID_ChecklistC, {
+        attributes: [
+          "Ngay",
+          "ID_KhoiCV",
+          "ID_Duan",
+          "Tinhtrang",
+          "Giobd",
+          "Giokt",
+          "ID_User",
+          "ID_Giamsat",
+          "ID_Calv",
+          "isDelete",
+        ],
+        include: [
+          {
+            model: Ent_duan,
+            attributes: ["Duan"],
+          },
+          {
+            model: Ent_khoicv,
+            attributes: ["KhoiCV"],
+          },
+          {
+            model: Ent_calv,
+            attributes: ["Tenca"],
+          },
+          {
+            model: Ent_user,
+            include: {
+              model: Ent_chucvu,
+              attributes: ["Chucvu"],
+            },
+            attributes: ["UserName", "Emails"],
+          },
+          {
+            model: Ent_giamsat,
+            attributes: ["Hoten"],
+          },
+        ],
+        where:{
+          isDelete: 0
+        }
+      }
+      )
+
       res.status(200).json({
         message: "Danh sách checklist",
         data: arrPush,
+        dataChecklistC: dataChecklistC 
       });
     }
   } catch (err) {

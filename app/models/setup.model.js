@@ -130,6 +130,11 @@ Tb_checklistc.belongsTo(Ent_duan, {
   foreignKey: "ID_Duan",
 });
 
+Ent_user.hasMany(Tb_checklistc);
+Tb_checklistc.belongsTo(Ent_user, {
+  foreignKey: "ID_User",
+});
+
 Ent_khoicv.hasMany(Tb_checklistc);
 Tb_checklistc.belongsTo(Ent_khoicv, {
   foreignKey: "ID_KhoiCV",
