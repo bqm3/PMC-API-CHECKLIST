@@ -1,4 +1,4 @@
-const { Ent_duan } = require("../models/setup.model");
+const { Ent_duan, Ent_khuvuc, Ent_toanha } = require("../models/setup.model");
 const { Op } = require("sequelize");
 
 exports.create = (req, res) => {
@@ -157,11 +157,12 @@ exports.update = async (req, res) => {
     const userData = req.user.data;
     if (req.params.id && userData) {
       Ent_duan.update(
-        { Duan: req.body.Duan,  
+        {
+          Duan: req.body.Duan,
           Diachi: req.body.Diachi,
           Vido: req.body.Vido,
-          Kinhdo: req.body.Kinhdo ,
-          Logo: req.body.Logo ,
+          Kinhdo: req.body.Kinhdo,
+          Logo: req.body.Logo,
         },
         {
           where: {
@@ -214,6 +215,62 @@ exports.delete = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+exports.getKhuvucByDuan = async (req, res) => {
+  try {
+    await Ent_duan.findAll({
+      attributes: [
+        "ID_Duan",
+        "Duan",
+        "Diachi",
+        "Vido",
+        "Kinhdo",
+        "Logo",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_toanha,
+          as: "ent_toanha",
+          attributes: ["Toanha", "Sotang", "ID_Duan", "ID_Toanha", "Vido", "Kinhdo"],
+          where: { isDelete: 0 }, // Điều kiện nếu cần, có thể bỏ nếu không cần thiết
+        },
+      ],
+      where: {
+        isDelete: 0,
+      },
+    })
+      .then((data) => {
+        const result = data.map((duan) => ({
+          ID_Duan: duan.ID_Duan,
+          Duan: duan.Duan,
+          Diachi: duan.Diachi,
+          Vido: duan.Vido,
+          Logo: duan.Logo,
+          toanhas: duan.ent_toanha.map((khuvuc) => ({
+            ID_Toanha: khuvuc.ID_Toanha,
+            Toanha: khuvuc.Toanha,
+            Sotang: khuvuc.Sotang,
+            Vido: khuvuc.Vido,
+            Kinhdo: khuvuc.Kinhdo,
+          })),
+        }));
+        res.status(200).json({
+          message: "Danh sách dự án với khu vực!",
+          data: result,
+        });
+      })
+      .catch((err) => {
+        res.status(500).json({
+          message: err.message || "Lỗi! Vui lòng thử lại sau.",
+        });
+      });
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
 };

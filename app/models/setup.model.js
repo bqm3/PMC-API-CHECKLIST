@@ -13,11 +13,10 @@ const Tb_checklistc = require("./tb_checklistc.model");
 const Tb_checklistchitiet = require("./tb_checklistchitiet.model");
 const Tb_checklistchitietdone = require("./tb_checklistchitietdone.model");
 
+
 // Toa nha
-Ent_duan.hasMany(Ent_toanha, { as: "ent_toanha" });
-Ent_toanha.belongsTo(Ent_duan, {
-  foreignKey: "ID_Duan",
-});
+Ent_duan.hasMany(Ent_toanha, { foreignKey: 'ID_Duan', as: 'ent_toanha' });
+Ent_toanha.belongsTo(Ent_duan, { foreignKey: 'ID_Duan', as: 'duan' });
 
 // Tang
 Ent_duan.hasMany(Ent_tang, { as: "ent_tang" });
