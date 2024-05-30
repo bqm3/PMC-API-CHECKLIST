@@ -1,4 +1,4 @@
-const { Ent_toanha, Ent_khuvuc, Ent_khoicv } = require("../models/setup.model");
+const { Ent_toanha, Ent_khuvuc, Ent_khoicv, Ent_duan } = require("../models/setup.model");
 const { Op } = require("sequelize");
 
 exports.create = async (req, res) => {
@@ -449,6 +449,91 @@ exports.filterByQr = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+
+exports.getKhuvucTotal = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    if (!userData) {
+      return res.status(400).json({ message: "Dữ liệu không hợp lệ." });
+    }
+
+    let whereCondition = {
+      isDelete: 0,
+    };
+
+    whereCondition["$ent_toanha.ID_Duan$"] =
+      userData?.ID_Duan;
+
+    const khuvucData = await Ent_khuvuc.findAll({
+      attributes: [
+        "Tenkhuvuc",
+        "MaQrCode",
+        "Makhuvuc",
+        "Sothutu",
+        "ID_Toanha",
+        "ID_KhoiCV",
+        "ID_Khuvuc",
+      ],
+      include: [
+        {
+          model: Ent_toanha,
+          attributes: ["Toanha", "Sotang", "ID_Toanha"],
+          include: {
+            model: Ent_duan,
+            attributes: [
+              "ID_Duan",
+              "Duan",
+              "Diachi",
+              "Vido",
+              "Kinhdo",
+              "Logo",
+            ],
+          },
+        },
+        {
+          model: Ent_khoicv,
+          attributes: ["KhoiCV"],
+        },
+      ],
+      where: whereCondition,
+    });
+
+    if (!khuvucData || khuvucData.length === 0) {
+      return res.status(200).json({
+        message: "Không còn checklist cho ca làm việc này!",
+        data: [],
+      });
+    }
+
+    // Filter data
+   
+    const khuvucCounts = {};
+    khuvucData.forEach((item) => {
+      const khoiCV = item.ent_khoicv.KhoiCV;
+      if (!khuvucCounts[khoiCV]) {
+        khuvucCounts[khoiCV] = 0;
+      }
+      khuvucCounts[khoiCV]++;
+    });
+
+    // Convert counts to desired format
+    const result = Object.keys(khuvucCounts).map((khoiCV) => ({
+      label: khoiCV,
+      value: khuvucCounts[khoiCV],
+    }));
+
+    return res.status(200).json({
+      message: "Danh sách khu vực!",
+      length: result.length,
+      data: result,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
 };

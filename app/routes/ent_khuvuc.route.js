@@ -7,6 +7,7 @@ module.exports = (app) => {
   router.post("/create", [isAuthenticated], ent_khuvuc.create);
   router.get("/", [isAuthenticated], ent_khuvuc.get);
   router.post("/filter",[isAuthenticated], ent_khuvuc.getKhuVuc);
+  router.get("/total", [isAuthenticated], ent_khuvuc.getKhuvucTotal)
   router.get("/:id", [isAuthenticated], ent_khuvuc.getDetail);
   router.put("/delete/:id",[isAuthenticated], ent_khuvuc.delete);
   router.put("/update/:id",[isAuthenticated], ent_khuvuc.update);

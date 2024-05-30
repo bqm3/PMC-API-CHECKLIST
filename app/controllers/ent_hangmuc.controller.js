@@ -2,6 +2,9 @@ const {
   Ent_hangmuc,
   Ent_toanha,
   Ent_khoicv,
+  Ent_chucvu,
+  Ent_user,
+  Ent_duan,
 } = require("../models/setup.model");
 const { Ent_khuvuc } = require("../models/setup.model");
 const { Op } = require("sequelize");
@@ -131,9 +134,7 @@ exports.get = async (req, res) => {
               },
               {
                 model: Ent_khoicv,
-                attributes: [
-                  "KhoiCV"
-                ],
+                attributes: ["KhoiCV"],
                 where: {
                   isDelete: 0,
                 },
@@ -145,9 +146,7 @@ exports.get = async (req, res) => {
           isDelete: 0,
           [Op.and]: [orConditions],
         },
-        order: [
-          ["ID_Khuvuc", "ASC"],
-        ],
+        order: [["ID_Khuvuc", "ASC"]],
       })
         .then((data) => {
           res.status(200).json({
@@ -358,7 +357,12 @@ exports.filterByKhuvuc = async (req, res) => {
         if (userData.ID_KhoiCV !== null) {
           whereCondition["$ent_khuvuc.ID_KhoiCV$"] = userData.ID_KhoiCV;
         }
-        if (ID_Khuvuc !== null  && ID_Khuvuc !== undefined&& ID_Khuvuc !== "" && ID_Khuvuc !== "null") {
+        if (
+          ID_Khuvuc !== null &&
+          ID_Khuvuc !== undefined &&
+          ID_Khuvuc !== "" &&
+          ID_Khuvuc !== "null"
+        ) {
           whereCondition[Op.and].push({
             ID_Khuvuc: ID_Khuvuc,
           });
@@ -402,9 +406,7 @@ exports.filterByKhuvuc = async (req, res) => {
           },
         ],
         where: whereCondition,
-        order: [
-          ["ID_Khuvuc", "ASC"],
-        ],
+        order: [["ID_Khuvuc", "ASC"]],
       })
         .then((data) => {
           res.status(200).json({
@@ -450,7 +452,6 @@ exports.filterByQr = async (req, res) => {
         if (userData.ID_KhoiCV !== null) {
           whereCondition["$ent_khuvuc.ID_KhoiCV$"] = userData.ID_KhoiCV;
         }
-       
       }
       // Thêm điều kiện isDelete
       whereCondition.isDelete = 0;
@@ -495,7 +496,7 @@ exports.filterByQr = async (req, res) => {
         .then((data) => {
           res.status(200).json({
             message: "Thông tin hạng mục!",
-            data: data ?  [data] : [],
+            data: data ? [data] : [],
           });
         })
         .catch((err) => {
@@ -515,3 +516,101 @@ exports.filterByQr = async (req, res) => {
     });
   }
 };
+
+exports.getHangmucTotal = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    if (!userData || !userData.ID_Duan) {
+      return res.status(400).json({ message: "Dữ liệu không hợp lệ." });
+    }
+
+    let whereCondition = {
+      isDelete: 0,
+      "$ent_khuvuc.ent_toanha.ID_Duan$": userData?.ID_Duan,
+    };
+
+    const hangmucData = await Ent_hangmuc.findAll({
+      attributes: [
+        "ID_Hangmuc",
+        "ID_Khuvuc",
+        "MaQrCode",
+        "Hangmuc",
+        "Tieuchuankt",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_khuvuc,
+          attributes: [
+            "ID_Toanha",
+            "ID_Khuvuc",
+            "ID_KhoiCV",
+            "Sothutu",
+            "MaQrCode",
+            "Tenkhuvuc",
+            "ID_User",
+            "isDelete",
+          ],
+         
+          include: [
+            {
+              model: Ent_toanha,
+              attributes: [
+                "ID_Toanha",
+                "ID_Duan",
+                "Toanha",
+                "Sotang",
+                "isDelete",
+              ],
+              
+            },
+            {
+              model: Ent_khoicv,
+              attributes: ["KhoiCV"],
+            
+            },
+          ],
+        },
+      ],
+      where: whereCondition,
+    })
+
+    if (!hangmucData || hangmucData.length === 0) {
+      return res.status(200).json({
+        message: "Không có hạng mục!",
+        data: [],
+      });
+    }
+    
+
+    // Count checklists by ID_KhoiCV
+    const hangmucCounts = {};
+    hangmucData.forEach((item) => {
+      const khoiCV = item.ent_khuvuc?.ent_khoicv?.KhoiCV;
+      if (khoiCV) {
+        if (!hangmucCounts[khoiCV]) {
+          hangmucCounts[khoiCV] = 0;
+        }
+        hangmucCounts[khoiCV]++;
+      }
+    });
+    console.log('hangmucData',hangmucCounts)
+    // Convert counts to desired format
+    const result = Object.keys(hangmucCounts).map((khoiCV) => ({
+      label: khoiCV,
+      value: hangmucCounts[khoiCV],
+    }));
+
+    return res.status(200).json({
+      message: "Danh sách hạng mục!",
+      length: result.length,
+      data: result,
+    });
+  } catch (err) {
+    console.error("Error in getHangmucTotal:", err);
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
