@@ -15,7 +15,7 @@ exports.create = (req, res) => {
       });
       return;
     }
-    const {ID_Checklists,Description, checklistLength, ID_ChecklistC } = req.body;
+    const { ID_Checklists, Description, checklistLength, ID_ChecklistC } = req.body;
 
     if (!Description) {
       res.status(400).json({
@@ -28,18 +28,21 @@ exports.create = (req, res) => {
     // Create a Tb_checklistchitietdone
     const data = {
       Description: descriptions || "",
-      ID_ChecklistC:  ID_ChecklistC|| null,
+      ID_ChecklistC: ID_ChecklistC || null,
       isDelete: 0,
     };
-    
+
     // Save Tb_checklistchitietdone in the database
     Tb_checklistchitietdone.create(data)
-      .then(async (data) => {
+      .then(async (createdData) => {
+        // Send response for successful creation
         res.status(200).json({
           message: "Checklist thành công!",
-          data: data,
+          data: createdData,
         });
-       await  Tb_checklistc.update(
+
+        // Update related data in the database
+        await Tb_checklistc.update(
           {
             TongC: Sequelize.literal(`TongC + ${checklistLength}`),
           },
@@ -57,7 +60,7 @@ exports.create = (req, res) => {
               ID_Checklist: {
                 [Op.in]: ID_Checklists,
               },
-            }
+            },
           }
         );
       })
@@ -72,6 +75,7 @@ exports.create = (req, res) => {
     });
   }
 };
+
 
 exports.getDataFormat = async (req, res) => {
   try {
