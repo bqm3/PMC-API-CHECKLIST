@@ -36,12 +36,6 @@ exports.create = (req, res) => {
     Tb_checklistchitietdone.create(data)
       .then(async (createdData) => {
         // Send response for successful creation
-        res.status(200).json({
-          message: "Checklist thành công!",
-          data: createdData,
-        });
-
-        // Update related data in the database
         await Tb_checklistc.update(
           {
             TongC: Sequelize.literal(`TongC + ${checklistLength}`),
@@ -63,6 +57,14 @@ exports.create = (req, res) => {
             },
           }
         );
+        
+        res.status(200).json({
+          message: "Checklist thành công!",
+          data: createdData,
+        });
+
+        // Update related data in the database
+       
       })
       .catch((err) => {
         res.status(500).json({
