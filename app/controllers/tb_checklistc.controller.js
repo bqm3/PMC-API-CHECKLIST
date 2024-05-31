@@ -18,6 +18,7 @@ const {
 const { Op, Sequelize } = require("sequelize");
 const { uploadFile } = require("../middleware/auth_google");
 const Ent_checklistc = require("../models/tb_checklistc.model");
+const sequelize = require("../config/db.config");
 
 exports.createFirstChecklist = async (req, res, next) => {
   try {
@@ -63,6 +64,7 @@ exports.createFirstChecklist = async (req, res, next) => {
         "Tinhtrang",
       ],
       where: {
+        isDelete: 0,
         [Op.and]: [
           { Ngay: Ngay },
           { ID_KhoiCV: ID_KhoiCV },
@@ -994,5 +996,85 @@ exports.checklistYear = async (req, res) => {
   }
 }
 
+exports.checklistPercent = async (req, res) => {
+  try{
+
+    const userData = req.user.data;
+    
+    if (!userData) {
+      return res.status(400).json({ message: "Dữ liệu không hợp lệ." });
+    }
+
+    let whereClause = {
+      isDelete: 0,
+      ID_Duan: userData.ID_Duan,
+    };
+
+    const results = await Tb_checklistc.findAll({
+      include: [{
+        model: Ent_khoicv,
+        attributes: ['KhoiCV']
+      }],
+      attributes: [
+        [sequelize.col('ent_khoicv.KhoiCV'), 'label'],
+        [sequelize.col('tb_checklistc.tongC'), 'totalAmount'],
+        [sequelize.literal('tb_checklistc.tongC / tb_checklistc.tong * 100'), 'value']
+      ],
+      where : whereClause
+    });
+
+    // Chuyển đổi dữ liệu kết quả sang định dạng mong muốn
+    const data = results.map(result => {
+      const { label, totalAmount, value } = result.get();
+      return {
+        label,
+        totalAmount,
+        value
+      };
+    });
+    processData(data).then(finalData => {
+      res.status(200).json({
+        message: "Dữ liệu!",
+        data: finalData
+      });
+    })
+  }catch(err){
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+  }
+}
 
 
+async function processData(data) {
+  const aggregatedData = {};
+
+  data.forEach(item => {
+      const { label, totalAmount, value } = item;
+      
+      if (!aggregatedData[label]) {
+          aggregatedData[label] = {
+              totalAmount: 0,
+              totalValue: 0,
+              count: 0
+          };
+      }
+      
+      aggregatedData[label].totalAmount += totalAmount;
+      if (value !== null) {
+          aggregatedData[label].totalValue += parseFloat(value);
+          aggregatedData[label].count++;
+      }
+  });
+
+  const finalData = [];
+
+  for (const label in aggregatedData) {
+      const { totalAmount, totalValue, count } = aggregatedData[label];
+      finalData.push({
+          label,
+          totalAmount,
+          value: count > 0 ? (totalValue / count).toFixed(4) : null
+      });
+  }
+
+  return finalData;
+}

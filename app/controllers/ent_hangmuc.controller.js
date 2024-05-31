@@ -88,7 +88,7 @@ exports.get = async (req, res) => {
       orConditions.push({
         "$ent_khuvuc.ent_toanha.ID_Duan$": userData?.ID_Duan,
       });
-      if (userData.ID_KhoiCV !== null) {
+      if (userData.ID_KhoiCV !== null && userData.ID_KhoiCV !== undefined) {
         orConditions.push({
           "$ent_khuvuc.ID_KhoiCV$": userData.ID_KhoiCV,
         });
@@ -150,7 +150,7 @@ exports.get = async (req, res) => {
       })
         .then((data) => {
           res.status(200).json({
-            message: "Danh sách hạng mục!",
+            message: "Danh sách hạng mục!!!",
             data: data,
           });
         })
@@ -613,4 +613,5 @@ exports.getHangmucTotal = async (req, res) => {
     });
   }
 };
+
 
