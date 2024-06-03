@@ -22,11 +22,7 @@ exports.create = async (req, res) => {
           message: "Cần có thời gian bắt đầu và kết thúc!",
         });
       }
-      if (giokt <= giobd && giobd < "20:00" && giokt >= "00:00") {
-        return res.status(400).json({
-          message: "Giờ kết thúc phải lớn hơn giờ bắt đầu!",
-        });
-      }
+      
 
       const reqData = {
         ID_Duan: userData.ID_Duan,

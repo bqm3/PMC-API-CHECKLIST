@@ -37,6 +37,28 @@ exports.createFirstChecklist = async (req, res, next) => {
     const { ID_Giamsat, ID_Calv, ID_KhoiCV, ID_User, ID_Duan, Ngay, Giobd } =
       req.body;
 
+    const calvData = await Ent_calv.findOne({
+      where: { ID_Calv: ID_Calv },
+      attributes: ["Giobatdau", "Gioketthuc"],
+    });
+
+    if (!calvData) {
+      return res.status(400).json({
+        message: "Ca làm việc không tồn tại!",
+      });
+    }
+
+    const { Giobatdau, Gioketthuc } = calvData;
+    const giobdMoment = moment(Giobd, "HH:mm:ss");
+    const giobatdauMoment = moment(Giobatdau, "HH:mm:ss");
+    const gioketthucMoment = moment(Gioketthuc, "HH:mm:ss");
+
+    if (!giobdMoment.isBetween(giobatdauMoment, gioketthucMoment, null, '[]')) {
+      return res.status(400).json({
+        message: "Giờ bắt đầu không thuộc khoảng thời gian của ca làm việc!",
+      });
+    }
+
     let whereCondition = {
       isDelete: 0,
       ID_User: ID_User,
@@ -74,7 +96,6 @@ exports.createFirstChecklist = async (req, res, next) => {
       },
     })
       .then(({ count, rows }) => {
-        // console.log('count',count, rows)
 
         // Kiểm tra xem đã có checklist được tạo hay chưa
         if (count === 0) {
@@ -851,7 +872,9 @@ exports.checklistCalv = async (req, res) => {
             const splitByComma = description.split(",");
             splitByComma.forEach((splitItem) => {
               const [ID_Checklist, valueCheck, gioht] = splitItem.split("/");
-              const relatedChecklist = relatedChecklists.find(rl => rl.ID_Checklist === parseInt(ID_Checklist));
+              const relatedChecklist = relatedChecklists.find(
+                (rl) => rl.ID_Checklist === parseInt(ID_Checklist)
+              );
               if (relatedChecklist) {
                 arrPush.push({
                   ID_Checklist: parseInt(ID_Checklist),
@@ -905,20 +928,21 @@ exports.checklistCalv = async (req, res) => {
             attributes: ["Hoten"],
           },
         ],
-        where:{
-          isDelete: 0
-        }
-      }
-      )
+        where: {
+          isDelete: 0,
+        },
+      });
 
       res.status(200).json({
         message: "Danh sách checklist",
         data: arrPush,
-        dataChecklistC: dataChecklistC 
+        dataChecklistC: dataChecklistC,
       });
     }
   } catch (err) {
-    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res
+      .status(500)
+      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -937,31 +961,31 @@ exports.checklistYear = async (req, res) => {
       ID_Duan: userData.ID_Duan,
       Ngay: {
         [Op.gte]: `${year}-01-01`,
-        [Op.lte]: `${year}-12-31`
-      }
+        [Op.lte]: `${year}-12-31`,
+      },
     };
 
-    if (khoi !== 'all') {
+    if (khoi !== "all") {
       whereClause.ID_KhoiCV = khoi;
     }
 
     // Fetch related checklist data
     const relatedChecklists = await Tb_checklistc.findAll({
       attributes: [
-        [Sequelize.fn('MONTH', Sequelize.col('Ngay')), 'month'],
-        [Sequelize.fn('SUM', Sequelize.col('TongC')), 'totalChecklist'],
-        [Sequelize.fn('SUM', Sequelize.col('Tong')), 'total']
+        [Sequelize.fn("MONTH", Sequelize.col("Ngay")), "month"],
+        [Sequelize.fn("SUM", Sequelize.col("TongC")), "totalChecklist"],
+        [Sequelize.fn("SUM", Sequelize.col("Tong")), "total"],
       ],
       where: whereClause,
-      group: [Sequelize.fn('MONTH', Sequelize.col('Ngay'))],
-      raw: true
+      group: [Sequelize.fn("MONTH", Sequelize.col("Ngay"))],
+      raw: true,
     });
 
     // Process the data to match the required format
     let totalChecklistData = Array(12).fill(0);
     let totalData = Array(12).fill(0);
 
-    relatedChecklists.forEach(item => {
+    relatedChecklists.forEach((item) => {
       const month = item.month - 1; // Adjust for zero-based index
       totalChecklistData[month] = item.totalChecklist;
       totalData[month] = item.total;
@@ -969,19 +993,32 @@ exports.checklistYear = async (req, res) => {
 
     // Format the result as required
     const result = {
-      categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      categories: [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ],
       series: [
         {
           type: String(year),
           data: [
             {
-              name: 'Kiểm tra',
+              name: "Kiểm tra",
               data: totalChecklistData,
             },
             {
-              name: 'Tổng',
+              name: "Tổng",
               data: totalData,
-            }
+            },
           ],
         },
       ],
@@ -992,15 +1029,16 @@ exports.checklistYear = async (req, res) => {
       data: result,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res
+      .status(500)
+      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
-}
+};
 
 exports.checklistPercent = async (req, res) => {
-  try{
-
+  try {
     const userData = req.user.data;
-    
+
     if (!userData) {
       return res.status(400).json({ message: "Dữ liệu không hợp lệ." });
     }
@@ -1011,69 +1049,75 @@ exports.checklistPercent = async (req, res) => {
     };
 
     const results = await Tb_checklistc.findAll({
-      include: [{
-        model: Ent_khoicv,
-        attributes: ['KhoiCV']
-      }],
-      attributes: [
-        [sequelize.col('ent_khoicv.KhoiCV'), 'label'],
-        [sequelize.col('tb_checklistc.tongC'), 'totalAmount'],
-        [sequelize.literal('tb_checklistc.tongC / tb_checklistc.tong * 100'), 'value']
+      include: [
+        {
+          model: Ent_khoicv,
+          attributes: ["KhoiCV"],
+        },
       ],
-      where : whereClause
+      attributes: [
+        [sequelize.col("ent_khoicv.KhoiCV"), "label"],
+        [sequelize.col("tb_checklistc.tongC"), "totalAmount"],
+        [
+          sequelize.literal("tb_checklistc.tongC / tb_checklistc.tong * 100"),
+          "value",
+        ],
+      ],
+      where: whereClause,
     });
 
     // Chuyển đổi dữ liệu kết quả sang định dạng mong muốn
-    const data = results.map(result => {
+    const data = results.map((result) => {
       const { label, totalAmount, value } = result.get();
       return {
         label,
         totalAmount,
-        value
+        value,
       };
     });
-    processData(data).then(finalData => {
+    processData(data).then((finalData) => {
       res.status(200).json({
         message: "Dữ liệu!",
-        data: finalData
+        data: finalData,
       });
-    })
-  }catch(err){
-    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
-}
-
+};
 
 async function processData(data) {
   const aggregatedData = {};
 
-  data.forEach(item => {
-      const { label, totalAmount, value } = item;
-      
-      if (!aggregatedData[label]) {
-          aggregatedData[label] = {
-              totalAmount: 0,
-              totalValue: 0,
-              count: 0
-          };
-      }
-      
-      aggregatedData[label].totalAmount += totalAmount;
-      if (value !== null) {
-          aggregatedData[label].totalValue += parseFloat(value);
-          aggregatedData[label].count++;
-      }
+  data.forEach((item) => {
+    const { label, totalAmount, value } = item;
+
+    if (!aggregatedData[label]) {
+      aggregatedData[label] = {
+        totalAmount: 0,
+        totalValue: 0,
+        count: 0,
+      };
+    }
+
+    aggregatedData[label].totalAmount += totalAmount;
+    if (value !== null) {
+      aggregatedData[label].totalValue += parseFloat(value);
+      aggregatedData[label].count++;
+    }
   });
 
   const finalData = [];
 
   for (const label in aggregatedData) {
-      const { totalAmount, totalValue, count } = aggregatedData[label];
-      finalData.push({
-          label,
-          totalAmount,
-          value: count > 0 ? (totalValue / count).toFixed(4) : null
-      });
+    const { totalAmount, totalValue, count } = aggregatedData[label];
+    finalData.push({
+      label,
+      totalAmount,
+      value: count > 0 ? (totalValue / count).toFixed(4) : null,
+    });
   }
 
   return finalData;

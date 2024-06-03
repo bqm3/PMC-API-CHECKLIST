@@ -16,6 +16,7 @@ exports.create = (req, res) => {
       return;
     }
     const { ID_Checklists, Description, checklistLength, ID_ChecklistC } = req.body;
+    console.log('ID_ChecklistsID_Checklists', ID_Checklists)
 
     if (!Description) {
       res.status(400).json({
@@ -35,8 +36,6 @@ exports.create = (req, res) => {
     // Save Tb_checklistchitietdone in the database
     Tb_checklistchitietdone.create(data)
       .then(async (createdData) => {
-        console.log('checklistLength', checklistLength)
-        console.log('ID_Checklists', ID_Checklists)
         // Send response for successful creation
         await Tb_checklistc.update(
           {
