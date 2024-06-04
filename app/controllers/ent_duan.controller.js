@@ -1,4 +1,4 @@
-const { Ent_duan, Ent_khuvuc, Ent_toanha } = require("../models/setup.model");
+const { Ent_duan, Ent_khuvuc, Ent_toanha, Ent_hangmuc } = require("../models/setup.model");
 const { Op } = require("sequelize");
 
 exports.create = (req, res) => {
@@ -271,4 +271,114 @@ exports.getKhuvucByDuan = async (req, res) => {
     });
   }
 };
+
+
+exports.getThongtinduan = async (req, res) => {
+  try {
+    const data = await Ent_duan.findAll({
+      attributes: [
+        "ID_Duan",
+        "Duan",
+        "Diachi",
+        "Vido",
+        "Kinhdo",
+        "Logo",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_toanha,
+          as: "ent_toanha",
+          attributes: ["ID_Toanha", "Toanha", "Sotang", "ID_Duan", "Vido", "Kinhdo", "isDelete"],
+          where: { isDelete: 0 },
+          required: false,
+          include: [
+            {
+              model: Ent_khuvuc,
+              as: "ent_khuvuc",
+              attributes: ["ID_Khuvuc", "ID_KhoiCV", "Makhuvuc", "MaQrCode", "Tenkhuvuc", "isDelete"],
+              where: { isDelete: 0 },
+              required: false,
+              include: [
+                {
+                  model: Ent_hangmuc,
+                  as: "ent_hangmuc",
+                  attributes: ["ID_Hangmuc", "ID_Khuvuc", "Hangmuc", "MaQrCode", "isDelete", "Tieuchuankt"],
+                  where: { isDelete: 0 },
+                  required: false,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      where: {
+        isDelete: 0,
+      },
+    });
+
+    const result = data.map((duan) => {
+      let totalHangmucInDuan = 0;
+      let totalKhuvucInDuan = 0;
+
+      const toanhas = duan.ent_toanha.map((toanha) => {
+        let totalHangmucInToanha = 0;
+        const khuvucs = toanha.ent_khuvuc.map((khuvuc) => {
+          const hangmucs = khuvuc.ent_hangmuc.map((hangmuc) => ({
+            ID_Hangmuc: hangmuc.ID_Hangmuc,
+            Hangmuc: hangmuc.Hangmuc,
+            MaQrCode: hangmuc.MaQrCode,
+            Tieuchuankt: hangmuc.Tieuchuankt,
+          }));
+          const hangMucLength = hangmucs.length;
+          totalHangmucInToanha += hangMucLength;
+          return {
+            ID_Khuvuc: khuvuc.ID_Khuvuc,
+            ID_KhoiCV: khuvuc.ID_KhoiCV,
+            Makhuvuc: khuvuc.Makhuvuc,
+            MaQrCode: khuvuc.MaQrCode,
+            Tenkhuvuc: khuvuc.Tenkhuvuc,
+            hangMucLength: hangMucLength,
+            hangmuc: hangmucs,
+          };
+        });
+        const khuvucLength = khuvucs.length;
+        totalHangmucInDuan += totalHangmucInToanha;
+        totalKhuvucInDuan += khuvucLength;
+        return {
+          ID_Toanha: toanha.ID_Toanha,
+          Toanha: toanha.Toanha,
+          Sotang: toanha.Sotang,
+          Vido: toanha.Vido,
+          Kinhdo: toanha.Kinhdo,
+          khuvucLength: khuvucLength,
+          khuvuc: khuvucs,
+          totalHangmucInToanha,
+        };
+      });
+
+      return {
+        ID_Duan: duan.ID_Duan,
+        Duan: duan.Duan,
+        Diachi: duan.Diachi,
+        Vido: duan.Vido,
+        Kinhdo: duan.Kinhdo,
+        Logo: duan.Logo,
+        toanhas: toanhas,
+        totalHangmucInDuan,
+        totalKhuvucInDuan,
+      };
+    });
+
+    res.status(200).json({
+      message: "Danh sách dự án với khu vực!",
+      data: result,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
 

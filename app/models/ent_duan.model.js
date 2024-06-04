@@ -23,7 +23,9 @@ const Ent_duan = sequelize.define(
     Kinhdo: {
       type: DataTypes.TEXT,
     },
-
+    Logo: {
+      type: DataTypes.TEXT,
+    },
     isDelete: {
       type: DataTypes.INTEGER,
       defaultValue: 0,

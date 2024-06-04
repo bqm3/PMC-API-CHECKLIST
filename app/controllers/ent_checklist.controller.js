@@ -40,7 +40,8 @@ exports.create = async (req, res) => {
         Checklist: req.body.Checklist,
         Ghichu: req.body.Ghichu || "",
         Tieuchuan: req.body.Tieuchuan || "",
-        Giatridinhdanh: req.body.Giatridinhdanh || "",
+        Giatridinhdanh:
+          req.body.Giatridinhdanh || req.body.Giatrinhan.split("/")[0] || "",
         Giatrinhan: req.body.Giatrinhan || "",
         ID_User: userData.ID_User,
         sCalv: JSON.stringify(sCalv) || null,

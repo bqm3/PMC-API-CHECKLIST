@@ -40,7 +40,7 @@ Ent_khuvuc.belongsTo(Ent_khoicv, {
   foreignKey: "ID_KhoiCV",
 });
 
-Ent_toanha.hasMany(Ent_khuvuc);
+Ent_toanha.hasMany(Ent_khuvuc,  { as: 'ent_khuvuc', foreignKey: 'ID_Toanha' });
 Ent_khuvuc.belongsTo(Ent_toanha, {
   foreignKey: "ID_Toanha",
 });
@@ -101,7 +101,7 @@ Ent_checklist.belongsTo(Ent_user, {
 });
 
 // Hạng mục
-Ent_khuvuc.hasMany(Ent_hangmuc);
+Ent_khuvuc.hasMany(Ent_hangmuc,   { as: 'ent_hangmuc', foreignKey: 'ID_Khuvuc' });
 Ent_hangmuc.belongsTo(Ent_khuvuc, {
   foreignKey: "ID_Khuvuc",
 });
