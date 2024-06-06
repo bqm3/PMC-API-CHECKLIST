@@ -19,6 +19,7 @@ const { Op, Sequelize } = require("sequelize");
 const { uploadFile } = require("../middleware/auth_google");
 const Ent_checklistc = require("../models/tb_checklistc.model");
 const sequelize = require("../config/db.config");
+const cron = require('node-cron');
 
 exports.createFirstChecklist = async (req, res, next) => {
   try {
@@ -53,7 +54,7 @@ exports.createFirstChecklist = async (req, res, next) => {
     const giobatdauMoment = moment(Giobatdau, "HH:mm:ss");
     const gioketthucMoment = moment(Gioketthuc, "HH:mm:ss");
 
-    if (!giobdMoment.isBetween(giobatdauMoment, gioketthucMoment, null, '[]')) {
+    if (!giobdMoment.isBetween(giobatdauMoment, gioketthucMoment, null, "[]")) {
       return res.status(400).json({
         message: "Giờ bắt đầu không thuộc khoảng thời gian của ca làm việc!",
       });
@@ -96,7 +97,6 @@ exports.createFirstChecklist = async (req, res, next) => {
       },
     })
       .then(({ count, rows }) => {
-
         // Kiểm tra xem đã có checklist được tạo hay chưa
         if (count === 0) {
           // Nếu không có checklist tồn tại, tạo mới
@@ -443,7 +443,10 @@ exports.getCheckListc = async (req, res, next) => {
           },
         ],
         where: whereClause,
-        order: [["Ngay", "DESC"]],
+        order: [
+          ["Ngay", "DESC"],
+          ["ID_ChecklistC", "DESC"],
+        ],
         offset: offset,
         limit: pageSize,
       })
@@ -1122,3 +1125,76 @@ async function processData(data) {
 
   return finalData;
 }
+
+// cron jib
+cron.schedule('0 * * * *', async function() {
+  console.log('---------------------');
+  console.log('Running Cron Job');
+
+  const currentDateTime = new Date();
+  const currentDateString = currentDateTime.toISOString().split('T')[0];
+  
+  try {
+    // Tìm các bản ghi thoả mãn điều kiện
+    const results = await Tb_checklistc.findAll({
+      attributes: [
+        "ID_ChecklistC",
+        "ID_Duan",
+        "ID_KhoiCV",
+        "ID_Calv",
+        "ID_Toanha",
+        "ID_User",
+        "ID_Giamsat",
+        "Ngay",
+        "Tong",
+        "TongC",
+        "Giobd",
+        "Giochupanh1",
+        "Anh1",
+        "Giochupanh2",
+        "Anh2",
+        "Giochupanh3",
+        "Anh3",
+        "Giochupanh4",
+        "Anh4",
+        "Giokt",
+        "Ghichu",
+        "Tinhtrang",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_calv,
+          attributes: ["Giobatdau", "Gioketthuc"],
+        },
+      ],
+      where: {
+        isDelete: 0,
+        Ngay: {
+          [Op.lte]: currentDateString,
+        }
+      },
+    });
+
+    const updates = [];
+    for (const record of results) {
+      const { Gioketthuc } = record.ent_calv;
+      const gioketthucDateTime = new Date(`${record.Ngay}T${Gioketthuc}`);
+
+      if (currentDateTime > gioketthucDateTime) {
+        updates.push(
+          Tb_checklistc.update(
+            { Tinhtrang: 1 },
+            { where: { ID_ChecklistC: record.ID_ChecklistC } }
+          )
+        );
+      }
+    }
+
+    await Promise.all(updates);
+
+    console.log('Cron job completed successfully');
+  } catch (error) {
+    console.error('Error running cron job:', error);
+  }
+});
