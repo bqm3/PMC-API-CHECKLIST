@@ -54,11 +54,11 @@ exports.createFirstChecklist = async (req, res, next) => {
     const giobatdauMoment = moment(Giobatdau, "HH:mm:ss");
     const gioketthucMoment = moment(Gioketthuc, "HH:mm:ss");
 
-    if (!giobdMoment.isBetween(giobatdauMoment, gioketthucMoment, null, "[]")) {
-      return res.status(400).json({
-        message: "Giờ bắt đầu không thuộc khoảng thời gian của ca làm việc!",
-      });
-    }
+    // if (!giobdMoment.isBetween(giobatdauMoment, gioketthucMoment, null, "[]")) {
+    //   return res.status(400).json({
+    //     message: "Giờ bắt đầu không thuộc khoảng thời gian của ca làm việc!",
+    //   });
+    // }
 
     let whereCondition = {
       isDelete: 0,
@@ -73,7 +73,7 @@ exports.createFirstChecklist = async (req, res, next) => {
 
     whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] =
       userData?.ID_Duan;
-    whereCondition["$ent_hangmuc.ent_khuvuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
+    whereCondition["$ent_hangmuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
 
     Tb_checklistc.findAndCountAll({
       attributes: [
@@ -216,7 +216,7 @@ exports.createChecklistInToanha = async (req, res, next) => {
       whereCondition["$ent_hangmuc.ent_khuvuc.ID_Toanha$"] = {
         [Op.in]: toanhaIdsArray,
       };
-      whereCondition["$ent_hangmuc.ent_khuvuc.ID_KhoiCV$"] =
+      whereCondition["$ent_hangmuc.ID_KhoiCV$"] =
         userData?.ID_KhoiCV;
 
       const checklistData = await Ent_checklist.findAndCountAll({
