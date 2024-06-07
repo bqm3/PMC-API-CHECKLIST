@@ -113,7 +113,7 @@ exports.get = async (req, res) => {
       include: [
         {
           model: Ent_hangmuc,
-          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode"],
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "ID_KhoiCV","ID_KhoiCV"],
           include: [
             {
               model: Ent_khuvuc,
@@ -123,7 +123,6 @@ exports.get = async (req, res) => {
                 "Makhuvuc",
                 "Sothutu",
                 "ID_Toanha",
-                "ID_KhoiCV",
                 "ID_Khuvuc",
               ],
               include: [
@@ -144,11 +143,12 @@ exports.get = async (req, res) => {
                   },
                 },
 
-                {
-                  model: Ent_khoicv,
-                  attributes: ["KhoiCV"],
-                },
+               
               ],
+            },
+            {
+              model: Ent_khoicv,
+              attributes: ["KhoiCV"],
             },
           ],
         },
@@ -199,7 +199,7 @@ exports.get = async (req, res) => {
       include: [
         {
           model: Ent_hangmuc,
-          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode"],
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "ID_KhoiCV","ID_KhoiCV"],
           include: [
             {
               model: Ent_khuvuc,
@@ -209,7 +209,6 @@ exports.get = async (req, res) => {
                 "Makhuvuc",
                 "Sothutu",
                 "ID_Toanha",
-                "ID_KhoiCV",
                 "ID_Khuvuc",
               ],
               include: [
@@ -230,11 +229,12 @@ exports.get = async (req, res) => {
                   },
                 },
 
-                {
-                  model: Ent_khoicv,
-                  attributes: ["KhoiCV"],
-                },
+               
               ],
+            },
+            {
+              model: Ent_khoicv,
+              attributes: ["KhoiCV"],
             },
           ],
         },
@@ -324,7 +324,7 @@ exports.getDetail = async (req, res) => {
         include: [
           {
             model: Ent_hangmuc,
-            attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode"],
+            attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "ID_KhoiCV"],
             include: [
               {
                 model: Ent_khuvuc,
@@ -355,11 +355,12 @@ exports.getDetail = async (req, res) => {
                     },
                   },
 
-                  {
-                    model: Ent_khoicv,
-                    attributes: ["KhoiCV"],
-                  },
+                  
                 ],
+              },
+              {
+                model: Ent_khoicv,
+                attributes: ["KhoiCV"],
               },
             ],
           },
@@ -574,7 +575,7 @@ exports.getFilter = async (req, res) => {
       };
       whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] =
         userData?.ID_Duan;
-      whereCondition["$ent_hangmuc.ent_khuvuc.ID_KhoiCV$"] = ID_KhoiCV;
+      whereCondition["$ent_hangmuc.ID_KhoiCV$"] = ID_KhoiCV;
 
       if (
         checklistIds &&
@@ -620,7 +621,7 @@ exports.getFilter = async (req, res) => {
         include: [
           {
             model: Ent_hangmuc,
-            attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode"],
+            attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "ID_KhoiCV"],
             include: [
               {
                 model: Ent_khuvuc,
@@ -791,7 +792,7 @@ exports.getChecklist = async (req, res) => {
 
     whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] =
       userData?.ID_Duan;
-    whereCondition["$ent_hangmuc.ent_khuvuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
+    whereCondition["$ent_hangmuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
 
     console.log("where", whereCondition);
     if (
@@ -855,7 +856,7 @@ exports.getChecklist = async (req, res) => {
         },
         {
           model: Ent_hangmuc,
-          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode"],
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "ID_KhoiCV","ID_KhoiCV"],
           include: [
             {
               model: Ent_khuvuc,
@@ -884,11 +885,12 @@ exports.getChecklist = async (req, res) => {
                     ],
                   },
                 },
-                {
-                  model: Ent_khoicv,
-                  attributes: ["KhoiCV"],
-                },
+                
               ],
+            },
+            {
+              model: Ent_khoicv,
+              attributes: ["KhoiCV"],
             },
           ],
         },
@@ -998,12 +1000,8 @@ exports.getFilterSearch = async (req, res) => {
       ],
       include: [
         {
-          model: Ent_tang,
-          attributes: ["Tentang", "Sotang"],
-        },
-        {
           model: Ent_hangmuc,
-          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode"],
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "ID_KhoiCV","ID_KhoiCV"],
           include: [
             {
               model: Ent_khuvuc,
@@ -1013,7 +1011,6 @@ exports.getFilterSearch = async (req, res) => {
                 "Makhuvuc",
                 "Sothutu",
                 "ID_Toanha",
-                "ID_KhoiCV",
                 "ID_Khuvuc",
               ],
               include: [
@@ -1030,15 +1027,22 @@ exports.getFilterSearch = async (req, res) => {
                       "Kinhdo",
                       "Logo",
                     ],
+                    where: { ID_Duan: userData.ID_Duan },
                   },
                 },
-                {
-                  model: Ent_khoicv,
-                  attributes: ["KhoiCV"],
-                },
+
+               
               ],
             },
+            {
+              model: Ent_khoicv,
+              attributes: ["KhoiCV"],
+            },
           ],
+        },
+        {
+          model: Ent_tang,
+          attributes: ["Tentang", "Sotang"],
         },
         {
           model: Ent_user,
@@ -1076,12 +1080,8 @@ exports.getFilterSearch = async (req, res) => {
       ],
       include: [
         {
-          model: Ent_tang,
-          attributes: ["Tentang", "Sotang"],
-        },
-        {
           model: Ent_hangmuc,
-          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode"],
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "ID_KhoiCV","ID_KhoiCV"],
           include: [
             {
               model: Ent_khuvuc,
@@ -1091,7 +1091,6 @@ exports.getFilterSearch = async (req, res) => {
                 "Makhuvuc",
                 "Sothutu",
                 "ID_Toanha",
-                "ID_KhoiCV",
                 "ID_Khuvuc",
               ],
               include: [
@@ -1108,15 +1107,22 @@ exports.getFilterSearch = async (req, res) => {
                       "Kinhdo",
                       "Logo",
                     ],
+                    where: { ID_Duan: userData.ID_Duan },
                   },
                 },
-                {
-                  model: Ent_khoicv,
-                  attributes: ["KhoiCV"],
-                },
+
+               
               ],
             },
+            {
+              model: Ent_khoicv,
+              attributes: ["KhoiCV"],
+            },
           ],
+        },
+        {
+          model: Ent_tang,
+          attributes: ["Tentang", "Sotang"],
         },
         {
           model: Ent_user,
@@ -1238,7 +1244,7 @@ exports.filterChecklists = async (req, res) => {
 
     whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] =
       userData?.ID_Duan;
-    whereCondition["$ent_hangmuc.ent_khuvuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
+    whereCondition["$ent_hangmuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
 
     if (
       checklistIds &&
@@ -1294,12 +1300,8 @@ exports.filterChecklists = async (req, res) => {
       ],
       include: [
         {
-          model: Ent_tang,
-          attributes: ["Tentang", "Sotang"],
-        },
-        {
           model: Ent_hangmuc,
-          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode"],
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "ID_KhoiCV","ID_KhoiCV"],
           include: [
             {
               model: Ent_khuvuc,
@@ -1309,7 +1311,6 @@ exports.filterChecklists = async (req, res) => {
                 "Makhuvuc",
                 "Sothutu",
                 "ID_Toanha",
-                "ID_KhoiCV",
                 "ID_Khuvuc",
               ],
               include: [
@@ -1326,15 +1327,22 @@ exports.filterChecklists = async (req, res) => {
                       "Kinhdo",
                       "Logo",
                     ],
+                    where: { ID_Duan: userData.ID_Duan },
                   },
                 },
-                {
-                  model: Ent_khoicv,
-                  attributes: ["KhoiCV"],
-                },
+
+               
               ],
             },
+            {
+              model: Ent_khoicv,
+              attributes: ["KhoiCV"],
+            },
           ],
+        },
+        {
+          model: Ent_tang,
+          attributes: ["Tentang", "Sotang"],
         },
         {
           model: Ent_user,
@@ -1421,7 +1429,7 @@ exports.getListChecklistWeb = async (req, res) => {
       include: [
         {
           model: Ent_hangmuc,
-          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode"],
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "ID_KhoiCV","ID_KhoiCV"],
           include: [
             {
               model: Ent_khuvuc,
@@ -1431,7 +1439,6 @@ exports.getListChecklistWeb = async (req, res) => {
                 "Makhuvuc",
                 "Sothutu",
                 "ID_Toanha",
-                "ID_KhoiCV",
                 "ID_Khuvuc",
               ],
               include: [
@@ -1452,11 +1459,12 @@ exports.getListChecklistWeb = async (req, res) => {
                   },
                 },
 
-                {
-                  model: Ent_khoicv,
-                  attributes: ["KhoiCV"],
-                },
+               
               ],
+            },
+            {
+              model: Ent_khoicv,
+              attributes: ["KhoiCV"],
             },
           ],
         },
@@ -1548,12 +1556,8 @@ exports.getChecklistTotal = async (req, res) => {
       ],
       include: [
         {
-          model: Ent_tang,
-          attributes: ["Tentang", "Sotang"],
-        },
-        {
           model: Ent_hangmuc,
-          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode"],
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "ID_KhoiCV","ID_KhoiCV"],
           include: [
             {
               model: Ent_khuvuc,
@@ -1563,7 +1567,6 @@ exports.getChecklistTotal = async (req, res) => {
                 "Makhuvuc",
                 "Sothutu",
                 "ID_Toanha",
-                "ID_KhoiCV",
                 "ID_Khuvuc",
               ],
               include: [
@@ -1580,15 +1583,22 @@ exports.getChecklistTotal = async (req, res) => {
                       "Kinhdo",
                       "Logo",
                     ],
+                    where: { ID_Duan: userData.ID_Duan },
                   },
                 },
-                {
-                  model: Ent_khoicv,
-                  attributes: ["KhoiCV"],
-                },
+
+               
               ],
             },
+            {
+              model: Ent_khoicv,
+              attributes: ["KhoiCV"],
+            },
           ],
+        },
+        {
+          model: Ent_tang,
+          attributes: ["Tentang", "Sotang"],
         },
         {
           model: Ent_user,
@@ -1617,7 +1627,7 @@ exports.getChecklistTotal = async (req, res) => {
     // Count checklists by ID_KhoiCV
     const checklistCounts = {};
     filteredData.forEach((item) => {
-      const khoiCV = item.ent_hangmuc.ent_khuvuc.ent_khoicv.KhoiCV;
+      const khoiCV = item.ent_hangmuc.ent_khoicv.KhoiCV;
       if (!checklistCounts[khoiCV]) {
         checklistCounts[khoiCV] = 0;
       }

@@ -1,10 +1,15 @@
-const { Ent_toanha, Ent_khuvuc, Ent_khoicv, Ent_duan } = require("../models/setup.model");
+const {
+  Ent_toanha,
+  Ent_khuvuc,
+  Ent_khoicv,
+  Ent_duan,
+} = require("../models/setup.model");
 const { Op } = require("sequelize");
 
 exports.create = async (req, res) => {
   // Validate request
   try {
-    if (!req.body.ID_Toanha || !req.body.ID_KhoiCV || !req.body.Tenkhuvuc) {
+    if (!req.body.ID_Toanha || !req.body.Tenkhuvuc) {
       return res.status(400).json({
         message: "Phải nhập đầy đủ dữ liệu!",
       });
@@ -15,7 +20,8 @@ exports.create = async (req, res) => {
       const ID_User = userData.ID_User;
       const data = {
         ID_Toanha: req.body.ID_Toanha,
-        ID_KhoiCV: req.body.ID_KhoiCV,
+        ID_KhoiCV: JSON.stringify(req.body.ID_KhoiCVs[0]) || null,
+        ID_KhoiCVs: JSON.stringify(req.body.ID_KhoiCVs),
         Sothutu: req.body.Sothutu,
         Makhuvuc: req.body.Makhuvuc,
         MaQrCode: req.body.MaQrCode,
@@ -90,14 +96,18 @@ exports.get = async (req, res) => {
     };
     if (userData) {
       orConditions.push({ "$ent_toanha.ID_Duan$": userData?.ID_Duan });
-      if (userData?.ID_KhoiCV !== null && userData?.ID_KhoiCV !== undefined ) {
-        whereCondition.ID_KhoiCV = userData?.ID_KhoiCV;
+      if (userData?.ID_KhoiCV !== null && userData?.ID_KhoiCV !== undefined) {
+        whereCondition[Op.or] = [
+          { ID_KhoiCV: userData?.ID_KhoiCV },
+          { '$ID_KhoiCVs$': { [Op.contains]: [userData?.ID_KhoiCV] } }
+        ];
       }
       await Ent_khuvuc.findAll({
         attributes: [
           "ID_Khuvuc",
           "ID_Toanha",
           "ID_KhoiCV",
+          "ID_KhoiCVs",
           "Sothutu",
           "Makhuvuc",
           "MaQrCode",
@@ -121,9 +131,7 @@ exports.get = async (req, res) => {
             [Op.and]: [orConditions],
           },
         ],
-        order: [
-          ["ID_Toanha", "ASC"],
-        ],
+        order: [["ID_Toanha", "ASC"]],
       })
         .then((data) => {
           res.status(200).json({
@@ -153,6 +161,7 @@ exports.getDetail = async (req, res) => {
           "ID_Khuvuc",
           "ID_Toanha",
           "ID_KhoiCV",
+          "ID_KhoiCVs",
           "Sothutu",
           "Makhuvuc",
           "MaQrCode",
@@ -197,9 +206,12 @@ exports.update = async (req, res) => {
   try {
     const userData = req.user.data;
     if (req.params.id && userData) {
+
+
       const reqData = {
         ID_Toanha: req.body.ID_Toanha,
-        ID_KhoiCV: req.body.ID_KhoiCV,
+        ID_KhoiCV: JSON.stringify(req.body.ID_KhoiCVs[0]) || null,
+        ID_KhoiCVs: JSON.stringify(req.body.ID_KhoiCVs) || null,
         Sothutu: req.body.Sothutu,
         Makhuvuc: req.body.Makhuvuc,
         MaQrCode: req.body.MaQrCode,
@@ -223,6 +235,7 @@ exports.update = async (req, res) => {
             "ID_Khuvuc",
             "ID_Toanha",
             "ID_KhoiCV",
+            "ID_KhoiCVs",
             "Sothutu",
             "Makhuvuc",
             "MaQrCode",
@@ -264,7 +277,6 @@ exports.update = async (req, res) => {
     });
   }
 };
-
 
 exports.delete = async (req, res) => {
   try {
@@ -313,10 +325,14 @@ exports.getKhuVuc = async (req, res) => {
         if (userData.ID_Duan !== null) {
           whereCondition["$ent_toanha.ID_Duan$"] = userData.ID_Duan;
         }
-        if (userData.ID_KhoiCV !== null  && userData.ID_KhoiCV !== undefined) {
+        if (userData.ID_KhoiCV !== null && userData.ID_KhoiCV !== undefined) {
           whereCondition[Op.and].push({
             ID_KhoiCV: userData.ID_KhoiCV,
+            
           });
+          whereCondition[Op.or] = [
+            { '$ID_KhoiCVs$': { [Op.contains]: [userData?.ID_KhoiCV] } }
+          ];
         }
 
         if (req.body.ID_Toanha !== null && req.body.ID_Toanha !== undefined) {
@@ -333,6 +349,7 @@ exports.getKhuVuc = async (req, res) => {
           "ID_Khuvuc",
           "ID_Toanha",
           "ID_KhoiCV",
+          "ID_KhoiCVs",
           "Sothutu",
           "Makhuvuc",
           "MaQrCode",
@@ -354,7 +371,7 @@ exports.getKhuVuc = async (req, res) => {
         order: [
           ["ID_Toanha", "ASC"],
           ["ID_KhoiCV", "ASC"],
-        ]
+        ],
       })
         .then((data) => {
           res.status(200).json({
@@ -400,7 +417,6 @@ exports.filterByQr = async (req, res) => {
         if (userData.ID_KhoiCV !== null) {
           whereCondition["$ID_KhoiCV$"] = userData.ID_KhoiCV;
         }
-       
       }
       // Thêm điều kiện isDelete
       whereCondition.isDelete = 0;
@@ -410,6 +426,7 @@ exports.filterByQr = async (req, res) => {
           "ID_Khuvuc",
           "ID_Toanha",
           "ID_KhoiCV",
+          "ID_KhoiCVs",
           "MaQrCode",
           "Sothutu",
           "Makhuvuc",
@@ -432,7 +449,7 @@ exports.filterByQr = async (req, res) => {
         .then((data) => {
           res.status(200).json({
             message: "Thông tin tòa nhà!",
-            data: data ?  [data] : [],
+            data: data ? [data] : [],
           });
         })
         .catch((err) => {
@@ -453,7 +470,6 @@ exports.filterByQr = async (req, res) => {
   }
 };
 
-
 exports.getKhuvucTotal = async (req, res) => {
   try {
     const userData = req.user.data;
@@ -465,8 +481,7 @@ exports.getKhuvucTotal = async (req, res) => {
       isDelete: 0,
     };
 
-    whereCondition["$ent_toanha.ID_Duan$"] =
-      userData?.ID_Duan;
+    whereCondition["$ent_toanha.ID_Duan$"] = userData?.ID_Duan;
 
     const khuvucData = await Ent_khuvuc.findAll({
       attributes: [
@@ -484,14 +499,7 @@ exports.getKhuvucTotal = async (req, res) => {
           attributes: ["Toanha", "Sotang", "ID_Toanha"],
           include: {
             model: Ent_duan,
-            attributes: [
-              "ID_Duan",
-              "Duan",
-              "Diachi",
-              "Vido",
-              "Kinhdo",
-              "Logo",
-            ],
+            attributes: ["ID_Duan", "Duan", "Diachi", "Vido", "Kinhdo", "Logo"],
           },
         },
         {
@@ -510,7 +518,7 @@ exports.getKhuvucTotal = async (req, res) => {
     }
 
     // Filter data
-   
+
     const khuvucCounts = {};
     khuvucData.forEach((item) => {
       const khoiCV = item.ent_khoicv.KhoiCV;

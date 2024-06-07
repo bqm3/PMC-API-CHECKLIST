@@ -40,6 +40,7 @@ exports.create = async (req, res) => {
           ID_KhoiCV: req.body.ID_KhoiCV,
           Tenca: req.body.Tenca,
           ID_Duan: userData.ID_Duan,
+          isDelete: 0
         },
         attributes: [
           "ID_Calv",

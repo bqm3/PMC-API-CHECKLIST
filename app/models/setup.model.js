@@ -106,6 +106,11 @@ Ent_hangmuc.belongsTo(Ent_khuvuc, {
   foreignKey: "ID_Khuvuc",
 });
 
+Ent_khoicv.hasMany(Ent_hangmuc);
+Ent_hangmuc.belongsTo(Ent_khoicv, {
+  foreignKey: "ID_KhoiCV",
+});
+
 
 //Giam sat
 Ent_duan.hasMany(Ent_giamsat);

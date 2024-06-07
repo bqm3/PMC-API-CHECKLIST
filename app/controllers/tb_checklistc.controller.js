@@ -716,9 +716,10 @@ exports.checklistCalv = async (req, res) => {
             include: [
               {
                 model: Ent_hangmuc,
-                attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode"],
+                attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "ID_KhoiCV"],
                 include: [
                   {
+                    
                     model: Ent_khuvuc,
                     attributes: [
                       "Tenkhuvuc",
@@ -745,11 +746,12 @@ exports.checklistCalv = async (req, res) => {
                           where: { ID_Duan: userData.ID_Duan },
                         },
                       },
-                      {
-                        model: Ent_khoicv,
-                        attributes: ["KhoiCV"],
-                      },
+                     
                     ],
+                  },
+                  {
+                    model: Ent_khoicv,
+                    attributes: ["KhoiCV"],
                   },
                 ],
               },
@@ -819,7 +821,7 @@ exports.checklistCalv = async (req, res) => {
         include: [
           {
             model: Ent_hangmuc,
-            attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode"],
+            attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "ID_KhoiCV"],
             include: [
               {
                 model: Ent_khuvuc,

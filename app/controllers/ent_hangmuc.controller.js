@@ -49,6 +49,7 @@ exports.create = async (req, res, next) => {
         // QR code không trùng lặp, cho phép thêm mới
         const data = {
           ID_Khuvuc: req.body.ID_Khuvuc,
+          ID_KhoiCV: req.body.ID_KhoiCV,
           MaQrCode: req.body.MaQrCode || null,
           Hangmuc: req.body.Hangmuc || null,
           Tieuchuankt: req.body.Tieuchuankt || null,
@@ -90,13 +91,14 @@ exports.get = async (req, res) => {
       });
       if (userData.ID_KhoiCV !== null && userData.ID_KhoiCV !== undefined) {
         orConditions.push({
-          "$ent_khuvuc.ID_KhoiCV$": userData.ID_KhoiCV,
+          ID_KhoiCV: userData.ID_KhoiCV,
         });
       }
       await Ent_hangmuc.findAll({
         attributes: [
           "ID_Hangmuc",
           "ID_Khuvuc",
+          "ID_KhoiCV",
           "MaQrCode",
           "Hangmuc",
           "Tieuchuankt",
@@ -104,11 +106,19 @@ exports.get = async (req, res) => {
         ],
         include: [
           {
+            model: Ent_khoicv,
+            attributes: ["KhoiCV", "ID_Khoi"],
+            where: {
+              isDelete: 0,
+            },
+          },
+          {
             model: Ent_khuvuc,
             attributes: [
               "ID_Toanha",
               "ID_Khuvuc",
               "ID_KhoiCV",
+              "ID_KhoiCVs",
               "Sothutu",
               "MaQrCode",
               "Tenkhuvuc",
@@ -132,15 +142,9 @@ exports.get = async (req, res) => {
                   isDelete: 0,
                 },
               },
-              {
-                model: Ent_khoicv,
-                attributes: ["KhoiCV"],
-                where: {
-                  isDelete: 0,
-                },
-              },
             ],
           },
+         
         ],
         where: {
           isDelete: 0,
@@ -177,7 +181,7 @@ exports.getDetail = async (req, res) => {
       });
       if (userData.ID_KhoiCV !== null) {
         orConditions.push({
-          "$ent_khuvuc.ID_KhoiCV$": userData.ID_KhoiCV,
+          $ID_KhoiCV$: userData.ID_KhoiCV,
         });
       }
       await Ent_hangmuc.findByPk(req.params.id, {
@@ -185,6 +189,7 @@ exports.getDetail = async (req, res) => {
           "ID_Hangmuc",
           "ID_Khuvuc",
           "MaQrCode",
+          "ID_KhoiCV",
           "Hangmuc",
           "Tieuchuankt",
           "isDelete",
@@ -196,6 +201,7 @@ exports.getDetail = async (req, res) => {
               "ID_Toanha",
               "ID_Khuvuc",
               "ID_KhoiCV",
+              "ID_KhoiCVs",
               "Sothutu",
               "MaQrCode",
               "Tenkhuvuc",
@@ -252,6 +258,7 @@ exports.update = async (req, res) => {
     if (req.params.id && userData) {
       const reqData = {
         ID_Khuvuc: req.body.ID_Khuvuc,
+        ID_KhoiCV: req.body.ID_KhoiCV,
         MaQrCode: req.body.MaQrCode,
         Hangmuc: req.body.Hangmuc,
         Tieuchuankt: req.body.Tieuchuankt,
@@ -355,7 +362,7 @@ exports.filterByKhuvuc = async (req, res) => {
           whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData.ID_Duan;
         }
         if (userData.ID_KhoiCV !== null) {
-          whereCondition["$ent_khuvuc.ID_KhoiCV$"] = userData.ID_KhoiCV;
+          whereCondition["$ID_KhoiCV$"] = userData.ID_KhoiCV;
         }
         if (
           ID_Khuvuc !== null &&
@@ -551,7 +558,7 @@ exports.getHangmucTotal = async (req, res) => {
             "ID_User",
             "isDelete",
           ],
-         
+
           include: [
             {
               model: Ent_toanha,
@@ -562,18 +569,16 @@ exports.getHangmucTotal = async (req, res) => {
                 "Sotang",
                 "isDelete",
               ],
-              
             },
             {
               model: Ent_khoicv,
               attributes: ["KhoiCV"],
-            
             },
           ],
         },
       ],
       where: whereCondition,
-    })
+    });
 
     if (!hangmucData || hangmucData.length === 0) {
       return res.status(200).json({
@@ -581,7 +586,6 @@ exports.getHangmucTotal = async (req, res) => {
         data: [],
       });
     }
-    
 
     // Count checklists by ID_KhoiCV
     const hangmucCounts = {};
@@ -594,7 +598,7 @@ exports.getHangmucTotal = async (req, res) => {
         hangmucCounts[khoiCV]++;
       }
     });
-    console.log('hangmucData',hangmucCounts)
+    console.log("hangmucData", hangmucCounts);
     // Convert counts to desired format
     const result = Object.keys(hangmucCounts).map((khoiCV) => ({
       label: khoiCV,
@@ -613,5 +617,3 @@ exports.getHangmucTotal = async (req, res) => {
     });
   }
 };
-
-

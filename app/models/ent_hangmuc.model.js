@@ -12,6 +12,9 @@ const Ent_Hangmuc = sequelize.define("ent_hangmuc", {
          type: DataTypes.INTEGER,
          allowNull: false,
        },
+       ID_KhoiCV: {
+        type: DataTypes.INTEGER,
+      },
        MaQrCode: {
         type: DataTypes.TEXT,
        },

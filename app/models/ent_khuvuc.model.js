@@ -16,6 +16,10 @@ const Ent_khuvuc = sequelize.define("ent_khuvuc", {
         type: DataTypes.INTEGER,
         allowNull: false,
        },
+       ID_KhoiCVs: {
+        type: DataTypes.CHAR,
+        allowNull: false,
+       },
        Sothutu: {
         type: DataTypes.INTEGER,
         allowNull: false,
