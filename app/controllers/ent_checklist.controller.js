@@ -1766,8 +1766,8 @@ exports.uploadFiles = async (req, res) => {
           Checklist: tenChecklist,
           Ghichu: ghiChu || "",
           Tieuchuan: tieuChuanChecklist || "",
-          Giatridinhdanh: giaTriDanhDinh || "",
-          Giatrinhan: cacGiaTriNhan || "",
+          Giatridinhdanh: capitalizeEachWord(giaTriDanhDinh) || "",
+          Giatrinhan: capitalizeEachWord(cacGiaTriNhan) || "",
           ID_User: userData.ID_User,
           sCalv: JSON.stringify(sCalv) || null,
           calv_1: JSON.stringify(sCalv[0]) || null,
@@ -1792,3 +1792,10 @@ exports.uploadFiles = async (req, res) => {
     });
   }
 };
+
+
+function capitalizeEachWord(str) {
+  return str.toLowerCase().replace(/\b\w/g, function(match) {
+      return match.toUpperCase();
+  });
+}

@@ -54,11 +54,11 @@ exports.createFirstChecklist = async (req, res, next) => {
     const giobatdauMoment = moment(Giobatdau, "HH:mm:ss");
     const gioketthucMoment = moment(Gioketthuc, "HH:mm:ss");
 
-    // if (!giobdMoment.isBetween(giobatdauMoment, gioketthucMoment, null, "[]")) {
-    //   return res.status(400).json({
-    //     message: "Giờ bắt đầu không thuộc khoảng thời gian của ca làm việc!",
-    //   });
-    // }
+    if (!giobdMoment.isBetween(giobatdauMoment, gioketthucMoment, null, "[]")) {
+      return res.status(400).json({
+        message: "Giờ bắt đầu không thuộc khoảng thời gian của ca làm việc!",
+      });
+    }
 
     let whereCondition = {
       isDelete: 0,
