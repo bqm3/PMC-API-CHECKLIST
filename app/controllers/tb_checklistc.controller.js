@@ -243,7 +243,7 @@ exports.createChecklistInToanha = async (req, res, next) => {
         include: [
           {
             model: Ent_hangmuc,
-            attributes: ["Hangmuc", "Tieuchuankt", "ID_Hangmuc", "ID_Khuvuc"],
+            attributes: ["Hangmuc", "Tieuchuankt", "ID_Hangmuc", "ID_Khuvuc", "ID_KhoiCV",],
             include: [
               {
                 model: Ent_khuvuc,
@@ -253,7 +253,6 @@ exports.createChecklistInToanha = async (req, res, next) => {
                   "Makhuvuc",
                   "Sothutu",
                   "ID_Toanha",
-                  "ID_KhoiCV",
                   "ID_Khuvuc",
                 ],
                 include: [
@@ -272,12 +271,10 @@ exports.createChecklistInToanha = async (req, res, next) => {
                       where: { ID_Duan: userData.ID_Duan },
                     },
                   },
-                  {
-                    model: Ent_khoicv,
-                    attributes: ["KhoiCV"],
-                  },
+                  
                 ],
               },
+            
             ],
           },
           {
