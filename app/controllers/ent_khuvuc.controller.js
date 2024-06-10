@@ -315,37 +315,42 @@ exports.getKhuVuc = async (req, res) => {
     const userData = req.user.data;
 
     if (userData) {
-      // Xây dựng điều kiện where dựa trên các giá trị đã kiểm tra
+      // Initialize where condition
       const whereCondition = {
-        [Op.and]: [],
+        isDelete: 0, // Always include isDelete condition
+        [Op.and]: []
       };
 
-      if (userData.Permission === 3 || userData.UserName === "PSH") {
-        // Nếu userData.Permission == 1, không cần thêm điều kiện where, lấy tất cả khu vực
-      } else {
-        // Nếu userData.Permission !== 1, thêm điều kiện where theo ID_KhoiCV và ID_Duan
+      if (userData.Permission !== 3 && userData.UserName !== "PSH") {
+        // Add ID_Duan condition if it exists
         if (userData.ID_Duan !== null) {
           whereCondition["$ent_toanha.ID_Duan$"] = userData.ID_Duan;
         }
+
+        // Add ID_KhoiCV condition if it exists
         if (userData.ID_KhoiCV !== null && userData.ID_KhoiCV !== undefined) {
           whereCondition[Op.and].push({
             ID_KhoiCV: userData.ID_KhoiCV,
-            
           });
-          whereCondition[Op.or] = [
-            { '$ID_KhoiCVs$': { [Op.contains]: [userData?.ID_KhoiCV] } }
-          ];
+
+          // Replace Op.contains with Op.like for MySQL (adjust according to your DB)
+          whereCondition[Op.and].push({
+            ID_KhoiCVs: { [Op.like]: `%${userData.ID_KhoiCV}%` } // Example for string-based inclusion
+          });
         }
 
+        // Add ID_Toanha condition if it exists in request body
         if (req.body.ID_Toanha !== null && req.body.ID_Toanha !== undefined) {
           whereCondition[Op.and].push({
             ID_Toanha: req.body.ID_Toanha,
           });
         }
       }
-      // Thêm điều kiện isDelete
-      whereCondition.isDelete = 0;
 
+      // Debugging: log the where condition to verify
+      console.log("whereCondition:", whereCondition);
+
+      // Fetch data
       Ent_khuvuc.findAll({
         attributes: [
           "ID_Khuvuc",
@@ -375,20 +380,19 @@ exports.getKhuVuc = async (req, res) => {
           ["ID_KhoiCV", "ASC"],
         ],
       })
-        .then((data) => {
-          res.status(200).json({
-            message: "Thông tin khu vực!",
-            data: data,
-          });
-        })
-        .catch((err) => {
-          res.status(500).json({
-            message: err.message || "Lỗi! Vui lòng thử lại sau.",
-          });
+      .then((data) => {
+        res.status(200).json({
+          message: "Thông tin khu vực!",
+          data: data,
         });
+      })
+      .catch((err) => {
+        res.status(500).json({
+          message: err.message || "Lỗi! Vui lòng thử lại sau.",
+        });
+      });
     } else {
-      // Trả về lỗi nếu không có dữ liệu người dùng hoặc không có ID được cung cấp
-      return res.status(400).json({
+      res.status(400).json({
         message: "Vui lòng cung cấp ít nhất một trong hai ID.",
       });
     }

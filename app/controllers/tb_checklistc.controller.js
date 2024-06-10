@@ -274,7 +274,10 @@ exports.createChecklistInToanha = async (req, res, next) => {
                   
                 ],
               },
-            
+              {
+                model: Ent_khoicv,
+                attributes: ["ID_Khoi", "KhoiCV"],
+              },
             ],
           },
           {
