@@ -4,7 +4,7 @@ const {
   Ent_khoicv,
   Ent_duan,
 } = require("../models/setup.model");
-const { Op } = require("sequelize");
+const { Op, Sequelize  } = require("sequelize");
 const xlsx = require("xlsx");
 
 
@@ -329,14 +329,17 @@ exports.getKhuVuc = async (req, res) => {
 
         // Add ID_KhoiCV condition if it exists
         if (userData.ID_KhoiCV !== null && userData.ID_KhoiCV !== undefined) {
-          whereCondition[Op.and].push({
-            ID_KhoiCV: userData.ID_KhoiCV,
-          });
+
+          whereCondition[Op.and].push(
+            Sequelize.literal(`JSON_CONTAINS(ID_KhoiCVs, '${userData.ID_KhoiCV}')`)
+          );
+
+          // whereCondition[Op.and].push({
+          //   ID_KhoiCV: userData.ID_KhoiCV,
+          // });
 
           // Replace Op.contains with Op.like for MySQL (adjust according to your DB)
-          whereCondition[Op.and].push({
-            ID_KhoiCVs: { [Op.like]: `%${userData.ID_KhoiCV}%` } // Example for string-based inclusion
-          });
+        
         }
 
         // Add ID_Toanha condition if it exists in request body
@@ -377,7 +380,6 @@ exports.getKhuVuc = async (req, res) => {
         where: whereCondition,
         order: [
           ["ID_Toanha", "ASC"],
-          ["ID_KhoiCV", "ASC"],
         ],
       })
       .then((data) => {
