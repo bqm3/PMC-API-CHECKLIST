@@ -384,7 +384,7 @@ exports.createChecklistInToanha = async (req, res, next) => {
         whereCondition["$ent_hangmuc.ent_khuvuc.ID_Toanha$"] = {
           [Op.in]: toanhaIdsArray,
         };
-      // }
+      }
 
       whereCondition["$ent_hangmuc.ID_KhoiCV$"] =
         userData?.ID_KhoiCV;
