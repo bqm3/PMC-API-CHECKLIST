@@ -374,12 +374,12 @@ exports.createChecklistInToanha = async (req, res, next) => {
         ],
       };
 
-      // if (user.ID_Khuvucs && user.ID_Khuvucs.length > 0) {
-      //   const khuvucIdsArray = user.ID_Khuvucs.split(",").map(id => parseInt(id.trim(), 10));
-      //   whereCondition["$ent_hangmuc.ID_Khuvuc$"] = {
-      //     [Op.in]: khuvucIdsArray,
-      //   };
-      // } else {
+      if (user.ID_Khuvucs && user.ID_Khuvucs.length > 0) {
+        const khuvucIdsArray = user.ID_Khuvucs.split(",").map(id => parseInt(id.trim(), 10));
+        whereCondition["$ent_hangmuc.ID_Khuvuc$"] = {
+          [Op.in]: khuvucIdsArray,
+        };
+      } else {
         // Nếu ID_Khuvucs không có dữ liệu, lọc theo ID_Toanha
         whereCondition["$ent_hangmuc.ent_khuvuc.ID_Toanha$"] = {
           [Op.in]: toanhaIdsArray,
