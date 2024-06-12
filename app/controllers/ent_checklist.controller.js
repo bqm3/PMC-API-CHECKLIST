@@ -1785,8 +1785,8 @@ exports.uploadFiles = async (req, res) => {
           Checklist: tenChecklist,
           Ghichu: ghiChu || "",
           Tieuchuan: tieuChuanChecklist || "",
-          Giatridinhdanh: capitalizeEachWord(giaTriDanhDinh) || "",
-          Giatrinhan: capitalizeEachWord(cacGiaTriNhan) || "",
+          Giatridinhdanh: giaTriDanhDinh || "",
+          Giatrinhan: cacGiaTriNhan || "",
           ID_User: userData.ID_User,
           sCalv: JSON.stringify(sCalv) || null,
           calv_1: JSON.stringify(sCalv[0]) || null,
@@ -1806,6 +1806,7 @@ exports.uploadFiles = async (req, res) => {
       data,
     });
   } catch (err) {
+    console.log('err', err)
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });

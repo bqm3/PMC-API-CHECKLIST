@@ -1,3 +1,7 @@
+const multer = require("multer");
+const upload = multer();
+
+
 module.exports = (app) => {
     const ent_hangmuc = require("../controllers/ent_hangmuc.controller.js");
     const {isAuthenticated}= require('../middleware/auth_middleware.js');
@@ -13,6 +17,8 @@ module.exports = (app) => {
     router.put("/delete/:id",isAuthenticated, ent_hangmuc.delete);
     router.get("/filter/:id",isAuthenticated, ent_hangmuc.filterByKhuvuc);
     router.post("/filter_qr", isAuthenticated, ent_hangmuc.filterByQr)
+
+    router.post("/uploads", [isAuthenticated, upload.single('files')], ent_hangmuc.uploadFiles)
   
   
     app.use("/api/ent_hangmuc", router);

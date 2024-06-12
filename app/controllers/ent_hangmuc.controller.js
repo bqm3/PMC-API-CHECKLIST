@@ -7,7 +7,10 @@ const {
   Ent_duan,
 } = require("../models/setup.model");
 const { Ent_khuvuc } = require("../models/setup.model");
-const { Op } = require("sequelize");
+const { Op, Sequelize,fn, col, literal, where  } = require("sequelize");
+const sequelize = require("../config/db.config");
+const xlsx = require("xlsx");
+
 
 // Create and Save a new Ent_tang
 exports.create = async (req, res, next) => {
@@ -612,6 +615,133 @@ exports.getHangmucTotal = async (req, res) => {
     });
   } catch (err) {
     console.error("Error in getHangmucTotal:", err);
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+
+exports.uploadFiles = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).send("No file uploaded.");
+    }
+
+    const userData = req.user.data;
+
+    // Read the uploaded Excel file from buffer
+    const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
+
+    // Extract data from the first sheet
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const data = xlsx.utils.sheet_to_json(worksheet);
+
+    const commonDetailsMap = {};
+
+    data.forEach((item) => {
+      const maChecklist = item["Mã checklist"];
+      if (!commonDetailsMap[maChecklist]) {
+        commonDetailsMap[maChecklist] = {
+          "Tên dự án": item["Tên dự án"],
+          "Tên tòa nhà": item["Tên tòa nhà"],
+          "Mã khu vực": item["Mã khu vực"],
+          "Mã QrCode khu vực": item["Mã QrCode khu vực"],
+          "Tên khu vực": item["Tên khu vực"],
+          "Mã QrCode hạng mục": item["Mã QrCode hạng mục"],
+          "Tên Hạng Mục": item["Tên Hạng Mục"],
+          "Tên tầng": item["Tên tầng"],
+          "Tên khối công việc": item["Tên khối công việc"],
+        };
+      }
+    });
+
+    // Step 2: Update objects with common details
+    const updatedData = data.map((item) => {
+      return {
+        ...item,
+      };
+    });
+
+    console.log('updatedData',updatedData)
+
+    await sequelize.transaction(async (transaction) => {
+      for (const item of updatedData) {
+        const tenKhoiCongViec = item["Tên khối công việc"];
+        const tenKhuvuc = item["Tên khu vực"];
+        const maKhuvuc = item["Mã khu vực"];
+        const maQrKhuvuc = item["Mã QrCode khu vực"];
+        const maQrHangmuc = item["Mã QrCode hạng mục"];
+        const tenHangmuc = item["Tên Hạng Mục"];
+        const tenTang = item["Tên tầng"];
+
+        const khuVuc = await Ent_khuvuc.findOne({
+          attributes: [
+            "ID_Khuvuc",
+            "MaQrCode",
+            "Tenkhuvuc",
+          ],
+          where: {
+            MaQrCode: sequelize.where(
+              sequelize.fn("UPPER", sequelize.col("MaQrCode")),
+              "LIKE",
+              "%" + maQrKhuvuc.toUpperCase() + "%"
+            ),
+          },
+          transaction,
+        });
+        
+
+        const khoiCV = await Ent_khoicv.findOne({
+          attributes: ["ID_Khoi", "KhoiCV"],
+          where: {
+            KhoiCV: sequelize.where(
+              sequelize.fn("UPPER", sequelize.col("KhoiCV")),
+              "LIKE",
+              "%" + tenKhoiCongViec.toUpperCase() + "%"
+            )
+          },
+          transaction,
+        });
+
+        // Check if tenKhuvuc already exists in the database
+        const existingHangMuc = await Ent_hangmuc.findOne({
+          attributes: ["ID_Hangmuc", "Hangmuc", "MaQrCode"],
+          where: {
+            [Op.and]: [
+              where(fn("UPPER", col("Hangmuc")), { [Op.like]: `%${tenHangmuc}%` }),
+              where(fn("UPPER", col("MaQrCode")), { [Op.like]: `%${maQrHangmuc}%` })
+            ]
+        },
+          transaction,
+        });
+
+        
+
+        if (!existingHangMuc) {
+          // If tenKhuvuc doesn't exist, create a new entry
+          const dataInsert = {
+            ID_Khuvuc: khuVuc.ID_Khuvuc,
+            ID_KhoiCV: khoiCV.ID_Khoi,
+            MaQrCode: maQrHangmuc,
+            Hangmuc: tenHangmuc,
+            isDelete: 0
+          };
+
+          await Ent_hangmuc.create(dataInsert, { transaction });
+        } else {
+          console.log(`Hang muc "${tenHangmuc}" đã tồn tại, bỏ qua việc tạo mới.`);
+        }
+      }
+    });
+
+    res.send({
+      message: "File uploaded and data processed successfully",
+      data,
+    });
+  } catch (err) {
+    console.log('err', err)
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });

@@ -3,8 +3,12 @@ const {
   Ent_khuvuc,
   Ent_khoicv,
   Ent_duan,
+  Ent_hangmuc,
+  Ent_tang,
+  Ent_checklist,
 } = require("../models/setup.model");
-const { Op, Sequelize  } = require("sequelize");
+const { Op, Sequelize,fn, col, literal  } = require("sequelize");
+const sequelize = require("../config/db.config");
 const xlsx = require("xlsx");
 
 
@@ -589,108 +593,101 @@ exports.uploadFiles = async (req, res) => {
 
     // Step 2: Update objects with common details
     const updatedData = data.map((item) => {
-      const maChecklist = item["Mã checklist"];
+      // const maChecklist = item["Mã checklist"];
       return {
         ...item,
-        ...commonDetailsMap[maChecklist],
+        // ...commonDetailsMap[maChecklist],
       };
     });
 
-    console.log('updatedData', updatedData)
+    await sequelize.transaction(async (transaction) => {
+      for (const item of updatedData) {
+        const tenKhoiCongViec = item["Tên khối công việc"];
+        const tenToanha = item["Tên tòa nhà"];
+        const tenKhuvuc = item["Tên khu vực"];
+        const maKhuvuc = item["Mã khu vực"];
+        const maQrKhuvuc = item["Mã QrCode khu vực"];
 
-    // await sequelize.transaction(async (transaction) => {
-    //   for (const item of updatedData) {
-    //     const maQrCodeHangMuc = item["Mã QrCode hạng mục"];
-    //     const tenTang = item["Tên tầng"];
-    //     const tenKhoiCongViec = item["Tên khối công việc"];
-    //     const caChecklist = item["Ca checklist"];
-    //     const maChecklist = item["Mã checklist"];
-    //     const qrChecklist = item["Mã QrCode checklist"];
-    //     const tenChecklist = item["Tên checklist"];
-    //     const tieuChuanChecklist = item["Tiêu chuẩn checklist"];
-    //     const giaTriDanhDinh = item["Giá trị danh định"];
-    //     const cacGiaTriNhan = item["Các giá trị nhận"];
-    //     const ghiChu = item["Ghi chú"];
+        const toaNha = await Ent_toanha.findOne({
+          attributes: [
+            "ID_Toanha",
+            "Sotang",
+            "Toanha"
+          ],
+          where: {
+            Toanha: sequelize.where(
+              sequelize.fn("UPPER", sequelize.col("Toanha")),
+              "LIKE",
+              "%" + tenToanha.toUpperCase() + "%"
+            ),
+          },
+          transaction,
+        });
+        
 
-    //     const hangmuc = await Ent_hangmuc.findOne({
-    //       attributes: [
-    //         "Hangmuc",
-    //         "Tieuchuankt",
-    //         "ID_Khuvuc",
-    //         "MaQrCode",
-    //         "ID_Hangmuc",
-    //       ],
-    //       where: { MaQrCode: maQrCodeHangMuc },
-    //       transaction,
-    //     });
+        const khoiCV = await Ent_khoicv.findOne({
+          attributes: ["ID_Khoi", "KhoiCV"],
+          where: {
+            KhoiCV: sequelize.where(
+              sequelize.fn("UPPER", sequelize.col("KhoiCV")),
+              "LIKE",
+              "%" + tenKhoiCongViec.toUpperCase() + "%"
+            )
+          },
+          transaction,
+        });
 
-    //     const tang = await Ent_tang.findOne({
-    //       attributes: ["Tentang", "Sotang", "ID_Tang", "ID_Duan"],
-    //       where: {
-    //         Tentang: sequelize.where(
-    //           sequelize.fn("UPPER", sequelize.col("Tentang")),
-    //           "LIKE",
-    //           "%" + tenTang.toUpperCase() + "%"
-    //         ),
-    //         ID_Duan: userData.ID_Duan,
-    //       },
-    //       transaction,
-    //     });
+        // Check if tenKhuvuc already exists in the database
+        const existingKhuVuc = await Ent_khuvuc.findOne({
+          attributes: ["ID_KhuVuc", "Tenkhuvuc", "isDelete", "ID_Toanha"],
+          where: {
+            Tenkhuvuc: sequelize.where(
+              sequelize.fn("UPPER", sequelize.col("Tenkhuvuc")),
+              "LIKE",
+              "%" + tenKhuvuc.toUpperCase() + "%"
+            ),
+            ID_Toanha: toaNha.ID_Toanha
+          },
+          transaction,
+        });
 
-    //     const khoiCV = await Ent_khoicv.findOne({
-    //       attributes: ["ID_Khoi", "KhoiCV"],
-    //       where: { KhoiCV: tenKhoiCongViec },
-    //       transaction,
-    //     });
+        
 
-    //     const caChecklistArray = caChecklist.split(",").map((ca) => ca.trim());
-    //     const calv = await Ent_calv.findAll({
-    //       attributes: ["ID_Calv", "ID_Duan", "ID_KhoiCV", "Tenca"],
-    //       where: {
-    //         TenCa: caChecklistArray,
-    //         ID_Duan: userData.ID_Duan,
-    //         ID_KhoiCV: khoiCV.ID_Khoi,
-    //       },
-    //       transaction,
-    //     });
-    //     const sCalv = calv.map((calvItem) => calvItem.ID_Calv);
+        if (!existingKhuVuc) {
+          console.log('existingKhuVuc', existingKhuVuc)
+          console.log('toaNha', toaNha)
+          // If tenKhuvuc doesn't exist, create a new entry
+          const dataInsert = {
+            ID_Toanha: toaNha.ID_Toanha,
+            ID_KhoiCV: khoiCV.ID_Khoi,
+            ID_KhoiCVs: [khoiCV.ID_Khoi],
+            Sothutu: 1,
+            Makhuvuc: maKhuvuc,
+            MaQrCode: maQrKhuvuc,
+            Tenkhuvuc: tenKhuvuc,
+            ID_User: userData.ID_User,
+            isDelete: 0
+          };
 
-    //     const data = {
-    //       ID_Khuvuc: hangmuc.ID_Khuvuc,
-    //       ID_Tang: tang.ID_Tang,
-    //       ID_Hangmuc: hangmuc.ID_Hangmuc,
-    //       Sothutu: 1,
-    //       Maso: maChecklist || "",
-    //       MaQrCode: qrChecklist || "",
-    //       Checklist: tenChecklist,
-    //       Ghichu: ghiChu || "",
-    //       Tieuchuan: tieuChuanChecklist || "",
-    //       Giatridinhdanh: capitalizeEachWord(giaTriDanhDinh) || "",
-    //       Giatrinhan: capitalizeEachWord(cacGiaTriNhan) || "",
-    //       ID_User: userData.ID_User,
-    //       sCalv: JSON.stringify(sCalv) || null,
-    //       calv_1: JSON.stringify(sCalv[0]) || null,
-    //       calv_2: JSON.stringify(sCalv[1]) || null,
-    //       calv_3: JSON.stringify(sCalv[2]) || null,
-    //       calv_4: JSON.stringify(sCalv[3]) || null,
-    //       isDelete: 0,
-    //       Tinhtrang: 0,
-    //     };
+          await Ent_khuvuc.create(dataInsert, { transaction });
+        } else {
+          console.log(`Khu vực "${tenKhuvuc}" đã tồn tại, bỏ qua việc tạo mới.`);
+        }
+      }
+    });
 
-    //     await Ent_checklist.create(data, { transaction });
-    //   }
-    // });
-
-    // res.send({
-    //   message: "File uploaded and data extracted successfully",
-    //   data,
-    // });
+    res.send({
+      message: "File uploaded and data processed successfully",
+      data,
+    });
   } catch (err) {
+    console.log('err', err)
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
 };
+
 
 
 function capitalizeEachWord(str) {

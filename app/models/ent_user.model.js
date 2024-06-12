@@ -29,7 +29,6 @@ const Ent_user = sequelize.define("ent_user", {
        },
        ID_Khuvucs: {
         type: DataTypes.JSON,
-        allowNull: false,
        },
        Permission: {
         type: DataTypes.INTEGER,
