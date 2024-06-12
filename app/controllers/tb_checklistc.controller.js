@@ -19,7 +19,7 @@ const { Op, Sequelize } = require("sequelize");
 const { uploadFile } = require("../middleware/auth_google");
 const Ent_checklistc = require("../models/tb_checklistc.model");
 const sequelize = require("../config/db.config");
-const cron = require('node-cron');
+const cron = require("node-cron");
 
 exports.createFirstChecklist = async (req, res, next) => {
   try {
@@ -43,8 +43,9 @@ exports.createFirstChecklist = async (req, res, next) => {
       attributes: ["Giobatdau", "Gioketthuc"],
     });
 
-    const user = await Ent_user.findByPk(userData.ID_User,{
-      attributes: ["ID_User",
+    const user = await Ent_user.findByPk(userData.ID_User, {
+      attributes: [
+        "ID_User",
         "UserName",
         "Emails",
         "Password",
@@ -52,8 +53,11 @@ exports.createFirstChecklist = async (req, res, next) => {
         "ID_KhoiCV",
         "ID_Khuvucs",
         "Permission",
-        "isDelete",],
+        "isDelete",
+      ],
     });
+
+    
 
     if (!calvData) {
       return res.status(400).json({
@@ -80,16 +84,15 @@ exports.createFirstChecklist = async (req, res, next) => {
         { calv_3: ID_Calv },
         { calv_4: ID_Calv },
       ],
-    }
+    };
 
-    if(user.ID_Khuvucs){
+    if (user && user.ID_Khuvucs) {
       whereConditionChecklist["ID_Khuvuc"] = {
-        [Op.in]: user.ID_Khuvucs,
+        [Op.in]: user?.ID_Khuvucs,
       };
     }
-    
-    whereConditionChecklist["$ent_hangmuc.ID_KhoiCV$"] =
-      userData?.ID_KhoiCV;
+
+    whereConditionChecklist["$ent_hangmuc.ID_KhoiCV$"] = user?.ID_KhoiCV;
 
     const checklistData = await Ent_checklist.findAndCountAll({
       attributes: [
@@ -115,7 +118,13 @@ exports.createFirstChecklist = async (req, res, next) => {
       include: [
         {
           model: Ent_hangmuc,
-          attributes: ["Hangmuc", "Tieuchuankt", "ID_Hangmuc", "ID_Khuvuc", "ID_KhoiCV",],
+          attributes: [
+            "Hangmuc",
+            "Tieuchuankt",
+            "ID_Hangmuc",
+            "ID_Khuvuc",
+            "ID_KhoiCV",
+          ],
           include: [
             {
               model: Ent_khuvuc,
@@ -133,17 +142,10 @@ exports.createFirstChecklist = async (req, res, next) => {
                   attributes: ["Toanha", "Sotang", "ID_Toanha"],
                   include: {
                     model: Ent_duan,
-                    attributes: [
-                      "ID_Duan",
-                      "Duan",
-                      "Diachi",
-                      "Vido",
-                      "Kinhdo",
-                    ],
+                    attributes: ["ID_Duan", "Duan", "Diachi", "Vido", "Kinhdo"],
                     where: { ID_Duan: userData.ID_Duan },
                   },
                 },
-                
               ],
             },
             {
@@ -168,6 +170,10 @@ exports.createFirstChecklist = async (req, res, next) => {
       ],
     });
 
+    console.log("whereCondition", whereConditionChecklist);
+
+    console.log('checklistData',checklistData.count)
+
     const listKhuvuc = await Ent_toanha.findAll({
       attributes: [
         "ID_Toanha",
@@ -191,18 +197,21 @@ exports.createFirstChecklist = async (req, res, next) => {
             "Tenkhuvuc",
             "isDelete",
           ],
-          where: { isDelete: 0, ID_Khuvuc: {
-            [Op.in]: user.ID_Khuvucs
-          } },
+          where: {
+            isDelete: 0,
+            ID_Khuvuc: {
+              [Op.in]: user.ID_Khuvucs,
+            },
+          },
           required: false,
         },
       ],
       order: [["ID_Toanha", "ASC"]],
-    })
+    });
 
     const arrayOfID_Toanha = listKhuvuc
-  .filter(toanha => toanha.ent_khuvuc.length > 0)  // Chỉ lấy các tòa nhà có khu vực
-  .map(toanha => toanha.dataValues.ID_Toanha);
+      .filter((toanha) => toanha.ent_khuvuc.length > 0) // Chỉ lấy các tòa nhà có khu vực
+      .map((toanha) => toanha.dataValues.ID_Toanha);
 
     let whereCondition = {
       isDelete: 0,
@@ -219,8 +228,9 @@ exports.createFirstChecklist = async (req, res, next) => {
       userData?.ID_Duan;
     whereCondition["$ent_hangmuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
 
-    const toanhaIdsArray = arrayOfID_Toanha
-        .join(",");
+    const toanhaIdsArray = arrayOfID_Toanha.join(",");
+
+    
 
     Tb_checklistc.findAndCountAll({
       attributes: [
@@ -263,6 +273,8 @@ exports.createFirstChecklist = async (req, res, next) => {
             isDelete: 0,
           };
 
+          console.log('data', data)
+
           Tb_checklistc.create(data)
             .then((data) => {
               res.status(200).json({
@@ -295,14 +307,16 @@ exports.createFirstChecklist = async (req, res, next) => {
                 ID_Calv: ID_Calv,
                 ID_Duan: ID_Duan,
                 ID_KhoiCV: ID_KhoiCV,
+                Ngay: formattedDate,
                 Giobd: Giobd,
                 TongC: 0,
-                Tong: 0,
-                Ngay: formattedDate,
+                Tong: checklistData.count || 0,
                 Tinhtrang: 0,
+                ID_Toanha: toanhaIdsArray,
+                ID_Khuvucs: user.ID_Khuvucs || null,
                 isDelete: 0,
               };
-
+              
               Tb_checklistc.create(data)
                 .then((data) => {
                   res.status(200).json({
@@ -346,8 +360,10 @@ exports.createChecklistInToanha = async (req, res, next) => {
   try {
     const userData = req.user.data;
 
-    const user = await Ent_user.findByPk(userData.ID_User,{
-      attributes: ["ID_User",
+    console.log('userData.ID_User', userData.ID_User)
+    const user = await Ent_user.findByPk(userData.ID_User, {
+      attributes: [
+        "ID_User",
         "UserName",
         "Emails",
         "Password",
@@ -355,7 +371,8 @@ exports.createChecklistInToanha = async (req, res, next) => {
         "ID_KhoiCV",
         "ID_Khuvucs",
         "Permission",
-        "isDelete",],
+        "isDelete",
+      ],
     });
     if (userData) {
       const { ID_ChecklistC, toanhaIds, ID_User, ID_Calv } = req.body;
@@ -374,8 +391,13 @@ exports.createChecklistInToanha = async (req, res, next) => {
         ],
       };
 
+      console.log('taikhaoan', user)
+
       if (user.ID_Khuvucs && user.ID_Khuvucs.length > 0) {
-        const khuvucIdsArray = user.ID_Khuvucs.split(",").map(id => parseInt(id.trim(), 10));
+        console.log('vào đây', user.ID_Khuvucs)
+        const khuvucIdsArray = user.ID_Khuvucs.split(",").map((id) =>
+          parseInt(id.trim(), 10)
+        );
         whereCondition["$ent_hangmuc.ID_Khuvuc$"] = {
           [Op.in]: khuvucIdsArray,
         };
@@ -386,8 +408,7 @@ exports.createChecklistInToanha = async (req, res, next) => {
         };
       }
 
-      whereCondition["$ent_hangmuc.ID_KhoiCV$"] =
-        userData?.ID_KhoiCV;
+      whereCondition["$ent_hangmuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
 
       const checklistData = await Ent_checklist.findAndCountAll({
         attributes: [
@@ -413,7 +434,13 @@ exports.createChecklistInToanha = async (req, res, next) => {
         include: [
           {
             model: Ent_hangmuc,
-            attributes: ["Hangmuc", "Tieuchuankt", "ID_Hangmuc", "ID_Khuvuc", "ID_KhoiCV",],
+            attributes: [
+              "Hangmuc",
+              "Tieuchuankt",
+              "ID_Hangmuc",
+              "ID_Khuvuc",
+              "ID_KhoiCV",
+            ],
             include: [
               {
                 model: Ent_khuvuc,
@@ -441,7 +468,6 @@ exports.createChecklistInToanha = async (req, res, next) => {
                       where: { ID_Duan: userData.ID_Duan },
                     },
                   },
-                  
                 ],
               },
               {
@@ -515,7 +541,8 @@ exports.getCheckListc = async (req, res, next) => {
 
       const totalCount = await Tb_checklistc.count({
         attributes: [
-          "ID_ChecklistC","ID_Khuvucs",
+          "ID_ChecklistC",
+          "ID_Khuvucs",
           "ID_Duan",
           "ID_KhoiCV",
           "ID_Calv",
@@ -564,7 +591,8 @@ exports.getCheckListc = async (req, res, next) => {
       const totalPages = Math.ceil(totalCount / pageSize);
       await Tb_checklistc.findAll({
         attributes: [
-          "ID_ChecklistC","ID_Khuvucs",
+          "ID_ChecklistC",
+          "ID_Khuvucs",
           "ID_Duan",
           "ID_KhoiCV",
           "ID_Calv",
@@ -659,7 +687,8 @@ exports.getDetail = async (req, res) => {
     if (req.params.id && userData) {
       await Tb_checklistc.findByPk(req.params.id, {
         attributes: [
-          "ID_ChecklistC","ID_Khuvucs",
+          "ID_ChecklistC",
+          "ID_Khuvucs",
           "ID_Duan",
           "ID_KhoiCV",
           "ID_Calv",
@@ -886,10 +915,15 @@ exports.checklistCalv = async (req, res) => {
             include: [
               {
                 model: Ent_hangmuc,
-                attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "ID_KhoiCV"],
+                attributes: [
+                  "Hangmuc",
+                  "Tieuchuankt",
+                  "ID_Khuvuc",
+                  "MaQrCode",
+                  "ID_KhoiCV",
+                ],
                 include: [
                   {
-                    
                     model: Ent_khuvuc,
                     attributes: [
                       "Tenkhuvuc",
@@ -916,7 +950,6 @@ exports.checklistCalv = async (req, res) => {
                           where: { ID_Duan: userData.ID_Duan },
                         },
                       },
-                     
                     ],
                   },
                   {
@@ -991,7 +1024,13 @@ exports.checklistCalv = async (req, res) => {
         include: [
           {
             model: Ent_hangmuc,
-            attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "ID_KhoiCV"],
+            attributes: [
+              "Hangmuc",
+              "Tieuchuankt",
+              "ID_Khuvuc",
+              "MaQrCode",
+              "ID_KhoiCV",
+            ],
             include: [
               {
                 model: Ent_khuvuc,
@@ -1299,13 +1338,13 @@ async function processData(data) {
 }
 
 // cron jib
-cron.schedule('0 * * * *', async function() {
-  console.log('---------------------');
-  console.log('Running Cron Job');
+cron.schedule("0 * * * *", async function () {
+  console.log("---------------------");
+  console.log("Running Cron Job");
 
   const currentDateTime = new Date();
-  const currentDateString = currentDateTime.toISOString().split('T')[0];
-  
+  const currentDateString = currentDateTime.toISOString().split("T")[0];
+
   try {
     // Tìm các bản ghi thoả mãn điều kiện
     const results = await Tb_checklistc.findAll({
@@ -1344,7 +1383,7 @@ cron.schedule('0 * * * *', async function() {
         isDelete: 0,
         Ngay: {
           [Op.lte]: currentDateString,
-        }
+        },
       },
     });
 
@@ -1365,8 +1404,8 @@ cron.schedule('0 * * * *', async function() {
 
     await Promise.all(updates);
 
-    console.log('Cron job completed successfully');
+    console.log("Cron job completed successfully");
   } catch (error) {
-    console.error('Error running cron job:', error);
+    console.error("Error running cron job:", error);
   }
 });
