@@ -334,7 +334,6 @@ exports.getDetail = async (req, res) => {
                   "Makhuvuc",
                   "Sothutu",
                   "ID_Toanha",
-                  "ID_KhoiCV",
                   "ID_Khuvuc",
                 ],
                 include: [
@@ -1183,6 +1182,13 @@ exports.filterChecklists = async (req, res) => {
     const ID_Calv = req.params.id_calv;
     const ID_Hangmuc = req.body.ID_Hangmuc;
 
+    const tbChecklist = await Tb_checklistc.findByPk(ID_ChecklistC, {
+      attributes: ["ID_Toanha", "ID_Khuvucs", "isDelete"],
+      where: {
+        isDelete: 0
+      }
+    })
+
     // const pageMaxSize =
     const checklistItems = await Tb_checklistchitiet.findAll({
       attributes: ["isDelete", "ID_Checklist", "ID_ChecklistC"],
@@ -1231,6 +1237,7 @@ exports.filterChecklists = async (req, res) => {
     const checklistIds = checklistItems.map((item) => item?.ID_Checklist) || [];
     const checklistDoneIds = arrPush.map((item) => item?.ID_Checklist) || [];
 
+    
     let whereCondition = {
       isDelete: 0,
       ID_Hangmuc,
@@ -1242,9 +1249,19 @@ exports.filterChecklists = async (req, res) => {
       ],
     };
 
+    
+    
+    if (Array.isArray(tbChecklist.ID_Khuvucs) && tbChecklist.ID_Khuvucs.length > 0) {
+      whereCondition.ID_Khuvuc = {
+        [Op.in]: tbChecklist.ID_Khuvucs
+      };
+    }
+
     whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] =
       userData?.ID_Duan;
     whereCondition["$ent_hangmuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
+
+    
 
     if (
       checklistIds &&
@@ -1274,6 +1291,8 @@ exports.filterChecklists = async (req, res) => {
         [Op.notIn]: checklistDoneIds,
       };
     }
+
+    console.log('whereCondition', whereCondition)
 
     const checklistData = await Ent_checklist.findAll({
       attributes: [

@@ -21,6 +21,9 @@ const Ent_checklistc = sequelize.define(
     ID_Toanha: {
       type: DataTypes.TEXT,
     },
+    ID_Khuvucs: {
+      type: DataTypes.JSON,
+    },
     ID_Calv: {
       type: DataTypes.INTEGER,
     },

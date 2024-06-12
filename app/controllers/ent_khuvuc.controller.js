@@ -350,9 +350,6 @@ exports.getKhuVuc = async (req, res) => {
         }
       }
 
-      // Debugging: log the where condition to verify
-      console.log("whereCondition:", whereCondition);
-
       // Fetch data
       Ent_khuvuc.findAll({
         attributes: [
@@ -701,3 +698,5 @@ function capitalizeEachWord(str) {
       return match.toUpperCase();
   });
 }
+
+

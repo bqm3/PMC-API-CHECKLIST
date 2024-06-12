@@ -43,6 +43,18 @@ exports.createFirstChecklist = async (req, res, next) => {
       attributes: ["Giobatdau", "Gioketthuc"],
     });
 
+    const user = await Ent_user.findByPk(userData.ID_User,{
+      attributes: ["ID_User",
+        "UserName",
+        "Emails",
+        "Password",
+        "ID_Duan",
+        "ID_KhoiCV",
+        "ID_Khuvucs",
+        "Permission",
+        "isDelete",],
+    });
+
     if (!calvData) {
       return res.status(400).json({
         message: "Ca làm việc không tồn tại!",
@@ -60,6 +72,138 @@ exports.createFirstChecklist = async (req, res, next) => {
       });
     }
 
+    let whereConditionChecklist = {
+      isDelete: 0,
+      [Op.or]: [
+        { calv_1: ID_Calv },
+        { calv_2: ID_Calv },
+        { calv_3: ID_Calv },
+        { calv_4: ID_Calv },
+      ],
+    }
+
+    if(user.ID_Khuvucs){
+      whereConditionChecklist["ID_Khuvuc"] = {
+        [Op.in]: user.ID_Khuvucs,
+      };
+    }
+    
+    whereConditionChecklist["$ent_hangmuc.ID_KhoiCV$"] =
+      userData?.ID_KhoiCV;
+
+    const checklistData = await Ent_checklist.findAndCountAll({
+      attributes: [
+        "ID_Checklist",
+        "ID_Khuvuc",
+        "ID_Hangmuc",
+        "Sothutu",
+        "Maso",
+        "MaQrCode",
+        "Checklist",
+        "Ghichu",
+        "Tieuchuan",
+        "Giatridinhdanh",
+        "Giatrinhan",
+        "ID_User",
+        "sCalv",
+        "calv_1",
+        "calv_2",
+        "calv_3",
+        "calv_4",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_hangmuc,
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Hangmuc", "ID_Khuvuc", "ID_KhoiCV",],
+          include: [
+            {
+              model: Ent_khuvuc,
+              attributes: [
+                "Tenkhuvuc",
+                "MaQrCode",
+                "Makhuvuc",
+                "Sothutu",
+                "ID_Toanha",
+                "ID_Khuvuc",
+              ],
+              include: [
+                {
+                  model: Ent_toanha,
+                  attributes: ["Toanha", "Sotang", "ID_Toanha"],
+                  include: {
+                    model: Ent_duan,
+                    attributes: [
+                      "ID_Duan",
+                      "Duan",
+                      "Diachi",
+                      "Vido",
+                      "Kinhdo",
+                    ],
+                    where: { ID_Duan: userData.ID_Duan },
+                  },
+                },
+                
+              ],
+            },
+            {
+              model: Ent_khoicv,
+              attributes: ["ID_Khoi", "KhoiCV"],
+            },
+          ],
+        },
+        {
+          model: Ent_user,
+          include: {
+            model: Ent_chucvu,
+            attributes: ["Chucvu"],
+          },
+          attributes: ["UserName", "Emails"],
+        },
+      ],
+      where: whereConditionChecklist,
+      order: [
+        ["ID_Khuvuc", "ASC"],
+        ["Sothutu", "ASC"],
+      ],
+    });
+
+    const listKhuvuc = await Ent_toanha.findAll({
+      attributes: [
+        "ID_Toanha",
+        "Toanha",
+        "Sotang",
+        "ID_Duan",
+        "Vido",
+        "Kinhdo",
+        "isDelete",
+      ],
+      where: { isDelete: 0 },
+      include: [
+        {
+          model: Ent_khuvuc,
+          as: "ent_khuvuc",
+          attributes: [
+            "ID_Khuvuc",
+            "ID_KhoiCV",
+            "Makhuvuc",
+            "MaQrCode",
+            "Tenkhuvuc",
+            "isDelete",
+          ],
+          where: { isDelete: 0, ID_Khuvuc: {
+            [Op.in]: user.ID_Khuvucs
+          } },
+          required: false,
+        },
+      ],
+      order: [["ID_Toanha", "ASC"]],
+    })
+
+    const arrayOfID_Toanha = listKhuvuc
+  .filter(toanha => toanha.ent_khuvuc.length > 0)  // Chỉ lấy các tòa nhà có khu vực
+  .map(toanha => toanha.dataValues.ID_Toanha);
+
     let whereCondition = {
       isDelete: 0,
       ID_User: ID_User,
@@ -74,6 +218,9 @@ exports.createFirstChecklist = async (req, res, next) => {
     whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] =
       userData?.ID_Duan;
     whereCondition["$ent_hangmuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
+
+    const toanhaIdsArray = arrayOfID_Toanha
+        .join(",");
 
     Tb_checklistc.findAndCountAll({
       attributes: [
@@ -109,8 +256,10 @@ exports.createFirstChecklist = async (req, res, next) => {
             Giobd: Giobd,
             Ngay: formattedDate,
             TongC: 0,
-            Tong: 0,
+            Tong: checklistData.count || 0,
             Tinhtrang: 0,
+            ID_Toanha: toanhaIdsArray,
+            ID_Khuvucs: user.ID_Khuvucs || null,
             isDelete: 0,
           };
 
@@ -196,6 +345,18 @@ exports.createFirstChecklist = async (req, res, next) => {
 exports.createChecklistInToanha = async (req, res, next) => {
   try {
     const userData = req.user.data;
+
+    const user = await Ent_user.findByPk(userData.ID_User,{
+      attributes: ["ID_User",
+        "UserName",
+        "Emails",
+        "Password",
+        "ID_Duan",
+        "ID_KhoiCV",
+        "ID_Khuvucs",
+        "Permission",
+        "isDelete",],
+    });
     if (userData) {
       const { ID_ChecklistC, toanhaIds, ID_User, ID_Calv } = req.body;
 
@@ -213,9 +374,18 @@ exports.createChecklistInToanha = async (req, res, next) => {
         ],
       };
 
-      whereCondition["$ent_hangmuc.ent_khuvuc.ID_Toanha$"] = {
-        [Op.in]: toanhaIdsArray,
-      };
+      if (user.ID_Khuvucs && user.ID_Khuvucs.length > 0) {
+        const khuvucIdsArray = user.ID_Khuvucs.split(",").map(id => parseInt(id.trim(), 10));
+        whereCondition["$ent_hangmuc.ID_Khuvuc$"] = {
+          [Op.in]: khuvucIdsArray,
+        };
+      } else {
+        // Nếu ID_Khuvucs không có dữ liệu, lọc theo ID_Toanha
+        whereCondition["$ent_hangmuc.ent_khuvuc.ID_Toanha$"] = {
+          [Op.in]: toanhaIdsArray,
+        };
+      }
+
       whereCondition["$ent_hangmuc.ID_KhoiCV$"] =
         userData?.ID_KhoiCV;
 
@@ -345,7 +515,7 @@ exports.getCheckListc = async (req, res, next) => {
 
       const totalCount = await Tb_checklistc.count({
         attributes: [
-          "ID_ChecklistC",
+          "ID_ChecklistC","ID_Khuvucs",
           "ID_Duan",
           "ID_KhoiCV",
           "ID_Calv",
@@ -394,7 +564,7 @@ exports.getCheckListc = async (req, res, next) => {
       const totalPages = Math.ceil(totalCount / pageSize);
       await Tb_checklistc.findAll({
         attributes: [
-          "ID_ChecklistC",
+          "ID_ChecklistC","ID_Khuvucs",
           "ID_Duan",
           "ID_KhoiCV",
           "ID_Calv",
@@ -489,7 +659,7 @@ exports.getDetail = async (req, res) => {
     if (req.params.id && userData) {
       await Tb_checklistc.findByPk(req.params.id, {
         attributes: [
-          "ID_ChecklistC",
+          "ID_ChecklistC","ID_Khuvucs",
           "ID_Duan",
           "ID_KhoiCV",
           "ID_Calv",

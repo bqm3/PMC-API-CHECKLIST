@@ -314,6 +314,7 @@ exports.getUserOnline = async (req, res, next) => {
         "Password",
         "ID_Duan",
         "ID_KhoiCV",
+        "ID_Khuvucs",
         "Permission",
         "isDelete",
       ],
@@ -342,7 +343,7 @@ exports.getUserOnline = async (req, res, next) => {
       .then((data) => {
         res.status(200).json({
           message: "Danh sách nhân viên!",
-          data: data,
+          data: data, 
         });
       })
       .catch((err) => {
@@ -373,7 +374,7 @@ exports.getDetail = async (req, res) => {
         attributes: [
           "ID_User",
           "UserName",
-          "Emails",
+          "Emails","ID_Khuvucs",
           "Password",
           "ID_Duan",
           "ID_KhoiCV",
@@ -430,6 +431,7 @@ exports.checkAuth = async (req, res, next) => {
         "UserName",
         "Emails",
         "Password",
+        "ID_Khuvucs",
         "ID_Duan",
         "ID_KhoiCV",
         "Permission",
@@ -468,4 +470,98 @@ exports.checkAuth = async (req, res, next) => {
       message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
+};
+
+
+// get account checklist giam sat by du an
+exports.getGiamSat = async (req, res, next) => {
+  try {
+    const userData = req.user.data;
+    if(userData && userData.Permission === 1){
+
+      const whereCondition = {
+        isDelete: 0,
+        Permission : 2,
+        ID_Duan: userData.ID_Duan
+
+      }
+      await Ent_user.findAll({
+        attributes: [
+          "ID_User",
+          "UserName",
+          "Emails","ID_Khuvucs",
+          "Password",
+          "ID_Duan",
+          "ID_KhoiCV",
+          "Permission",
+          "isDelete",
+        ],
+        include: [
+          {
+            model: Ent_duan,
+            attributes: ["Duan", "Diachi"],
+          },
+          {
+            model: Ent_chucvu,
+            attributes: ["Chucvu"],
+          },
+          {
+            model: Ent_khoicv,
+            attributes: ["KhoiCV"],
+          },
+        ],
+        where: whereCondition,
+        
+      })
+        .then((data) => {
+          res.status(200).json({
+            message: "Danh sách nhân viên!",
+            data: data,
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+}
+
+exports.setUpKhuVuc = async(req, res,next)=> {
+  try{
+    const userData = req.user.data;
+    const ID_User = req.params.id;
+
+    const data = req.body;
+    const checkedIDs = extractCheckedIDs(data);
+
+    if(userData){
+      await Ent_user.update({
+        ID_Khuvucs: checkedIDs
+      }, {
+        where: {
+          ID_User: ID_User,
+        },
+      });
+    }
+    return res.status(200).json({ message: "Cập nhật thông tin thành công!" });
+  }catch(error){ 
+    return res.status(500).json({
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+}
+
+const extractCheckedIDs = (data) => {
+  return data
+    .flatMap(buildingAreas => 
+      buildingAreas
+        .filter(area => area.checked)  // Filter areas with checked === true
+        .map(area => area.ID_Khuvuc)   // Map to ID_Khuvuc
+    );
 };
