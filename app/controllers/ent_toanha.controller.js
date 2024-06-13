@@ -165,15 +165,14 @@ exports.delete = async (req, res) => {
         whereClause.ID_Duan = userData.ID_Duan;
       }
 
-      await Ent_toanha.findAll({
-        attributes: ["ID_Toanha", "ID_Duan", "Toanha", "Sotang", "isDelete"],
-        include: {
-          model: Ent_duan,
-          attributes: ["Duan"],
-        },
-        where: whereClause,
-        order: [["ID_Duan", "ASC"]],
-      })
+      Ent_toanha.update(
+        { isDelete: 1 },
+        {
+          where: {
+            ID_Toanha: req.params.id,
+          },
+        }
+      )
         .then((data) => {
           res.status(200).json({
             message: "Danh sách tòa nhà!",

@@ -1711,10 +1711,8 @@ exports.uploadFiles = async (req, res) => {
 
     // Step 2: Update objects with common details
     const updatedData = data.map((item) => {
-      const maChecklist = item["Mã checklist"];
       return {
         ...item,
-        ...commonDetailsMap[maChecklist],
       };
     });
 
@@ -1724,6 +1722,7 @@ exports.uploadFiles = async (req, res) => {
         const tenTang = item["Tên tầng"];
         const tenKhoiCongViec = item["Tên khối công việc"];
         const caChecklist = item["Ca checklist"];
+        const sttChecklist = item["Số thứ tự checklist"];
         const maChecklist = item["Mã checklist"];
         const qrChecklist = item["Mã QrCode checklist"];
         const tenChecklist = item["Tên checklist"];
@@ -1779,7 +1778,7 @@ exports.uploadFiles = async (req, res) => {
           ID_Khuvuc: hangmuc.ID_Khuvuc,
           ID_Tang: tang.ID_Tang,
           ID_Hangmuc: hangmuc.ID_Hangmuc,
-          Sothutu: 1,
+          Sothutu: sttChecklist || 1,
           Maso: maChecklist || "",
           MaQrCode: qrChecklist || "",
           Checklist: tenChecklist,
