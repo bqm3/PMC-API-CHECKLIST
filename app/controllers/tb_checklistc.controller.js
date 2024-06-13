@@ -868,6 +868,8 @@ exports.checklistCalv = async (req, res) => {
         ID_ChecklistC: ID_ChecklistC,
       };
 
+      console.log('whereClause',whereClause)
+
       // Fetch checklist detail items
       const dataChecklistChiTiet = await Tb_checklistchitiet.findAll({
         attributes: [
@@ -1014,6 +1016,8 @@ exports.checklistCalv = async (req, res) => {
         });
       }
 
+      let initialChecklistIds = checklistIds.filter(id => !isNaN(id));
+
       // Fetch related checklist data
       const relatedChecklists = await Ent_checklist.findAll({
         attributes: [
@@ -1028,7 +1032,7 @@ exports.checklistCalv = async (req, res) => {
           "Giatrinhan",
         ],
         where: {
-          ID_Checklist: checklistIds,
+          ID_Checklist: initialChecklistIds,
         },
         include: [
           {
@@ -1068,11 +1072,13 @@ exports.checklistCalv = async (req, res) => {
                       where: { ID_Duan: userData.ID_Duan },
                     },
                   },
-                  {
-                    model: Ent_khoicv,
-                    attributes: ["KhoiCV"],
-                  },
+                 
                 ],
+                
+              },
+              {
+                model: Ent_khoicv,
+                attributes: ["KhoiCV"],
               },
             ],
           },
@@ -1163,6 +1169,7 @@ exports.checklistCalv = async (req, res) => {
       });
     }
   } catch (err) {
+    console.log('err', err)
     res
       .status(500)
       .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
