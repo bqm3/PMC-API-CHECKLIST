@@ -7,7 +7,7 @@ const {
   Ent_tang,
   Ent_checklist,
 } = require("../models/setup.model");
-const { Op, Sequelize,fn, col, literal  } = require("sequelize");
+const { Op, Sequelize,fn, col, literal, where  } = require("sequelize");
 const sequelize = require("../config/db.config");
 const xlsx = require("xlsx");
 
@@ -600,6 +600,8 @@ exports.uploadFiles = async (req, res) => {
       };
     });
 
+    console.log('updatedData', updatedData)
+
     await sequelize.transaction(async (transaction) => {
       for (const item of updatedData) {
         const tenKhoiCongViec = item["Tên khối công việc"];
@@ -641,11 +643,10 @@ exports.uploadFiles = async (req, res) => {
         const existingKhuVuc = await Ent_khuvuc.findOne({
           attributes: ["ID_KhuVuc", "Tenkhuvuc", "isDelete", "ID_Toanha"],
           where: {
-            Tenkhuvuc: sequelize.where(
-              sequelize.fn("UPPER", sequelize.col("Tenkhuvuc")),
-              "LIKE",
-              "%" + tenKhuvuc.toUpperCase() + "%"
-            ),
+            [Op.and]: [
+              where(fn("UPPER", col("Tenkhuvuc")), { [Op.like]: `%${tenKhuvuc}%` }),
+              where(fn("UPPER", col("MaQrCode")), { [Op.like]: `%${maQrKhuvuc}%` })
+            ],
             ID_Toanha: toaNha.ID_Toanha
           },
           transaction,
@@ -654,8 +655,6 @@ exports.uploadFiles = async (req, res) => {
         
 
         if (!existingKhuVuc) {
-          console.log('existingKhuVuc', existingKhuVuc)
-          console.log('toaNha', toaNha)
           // If tenKhuvuc doesn't exist, create a new entry
           const dataInsert = {
             ID_Toanha: toaNha.ID_Toanha,

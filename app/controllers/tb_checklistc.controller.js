@@ -66,14 +66,27 @@ exports.createFirstChecklist = async (req, res, next) => {
     }
 
     const { Giobatdau, Gioketthuc } = calvData;
+
     const giobdMoment = moment(Giobd, "HH:mm:ss");
     const giobatdauMoment = moment(Giobatdau, "HH:mm:ss");
     const gioketthucMoment = moment(Gioketthuc, "HH:mm:ss");
 
-    if (!giobdMoment.isBetween(giobatdauMoment, gioketthucMoment, null, "[]")) {
-      return res.status(400).json({
-        message: "Giờ bắt đầu không thuộc khoảng thời gian của ca làm việc!",
-      });
+    if (gioketthucMoment.isBefore(giobatdauMoment)) {
+      // Kiểm tra nếu giobdMoment nằm trong khoảng từ giobatdauMoment đến 23:59:59
+      // hoặc từ 00:00:00 đến gioketthucMoment
+      if (!giobdMoment.isBetween(giobatdauMoment, moment('23:59:59', 'HH:mm:ss'), null, '[]') &&
+          !giobdMoment.isBetween(moment('00:00:00', 'HH:mm:ss'), gioketthucMoment, null, '[]')) {
+        return res.status(400).json({
+          message: "Giờ bắt đầu không thuộc khoảng thời gian của ca làm việc!",
+        });
+      }
+    } else {
+      // Nếu khoảng thời gian không qua nửa đêm, sử dụng logic thông thường
+      if (!giobdMoment.isBetween(giobatdauMoment, gioketthucMoment, null, '[]')) {
+        return res.status(400).json({
+          message: "Giờ bắt đầu không thuộc khoảng thời gian của ca làm việc!",
+        });
+      }
     }
 
     let whereConditionChecklist = {
@@ -169,10 +182,6 @@ exports.createFirstChecklist = async (req, res, next) => {
         ["Sothutu", "ASC"],
       ],
     });
-
-    console.log("whereCondition", whereConditionChecklist);
-
-    console.log('checklistData',checklistData.count)
 
     const listKhuvuc = await Ent_toanha.findAll({
       attributes: [
