@@ -1705,6 +1705,7 @@ exports.uploadFiles = async (req, res) => {
           "Tên Hạng Mục": item["Tên Hạng Mục"],
           "Tên tầng": item["Tên tầng"],
           "Tên khối công việc": item["Tên khối công việc"],
+          "Số thứ tự checklist": item["Số thứ tự checklist"],
         };
       }
     });
