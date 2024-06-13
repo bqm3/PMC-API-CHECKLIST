@@ -1705,6 +1705,7 @@ exports.uploadFiles = async (req, res) => {
           "Tên Hạng Mục": item["Tên Hạng Mục"],
           "Tên tầng": item["Tên tầng"],
           "Tên khối công việc": item["Tên khối công việc"],
+          "Mã checklist": item["Mã checklist"],
           "STT": item["STT"],
         };
       }
@@ -1725,7 +1726,6 @@ exports.uploadFiles = async (req, res) => {
         const caChecklist = item["Ca checklist"];
         const sttChecklist = item["STT"];
         const maChecklist = item["Mã checklist"];
-        const qrChecklist = item["Mã QrCode checklist"];
         const tenChecklist = item["Tên checklist"];
         const tieuChuanChecklist = item["Tiêu chuẩn checklist"];
         const giaTriDanhDinh = item["Giá trị danh định"];
@@ -1781,7 +1781,7 @@ exports.uploadFiles = async (req, res) => {
           ID_Hangmuc: hangmuc.ID_Hangmuc,
           Sothutu: sttChecklist || 1,
           Maso: maChecklist || "",
-          MaQrCode: qrChecklist || "",
+          MaQrCode: maChecklist || "",
           Checklist: tenChecklist,
           Ghichu: ghiChu || "",
           Tieuchuan: tieuChuanChecklist || "",
