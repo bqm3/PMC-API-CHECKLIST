@@ -282,8 +282,6 @@ exports.createFirstChecklist = async (req, res, next) => {
             isDelete: 0,
           };
 
-          console.log('data', data)
-
           Tb_checklistc.create(data)
             .then((data) => {
               res.status(200).json({
@@ -368,8 +366,6 @@ exports.createFirstChecklist = async (req, res, next) => {
 exports.createChecklistInToanha = async (req, res, next) => {
   try {
     const userData = req.user.data;
-
-    console.log('userData.ID_User', userData.ID_User)
     const user = await Ent_user.findByPk(userData.ID_User, {
       attributes: [
         "ID_User",
@@ -400,10 +396,7 @@ exports.createChecklistInToanha = async (req, res, next) => {
         ],
       };
 
-      console.log('taikhaoan', user)
-
       if (user.ID_Khuvucs && user.ID_Khuvucs.length > 0) {
-        console.log('vào đây', user.ID_Khuvucs)
         const khuvucIdsArray = user.ID_Khuvucs.split(",").map((id) =>
           parseInt(id.trim(), 10)
         );
@@ -868,8 +861,6 @@ exports.checklistCalv = async (req, res) => {
         ID_ChecklistC: ID_ChecklistC,
       };
 
-      console.log('whereClause',whereClause)
-
       // Fetch checklist detail items
       const dataChecklistChiTiet = await Tb_checklistchitiet.findAll({
         attributes: [
@@ -1169,7 +1160,6 @@ exports.checklistCalv = async (req, res) => {
       });
     }
   } catch (err) {
-    console.log('err', err)
     res
       .status(500)
       .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });

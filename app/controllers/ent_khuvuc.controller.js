@@ -600,8 +600,6 @@ exports.uploadFiles = async (req, res) => {
       };
     });
 
-    console.log('updatedData', updatedData)
-
     await sequelize.transaction(async (transaction) => {
       for (const item of updatedData) {
         const tenKhoiCongViec = item["Tên khối công việc"];
