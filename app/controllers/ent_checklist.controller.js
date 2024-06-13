@@ -1705,7 +1705,7 @@ exports.uploadFiles = async (req, res) => {
           "Tên Hạng Mục": item["Tên Hạng Mục"],
           "Tên tầng": item["Tên tầng"],
           "Tên khối công việc": item["Tên khối công việc"],
-          "Số thứ tự checklist": item["Số thứ tự checklist"],
+          "STT": item["STT"],
         };
       }
     });
@@ -1723,7 +1723,7 @@ exports.uploadFiles = async (req, res) => {
         const tenTang = item["Tên tầng"];
         const tenKhoiCongViec = item["Tên khối công việc"];
         const caChecklist = item["Ca checklist"];
-        const sttChecklist = item["Số thứ tự checklist"];
+        const sttChecklist = item["STT"];
         const maChecklist = item["Mã checklist"];
         const qrChecklist = item["Mã QrCode checklist"];
         const tenChecklist = item["Tên checklist"];
