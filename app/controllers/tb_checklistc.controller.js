@@ -57,8 +57,6 @@ exports.createFirstChecklist = async (req, res, next) => {
       ],
     });
 
-    
-
     if (!calvData) {
       return res.status(400).json({
         message: "Ca làm việc không tồn tại!",
@@ -74,15 +72,29 @@ exports.createFirstChecklist = async (req, res, next) => {
     if (gioketthucMoment.isBefore(giobatdauMoment)) {
       // Kiểm tra nếu giobdMoment nằm trong khoảng từ giobatdauMoment đến 23:59:59
       // hoặc từ 00:00:00 đến gioketthucMoment
-      if (!giobdMoment.isBetween(giobatdauMoment, moment('23:59:59', 'HH:mm:ss'), null, '[]') &&
-          !giobdMoment.isBetween(moment('00:00:00', 'HH:mm:ss'), gioketthucMoment, null, '[]')) {
+      if (
+        !giobdMoment.isBetween(
+          giobatdauMoment,
+          moment("23:59:59", "HH:mm:ss"),
+          null,
+          "[]"
+        ) &&
+        !giobdMoment.isBetween(
+          moment("00:00:00", "HH:mm:ss"),
+          gioketthucMoment,
+          null,
+          "[]"
+        )
+      ) {
         return res.status(400).json({
           message: "Giờ bắt đầu không thuộc khoảng thời gian của ca làm việc!",
         });
       }
     } else {
       // Nếu khoảng thời gian không qua nửa đêm, sử dụng logic thông thường
-      if (!giobdMoment.isBetween(giobatdauMoment, gioketthucMoment, null, '[]')) {
+      if (
+        !giobdMoment.isBetween(giobatdauMoment, gioketthucMoment, null, "[]")
+      ) {
         return res.status(400).json({
           message: "Giờ bắt đầu không thuộc khoảng thời gian của ca làm việc!",
         });
@@ -239,8 +251,6 @@ exports.createFirstChecklist = async (req, res, next) => {
 
     const toanhaIdsArray = arrayOfID_Toanha.join(",");
 
-    
-
     Tb_checklistc.findAndCountAll({
       attributes: [
         "ID_ChecklistC",
@@ -323,7 +333,7 @@ exports.createFirstChecklist = async (req, res, next) => {
                 ID_Khuvucs: user.ID_Khuvucs || null,
                 isDelete: 0,
               };
-              
+
               Tb_checklistc.create(data)
                 .then((data) => {
                   res.status(200).json({
@@ -1007,7 +1017,7 @@ exports.checklistCalv = async (req, res) => {
         });
       }
 
-      let initialChecklistIds = checklistIds.filter(id => !isNaN(id));
+      let initialChecklistIds = checklistIds.filter((id) => !isNaN(id));
 
       // Fetch related checklist data
       const relatedChecklists = await Ent_checklist.findAll({
@@ -1063,9 +1073,7 @@ exports.checklistCalv = async (req, res) => {
                       where: { ID_Duan: userData.ID_Duan },
                     },
                   },
-                 
                 ],
-                
               },
               {
                 model: Ent_khoicv,
