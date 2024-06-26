@@ -26,8 +26,8 @@ exports.create = async (req, res) => {
       const ID_User = userData.ID_User;
       const data = {
         ID_Toanha: req.body.ID_Toanha,
-        ID_KhoiCV: JSON.stringify(req.body.ID_KhoiCVs[0]) || null,
-        ID_KhoiCVs: JSON.stringify(req.body.ID_KhoiCVs),
+        ID_KhoiCV: req.body.ID_KhoiCVs ? req.body.ID_KhoiCVs[0] : req.body.ID_KhoiCV || null,
+        ID_KhoiCVs: req.body.ID_KhoiCVs ? req.body.ID_KhoiCVs : [req.body.ID_KhoiCV] || null,
         Sothutu: req.body.Sothutu,
         Makhuvuc: req.body.Makhuvuc,
         MaQrCode: req.body.MaQrCode,
@@ -216,8 +216,8 @@ exports.update = async (req, res) => {
 
       const reqData = {
         ID_Toanha: req.body.ID_Toanha,
-        ID_KhoiCV: JSON.stringify(req.body.ID_KhoiCVs[0]) || null,
-        ID_KhoiCVs: JSON.stringify(req.body.ID_KhoiCVs) || null,
+        ID_KhoiCV: req.body.ID_KhoiCVs[0] || null,
+        ID_KhoiCVs: req.body.ID_KhoiCVs || null,
         Sothutu: req.body.Sothutu,
         Makhuvuc: req.body.Makhuvuc,
         MaQrCode: req.body.MaQrCode,
