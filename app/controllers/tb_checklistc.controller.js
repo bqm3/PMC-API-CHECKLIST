@@ -805,6 +805,109 @@ exports.close = async (req, res) => {
   }
 };
 
+exports.open = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    
+    if (req.params.id && userData.Permission === 1) {
+      // Truy vấn ngày từ cơ sở dữ liệu
+      const checklist = await Tb_checklistc.findOne({
+        attributes: [
+          "ID_ChecklistC",
+          "ID_Khuvucs",
+          "ID_Duan",
+          "ID_KhoiCV",
+          "ID_Calv",
+          "ID_Giamsat",
+          "Ngay",
+          "Giobd",
+          "Giochupanh1",
+          "Anh1",
+          "Giochupanh2",
+          "Anh2",
+          "Giochupanh3",
+          "Anh3",
+          "Giochupanh4",
+          "Anh4",
+          "Giokt",
+          "Ghichu",
+          "Tinhtrang",
+          "isDelete",
+        ],
+        include: [
+          {
+            model: Ent_duan,
+            attributes: ["ID_Duan", "Duan", "Diachi", "Vido", "Kinhdo"],
+          },
+          {
+            model: Ent_khoicv,
+            attributes: ["ID_Khoi", "KhoiCV"],
+          },
+          {
+            model: Ent_calv,
+            attributes: ["ID_Calv", "Tenca", "Giobatdau", "Gioketthuc"],
+          },
+          {
+            model: Ent_giamsat,
+            attributes: ["ID_Giamsat", "Hoten"],
+            include: [
+              {
+                model: Ent_chucvu,
+                attributes: ["Chucvu"],
+              },
+            ],
+          },
+        ],
+        where: { ID_ChecklistC: req.params.id }
+      });
+      
+      if (checklist) {
+        const currentDay = new Date();
+        const checklistDay = new Date(checklist.Ngay); // Giả sử cột ngày trong bảng là 'Ngay'
+        
+        // So sánh ngày hiện tại và ngày từ cơ sở dữ liệu
+        if (currentDay.toDateString() === checklistDay.toDateString()) {
+          // Ngày hiện tại bằng với ngày trong cơ sở dữ liệu, cho phép cập nhật
+          await Tb_checklistc.update(
+            { Tinhtrang: 0 },
+            {
+              where: { ID_ChecklistC: req.params.id }
+            }
+          );
+          res.status(200).json({
+            message: "Mở ca thành công!"
+          });
+        } else if (currentDay > checklistDay) {
+          // Ngày hiện tại lớn hơn ngày từ cơ sở dữ liệu
+          res.status(400).json({
+            message: "Ngày khóa ca nhỏ hơn ngày hiện tại"
+          });
+        } else {
+          // Ngày hiện tại nhỏ hơn ngày từ cơ sở dữ liệu (nếu có trường hợp này)
+          res.status(400).json({
+            message: "Không thể mở ca trước ngày đã khóa"
+          });
+        }
+      } else {
+        res.status(404).json({
+          message: "Không tìm thấy bản ghi"
+        });
+      }
+    } else {
+      res.status(400).json({
+        message: "Không có quyền chỉnh sửa"
+      });
+    }
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message || "Lỗi! Vui lòng thử lại sau."
+    });
+  }
+};
+
+
+
 exports.checklistImages = async (req, res) => {
   try {
     const userData = req.user.data;

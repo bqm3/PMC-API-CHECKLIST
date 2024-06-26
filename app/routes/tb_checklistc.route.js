@@ -31,6 +31,7 @@ module.exports = (app) => {
   router.get("/", [isAuthenticated], tb_checklistc.getCheckListc);
   router.get("/:id", [isAuthenticated], tb_checklistc.getDetail);
   router.put("/close/:id", [isAuthenticated], tb_checklistc.close);
+  router.put("/open/:id", [isAuthenticated], tb_checklistc.open);
 
   router.post(
     "/update_images/:id",
