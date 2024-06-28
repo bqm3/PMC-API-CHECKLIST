@@ -3,7 +3,7 @@
 module.exports = {
     apps: [
         {
-            name: "CHECKLIST",
+            name: "api-checklist",
             script: "./index.js",
             env: {
                 NODE_ENV: 'production',
