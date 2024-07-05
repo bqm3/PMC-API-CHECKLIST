@@ -9,7 +9,7 @@ const { Op } = require("sequelize");
 exports.create = async (req, res) => {
   // Validate request
   try {
-    if (!req.body.Hoten || !req.body.ID_Chucvu) {
+    if (!req.body.Hoten ) {
       res.status(400).json({
         message: "Phải nhập đầy đủ dữ liệu!",
       });
