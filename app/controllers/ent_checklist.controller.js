@@ -424,13 +424,33 @@ exports.update = async (req, res) => {
     const userData = req.user.data;
     if (req.params.id && userData) {
       if (!req.body.Giatrinhan || !req.body.Checklist) {
-        res.status(400).json({
+        return res.status(400).json({
           message: "Cần nhập đầy đủ thông tin!",
         });
-        return;
       }
-      const sCalv = req.body.sCalv;
 
+      let sCalv = req.body.sCalv;
+
+      // Đảo ngược mảng sCalv
+      sCalv = sCalv.reverse();
+
+      // Lấy các ID_Calv từ mảng sCalv
+      const idCalvArray = sCalv.map(id => parseInt(id, 10));
+
+      // Truy vấn cơ sở dữ liệu để lấy các giá trị isDelete của ID_Calv trong ent_calv
+      const calvData = await Ent_calv.findAll({
+        where: {
+          ID_Calv: idCalvArray
+        },
+        attributes: ['ID_Calv', 'isDelete']
+      });
+
+      // Lọc các ID_Calv mà có isDelete = 0
+      const validCalv = calvData
+        .filter(calv => `${calv.isDelete}` === '0')
+        .map(calv => calv.ID_Calv);
+
+      // Chuẩn bị dữ liệu để cập nhật
       const reqData = {
         ID_Khuvuc: req.body.ID_Khuvuc,
         ID_Tang: req.body.ID_Tang,
@@ -439,20 +459,19 @@ exports.update = async (req, res) => {
         Maso: req.body.Maso,
         MaQrCode: req.body.MaQrCode,
         Checklist: req.body.Checklist,
-        Ghichu: req.body.Ghichu,
+        Ghichu: req.body.Ghichu || "",
         Giatridinhdanh: req.body.Giatridinhdanh,
         Giatrinhan: req.body.Giatrinhan,
-        Sothutu: req.body.Sothutu,
-        Ghichu: req.body.Ghichu || "",
         Tieuchuan: req.body.Tieuchuan || "",
-        sCalv: JSON.stringify(sCalv) || null,
-        calv_1: JSON.stringify(sCalv[0]) || null,
-        calv_2: JSON.stringify(sCalv[1]) || null,
-        calv_3: JSON.stringify(sCalv[2]) || null,
-        calv_4: JSON.stringify(sCalv[3]) || null,
+        sCalv: JSON.stringify(validCalv) || null,
+        calv_1: JSON.stringify(validCalv[0]) || null,
+        calv_2: JSON.stringify(validCalv[1]) || null,
+        calv_3: JSON.stringify(validCalv[2]) || null,
+        calv_4: JSON.stringify(validCalv[3]) || null,
         isDelete: 0,
       };
 
+      // Thực hiện cập nhật dữ liệu
       Ent_checklist.update(reqData, {
         where: {
           ID_Checklist: req.params.id,
@@ -475,6 +494,7 @@ exports.update = async (req, res) => {
     });
   }
 };
+
 
 exports.delete = async (req, res) => {
   try {
@@ -801,12 +821,7 @@ exports.getChecklist = async (req, res) => {
     let whereCondition = {
       isDelete: 0,
       ID_Hangmuc,
-      [Op.or]: [
-        { calv_1: ID_Calv },
-        { calv_2: ID_Calv },
-        { calv_3: ID_Calv },
-        { calv_4: ID_Calv },
-      ],
+      [Op.or]: { sCalv: { [Op.like]: `%${ID_Calv}%` } },
     };
 
     whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] =
@@ -1279,12 +1294,7 @@ exports.filterChecklists = async (req, res) => {
     let whereCondition = {
       isDelete: 0,
       ID_Hangmuc,
-      [Op.or]: [
-        { calv_1: ID_Calv },
-        { calv_2: ID_Calv },
-        { calv_3: ID_Calv },
-        { calv_4: ID_Calv },
-      ],
+      [Op.or]: { sCalv: { [Op.like]: `%${ID_Calv}%` } },
     };
 
     if (
