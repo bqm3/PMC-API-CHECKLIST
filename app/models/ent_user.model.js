@@ -25,7 +25,6 @@ const Ent_user = sequelize.define("ent_user", {
        },
        Emails: {
         type: DataTypes.CHAR,
-        allowNull: false,
        },
        ID_Khuvucs: {
         type: DataTypes.JSON,
