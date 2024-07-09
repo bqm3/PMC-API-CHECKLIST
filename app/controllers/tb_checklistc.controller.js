@@ -906,7 +906,37 @@ exports.open = async (req, res) => {
   }
 };
 
+exports.delete = async(req, res) => {
+  try{
+    const userData = req.user.data;
+    const ID_ChecklistC = req.params.id;
 
+    if (req.params.id && userData) {
+      Tb_checklistc.update(
+        { isDelete: 1 },
+        {
+          where: {
+            ID_ChecklistC: ID_ChecklistC,
+          },
+        }
+      )
+        .then((data) => {
+          res.status(200).json({
+            message: "Xoá ca thành công!",
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    }
+  }catch (error) {
+    res.status(500).json({
+      message: error.message || "Lỗi! Vui lòng thử lại sau."
+    });
+  }
+}
 
 exports.checklistImages = async (req, res) => {
   try {

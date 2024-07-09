@@ -9,12 +9,9 @@ var corsOptions = {
   origin: [
     "*",
     "http://localhost:3000",
-    "http://localhost:3000",
-    "https://dawndev.io.vn",
-    "https://master-nu-pied.vercel.app/",
+    "http://localhost:3006",
     "https://checklist.pmcweb.vn",
-   "https://be-nodejs-project.vercel.app",
-	  "https://pmc-rho.vercel.app"
+    "https://qlts.pmcweb.vn",
   ],
 
   credentials: true, //access-control-allow-credentials:true
