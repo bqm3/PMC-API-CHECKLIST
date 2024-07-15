@@ -601,7 +601,6 @@ exports.getHangmucTotal = async (req, res) => {
         hangmucCounts[khoiCV]++;
       }
     });
-    console.log("hangmucData", hangmucCounts);
     // Convert counts to desired format
     const result = Object.keys(hangmucCounts).map((khoiCV) => ({
       label: khoiCV,

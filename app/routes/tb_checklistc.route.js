@@ -33,6 +33,7 @@ module.exports = (app) => {
   router.put("/close/:id", [isAuthenticated], tb_checklistc.close);
   router.put("/open/:id", [isAuthenticated], tb_checklistc.open);
   router.put("/delete/:id", [isAuthenticated], tb_checklistc.delete);
+  router.post("/baocao", [isAuthenticated], tb_checklistc.createExcelFile);
 
   router.post(
     "/update_images/:id",
