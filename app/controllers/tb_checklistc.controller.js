@@ -21,6 +21,29 @@ const Ent_checklistc = require("../models/tb_checklistc.model");
 const sequelize = require("../config/db.config");
 const cron = require("node-cron");
 
+function convertTimeFormat(timeStr) {
+  if (!timeStr.includes("AM") && !timeStr.includes("PM")) {
+    return timeStr;
+  }
+
+  // Tách phần giờ, phút, giây và phần AM/PM
+  let [time, modifier] = timeStr.split(" ");
+
+  // Tách giờ, phút, giây ra khỏi chuỗi thời gian
+  let [hours, minutes, seconds] = time.split(":");
+
+  // Nếu giờ là 12 AM, đổi thành 0 (nửa đêm)
+  if (hours === "12" && modifier === "AM") {
+    hours = "00";
+  } else if (modifier === "PM" && hours !== "12") {
+    // Nếu không phải 12 PM, cộng thêm 12 giờ
+    hours = (parseInt(hours, 10) + 12).toString().padStart(2, "0");
+  }
+
+  // Trả về chuỗi thời gian mới
+  return `${hours}:${minutes}:${seconds}`;
+}
+
 exports.createFirstChecklist = async (req, res, next) => {
   try {
     const userData = req.user.data;
@@ -65,7 +88,7 @@ exports.createFirstChecklist = async (req, res, next) => {
 
     const { Giobatdau, Gioketthuc } = calvData;
 
-    const giobdMoment = moment(Giobd, "HH:mm:ss");
+    const giobdMoment = moment(convertTimeFormat(Giobd), "HH:mm:ss");
     const giobatdauMoment = moment(Giobatdau, "HH:mm:ss");
     const gioketthucMoment = moment(Gioketthuc, "HH:mm:ss");
 
@@ -282,7 +305,7 @@ exports.createFirstChecklist = async (req, res, next) => {
             ID_Calv: ID_Calv,
             ID_Duan: ID_Duan,
             ID_KhoiCV: ID_KhoiCV,
-            Giobd: Giobd,
+            Giobd: convertTimeFormat(Giobd),
             Ngay: formattedDate,
             TongC: 0,
             Tong: checklistData.count || 0,
@@ -325,7 +348,7 @@ exports.createFirstChecklist = async (req, res, next) => {
                 ID_Duan: ID_Duan,
                 ID_KhoiCV: ID_KhoiCV,
                 Ngay: formattedDate,
-                Giobd: Giobd,
+                Giobd: convertTimeFormat(Giobd),
                 TongC: 0,
                 Tong: checklistData.count || 0,
                 Tinhtrang: 0,
@@ -808,7 +831,7 @@ exports.close = async (req, res) => {
 exports.open = async (req, res) => {
   try {
     const userData = req.user.data;
-    
+
     if (req.params.id && userData.Permission === 1) {
       // Truy vấn ngày từ cơ sở dữ liệu
       const checklist = await Tb_checklistc.findOne({
@@ -858,56 +881,55 @@ exports.open = async (req, res) => {
             ],
           },
         ],
-        where: { ID_ChecklistC: req.params.id }
+        where: { ID_ChecklistC: req.params.id },
       });
-      
+
       if (checklist) {
         const currentDay = new Date();
         const checklistDay = new Date(checklist.Ngay); // Giả sử cột ngày trong bảng là 'Ngay'
-        
+
         // So sánh ngày hiện tại và ngày từ cơ sở dữ liệu
         if (currentDay.toDateString() === checklistDay.toDateString()) {
           // Ngày hiện tại bằng với ngày trong cơ sở dữ liệu, cho phép cập nhật
           await Tb_checklistc.update(
             { Tinhtrang: 0 },
             {
-              where: { ID_ChecklistC: req.params.id }
+              where: { ID_ChecklistC: req.params.id },
             }
           );
           res.status(200).json({
-            message: "Mở ca thành công!"
+            message: "Mở ca thành công!",
           });
         } else if (currentDay > checklistDay) {
           // Ngày hiện tại lớn hơn ngày từ cơ sở dữ liệu
           res.status(400).json({
-            message: "Ngày khóa ca nhỏ hơn ngày hiện tại"
+            message: "Ngày khóa ca nhỏ hơn ngày hiện tại",
           });
         } else {
           // Ngày hiện tại nhỏ hơn ngày từ cơ sở dữ liệu (nếu có trường hợp này)
           res.status(400).json({
-            message: "Không thể mở ca trước ngày đã khóa"
+            message: "Không thể mở ca trước ngày đã khóa",
           });
         }
       } else {
         res.status(404).json({
-          message: "Không tìm thấy bản ghi"
+          message: "Không tìm thấy bản ghi",
         });
       }
     } else {
       res.status(400).json({
-        message: "Không có quyền chỉnh sửa"
+        message: "Không có quyền chỉnh sửa",
       });
     }
-
   } catch (error) {
     res.status(500).json({
-      message: error.message || "Lỗi! Vui lòng thử lại sau."
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
 };
 
-exports.delete = async(req, res) => {
-  try{
+exports.delete = async (req, res) => {
+  try {
     const userData = req.user.data;
     const ID_ChecklistC = req.params.id;
 
@@ -931,12 +953,12 @@ exports.delete = async(req, res) => {
           });
         });
     }
-  }catch (error) {
+  } catch (error) {
     res.status(500).json({
-      message: error.message || "Lỗi! Vui lòng thử lại sau."
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
-}
+};
 
 exports.checklistImages = async (req, res) => {
   try {
@@ -1442,6 +1464,15 @@ exports.checklistPercent = async (req, res) => {
         data: finalData,
       });
     });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+  }
+};
+
+exports.fileChecklistSuCo = async (req, res) => {
+  try {
   } catch (err) {
     res
       .status(500)

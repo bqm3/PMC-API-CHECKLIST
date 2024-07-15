@@ -23,6 +23,9 @@ exports.createCheckListChiTiet = async (req, res, next) => {
      // Extract data from the request body and files
      const records = req.body;
      const images = req.files;
+
+     console.log('records',records)
+     console.log('images',images)
  
      // Ensure records.ID_ChecklistC and records.ID_Checklist are arrays
      const ensureArray = (data) => {
@@ -135,7 +138,9 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     } catch (error) {
       // Rollback transaction
       await transaction.rollback();
-      throw error;
+      console.error("Error during transaction:", error);
+      res.status(500).json({ error: "Failed to create checklist details, transaction rolled back" });
+    
     }
   } catch (error) {
     // Log error and respond with internal server error
@@ -880,3 +885,4 @@ exports.getWriteExcel = async (req, res, next) => {
       .json({ message: error.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
+
