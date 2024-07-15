@@ -20,6 +20,8 @@ const { uploadFile } = require("../middleware/auth_google");
 const Ent_checklistc = require("../models/tb_checklistc.model");
 const sequelize = require("../config/db.config");
 const cron = require("node-cron");
+const ExcelJS = require("exceljs");
+var FileSaver = require("file-saver");
 
 function convertTimeFormat(timeStr) {
   if (!timeStr.includes("AM") && !timeStr.includes("PM")) {
@@ -1473,6 +1475,240 @@ exports.checklistPercent = async (req, res) => {
 
 exports.fileChecklistSuCo = async (req, res) => {
   try {
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+  }
+};
+
+const formatDate = (date) => {
+  const day = date.getDate().toString().padStart(2, "0");
+  const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Months are zero based
+  const year = date.getFullYear();
+
+  return `${day}/${month}/${year}`;
+};
+
+exports.createExcelFile = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    const list_IDChecklistC = req.body.list_IDChecklistC || [];
+    const startDate = req.body.startDate;
+    const endDate = req.body.endDate;
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Checklist Report");
+
+    console.log("startDate", moment(startDate).format("DD/MM/YYYY"));
+    console.log("endDate", moment(endDate).format("DD/MM/YYYY"));
+
+    let whereClause = {
+      isDelete: 0,
+      ID_ChecklistC: {
+        [Op.in]: list_IDChecklistC,
+      },
+    };
+
+    const dataChecklistC = await Tb_checklistchitiet.findAll({
+      attributes: [
+        "ID_Checklistchitiet",
+        "ID_ChecklistC",
+        "ID_Checklist",
+        "Ketqua",
+        "Anh",
+        "Gioht",
+        "Ghichu",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Tb_checklistc,
+          attributes: [
+            "ID_ChecklistC",
+            "ID_Khuvucs",
+            "ID_Duan",
+            "ID_KhoiCV",
+            "ID_Calv",
+            "ID_Toanha",
+            "ID_User",
+            "ID_Giamsat",
+            "Ngay",
+            "Tong",
+            "TongC",
+            "Giobd",
+            "Giochupanh1",
+            "Anh1",
+            "Giochupanh2",
+            "Anh2",
+            "Giochupanh3",
+            "Anh3",
+            "Giochupanh4",
+            "Anh4",
+            "Giokt",
+            "Ghichu",
+            "Tinhtrang",
+            "isDelete",
+          ],
+          include: [
+            {
+              model: Ent_khoicv,
+              attributes: ["KhoiCV"],
+            },
+            {
+              model: Ent_giamsat,
+              attributes: ["Hoten"],
+            },
+            {
+              model: Ent_calv,
+              attributes: ["Tenca", "Giobatdau", "Gioketthuc"],
+            },
+          ],
+        },
+        {
+          model: Ent_checklist,
+          attributes: [
+            "ID_Checklist",
+            "ID_Khuvuc",
+            "ID_Hangmuc",
+            "ID_Tang",
+            "Sothutu",
+            "Maso",
+            "MaQrCode",
+            "Checklist",
+            "Giatridinhdanh",
+            "Giatrinhan",
+          ],
+          include: [
+            {
+              model: Ent_khuvuc,
+              attributes: ["Tenkhuvuc", "MaQrCode", "Makhuvuc", "Sothutu"],
+
+              include: [
+                {
+                  model: Ent_toanha,
+                  attributes: ["Toanha", "Sotang", "ID_Duan"],
+
+                  include: [
+                    {
+                      model: Ent_duan,
+                      attributes: ["Duan"],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              model: Ent_hangmuc,
+              attributes: [
+                "Hangmuc",
+                "Tieuchuankt",
+                "ID_Khuvuc",
+                "MaQrCode",
+                "ID_KhoiCV",
+                "ID_KhoiCV",
+              ],
+            },
+            {
+              model: Ent_tang,
+              attributes: ["Tentang", "Sotang"],
+            },
+            {
+              model: Ent_user,
+              attributes: ["UserName"],
+            },
+          ],
+        },
+      ],
+      where: whereClause,
+    });
+
+    worksheet.columns = [
+      { header: "STT", key: "stt", width: 5 },
+      { header: "Checklist", key: "checklist", width: 25 },
+      { header: "Tầng", key: "tang", width: 10 },
+      { header: "Khu vực", key: "khuvuc", width: 15 },
+      { header: "Hạng mục", key: "hangmuc", width: 15 },
+      { header: "Ngày", key: "ngay", width: 15 },
+      { header: "Ca", key: "ca", width: 10 },
+      { header: "Nhân viên", key: "nhanvien", width: 20 },
+      { header: "Ghi nhận lỗi", key: "ghinhanloi", width: 20 },
+      { header: "Tình trạng xử lý", key: "tinhtrang", width: 20 },
+    ];
+
+    // Merge cells for the header
+    worksheet.mergeCells("A1:J1");
+    const headerRow = worksheet.getCell("A1");
+    headerRow.value = "BÁO CÁO CHECKLIST CÓ VẤN ĐỀ";
+    headerRow.alignment = { horizontal: "center", vertical: "middle" };
+    headerRow.font = { size: 16, bold: true };
+
+    // Add sub-header
+    worksheet.mergeCells("A3:B3");
+    worksheet.getCell("A3").value = `Từ ngày: ${moment(startDate).format(
+      "DD/MM/YYYY"
+    )}`;
+
+    worksheet.mergeCells("C3:D3");
+    worksheet.getCell("C3").value = `Đến ngày: ${moment(endDate).format(
+      "DD/MM/YYYY"
+    )}`;
+
+    worksheet.mergeCells("E3:F3");
+    worksheet.getCell("E3").value = "Tên Bộ phận: ";
+
+    // Add table headers
+    const tableHeaderRow = worksheet.getRow(5);
+    tableHeaderRow.values = [
+      "STT",
+      "Checklist",
+      "Tầng",
+      "Khu vực",
+      "Hạng mục",
+      "Ngày",
+      "Ca",
+      "Nhân viên",
+      "Ghi nhận lỗi",
+      "Tình trạng xử lý",
+    ];
+    tableHeaderRow.eachCell((cell) => {
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: "center" };
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      };
+    });
+
+    // Add empty rows for data
+    for (let i = 0; i < dataChecklistC.length; i++) {
+      worksheet.addRow([
+        i + 1,
+        dataChecklistC[i]?.ent_checklist?.Checklist,
+        dataChecklistC[i]?.ent_checklist?.ent_tang?.Tentang,
+        dataChecklistC[i]?.ent_checklist?.ent_khuvuc?.Tenkhuvuc,
+        dataChecklistC[i]?.ent_checklist?.ent_hangmuc?.Hangmuc,
+        dataChecklistC[i]?.tb_checklistc?.Ngay,
+        dataChecklistC[i]?.tb_checklistc?.ent_calv?.Tenca,
+        dataChecklistC[i]?.tb_checklistc?.ent_giamsat?.Hoten,
+        dataChecklistC[i]?.Ketqua,
+        "",
+      ]);
+    }
+
+    // Generate the Excel file buffer
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=Checklist_Report.xlsx"
+    );
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.send(buffer);
   } catch (err) {
     res
       .status(500)
