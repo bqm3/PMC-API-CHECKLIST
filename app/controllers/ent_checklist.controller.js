@@ -1808,14 +1808,15 @@ exports.uploadFiles = async (req, res) => {
           attributes: ["Tentang", "Sotang", "ID_Tang", "ID_Duan"],
           where: {
             Tentang: sequelize.where(
-              sequelize.fn("UPPER", sequelize.col("Tentang")),
+              sequelize.fn("UPPER", sequelize.fn('TRIM', sequelize.col("Tentang"))),
               "LIKE",
-              "%" + tenTang.toUpperCase() + "%"
+              "%" + tenTang.trim().toUpperCase() + "%"
             ),
             ID_Duan: userData.ID_Duan,
           },
           transaction,
         });
+        console.log('tang',tang)
 
         const khoiCV = await Ent_khoicv.findOne({
           attributes: ["ID_Khoi", "KhoiCV"],
