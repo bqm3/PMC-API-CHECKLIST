@@ -30,7 +30,7 @@ const Ent_checklist = sequelize.define(
       type: DataTypes.CHAR,
     },
     Checklist: {
-      type: DataTypes.CHAR,
+      type: DataTypes.TEXT,
     },
     Ghichu: {
       type: DataTypes.TEXT,
