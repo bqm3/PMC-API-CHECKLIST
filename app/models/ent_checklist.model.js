@@ -48,6 +48,10 @@ const Ent_checklist = sequelize.define(
       type: DataTypes.INTEGER,
       defaultValue: 0,
     },
+    isCheck: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
     calv_1: {
       type: DataTypes.CHAR,
     },
