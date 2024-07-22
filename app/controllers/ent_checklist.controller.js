@@ -27,7 +27,6 @@ exports.create = async (req, res) => {
         });
         return;
       }
-      // const sCalv = req.body.sCalv;
       const sCalv = req.body.sCalv;
 
       const data = {
@@ -51,6 +50,7 @@ exports.create = async (req, res) => {
         calv_4: JSON.stringify(sCalv[3]) || null,
         isDelete: 0,
         Tinhtrang: 0,
+        isCheck: req.body.isCheck,
       };
 
       Ent_checklist.create(data)
@@ -105,7 +105,7 @@ exports.get = async (req, res) => {
         "Checklist",
         "Ghichu",
         "Tieuchuan",
-        "Giatridinhdanh",
+        "Giatridinhdanh", "isCheck",
         "Giatrinhan",
         "ID_User",
         "isDelete",
@@ -190,7 +190,7 @@ exports.get = async (req, res) => {
         "Checklist",
         "Ghichu",
         "Tieuchuan",
-        "Giatridinhdanh",
+        "Giatridinhdanh", "isCheck",
         "Giatrinhan",
         "sCalv",
         "Tinhtrang",
@@ -320,7 +320,7 @@ exports.getDetail = async (req, res) => {
           "Checklist",
           "Ghichu",
           "Tieuchuan",
-          "Giatridinhdanh",
+          "Giatridinhdanh", "isCheck",
           "Giatrinhan",
           "sCalv",
           "calv_1",
@@ -460,8 +460,9 @@ exports.update = async (req, res) => {
         MaQrCode: req.body.MaQrCode,
         Checklist: req.body.Checklist,
         Ghichu: req.body.Ghichu || "",
-        Giatridinhdanh: req.body.Giatridinhdanh,
-        Giatrinhan: req.body.Giatrinhan,
+        Giatridinhdanh: req.body.Giatridinhdanh || "",
+        Giatrinhan: req.body.Giatrinhan || "",  
+        isCheck: req.body.isCheck,
         Tieuchuan: req.body.Tieuchuan || "",
         sCalv: JSON.stringify(validCalv) || null,
         calv_1: JSON.stringify(validCalv[0]) || null,
@@ -646,7 +647,7 @@ exports.getFilter = async (req, res) => {
           "Checklist",
           "Ghichu",
           "Tieuchuan",
-          "Giatridinhdanh",
+          "Giatridinhdanh", "isCheck",
           "Giatrinhan",
           "ID_User",
           "isDelete",
@@ -869,7 +870,7 @@ exports.getChecklist = async (req, res) => {
         "Checklist",
         "Ghichu",
         "Tieuchuan",
-        "Giatridinhdanh",
+        "Giatridinhdanh", "isCheck",
         "Giatrinhan",
         "ID_User",
         "sCalv",
@@ -1029,7 +1030,7 @@ exports.getFilterSearch = async (req, res) => {
         "Checklist",
         "Ghichu",
         "Tieuchuan",
-        "Giatridinhdanh",
+        "Giatridinhdanh", "isCheck",
         "Giatrinhan",
         "ID_User",
         "isDelete",
@@ -1114,7 +1115,7 @@ exports.getFilterSearch = async (req, res) => {
         "Checklist",
         "Ghichu",
         "Tieuchuan",
-        "Giatridinhdanh",
+        "Giatridinhdanh", "isCheck",
         "Giatrinhan",
         "ID_User",
         "isDelete",
@@ -1351,7 +1352,7 @@ exports.filterChecklists = async (req, res) => {
         "Checklist",
         "Ghichu",
         "Tieuchuan",
-        "Giatridinhdanh",
+        "Giatridinhdanh", "isCheck",
         "Giatrinhan",
         "Tinhtrang",
         "ID_User",
@@ -1484,7 +1485,7 @@ exports.getListChecklistWeb = async (req, res) => {
         "Checklist",
         "Ghichu",
         "Tieuchuan",
-        "Giatridinhdanh",
+        "Giatridinhdanh", "isCheck",
         "Giatrinhan",
         "sCalv",
         "Tinhtrang",
@@ -1618,7 +1619,7 @@ exports.getChecklistTotal = async (req, res) => {
         "Checklist",
         "Ghichu",
         "Tieuchuan",
-        "Giatridinhdanh",
+        "Giatridinhdanh", "isCheck",
         "Giatrinhan",
         "ID_User",
         "sCalv",
@@ -1816,7 +1817,6 @@ exports.uploadFiles = async (req, res) => {
           },
           transaction,
         });
-        console.log('tang',tang)
 
         const khoiCV = await Ent_khoicv.findOne({
           attributes: ["ID_Khoi", "KhoiCV"],

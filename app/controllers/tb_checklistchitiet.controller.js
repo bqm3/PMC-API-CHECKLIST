@@ -204,7 +204,7 @@ exports.getCheckListChiTiet = async (req, res, next) => {
               "Maso",
               "MaQrCode",
               "Checklist",
-              "Giatridinhdanh",
+              "Giatridinhdanh", "isCheck",
               "Giatrinhan",
             ],
             include: [
@@ -306,7 +306,7 @@ exports.getDetail = async (req, res) => {
               "Maso",
               "MaQrCode",
               "Checklist",
-              "Giatridinhdanh",
+              "Giatridinhdanh", "isCheck",
               "Giatrinhan",
             ],
             include: [
@@ -457,7 +457,7 @@ exports.searchChecklist = async (req, res) => {
               "Maso",
               "MaQrCode",
               "Checklist",
-              "Giatridinhdanh",
+              "Giatridinhdanh", "isCheck",
               "Giatrinhan",
             ],
             include: [
@@ -552,7 +552,7 @@ exports.searchChecklist = async (req, res) => {
               "Maso",
               "MaQrCode",
               "Checklist",
-              "Giatridinhdanh",
+              "Giatridinhdanh", "isCheck",
               "Giatrinhan",
               "Tieuchuan",
               "Ghichu",
