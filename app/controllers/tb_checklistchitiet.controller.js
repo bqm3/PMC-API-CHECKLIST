@@ -13,91 +13,93 @@ const {
   Ent_tang,
   Ent_toanha,
 } = require("../models/setup.model");
-const sequelize = require('../config/db.config');
+const sequelize = require("../config/db.config");
 const { Op, where, Sequelize } = require("sequelize");
 const ExcelJS = require("exceljs");
 var path = require("path");
 
 exports.createCheckListChiTiet = async (req, res, next) => {
   try {
-     // Extract data from the request body and files
-     const records = req.body;
-     const images = req.files;
+    // Extract data from the request body and files
+    const records = req.body;
+    const images = req.files;
 
-     console.log('records',records)
-     console.log('images',images)
- 
-     // Ensure records.ID_ChecklistC and records.ID_Checklist are arrays
-     const ensureArray = (data) => {
-       if (!Array.isArray(data)) {
-         return [data];
-       }
-       return data;
-     };
- 
-     records.ID_ChecklistC = ensureArray(records.ID_ChecklistC);
-     records.ID_Checklist = ensureArray(records.ID_Checklist);
-     records.Ketqua = ensureArray(records.Ketqua);
-     records.Ghichu = ensureArray(records.Ghichu);
-     records.Gioht = ensureArray(records.Gioht);
- 
-     // Validate records and images as arrays
-     if (records.ID_ChecklistC.length !== records.ID_Checklist.length) {
-       return res.status(400).json({
-         error: "ID_ChecklistC and ID_Checklist must have the same length.",
-       });
-     }
- 
-     // Upload images and collect file details (id and original name)
-     const uploadedFileIds = [];
-     for (const image of images) {
-       const fileId = await uploadFile(image);
-       await uploadedFileIds.push({ id: fileId, name: image.originalname });
-     }
- 
- 
-     // Prepare records for bulk creation
-     const newRecords = records.ID_ChecklistC.map((ID_ChecklistC, index) => {
-       const ID_Checklist = records.ID_Checklist[index];
-       const Ketqua = records.Ketqua[index];
-       const Gioht = records.Gioht[index];
-       const Ghichu = records.Ghichu[index];
- 
-       // Handle Anh from records
-       let Anh = null; // Default to null if no image is provided
-       let inputAnh = Array.isArray(records.Anh) ? records.Anh[index] : records.Anh;
- 
-       if (inputAnh) {
-         // Xác định `inputAnh` có phải là đối tượng hay không
-         if (typeof inputAnh === 'object') {
-             // Nếu `inputAnh` là đối tượng, lấy tên của đối tượng để so sánh
-             inputAnh = inputAnh.name;
-         }
-     
-         // Kiểm tra tệp ảnh đã tải lên
-         const matchingImage = uploadedFileIds.find((file) => file.name === inputAnh);
-     
-         if (matchingImage) {
-             // Sử dụng ID của tệp ảnh đã tải lên làm giá trị cho Anh
-             Anh = matchingImage.id.id;
-         } else {
-             console.log(`No matching image found for Anh: ${inputAnh}`);
-         }
-     } else {
-         console.log(`Unexpected Anh format: ${JSON.stringify(inputAnh)}`);
-     }
-     
- 
-       // Create the record object
-       return {
-         ID_ChecklistC,
-         ID_Checklist,
-         Ketqua,
-         Gioht,
-         Ghichu,
-         Anh,
-       };
-     });
+    console.log("records", records);
+    console.log("images", images);
+
+    // Ensure records.ID_ChecklistC and records.ID_Checklist are arrays
+    const ensureArray = (data) => {
+      if (!Array.isArray(data)) {
+        return [data];
+      }
+      return data;
+    };
+
+    records.ID_ChecklistC = ensureArray(records.ID_ChecklistC);
+    records.ID_Checklist = ensureArray(records.ID_Checklist);
+    records.Ketqua = ensureArray(records.Ketqua);
+    records.Ghichu = ensureArray(records.Ghichu);
+    records.Gioht = ensureArray(records.Gioht);
+
+    // Validate records and images as arrays
+    if (records.ID_ChecklistC.length !== records.ID_Checklist.length) {
+      return res.status(400).json({
+        error: "ID_ChecklistC and ID_Checklist must have the same length.",
+      });
+    }
+
+    // Upload images and collect file details (id and original name)
+    const uploadedFileIds = [];
+    for (const image of images) {
+      const fileId = await uploadFile(image);
+      await uploadedFileIds.push({ id: fileId, name: image.originalname });
+    }
+
+    // Prepare records for bulk creation
+    const newRecords = records.ID_ChecklistC.map((ID_ChecklistC, index) => {
+      const ID_Checklist = records.ID_Checklist[index];
+      const Ketqua = records.Ketqua[index];
+      const Gioht = records.Gioht[index];
+      const Ghichu = records.Ghichu[index];
+
+      // Handle Anh from records
+      let Anh = null; // Default to null if no image is provided
+      let inputAnh = Array.isArray(records.Anh)
+        ? records.Anh[index]
+        : records.Anh;
+
+      if (inputAnh) {
+        // Xác định `inputAnh` có phải là đối tượng hay không
+        if (typeof inputAnh === "object") {
+          // Nếu `inputAnh` là đối tượng, lấy tên của đối tượng để so sánh
+          inputAnh = inputAnh.name;
+        }
+
+        // Kiểm tra tệp ảnh đã tải lên
+        const matchingImage = uploadedFileIds.find(
+          (file) => file.name === inputAnh
+        );
+
+        if (matchingImage) {
+          // Sử dụng ID của tệp ảnh đã tải lên làm giá trị cho Anh
+          Anh = matchingImage.id.id;
+        } else {
+          console.log(`No matching image found for Anh: ${inputAnh}`);
+        }
+      } else {
+        console.log(`Unexpected Anh format: ${JSON.stringify(inputAnh)}`);
+      }
+
+      // Create the record object
+      return {
+        ID_ChecklistC,
+        ID_Checklist,
+        Ketqua,
+        Gioht,
+        Ghichu,
+        Anh,
+      };
+    });
 
     // Start transaction
     const transaction = await sequelize.transaction();
@@ -134,13 +136,16 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       // Commit transaction
       await transaction.commit();
 
-      res.status(200).json({ message: "Records created and updated successfully" });
+      res
+        .status(200)
+        .json({ message: "Records created and updated successfully" });
     } catch (error) {
       // Rollback transaction
       await transaction.rollback();
       console.error("Error during transaction:", error);
-      res.status(500).json({ error: "Failed to create checklist details, transaction rolled back" });
-    
+      res.status(500).json({
+        error: "Failed to create checklist details, transaction rolled back",
+      });
     }
   } catch (error) {
     // Log error and respond with internal server error
@@ -204,7 +209,8 @@ exports.getCheckListChiTiet = async (req, res, next) => {
               "Maso",
               "MaQrCode",
               "Checklist",
-              "Giatridinhdanh", "isCheck",
+              "Giatridinhdanh",
+              "isCheck",
               "Giatrinhan",
             ],
             include: [
@@ -306,7 +312,8 @@ exports.getDetail = async (req, res) => {
               "Maso",
               "MaQrCode",
               "Checklist",
-              "Giatridinhdanh", "isCheck",
+              "Giatridinhdanh",
+              "isCheck",
               "Giatrinhan",
             ],
             include: [
@@ -457,7 +464,8 @@ exports.searchChecklist = async (req, res) => {
               "Maso",
               "MaQrCode",
               "Checklist",
-              "Giatridinhdanh", "isCheck",
+              "Giatridinhdanh",
+              "isCheck",
               "Giatrinhan",
             ],
             include: [
@@ -552,7 +560,8 @@ exports.searchChecklist = async (req, res) => {
               "Maso",
               "MaQrCode",
               "Checklist",
-              "Giatridinhdanh", "isCheck",
+              "Giatridinhdanh",
+              "isCheck",
               "Giatrinhan",
               "Tieuchuan",
               "Ghichu",
@@ -591,7 +600,10 @@ exports.searchChecklist = async (req, res) => {
           isDelete: 0,
           [Op.and]: [orConditions],
         },
-        order: [[{ model: Tb_checklistc }, "Ngay", "DESC"]],
+        order: [
+          [{ model: Tb_checklistc }, "Ngay", "DESC"],
+          ["Gioht", "DESC"],
+        ],
         limit: pageSize,
         offset: offset,
       })
@@ -885,4 +897,3 @@ exports.getWriteExcel = async (req, res, next) => {
       .json({ message: error.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
-
