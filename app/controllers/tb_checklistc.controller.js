@@ -570,6 +570,7 @@ exports.getCheckListc = async (req, res, next) => {
       // Nếu quyền là 1 (Permission === 1) thì không cần thêm điều kiện ID_KhoiCV
       if (userData.Permission !== 1) {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
+        whereClause.ID_User = userData?.ID_User
       }
 
       const page = parseInt(req.query.page) || 0;
@@ -1472,6 +1473,29 @@ exports.checklistPercent = async (req, res) => {
       .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
+
+
+exports.checklistKhoiCVPercent = async(req, res) => {
+  try{
+    const userData = req.user.data;
+
+    if (!userData) {
+      return res.status(400).json({ message: "Dữ liệu không hợp lệ." });
+    }
+
+    let whereClause = {
+      isDelete: 0,
+      ID_Duan: userData.ID_Duan,
+    };
+
+    
+
+  }catch(err){
+    res
+      .status(500)
+      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+  }
+}
 
 exports.fileChecklistSuCo = async (req, res) => {
   try {
