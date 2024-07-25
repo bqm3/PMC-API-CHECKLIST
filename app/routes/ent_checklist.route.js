@@ -30,6 +30,11 @@ module.exports = (app) => {
     ent_checklist.filterChecklists
   );
 
+  router.put(
+    "/filter/:idc/:id_calv",
+    isAuthenticated,
+    ent_checklist.KhuvucChecklists
+  );
   router.post("/uploads", [isAuthenticated, upload.single('files')], ent_checklist.uploadFiles)
 
   app.use("/api/ent_checklist", router);
