@@ -1457,6 +1457,157 @@ exports.filterChecklists = async (req, res) => {
   }
 };
 
+exports.KhuvucChecklists = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    const ID_ChecklistC = req.params.idc;
+    const ID_Calv = req.params.id_calv;
+    const ID_Hangmuc = req.body.ID_Hangmuc;
+
+    const tbChecklist = await Tb_checklistc.findByPk(ID_ChecklistC, {
+      attributes: ["ID_Toanha", "ID_Khuvucs", "isDelete"],
+      where: {
+        isDelete: 0,
+      },
+    });
+
+    
+    let whereCondition = {
+      isDelete: 0,
+      ID_Hangmuc,
+      [Op.or]: { sCalv: { [Op.like]: `%${ID_Calv}%` } },
+    };
+
+    if (
+      Array.isArray(tbChecklist.ID_Khuvucs) &&
+      tbChecklist.ID_Khuvucs.length > 0
+    ) {
+      whereCondition.ID_Khuvuc = {
+        [Op.in]: tbChecklist.ID_Khuvucs,
+      };
+    }
+
+    whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] =
+      userData?.ID_Duan;
+    whereCondition["$ent_hangmuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
+
+    const checklistData = await Ent_checklist.findAll({
+      attributes: [
+        "ID_Checklist",
+        "ID_Khuvuc",
+        "ID_Hangmuc",
+        "ID_Tang",
+        "Sothutu",
+        "Maso",
+        "MaQrCode",
+        "Checklist",
+        "Ghichu",
+        "Tieuchuan",
+        "Giatridinhdanh", "isCheck",
+        "Giatrinhan",
+        "Tinhtrang",
+        "ID_User",
+        "sCalv",
+        "calv_1",
+        "calv_2",
+        "calv_3",
+        "calv_4",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_hangmuc,
+          attributes: [
+            "Hangmuc",
+            "Tieuchuankt",
+            "ID_Khuvuc",
+            "MaQrCode",
+            "ID_KhoiCV",
+            "ID_KhoiCV",
+          ],
+          include: [
+            {
+              model: Ent_khuvuc,
+              attributes: [
+                "Tenkhuvuc",
+                "MaQrCode",
+                "Makhuvuc",
+                "Sothutu",
+                "ID_Toanha",
+                "ID_Khuvuc",
+              ],
+              include: [
+                {
+                  model: Ent_toanha,
+                  attributes: ["Toanha", "Sotang", "ID_Toanha"],
+                  include: {
+                    model: Ent_duan,
+                    attributes: [
+                      "ID_Duan",
+                      "Duan",
+                      "Diachi",
+                      "Vido",
+                      "Kinhdo",
+                      "Logo",
+                    ],
+                    where: { ID_Duan: userData.ID_Duan },
+                  },
+                },
+              ],
+            },
+            {
+              model: Ent_khoicv,
+              attributes: ["KhoiCV"],
+            },
+          ],
+        },
+        {
+          model: Ent_tang,
+          attributes: ["Tentang", "Sotang"],
+        },
+        {
+          model: Ent_user,
+          include: {
+            model: Ent_chucvu,
+            attributes: ["Chucvu"],
+          },
+          attributes: ["UserName", "Emails"],
+        },
+      ],
+      where: whereCondition,
+      order: [
+        ["ID_Khuvuc", "ASC"],
+        ["Sothutu", "ASC"],
+        ["ID_Checklist", "ASC"],
+      ],
+    });
+
+    if (!checklistData || checklistData.length === 0) {
+      return res.status(200).json({
+        message: "Không còn checklist cho ca làm việc này!",
+        data: [],
+      });
+    }
+
+    const filteredData = checklistData.filter(
+      (item) => item.ent_hangmuc !== null
+    );
+
+    return res.status(200).json({
+      message:
+        filteredData.length > 0
+          ? "Danh sách checklist!"
+          : "Không còn checklist cho ca làm việc này!",
+      length: filteredData.length,
+      data: filteredData,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+}
+
 exports.getListChecklistWeb = async (req, res) => {
   try {
     const userData = req.user.data;
