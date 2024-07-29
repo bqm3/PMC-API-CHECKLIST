@@ -1944,6 +1944,16 @@ exports.uploadFiles = async (req, res) => {
         const cacGiaTriNhan = item["Các giá trị nhận"];
         const ghiChu = item["Ghi chú"];
 
+        if (!tenChecklist || !caChecklist) {
+          console.log('Skipping due to missing tenChecklist or caChecklist');
+          continue;
+        }
+    
+        if (!tenTang) {
+          console.log('Skipping due to missing tenTang');
+          continue;
+        }
+
         const hangmuc = await Ent_hangmuc.findOne({
           attributes: [
             "Hangmuc",
