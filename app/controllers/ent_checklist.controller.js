@@ -1975,41 +1975,47 @@ exports.uploadFiles = async (req, res) => {
           transaction,
         });
 
-        const caChecklistArray = caChecklist.split(",").map((ca) => ca.trim());
-        const calv = await Ent_calv.findAll({
-          attributes: ["ID_Calv", "ID_Duan", "ID_KhoiCV", "Tenca"],
-          where: {
-            TenCa: caChecklistArray,
-            ID_Duan: userData.ID_Duan,
-            ID_KhoiCV: khoiCV.ID_Khoi,
-          },
-          transaction,
-        });
-        const sCalv = calv.map((calvItem) => calvItem.ID_Calv);
+        if(!caChecklist|| !tenChecklist){
+          console.log(`Bỏ qua`);
+        }else {
+          const caChecklistArray = caChecklist.split(",").map((ca) => ca.trim());
+          const calv = await Ent_calv.findAll({
+            attributes: ["ID_Calv", "ID_Duan", "ID_KhoiCV", "Tenca"],
+            where: {
+              TenCa: caChecklistArray,
+              ID_Duan: userData.ID_Duan,
+              ID_KhoiCV: khoiCV.ID_Khoi,
+            },
+            transaction,
+          });
+          const sCalv = calv.map((calvItem) => calvItem.ID_Calv);
+  
+          const data = {
+            ID_Khuvuc: hangmuc.ID_Khuvuc,
+            ID_Tang: tang.ID_Tang,
+            ID_Hangmuc: hangmuc.ID_Hangmuc,
+            Sothutu: sttChecklist || 1,
+            Maso: maChecklist || "",
+            MaQrCode: maChecklist || "",
+            Checklist: tenChecklist,
+            Ghichu: ghiChu || "",
+            Tieuchuan: tieuChuanChecklist || "",
+            Giatridinhdanh: giaTriDanhDinh || "",
+            Giatrinhan: cacGiaTriNhan || "",
+            ID_User: userData.ID_User,
+            sCalv: JSON.stringify(sCalv) || null,
+            calv_1: JSON.stringify(sCalv[0]) || null,
+            calv_2: JSON.stringify(sCalv[1]) || null,
+            calv_3: JSON.stringify(sCalv[2]) || null,
+            calv_4: JSON.stringify(sCalv[3]) || null,
+            isDelete: 0,
+            Tinhtrang: 0,
+          };
+  
+          await Ent_checklist.create(data, { transaction });
+        }
 
-        const data = {
-          ID_Khuvuc: hangmuc.ID_Khuvuc,
-          ID_Tang: tang.ID_Tang,
-          ID_Hangmuc: hangmuc.ID_Hangmuc,
-          Sothutu: sttChecklist || 1,
-          Maso: maChecklist || "",
-          MaQrCode: maChecklist || "",
-          Checklist: tenChecklist,
-          Ghichu: ghiChu || "",
-          Tieuchuan: tieuChuanChecklist || "",
-          Giatridinhdanh: giaTriDanhDinh || "",
-          Giatrinhan: cacGiaTriNhan || "",
-          ID_User: userData.ID_User,
-          sCalv: JSON.stringify(sCalv) || null,
-          calv_1: JSON.stringify(sCalv[0]) || null,
-          calv_2: JSON.stringify(sCalv[1]) || null,
-          calv_3: JSON.stringify(sCalv[2]) || null,
-          calv_4: JSON.stringify(sCalv[3]) || null,
-          isDelete: 0,
-          Tinhtrang: 0,
-        };
-
-        await Ent_checklist.create(data, { transaction });
+        
       }
     });
 
