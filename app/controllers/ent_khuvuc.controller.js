@@ -7,10 +7,9 @@ const {
   Ent_tang,
   Ent_checklist,
 } = require("../models/setup.model");
-const { Op, Sequelize,fn, col, literal, where  } = require("sequelize");
+const { Op, Sequelize, fn, col, literal, where } = require("sequelize");
 const sequelize = require("../config/db.config");
 const xlsx = require("xlsx");
-
 
 exports.create = async (req, res) => {
   // Validate request
@@ -26,8 +25,12 @@ exports.create = async (req, res) => {
       const ID_User = userData.ID_User;
       const data = {
         ID_Toanha: req.body.ID_Toanha,
-        ID_KhoiCV: req.body.ID_KhoiCVs ? req.body.ID_KhoiCVs[0] : req.body.ID_KhoiCV || null,
-        ID_KhoiCVs: req.body.ID_KhoiCVs ? req.body.ID_KhoiCVs : [req.body.ID_KhoiCV] || null,
+        ID_KhoiCV: req.body.ID_KhoiCVs
+          ? req.body.ID_KhoiCVs[0]
+          : req.body.ID_KhoiCV || null,
+        ID_KhoiCVs: req.body.ID_KhoiCVs
+          ? req.body.ID_KhoiCVs
+          : [req.body.ID_KhoiCV] || null,
         Sothutu: req.body.Sothutu,
         Makhuvuc: req.body.Makhuvuc,
         MaQrCode: req.body.MaQrCode,
@@ -105,7 +108,7 @@ exports.get = async (req, res) => {
       if (userData?.ID_KhoiCV !== null && userData?.ID_KhoiCV !== undefined) {
         whereCondition[Op.or] = [
           { ID_KhoiCV: userData?.ID_KhoiCV },
-          { '$ID_KhoiCVs$': { [Op.contains]: [userData?.ID_KhoiCV] } }
+          { $ID_KhoiCVs$: { [Op.contains]: [userData?.ID_KhoiCV] } },
         ];
       }
       await Ent_khuvuc.findAll({
@@ -212,8 +215,6 @@ exports.update = async (req, res) => {
   try {
     const userData = req.user.data;
     if (req.params.id && userData) {
-
-
       const reqData = {
         ID_Toanha: req.body.ID_Toanha,
         ID_KhoiCV: req.body.ID_KhoiCVs[0] || null,
@@ -322,7 +323,7 @@ exports.getKhuVuc = async (req, res) => {
       // Initialize where condition
       const whereCondition = {
         isDelete: 0, // Always include isDelete condition
-        [Op.and]: []
+        [Op.and]: [],
       };
 
       if (userData.Permission !== 3 && userData.UserName !== "PSH") {
@@ -333,9 +334,10 @@ exports.getKhuVuc = async (req, res) => {
 
         // Add ID_KhoiCV condition if it exists
         if (userData.ID_KhoiCV !== null && userData.ID_KhoiCV !== undefined) {
-
           whereCondition[Op.and].push(
-            Sequelize.literal(`JSON_CONTAINS(ID_KhoiCVs, '${userData.ID_KhoiCV}')`)
+            Sequelize.literal(
+              `JSON_CONTAINS(ID_KhoiCVs, '${userData.ID_KhoiCV}')`
+            )
           );
 
           // whereCondition[Op.and].push({
@@ -343,7 +345,6 @@ exports.getKhuVuc = async (req, res) => {
           // });
 
           // Replace Op.contains with Op.like for MySQL (adjust according to your DB)
-        
         }
 
         // Add ID_Toanha condition if it exists in request body
@@ -379,21 +380,19 @@ exports.getKhuVuc = async (req, res) => {
           },
         ],
         where: whereCondition,
-        order: [
-          ["ID_Toanha", "ASC"],
-        ],
+        order: [["ID_Toanha", "ASC"]],
       })
-      .then((data) => {
-        res.status(200).json({
-          message: "Thông tin khu vực!",
-          data: data,
+        .then((data) => {
+          res.status(200).json({
+            message: "Thông tin khu vực!",
+            data: data,
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
         });
-      })
-      .catch((err) => {
-        res.status(500).json({
-          message: err.message || "Lỗi! Vui lòng thử lại sau.",
-        });
-      });
     } else {
       res.status(400).json({
         message: "Vui lòng cung cấp ít nhất một trong hai ID.",
@@ -555,7 +554,6 @@ exports.getKhuvucTotal = async (req, res) => {
   }
 };
 
-
 exports.uploadFiles = async (req, res) => {
   try {
     if (!req.file) {
@@ -601,29 +599,34 @@ exports.uploadFiles = async (req, res) => {
     });
 
     await sequelize.transaction(async (transaction) => {
+      const removeSpacesFromKeys = (obj) => {
+        return Object.keys(obj).reduce((acc, key) => {
+          const newKey = key.replace(/\s+/g, "").toUpperCase();
+          acc[newKey] = obj[key];
+          return acc;
+        }, {});
+      };
+
       for (const item of updatedData) {
-        const tenKhoiCongViec = item["Tên khối công việc"];
-        const tenToanha = item["Tên tòa nhà"];
-        const tenKhuvuc = item["Tên khu vực"];
-        const maKhuvuc = item["Mã khu vực"];
-        const maQrKhuvuc = item["Mã QrCode khu vực"];
+        const transformedItem = removeSpacesFromKeys(item);
+
+        const tenKhoiCongViec = transformedItem["TÊNKHỐICÔNGVIỆC"];
+        const tenToanha = transformedItem["TÊNTÒANHÀ"];
+        const tenKhuvuc = transformedItem["TÊNKHUVỰC"];
+        const maKhuvuc = transformedItem["MÃKHUVỰC"];
+        const maQrKhuvuc = transformedItem["MÃQRCODEKHUVỰC"];
 
         const toaNha = await Ent_toanha.findOne({
-          attributes: [
-            "ID_Toanha",
-            "Sotang",
-            "Toanha"
-          ],
+          attributes: ["ID_Toanha", "Sotang", "Toanha"],
           where: {
             Toanha: sequelize.where(
               sequelize.fn("UPPER", sequelize.col("Toanha")),
               "LIKE",
-              "%" + tenToanha.toUpperCase() + "%"
+              "%" + tenToanha?.toUpperCase() + "%"
             ),
           },
           transaction,
         });
-        
 
         const khoiCV = await Ent_khoicv.findOne({
           attributes: ["ID_Khoi", "KhoiCV"],
@@ -632,7 +635,7 @@ exports.uploadFiles = async (req, res) => {
               sequelize.fn("UPPER", sequelize.col("KhoiCV")),
               "LIKE",
               "%" + tenKhoiCongViec.toUpperCase() + "%"
-            )
+            ),
           },
           transaction,
         });
@@ -642,15 +645,17 @@ exports.uploadFiles = async (req, res) => {
           attributes: ["ID_KhuVuc", "Tenkhuvuc", "isDelete", "ID_Toanha"],
           where: {
             [Op.and]: [
-              where(fn("UPPER", col("Tenkhuvuc")), { [Op.like]: `%${tenKhuvuc}%` }),
-              where(fn("UPPER", col("MaQrCode")), { [Op.like]: `%${maQrKhuvuc}%` })
+              where(fn("UPPER", col("Tenkhuvuc")), {
+                [Op.like]: `%${tenKhuvuc}%`,
+              }),
+              where(fn("UPPER", col("MaQrCode")), {
+                [Op.like]: `%${maQrKhuvuc}%`,
+              }),
             ],
-            ID_Toanha: toaNha.ID_Toanha
+            ID_Toanha: toaNha.ID_Toanha,
           },
           transaction,
         });
-
-        
 
         if (!existingKhuVuc) {
           // If tenKhuvuc doesn't exist, create a new entry
@@ -663,12 +668,14 @@ exports.uploadFiles = async (req, res) => {
             MaQrCode: maQrKhuvuc,
             Tenkhuvuc: tenKhuvuc,
             ID_User: userData.ID_User,
-            isDelete: 0
+            isDelete: 0,
           };
 
           await Ent_khuvuc.create(dataInsert, { transaction });
         } else {
-          console.log(`Khu vực "${tenKhuvuc}" đã tồn tại, bỏ qua việc tạo mới.`);
+          console.log(
+            `Khu vực "${tenKhuvuc}" đã tồn tại, bỏ qua việc tạo mới.`
+          );
         }
       }
     });
@@ -678,19 +685,15 @@ exports.uploadFiles = async (req, res) => {
       data,
     });
   } catch (err) {
-    console.log('err', err)
+    console.log("err", err);
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
 };
 
-
-
 function capitalizeEachWord(str) {
-  return str.toLowerCase().replace(/\b\w/g, function(match) {
-      return match.toUpperCase();
+  return str.toLowerCase().replace(/\b\w/g, function (match) {
+    return match.toUpperCase();
   });
 }
-
-
