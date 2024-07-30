@@ -2021,6 +2021,8 @@ exports.uploadFiles = async (req, res) => {
             isDelete: 0,
             Tinhtrang: 0,
           };
+
+          console.log('data',data)
   
           await Ent_checklist.create(data, { transaction });
         }
