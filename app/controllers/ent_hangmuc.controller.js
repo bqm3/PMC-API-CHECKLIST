@@ -681,11 +681,9 @@ exports.uploadFiles = async (req, res) => {
             "Tenkhuvuc",
           ],
           where: {
-            MaQrCode: sequelize.where(
-              sequelize.fn("UPPER", sequelize.col("MaQrCode")),
-              "LIKE",
-              "%" + maQrKhuvuc.toUpperCase() + "%"
-            ),
+            MaQrCode: {
+              [Op.eq]: maQrKhuvuc.toUpperCase(),
+            },
           },
           transaction,
         });
@@ -708,10 +706,14 @@ exports.uploadFiles = async (req, res) => {
           attributes: ["ID_Hangmuc", "Hangmuc", "MaQrCode"],
           where: {
             [Op.and]: [
-              where(fn("UPPER", col("Hangmuc")), { [Op.like]: `%${tenHangmuc}%` }),
-              where(fn("UPPER", col("MaQrCode")), { [Op.like]: `%${maQrHangmuc}%` })
+              where(fn("UPPER", col("Hangmuc")), {
+                [Op.eq]: tenHangmuc.trim().toUpperCase()
+              }),
+              where(fn("UPPER", col("MaQrCode")), {
+                [Op.eq]: maQrHangmuc.trim().toUpperCase()
+              })
             ]
-        },
+          },
           transaction,
         });
 
@@ -726,6 +728,8 @@ exports.uploadFiles = async (req, res) => {
             Hangmuc: tenHangmuc,
             isDelete: 0
           };
+
+          console.log('dataInsert',dataInsert)
 
           await Ent_hangmuc.create(dataInsert, { transaction });
         } else {
