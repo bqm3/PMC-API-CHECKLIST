@@ -703,19 +703,18 @@ exports.uploadFiles = async (req, res) => {
 
         // Check if tenKhuvuc already exists in the database
         const existingHangMuc = await Ent_hangmuc.findOne({
-          attributes: ["ID_Hangmuc", "Hangmuc", "MaQrCode"],
+          attributes: ["ID_Hangmuc", "Hangmuc", "MaQrCode", "ID_Khuvuc"],
           where: {
             [Op.and]: [
-              where(fn("UPPER", col("Hangmuc")), {
-                [Op.eq]: tenHangmuc.trim().toUpperCase()
-              }),
-              where(fn("UPPER", col("MaQrCode")), {
-                [Op.eq]: maQrHangmuc.trim().toUpperCase()
-              })
+              { Hangmuc: tenHangmuc.toUpperCase() },
+              { MaQrCode: maQrHangmuc.toUpperCase() },
+              { ID_Khuvuc: khuVuc.ID_Khuvuc }
             ]
           },
           transaction,
         });
+
+        console.log('existingHangMuc',existingHangMuc)
 
         
 
