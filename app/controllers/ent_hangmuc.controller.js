@@ -543,6 +543,7 @@ exports.getHangmucTotal = async (req, res) => {
       attributes: [
         "ID_Hangmuc",
         "ID_Khuvuc",
+        "ID_KhoiCV",
         "MaQrCode",
         "Hangmuc",
         "Tieuchuankt",
@@ -573,11 +574,15 @@ exports.getHangmucTotal = async (req, res) => {
                 "isDelete",
               ],
             },
-            {
-              model: Ent_khoicv,
-              attributes: ["KhoiCV"],
-            },
+            
           ],
+          where: {
+            isDelete: 0
+          }
+        },
+        {
+          model: Ent_khoicv,
+          attributes: ["KhoiCV"],
         },
       ],
       where: whereCondition,
@@ -593,7 +598,7 @@ exports.getHangmucTotal = async (req, res) => {
     // Count checklists by ID_KhoiCV
     const hangmucCounts = {};
     hangmucData.forEach((item) => {
-      const khoiCV = item.ent_khuvuc?.ent_khoicv?.KhoiCV;
+      const khoiCV = item?.ent_khoicv?.KhoiCV;
       if (khoiCV) {
         if (!hangmucCounts[khoiCV]) {
           hangmucCounts[khoiCV] = 0;
@@ -714,9 +719,6 @@ exports.uploadFiles = async (req, res) => {
           transaction,
         });
 
-        console.log('existingHangMuc',existingHangMuc)
-
-        
 
         if (!existingHangMuc) {
           // If tenKhuvuc doesn't exist, create a new entry
@@ -727,8 +729,6 @@ exports.uploadFiles = async (req, res) => {
             Hangmuc: tenHangmuc,
             isDelete: 0
           };
-
-          console.log('dataInsert',dataInsert)
 
           await Ent_hangmuc.create(dataInsert, { transaction });
         } else {
