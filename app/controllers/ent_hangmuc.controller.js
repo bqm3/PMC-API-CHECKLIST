@@ -684,11 +684,13 @@ exports.uploadFiles = async (req, res) => {
             "ID_Khuvuc",
             "MaQrCode",
             "Tenkhuvuc",
+            "isDelete"
           ],
           where: {
             MaQrCode: {
               [Op.eq]: maQrKhuvuc.toUpperCase(),
             },
+            isDelete: 0
           },
           transaction,
         });
