@@ -631,17 +631,20 @@ exports.uploadFiles = async (req, res) => {
         const maKhuvuc = transformedItem["MÃKHUVỰC"];
         const maQrKhuvuc = transformedItem["MÃQRCODEKHUVỰC"];
 
+        const sanitizedTenToanha = tenToanha.replace(/\t/g, ''); // Loại bỏ tất cả các ký tự tab
+
         const toaNha = await Ent_toanha.findOne({
           attributes: ["ID_Toanha", "Sotang", "Toanha"],
           where: {
-            Toanha: sequelize.where(
-              sequelize.fn("UPPER", sequelize.col("Toanha")),
-              "LIKE",
-              "%" + tenToanha?.toUpperCase() + "%"
-            ),
+            Toanha: sanitizedTenToanha
+            
           },
           transaction,
         });
+        
+
+        console.log('toaNha',toaNha)
+        console.log('tenToanha',tenToanha)
 
         const khoiCV = await Ent_khoicv.findOne({
           attributes: ["ID_Khoi", "KhoiCV"],
