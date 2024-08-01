@@ -35,6 +35,8 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       return data;
     };
 
+    const isEmpty = (obj) => Object.keys(obj).length === 0;
+
     records.ID_ChecklistC = ensureArray(records.ID_ChecklistC);
     records.ID_Checklist = ensureArray(records.ID_Checklist);
     records.Ketqua = ensureArray(records.Ketqua);
@@ -50,9 +52,11 @@ exports.createCheckListChiTiet = async (req, res, next) => {
 
     // Upload images and collect file details (id and original name)
     const uploadedFileIds = [];
-    for (const image of images) {
-      const fileId = await uploadFile(image);
-      await uploadedFileIds.push({ id: fileId, name: image.originalname });
+    if (!isEmpty(images)) {
+      for (const image of images) {
+        const fileId = await uploadFile(image);
+        await uploadedFileIds.push({ id: fileId, name: image.originalname });
+      }
     }
 
     // Prepare records for bulk creation
@@ -63,31 +67,33 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       const Ghichu = records.Ghichu[index];
 
       // Handle Anh from records
-      let Anh = null; // Default to null if no image is provided
-      let inputAnh = Array.isArray(records.Anh)
-        ? records.Anh[index]
-        : records.Anh;
+      let Anh = ""; // Default to null if no image is provided
+      if (!isEmpty(images)) {
+        let inputAnh = Array.isArray(records.Anh)
+          ? records.Anh[index]
+          : records.Anh;
 
-      if (inputAnh) {
-        // Xác định `inputAnh` có phải là đối tượng hay không
-        if (typeof inputAnh === "object") {
-          // Nếu `inputAnh` là đối tượng, lấy tên của đối tượng để so sánh
-          inputAnh = inputAnh.name;
-        }
+        if (inputAnh) {
+          // Xác định `inputAnh` có phải là đối tượng hay không
+          if (typeof inputAnh === "object") {
+            // Nếu `inputAnh` là đối tượng, lấy tên của đối tượng để so sánh
+            inputAnh = inputAnh.name;
+          }
 
-        // Kiểm tra tệp ảnh đã tải lên
-        const matchingImage = uploadedFileIds.find(
-          (file) => file.name === inputAnh
-        );
+          // Kiểm tra tệp ảnh đã tải lên
+          const matchingImage = uploadedFileIds.find(
+            (file) => file.name === inputAnh
+          );
 
-        if (matchingImage) {
-          // Sử dụng ID của tệp ảnh đã tải lên làm giá trị cho Anh
-          Anh = matchingImage.id.id;
+          if (matchingImage) {
+            // Sử dụng ID của tệp ảnh đã tải lên làm giá trị cho Anh
+            Anh = matchingImage.id.id;
+          } else {
+            console.log(`No matching image found for Anh: ${inputAnh}`);
+          }
         } else {
-          console.log(`No matching image found for Anh: ${inputAnh}`);
+          console.log(`Unexpected Anh format: ${JSON.stringify(inputAnh)}`);
         }
-      } else {
-        console.log(`Unexpected Anh format: ${JSON.stringify(inputAnh)}`);
       }
 
       // Create the record object
@@ -107,15 +113,6 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     try {
       // Bulk create new records
       await Tb_checklistchitiet.bulkCreate(newRecords, { transaction });
-
-      // Update `TongC` in `Tb_checklistc`
-      await Tb_checklistc.update(
-        { TongC: Sequelize.literal(`TongC + ${records.ID_ChecklistC.length}`) },
-        {
-          where: { ID_ChecklistC: records.ID_ChecklistC[0] },
-          transaction,
-        }
-      );
 
       // Extract unique ID_Checklist values
       const uniqueIDChecklists = [...new Set(records.ID_Checklist)];
