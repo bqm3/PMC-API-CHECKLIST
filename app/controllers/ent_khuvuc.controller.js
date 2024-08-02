@@ -660,7 +660,7 @@ exports.uploadFiles = async (req, res) => {
 
         // Check if tenKhuvuc already exists in the database
         const existingKhuVuc = await Ent_khuvuc.findOne({
-          attributes: ["ID_KhuVuc", "Tenkhuvuc", "isDelete", "ID_Toanha"],
+          attributes: ["ID_KhuVuc", "Tenkhuvuc", "isDelete", "ID_Toanha", "isDelete"],
           where: {
             [Op.and]: [
               where(fn("UPPER", col("Tenkhuvuc")), {
@@ -671,6 +671,7 @@ exports.uploadFiles = async (req, res) => {
               }),
             ],
             ID_Toanha: toaNha.ID_Toanha,
+            isDelete: 0
           },
           transaction,
         });
