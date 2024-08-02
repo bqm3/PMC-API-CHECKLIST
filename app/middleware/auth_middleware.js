@@ -25,7 +25,7 @@ const isAuthenticated = asyncHandler((req, res, next) => {
 const isAdmin = asyncHandler((req, res, next) => {
     const { ent_chucvu } = req.user.data;
 
-    if (ent_chucvu.Chucvu !== 'PSH')
+    if (ent_chucvu.Chucvu !== 'PSH' && ent_chucvu.Chucvu !== 'Giám đốc dự án' )
         return res.status(401).json({
             success: false,
             message: 'Không có quyền truy cập'
