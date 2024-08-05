@@ -537,6 +537,10 @@ exports.getGiamSat = async (req, res, next) => {
   }
 };
 
+exports.devuceToken = async (req, res, next) => {
+  
+}
+
 exports.setUpKhuVuc = async (req, res, next) => {
   try {
     const userData = req.user.data;
