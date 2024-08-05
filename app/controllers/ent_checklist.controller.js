@@ -1961,13 +1961,34 @@ exports.uploadFiles = async (req, res) => {
             "ID_Khuvuc",
             "MaQrCode",
             "ID_Hangmuc",
+            "isDelete"
           ],
-          where: { MaQrCode: maQrCodeHangMuc },
+          include: [
+            {
+              model: Ent_khuvuc,
+              attributes: [
+                "ID_Toanha",
+                "ID_Khuvuc",
+                "ID_KhoiCV",
+                "ID_KhoiCVs",
+                "Sothutu",
+                "MaQrCode",
+                "Tenkhuvuc",
+                "ID_User",
+                "isDelete",
+              ],
+              where: {
+                isDelete: 0,
+              },
+              
+            },
+          ],
+          where: { MaQrCode: maQrCodeHangMuc, isDelete: 0 },
           transaction,
         });
 
         const tang = await Ent_tang.findOne({
-          attributes: ["Tentang", "Sotang", "ID_Tang", "ID_Duan"],
+          attributes: ["Tentang", "Sotang", "ID_Tang", "ID_Duan", "isDelete"],
           where: {
             Tentang: sequelize.where(
               sequelize.fn("UPPER", sequelize.fn('TRIM', sequelize.col("Tentang"))),
@@ -1975,13 +1996,14 @@ exports.uploadFiles = async (req, res) => {
               "%" + tenTang.trim().toUpperCase() + "%"
             ),
             ID_Duan: userData.ID_Duan,
+            isDelete: 0
           },
           transaction,
         });
 
         const khoiCV = await Ent_khoicv.findOne({
-          attributes: ["ID_Khoi", "KhoiCV"],
-          where: { KhoiCV: tenKhoiCongViec },
+          attributes: ["ID_Khoi", "KhoiCV", "isDelete"],
+          where: { KhoiCV: tenKhoiCongViec, isDelete: 0 },
           transaction,
         });
 
@@ -1990,11 +2012,12 @@ exports.uploadFiles = async (req, res) => {
         }else {
           const caChecklistArray = caChecklist.split(",").map((ca) => ca.trim());
           const calv = await Ent_calv.findAll({
-            attributes: ["ID_Calv", "ID_Duan", "ID_KhoiCV", "Tenca"],
+            attributes: ["ID_Calv", "ID_Duan", "ID_KhoiCV", "Tenca", "isDelete"],
             where: {
               TenCa: caChecklistArray,
               ID_Duan: userData.ID_Duan,
               ID_KhoiCV: khoiCV.ID_Khoi,
+              isDelete: 0
             },
             transaction,
           });
