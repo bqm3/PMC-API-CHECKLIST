@@ -26,6 +26,7 @@ module.exports = (app) => {
     tb_checklistc.checklistCalv
   );
 
+  router.get("/top3kythuatmax", tb_checklistc.top3kythuatMax);
   router.get("/year", [isAuthenticated], tb_checklistc.checklistYear);
   router.get("/percent", [isAuthenticated], tb_checklistc.checklistPercent);
   router.get("/", [isAuthenticated], tb_checklistc.getCheckListc);
@@ -34,6 +35,7 @@ module.exports = (app) => {
   router.put("/open/:id", [isAuthenticated], tb_checklistc.open);
   router.put("/delete/:id", [isAuthenticated], tb_checklistc.delete);
   router.post("/baocao", [isAuthenticated], tb_checklistc.createExcelFile);
+ 
 
   router.post(
     "/update_images/:id",

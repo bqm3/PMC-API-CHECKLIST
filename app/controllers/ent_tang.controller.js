@@ -64,7 +64,7 @@ exports.get = async (req, res) => {
         include: [
           {
             model: Ent_duan,
-            attributes: ["Duan", "Diachi"],
+            attributes: ["Duan", "Diachi", "Logo"],
           },
           {
             model: Ent_user,
@@ -99,7 +99,7 @@ exports.get = async (req, res) => {
         include: [
           {
             model: Ent_duan,
-            attributes: ["Duan", "Diachi"],
+            attributes: ["Duan", "Diachi", "Logo"],
           },
           {
             model: Ent_user,
