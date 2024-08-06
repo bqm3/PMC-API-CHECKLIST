@@ -35,19 +35,29 @@ exports.create = (req, res) => {
 
     // Save Tb_checklistchitietdone in the database
     Tb_checklistchitietdone.create(data)
-      .then(async (createdData) => {
-        // Send response for successful creation
-        await Tb_checklistc.update(
-          {
-            TongC: Sequelize.literal(`TongC + ${checklistLength}`),
-          },
-          {
-            where: {
-              ID_ChecklistC: ID_ChecklistC,
-            },
+    .then(async (createdData) => {
+      try {
+        // Find the checklist record to check current TongC
+        const checklistC = await Tb_checklistc.findOne({
+          where: { ID_ChecklistC: ID_ChecklistC }
+        });
+  
+        if (checklistC) {
+          const currentTongC = checklistC.TongC;
+          const totalTong = checklistC.Tong;
+  
+          if (currentTongC < totalTong) {
+            // Update TongC only if it is less than Tong
+            await Tb_checklistc.update(
+              { TongC: Sequelize.literal(`TongC + ${checklistLength}`) },
+              {
+                where: { ID_ChecklistC: ID_ChecklistC },
+              }
+            );
           }
-        );
-
+        }
+  
+        // Update Ent_checklist Tinhtrang
         await Ent_checklist.update(
           { Tinhtrang: 0 },
           {
@@ -58,20 +68,23 @@ exports.create = (req, res) => {
             },
           }
         );
-
+  
         res.status(200).json({
           message: "Checklist thành công!",
           data: createdData,
         });
-
-        // Update related data in the database
-       
-      })
-      .catch((err) => {
+      } catch (error) {
         res.status(500).json({
-          message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          message: error.message || "Lỗi! Vui lòng thử lại sau.",
         });
+      }
+    })
+    .catch((err) => {
+      res.status(500).json({
+        message: err.message || "Lỗi! Vui lòng thử lại sau.",
       });
+    });
+  
   } catch (err) {
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",

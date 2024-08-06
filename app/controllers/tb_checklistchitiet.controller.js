@@ -116,6 +116,30 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       // Extract unique ID_Checklist values
       const uniqueIDChecklists = [...new Set(records.ID_Checklist)];
 
+      await Tb_checklistc.findOne({
+        where: { ID_ChecklistC: records.ID_ChecklistC[0] },
+        transaction,
+      }).then(async (checklistC) => {
+        if (checklistC) {
+          // Kiểm tra xem giá trị TongC có lớn hơn hoặc bằng Tong hay không
+          const currentTongC = checklistC.TongC;
+          const totalTong = checklistC.Tong;
+      
+          if (currentTongC < totalTong) {
+            // Cộng thêm giá trị chỉ khi TongC nhỏ hơn Tong
+            await Tb_checklistc.update(
+              { TongC: Sequelize.literal(`TongC + ${records.ID_ChecklistC.length}`) },
+              {
+                where: { ID_ChecklistC: records.ID_ChecklistC[0] },
+                transaction,
+              }
+            );
+          }
+        }
+      }).catch((error) => {
+        console.error("Error in updating TongC: ", error);
+      });
+
       // Update Tinhtrang = 1 for each ID_Checklist in ent_checklist
       await Ent_checklist.update(
         { Tinhtrang: 1 },
