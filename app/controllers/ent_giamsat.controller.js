@@ -29,6 +29,19 @@ exports.create = async (req, res) => {
         iQuyen,
       } = req.body;
 
+      // Kiểm tra ngày sinh có hợp lệ không
+      const birthDate = new Date(Ngaysinh);
+      const today = new Date();
+      const age = today.getFullYear() - birthDate.getFullYear();
+      const monthDifference = today.getMonth() - birthDate.getMonth();
+      const dayDifference = today.getDate() - birthDate.getDate();
+
+      if (age < 18 || (age === 18 && (monthDifference < 0 || (monthDifference === 0 && dayDifference < 0)))) {
+        return res.status(400).json({
+          message: "Người dùng phải trên 18 tuổi!",
+        });
+      }
+
       // Kiểm tra xem số điện thoại đã tồn tại trong cơ sở dữ liệu hay chưa
       const existingEntry = await Ent_giamsat.findOne({
         attributes: [
@@ -78,6 +91,7 @@ exports.create = async (req, res) => {
     });
   }
 };
+
 
 exports.get = async (req, res) => {
   try {
@@ -207,6 +221,18 @@ exports.update = async (req, res) => {
           message: "Cần nhập đầy đủ thông tin!",
         });
         return;
+      }
+
+      const birthDate = new Date(req.body.Ngaysinh);
+      const today = new Date();
+      const age = today.getFullYear() - birthDate.getFullYear();
+      const monthDifference = today.getMonth() - birthDate.getMonth();
+      const dayDifference = today.getDate() - birthDate.getDate();
+
+      if (age < 18 || (age === 18 && (monthDifference < 0 || (monthDifference === 0 && dayDifference < 0)))) {
+        return res.status(400).json({
+          message: "Người giám sát phải trên 18 tuổi!",
+        });
       }
       // Kiểm tra xem số điện thoại đã tồn tại trong cơ sở dữ liệu hay chưa, ngoại trừ bản ghi hiện tại đang được cập nhật
       const existingEntry = await Ent_giamsat.findOne({
