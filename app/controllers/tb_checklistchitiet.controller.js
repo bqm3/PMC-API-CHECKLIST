@@ -17,15 +17,14 @@ const sequelize = require("../config/db.config");
 const { Op, where, Sequelize } = require("sequelize");
 const ExcelJS = require("exceljs");
 var path = require("path");
+const { notiPush } = require("./ent_user.controller");
 
 exports.createCheckListChiTiet = async (req, res, next) => {
   try {
     // Extract data from the request body and files
     const records = req.body;
     const images = req.files;
-
-    console.log("records", records);
-    console.log("images", images);
+    const userData = req.user.data;
 
     // Ensure records.ID_ChecklistC and records.ID_Checklist are arrays
     const ensureArray = (data) => {
@@ -133,9 +132,41 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       // Commit transaction
       await transaction.commit();
 
-      res
+      const hasImageAndNote = newRecords.some(
+        (record) => record.Anh && record.Ghichu
+      );
+
+      if (hasImageAndNote) {
+        // Prepare the notification message
+        const message = {
+          title: "PMC Checklist",
+          body: `Kết quả: ${records.Ketqua.join(
+            ", "
+          )}, Giờ kiểm tra: ${records.Gioht.join(", ")}, Tình trạng: ${records.Ghichu.join(
+            ", "
+          )}`,
+          data: {
+            Ketqua: records.Ketqua,
+            Gioht: records.Gioht,
+            Ghichu: records.Ghichu,
+            userData,
+          },
+        };
+
+        // Call the notiPush API to send notifications
+        req.body.message = message;
+        const notificationResult = await notiPush(message);
+        return res.status(200).json({
+          message: "Records created and updated successfully",
+          notificationResult,
+        });
+      }else {
+        return res
         .status(200)
         .json({ message: "Records created and updated successfully" });
+      }
+
+      
     } catch (error) {
       // Rollback transaction
       await transaction.rollback();

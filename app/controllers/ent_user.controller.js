@@ -8,6 +8,7 @@ const { hashSync, genSaltSync, compareSync } = require("bcrypt");
 const bcrypt = require("bcrypt");
 const jsonwebtoken = require("jsonwebtoken");
 const { Op } = require("sequelize");
+const fetch = require('node-fetch');
 
 // Login User
 exports.login = async (req, res) => {
@@ -37,7 +38,7 @@ exports.login = async (req, res) => {
       include: [
         {
           model: Ent_duan,
-          attributes: ["Duan"],
+          attributes: ["Duan", "Diachi", "Logo"],
         },
         {
           model: Ent_chucvu,
@@ -330,7 +331,7 @@ exports.getUserOnline = async (req, res, next) => {
       include: [
         {
           model: Ent_duan,
-          attributes: ["Duan", "Diachi"],
+          attributes: ["Duan", "Diachi", "Logo"],
         },
         {
           model: Ent_chucvu,
@@ -395,7 +396,7 @@ exports.getDetail = async (req, res) => {
         include: [
           {
             model: Ent_duan,
-            attributes: ["Duan", "Diachi"],
+            attributes: ["Duan", "Diachi", "Logo"],
           },
           {
             model: Ent_chucvu,
@@ -442,12 +443,13 @@ exports.checkAuth = async (req, res, next) => {
         "ID_Khuvucs",
         "ID_Duan",
         "ID_KhoiCV",
+        "deviceToken",
         "Permission",
       ],
       include: [
         {
           model: Ent_duan,
-          attributes: ["Duan", "Diachi"],
+          attributes: ["Duan", "Diachi", "Logo"],
         },
         {
           model: Ent_chucvu,
@@ -505,7 +507,7 @@ exports.getGiamSat = async (req, res, next) => {
         include: [
           {
             model: Ent_duan,
-            attributes: ["Duan", "Diachi"],
+            attributes: ["Duan", "Diachi", "Logo"],
           },
           {
             model: Ent_chucvu,
@@ -537,9 +539,67 @@ exports.getGiamSat = async (req, res, next) => {
   }
 };
 
-exports.devuceToken = async (req, res, next) => {
-  
-}
+exports.deviceToken = async (req, res, next) => {
+  try {
+    const userData = req.user.data;
+    if (userData) {
+      const { deviceToken } = req.body;
+
+      // Tìm kiếm deviceToken trong bảng Ent_user
+      const existingUser = await Ent_user.findOne({
+        attributes: [
+          "ID_User",
+          "UserName",
+          "Emails",
+          "Password",
+          "ID_Khuvucs",
+          "ID_Duan",
+          "ID_KhoiCV",
+          "deviceToken",
+          "Permission",
+        ],
+        where: {
+          deviceToken: deviceToken,
+          ID_User: { [Op.ne]: userData.ID_User }
+        }
+      });
+
+      // Nếu tìm thấy user khác có deviceToken này, cập nhật deviceToken của họ thành null
+      if (existingUser) {
+        await Ent_user.update(
+          { deviceToken: null },
+          {
+            where: {
+              ID_User: existingUser.ID_User
+            }
+          }
+        );
+      }
+      // Cập nhật deviceToken cho user hiện tại
+      await Ent_user.update(
+        { deviceToken: deviceToken },
+        {
+          where: {
+            ID_User: userData.ID_User
+          }
+        }
+      ).then((data) => {
+        res.status(200).json({
+          message: "Cập nhật device token thành công!" ,
+        });
+      })
+      .catch((err) => {
+        res.status(500).json({
+          message: err.message || "Lỗi! Vui lòng thử lại sau.",
+        });
+      });
+
+      // return res.status(200).json({ message: "Cập nhật device token thành công!" });
+    }
+  } catch (err) {
+    return res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+  }
+};
 
 exports.setUpKhuVuc = async (req, res, next) => {
   try {
@@ -576,4 +636,75 @@ const extractCheckedIDs = (data) => {
         .filter((area) => area.checked) // Filter areas with checked === true
         .map((area) => area.ID_Khuvuc) // Map to ID_Khuvuc
   );
+};
+
+async function sendPushNotification(expoPushToken, message) {
+  // console.log('expoPushToken',expoPushToken)
+  const payload = {
+    to: expoPushToken,
+    sound: "default",
+    title: message.title,
+    body: message.body,
+    data: message.data,
+  };
+  // console.log('payload', payload)
+
+  const response = await fetch("https://exp.host/--/api/v2/push/send", {
+    method: "POST",
+    headers: {
+      "Accept": "application/json",
+      "Accept-encoding": "gzip, deflate",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Error sending push notification: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  return data;
+}
+
+exports.notiPush = async (message) => {
+  try {
+    const users = await Ent_user.findAll({
+      attributes: ["deviceToken",  "ID_User",
+        "UserName",
+        "Emails",
+        "Password",
+        "ID_Duan",
+        "ID_KhoiCV",
+        "ID_Khuvucs",
+        "Permission",
+        "isDelete",],
+      where: { isDelete: 0 },
+    });
+    // users.map((user) => console.log(user.ID_Duan, "|", user.ID_KhoiCV))
+    // console.log('message.data.userData.ID_KhoiCV',message.data.userData.ID_KhoiCV)
+    const tokens = users
+      .filter((user) => user.deviceToken && user.ID_Duan === message.data.userData.ID_Duan
+      && user.ID_KhoiCV == message.data.userData.ID_KhoiCV && user.ID_User !== message.data.userData.ID_User)
+      .map((user) => user.deviceToken);
+
+    const new_message = {
+      title: message.title,
+      body: message.body,
+      data: {
+        Ketqua: message.data.Ketqua[0],
+        Gioht: message.data.Gioht[0],
+        Ghichu: message.data.Ghichu[0],
+      },
+    };
+    const notificationPromises = tokens.map(token => sendPushNotification(token, new_message));
+
+    const results = await Promise.all(notificationPromises);
+
+    return { success: true, message: "Notifications sent to all users", results };
+  } catch (error) {
+    console.error("Error sending notifications:", error);
+    return res.status(500).json({ success: false, error: error.message });
+  }
 };

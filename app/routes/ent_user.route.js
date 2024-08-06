@@ -10,11 +10,12 @@ module.exports = (app) => {
     router.put("/set-up/:id",[isAuthenticated], ent_user.setUpKhuVuc);
     router.get("/:id",[isAuthenticated, isAdmin], ent_user.getDetail);
     router.post("/check-auth",[isAuthenticated], ent_user.checkAuth);
-    router.post("/device-token",[isAuthenticated], ent_user.devuceToken);
+    router.post("/device-token",[isAuthenticated], ent_user.deviceToken);
     router.post("/register", [isAuthenticated, isAdmin],ent_user.register);
     router.post("/change-password",[isAuthenticated], ent_user.changePassword);
     router.put("/delete/:id",[isAuthenticated, isAdmin], ent_user.deleteUser);
     router.put("/update/:id",[isAuthenticated, isAdmin], ent_user.updateUser);
+    router.post("/noti",[isAuthenticated], ent_user.notiPush);
    
     app.use("/api/ent_user", router);
   };
