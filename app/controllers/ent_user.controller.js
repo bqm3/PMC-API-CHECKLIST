@@ -8,8 +8,8 @@ const { hashSync, genSaltSync, compareSync } = require("bcrypt");
 const bcrypt = require("bcrypt");
 const jsonwebtoken = require("jsonwebtoken");
 const { Op } = require("sequelize");
-const fetch = require('node-fetch');
-const moment = require('moment-timezone');
+const fetch = require("node-fetch");
+const moment = require("moment-timezone");
 
 // Login User
 exports.login = async (req, res) => {
@@ -199,11 +199,11 @@ exports.changePassword = async (req, res, next) => {
       const vietnamTime = new Date(utcNow + 7 * 60 * 60000);
 
       const year = vietnamTime.getFullYear();
-      const month = String(vietnamTime.getMonth() + 1).padStart(2, '0');
-      const day = String(vietnamTime.getDate()).padStart(2, '0');
-      const hours = String(vietnamTime.getHours()).padStart(2, '0');
-      const minutes = String(vietnamTime.getMinutes()).padStart(2, '0');
-      const seconds = String(vietnamTime.getSeconds()).padStart(2, '0');
+      const month = String(vietnamTime.getMonth() + 1).padStart(2, "0");
+      const day = String(vietnamTime.getDate()).padStart(2, "0");
+      const hours = String(vietnamTime.getHours()).padStart(2, "0");
+      const minutes = String(vietnamTime.getMinutes()).padStart(2, "0");
+      const seconds = String(vietnamTime.getSeconds()).padStart(2, "0");
 
       const formattedVietnamTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 
@@ -575,8 +575,8 @@ exports.deviceToken = async (req, res, next) => {
         ],
         where: {
           deviceToken: deviceToken,
-          ID_User: { [Op.ne]: userData.ID_User }
-        }
+          ID_User: { [Op.ne]: userData.ID_User },
+        },
       });
 
       // Nếu tìm thấy user khác có deviceToken này, cập nhật deviceToken của họ thành null
@@ -585,8 +585,8 @@ exports.deviceToken = async (req, res, next) => {
           { deviceToken: null },
           {
             where: {
-              ID_User: existingUser.ID_User
-            }
+              ID_User: existingUser.ID_User,
+            },
           }
         );
       }
@@ -595,24 +595,27 @@ exports.deviceToken = async (req, res, next) => {
         { deviceToken: deviceToken },
         {
           where: {
-            ID_User: userData.ID_User
-          }
+            ID_User: userData.ID_User,
+          },
         }
-      ).then((data) => {
-        res.status(200).json({
-          message: "Cập nhật device token thành công!" ,
+      )
+        .then((data) => {
+          res.status(200).json({
+            message: "Cập nhật device token thành công!",
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
         });
-      })
-      .catch((err) => {
-        res.status(500).json({
-          message: err.message || "Lỗi! Vui lòng thử lại sau.",
-        });
-      });
 
       // return res.status(200).json({ message: "Cập nhật device token thành công!" });
     }
   } catch (err) {
-    return res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    return res
+      .status(500)
+      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -667,7 +670,7 @@ async function sendPushNotification(expoPushToken, message) {
   const response = await fetch("https://exp.host/--/api/v2/push/send", {
     method: "POST",
     headers: {
-      "Accept": "application/json",
+      Accept: "application/json",
       "Accept-encoding": "gzip, deflate",
       "Content-Type": "application/json",
     },
@@ -676,7 +679,9 @@ async function sendPushNotification(expoPushToken, message) {
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Error sending push notification: ${response.status} - ${errorText}`);
+    throw new Error(
+      `Error sending push notification: ${response.status} - ${errorText}`
+    );
   }
 
   const data = await response.json();
@@ -686,7 +691,9 @@ async function sendPushNotification(expoPushToken, message) {
 exports.notiPush = async (message) => {
   try {
     const users = await Ent_user.findAll({
-      attributes: ["deviceToken",  "ID_User",
+      attributes: [
+        "deviceToken",
+        "ID_User",
         "UserName",
         "Emails",
         "Password",
@@ -694,14 +701,20 @@ exports.notiPush = async (message) => {
         "ID_KhoiCV",
         "ID_Khuvucs",
         "Permission",
-        "isDelete",],
+        "isDelete",
+      ],
       where: { isDelete: 0 },
     });
     // users.map((user) => console.log(user.ID_Duan, "|", user.ID_KhoiCV))
     // console.log('message.data.userData.ID_KhoiCV',message.data.userData.ID_KhoiCV)
     const tokens = users
-      .filter((user) => user.deviceToken && user.ID_Duan === message.data.userData.ID_Duan
-      && user.ID_KhoiCV == message.data.userData.ID_KhoiCV && user.ID_User !== message.data.userData.ID_User)
+      .filter(
+        (user) =>
+          user.deviceToken &&
+          user.ID_Duan === message.data.userData.ID_Duan &&
+          user.ID_KhoiCV == message.data.userData.ID_KhoiCV &&
+          user.ID_User !== message.data.userData.ID_User
+      )
       .map((user) => user.deviceToken);
 
     const new_message = {
@@ -713,11 +726,17 @@ exports.notiPush = async (message) => {
         Ghichu: message.data.Ghichu[0],
       },
     };
-    const notificationPromises = tokens.map(token => sendPushNotification(token, new_message));
+    const notificationPromises = tokens.map((token) =>
+      sendPushNotification(token, new_message)
+    );
 
     const results = await Promise.all(notificationPromises);
 
-    return { success: true, message: "Notifications sent to all users", results };
+    return {
+      success: true,
+      message: "Notifications sent to all users",
+      results,
+    };
   } catch (error) {
     console.error("Error sending notifications:", error);
     return res.status(500).json({ success: false, error: error.message });

@@ -3,7 +3,45 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const admin = require("firebase-admin");
+const { getMessaging } = require("firebase-admin/messaging");
 const app = express();
+
+
+var serviceAccount = require("./pmc-cskh-firebase-adminsdk-y7378-5122f6edc7.json");
+
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+// This registration token comes from the client FCM SDKs.
+app.get("/test-noti", async (req, res) => {
+
+  const registrationTokens = [
+  "ExponentPushToken[CzoGcLH9L4wqJGVB9V-68-]",
+  "ExponentPushToken[0eplaPHQHUcrFvaEm24iMe]"
+  ];
+
+  const message = {
+    
+    notification: {
+      title: "Hello World 2",
+      body: "Test Body 2"
+    },
+    tokens: registrationTokens,
+  };
+
+  getMessaging().sendEachForMulticast(message)
+    .then((response) => {
+      res.json({ response })
+      console.log(response.successCount + ' messages were sent successfully');
+    })
+    .catch(err => {
+      console.log(err);  
+    })
+});
+
 
 var corsOptions = {
   origin: [
