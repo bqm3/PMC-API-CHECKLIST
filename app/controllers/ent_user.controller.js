@@ -9,6 +9,7 @@ const bcrypt = require("bcrypt");
 const jsonwebtoken = require("jsonwebtoken");
 const { Op } = require("sequelize");
 const fetch = require('node-fetch');
+const moment = require('moment-timezone');
 
 // Login User
 exports.login = async (req, res) => {
@@ -193,12 +194,24 @@ exports.changePassword = async (req, res, next) => {
       if (!isPasswordValid) {
         return res.status(403).json({ message: "Sai mật khẩu" });
       }
-      const currentTime = new Date(); // Get the current time
+      const now = new Date();
+      const utcNow = now.getTime() + now.getTimezoneOffset() * 60000;
+      const vietnamTime = new Date(utcNow + 7 * 60 * 60000);
+
+      const year = vietnamTime.getFullYear();
+      const month = String(vietnamTime.getMonth() + 1).padStart(2, '0');
+      const day = String(vietnamTime.getDate()).padStart(2, '0');
+      const hours = String(vietnamTime.getHours()).padStart(2, '0');
+      const minutes = String(vietnamTime.getMinutes()).padStart(2, '0');
+      const seconds = String(vietnamTime.getSeconds()).padStart(2, '0');
+
+      const formattedVietnamTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+
       const hashedNewPassword = await hashSync(newPassword, 10);
       await Ent_user.update(
         {
           Password: hashedNewPassword,
-          updateTime: currentTime, // Add the current time to the update
+          updateTime: formattedVietnamTime, // Add the current time to the update
         },
         {
           where: {
