@@ -32,6 +32,9 @@ const Ent_user = sequelize.define("ent_user", {
        ID_Khuvucs: {
         type: DataTypes.JSON,
        },
+       updateTime: {
+        type: DataTypes.DATE,
+       },
        Permission: {
         type: DataTypes.INTEGER,
         allowNull: false,
