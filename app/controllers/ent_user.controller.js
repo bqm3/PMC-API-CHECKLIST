@@ -193,10 +193,12 @@ exports.changePassword = async (req, res, next) => {
       if (!isPasswordValid) {
         return res.status(403).json({ message: "Sai mật khẩu" });
       }
+      const currentTime = new Date(); // Get the current time
       const hashedNewPassword = await hashSync(newPassword, 10);
       await Ent_user.update(
         {
           Password: hashedNewPassword,
+          updateTime: currentTime, // Add the current time to the update
         },
         {
           where: {
