@@ -155,7 +155,8 @@ exports.createFirstChecklist = async (req, res, next) => {
         "Checklist",
         "Ghichu",
         "Tieuchuan",
-        "Giatridinhdanh", "isCheck",
+        "Giatridinhdanh",
+        "isCheck",
         "Giatrinhan",
         "ID_User",
         "sCalv",
@@ -458,7 +459,8 @@ exports.createChecklistInToanha = async (req, res, next) => {
           "Checklist",
           "Ghichu",
           "Tieuchuan",
-          "Giatridinhdanh", "isCheck",
+          "Giatridinhdanh",
+          "isCheck",
           "Giatrinhan",
           "ID_User",
           "sCalv",
@@ -570,7 +572,7 @@ exports.getCheckListc = async (req, res, next) => {
       // Nếu quyền là 1 (Permission === 1) thì không cần thêm điều kiện ID_KhoiCV
       if (userData.Permission !== 1) {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
-        whereClause.ID_User = userData?.ID_User
+        whereClause.ID_User = userData?.ID_User;
       }
 
       const page = parseInt(req.query.page) || 0;
@@ -1079,7 +1081,8 @@ exports.checklistCalv = async (req, res) => {
               "Maso",
               "MaQrCode",
               "Checklist",
-              "Giatridinhdanh", "isCheck",
+              "Giatridinhdanh",
+              "isCheck",
               "Giatrinhan",
             ],
             include: [
@@ -1187,7 +1190,8 @@ exports.checklistCalv = async (req, res) => {
           "Maso",
           "MaQrCode",
           "Checklist",
-          "Giatridinhdanh", "isCheck",
+          "Giatridinhdanh",
+          "isCheck",
           "Giatrinhan",
         ],
         where: {
@@ -1474,361 +1478,288 @@ exports.checklistPercent = async (req, res) => {
   }
 };
 
-exports.top3kythuatMax = async (req, res) => {
-
+exports.top3kythuatMaxMin = async (req, res) => {
   try {
     // Get the start and end dates for the past month
     const endDate = new Date();
     const startDate = new Date();
     startDate.setMonth(startDate.getMonth() - 1);
 
-    // Fetch all checklist detail items for the past month
-    const dataChecklistChiTiet = await Tb_checklistchitiet.findAll({
-      attributes: [
-        "ID_Checklistchitiet",
-        "ID_ChecklistC",
-        "ID_Checklist",
-        "Ketqua",
-        "Anh",
-        "Gioht",
-        "Ghichu",
-        "isDelete",
-      ],
-      include: [
-        {
-          model: Tb_checklistc,
-          attributes: [
-            "ID_ChecklistC",
-            "Ngay",
-            "Giobd",
-            "Giokt",
-            "ID_KhoiCV",
-            "ID_Giamsat",
-            "ID_Calv",
-          ],
-          where: {
-            Ngay: {
-              [Op.between]: [startDate, endDate]
-            }
-          },
-          include: [
-            {
-              model: Ent_khoicv,
-              attributes: ["KhoiCV"],
-            },
-            {
-              model: Ent_giamsat,
-              attributes: ["Hoten"],
-            },
-            {
-              model: Ent_calv,
-              attributes: ["Tenca", "Giobatdau", "Gioketthuc"],
-            },
-          ],
-        },
-        {
-          model: Ent_checklist,
-          attributes: [
-            "ID_Checklist",
-            "ID_Hangmuc",
-            "ID_Tang",
-            "Sothutu",
-            "Maso",
-            "MaQrCode",
-            "Checklist",
-            "Giatridinhdanh", "isCheck",
-            "Giatrinhan",
-          ],
-          include: [
-            {
-              model: Ent_hangmuc,
-              attributes: [
-                "Hangmuc",
-                "Tieuchuankt",
-                "ID_Khuvuc",
-                "MaQrCode",
-                "ID_KhoiCV",
-              ],
-              include: [
-                {
-                  model: Ent_khuvuc,
-                  attributes: [
-                    "Tenkhuvuc",
-                    "MaQrCode",
-                    "Makhuvuc",
-                    "Sothutu",
-                    "ID_Toanha",
-                    "ID_KhoiCV",
-                    "ID_Khuvuc",
-                  ],
-                  include: [
-                    {
-                      model: Ent_toanha,
-                      attributes: ["Toanha", "Sotang", "ID_Toanha"],
-                      include: {
-                        model: Ent_duan,
-                        attributes: [
-                          "ID_Duan",
-                          "Duan",
-                          "Diachi",
-                          "Vido",
-                          "Kinhdo",
-                        ],
-                      },
-                    },
-                  ],
-                },
-                {
-                  model: Ent_khoicv,
-                  attributes: ["KhoiCV"],
-                },
-              ],
-            },
-            {
-              model: Ent_tang,
-              attributes: ["Tentang", "Sotang"],
-            },
-            {
-              model: Ent_user,
-              attributes: ["UserName"],
-            },
-          ],
-        },
-      ],
-    });
-
-    // Fetch all checklist done items
-    const checklistDoneItems = await Tb_checklistchitietdone.findAll({
-      attributes: ["Description", "isDelete", "ID_ChecklistC"],
-      where: { isDelete: 0 },
-    });
-
-    const arrPush = [];
-
-    // Add status to dataChecklistChiTiet items
-    if (dataChecklistChiTiet.length > 0) {
-      dataChecklistChiTiet.forEach((item) => {
-        arrPush.push({ ...item.dataValues, status: 0 });
-      });
-    }
-
-    // Extract all ID_Checklist from checklistDoneItems and fetch related data
-    let checklistIds = [];
-    if (checklistDoneItems.length > 0) {
-      checklistDoneItems.forEach((item) => {
-        const descriptionArray = JSON.parse(item.dataValues.Description);
-        if (Array.isArray(descriptionArray)) {
-          descriptionArray.forEach((description) => {
-            const splitByComma = description.split(",");
-            splitByComma.forEach((splitItem) => {
-              const [ID_Checklist] = splitItem.split("/");
-              checklistIds.push(parseInt(ID_Checklist));
-            });
-          });
-        } else {
-          console.log("descriptionArray is not an array.");
-        }
-      });
-    }
-
-    let initialChecklistIds = checklistIds.filter((id) => !isNaN(id));
-
-    // Fetch related checklist data
-    const relatedChecklists = await Ent_checklist.findAll({
-      attributes: [
-        "ID_Checklist",
-        "ID_Hangmuc",
-        "ID_Tang",
-        "Sothutu",
-        "Maso",
-        "MaQrCode",
-        "Checklist",
-        "Giatridinhdanh", "isCheck",
-        "Giatrinhan",
-      ],
-      where: {
-        ID_Checklist: initialChecklistIds,
-      },
-      include: [
-        {
-          model: Ent_hangmuc,
-          attributes: [
-            "Hangmuc",
-            "Tieuchuankt",
-            "ID_Khuvuc",
-            "MaQrCode",
-            "ID_KhoiCV",
-          ],
-          include: [
-            {
-              model: Ent_khuvuc,
-              attributes: [
-                "Tenkhuvuc",
-                "MaQrCode",
-                "Makhuvuc",
-                "Sothutu",
-                "ID_Toanha",
-                "ID_KhoiCV",
-                "ID_Khuvuc",
-              ],
-              include: [
-                {
-                  model: Ent_toanha,
-                  attributes: ["Toanha", "Sotang", "ID_Toanha"],
-                  include: {
-                    model: Ent_duan,
-                    attributes: [
-                      "ID_Duan",
-                      "Duan",
-                      "Diachi",
-                      "Vido",
-                      "Kinhdo",
-                    ],
-                  },
-                },
-              ],
-            },
-            {
-              model: Ent_khoicv,
-              attributes: ["KhoiCV"],
-            },
-          ],
-        },
-        {
-          model: Ent_tang,
-          attributes: ["Tentang", "Sotang"],
-        },
-        {
-          model: Ent_user,
-          attributes: ["UserName"],
-        },
-      ],
-    });
-
-    // Merge checklistDoneItems data into arrPush
-    checklistDoneItems.forEach((item) => {
-      const descriptionArray = JSON.parse(item.dataValues.Description);
-      if (Array.isArray(descriptionArray)) {
-        descriptionArray.forEach((description) => {
-          const splitByComma = description.split(",");
-          splitByComma.forEach((splitItem) => {
-            const [ID_Checklist, valueCheck, gioht] = splitItem.split("/");
-            const relatedChecklist = relatedChecklists.find(
-              (rl) => rl.ID_Checklist === parseInt(ID_Checklist)
-            );
-            if (relatedChecklist) {
-              arrPush.push({
-                ID_Checklist: parseInt(ID_Checklist),
-                Ketqua: valueCheck,
-                Gioht: gioht,
-                status: 1,
-                ent_checklist: relatedChecklist,
-              });
-            }
-          });
-        });
-      }
-    });
-
-    // Fetch all checklistC data
+    // Fetch all checklistC data for the past month
     const dataChecklistCs = await Tb_checklistc.findAll({
       attributes: [
+        "ID_ChecklistC",
+        "ID_Duan",
+        "Tong",
+        "TongC",
         "Ngay",
         "ID_KhoiCV",
-        "ID_Duan",
-        "Tinhtrang",
-        "Giobd",
-        "Giokt",
-        "ID_User",
-        "ID_Giamsat",
-        "ID_Calv",
-        "isDelete",
       ],
+      where: {
+        ID_KhoiCV: 2,
+        Ngay: {
+          [Op.between]: [startDate, endDate],
+        },
+        ID_Duan: {
+          [Op.notIn]: [10, 17],
+        },
+      },
       include: [
         {
           model: Ent_duan,
           attributes: ["Duan"],
         },
-        {
-          model: Ent_khoicv,
-          attributes: ["KhoiCV"],
-        },
-        {
-          model: Ent_calv,
-          attributes: ["Tenca"],
-        },
-        {
-          model: Ent_user,
-          include: {
-            model: Ent_chucvu,
-            attributes: ["Chucvu"],
-          },
-          attributes: ["UserName", "Emails"],
-        },
-        {
-          model: Ent_giamsat,
-          attributes: ["Hoten"],
-        },
       ],
-      where: {
-        isDelete: 0,
-        Ngay: {
-          [Op.between]: [startDate, endDate]
-        }
-      },
     });
 
     // Calculate total checklist and completed checklist for each project
-    const projectCompletionRates = dataChecklistCs.map((checklistC) => {
+    const projectCompletionRates = dataChecklistCs.reduce((acc, checklistC) => {
       const projectId = checklistC.ID_Duan;
 
-      console.log('projectId',projectId)
+      if (!acc[projectId]) {
+        acc[projectId] = {
+          projectName: checklistC.ent_duan.Duan,
+          totalChecklists: 0,
+          completedChecklists: 0,
+          totalChecklistsSessions: 0,
+        };
+      }
 
-      // Count total number of checklists in this checklistC
-      const totalChecklists = dataChecklistChiTiet.filter(
-        (item) => item.ID_ChecklistC === checklistC.ID_ChecklistC
-      ).length;
+      acc[projectId].totalChecklists += checklistC.Tong || 0;
+      acc[projectId].completedChecklists += checklistC.TongC || 0;
+      acc[projectId].totalChecklistsSessions += 1;
 
-      // Count number of completed checklists for this project
-      const completedChecklists = arrPush.filter(
-        (item) => item.ent_checklist.ent_hangmuc.ent_khuvuc.ent_toanha.ent_duan.ID_Duan === projectId
-      ).length;
+      return acc;
+    }, {});
 
-      // Calculate completion rate
-      const completionRate = (completedChecklists / totalChecklists) * 100;
+    // Calculate completion rates
+    const projectCompletionRatesArray = Object.keys(projectCompletionRates).map(
+      (projectId) => {
+        const projectData = projectCompletionRates[projectId];
+        const completionRate = projectData.totalChecklists
+          ? (projectData.completedChecklists / projectData.totalChecklists) *
+            100
+          : 0;
 
-      return {
-        projectId: projectId,
-        projectName: checklistC.ent_duan.Duan,
-        totalChecklists,
-        completedChecklists,
-        completionRate: completionRate.toFixed(2) // Format as percentage
-      };
-    });
+        return {
+          projectId: parseInt(projectId),
+          projectName: projectData.projectName,
+          totalChecklists: projectData.totalChecklists,
+          completedChecklists: projectData.completedChecklists,
+          completionRate: completionRate.toFixed(2), // Format as percentage
+          totalChecklistsSessions: projectData.totalChecklistsSessions,
+        };
+      }
+    );
+
+    // Sort projects by completion rate
+    projectCompletionRatesArray.sort(
+      (a, b) => a.completionRate - b.completionRate
+    );
+
+    // Get top 3 highest and bottom 3 lowest completion rates
+    const top3Max = projectCompletionRatesArray.slice(-3).reverse();
+    const top3Min = projectCompletionRatesArray.slice(0, 3);
 
     res.status(200).json({
       message: "Tỷ lệ hoàn thành của các dự án",
-      data: projectCompletionRates,
+      data: {
+        top3Max,
+        top3Min,
+      },
     });
   } catch (err) {
     res
       .status(500)
       .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
-}
+};
 
-// const projectCompletionRates = dataChecklistCs.map((checklistC) => 
-//   { const projectId = checklistC.ID_Duan; 
-//     const totalChecklistCount = dataChecklistChiTiet.filter( (item) => item.ID_ChecklistC === checklistC.ID_ChecklistC ).length; 
-//     const completedChecklistCount = arrPush.filter( (item) => item.ent_checklist.ID_Duan === projectId ).length; 
-//     const completionRate = (completedChecklistCount / totalChecklistCount) * 100; 
-//     return { projectId: projectId, projectName: checklistC.ent_duan.Duan, totalChecklistCount, completedChecklistCount, completionRate: completionRate.toFixed(2) 
+exports.getChecklistsErrorFromYesterday = async (req, res) => {
+  try {
+    // Get the date for yesterday
+    const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
+
+    // Fetch all checklistC data for yesterday, excluding projects 10 and 17
+    const dataChecklistCs = await Tb_checklistc.findAll({
+      attributes: [
+        "ID_ChecklistC",
+        "ID_Duan",
+        "Tong",
+        "TongC",
+        "Ngay",
+        "ID_KhoiCV",
+      ],
+      where: {
+        Ngay: yesterday,
+        ID_Duan: {
+          [Op.notIn]: [10, 17],
+        },
+      },
+      include: [
+        {
+          model: Ent_duan,
+          attributes: ["Duan"],
+        },
+      ],
+    });
+
+    // Fetch checklist detail items for the related checklistC
+    const checklistDetailItems = await Tb_checklistchitiet.findAll({
+      attributes: ["ID_ChecklistC", "ID_Checklist", "Ketqua", "Anh", "Ghichu"],
+      where: {
+        ID_ChecklistC: {
+          [Op.in]: dataChecklistCs.map(
+            (checklistC) => checklistC.ID_ChecklistC
+          ),
+        },
+        Anh: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: "" }] },
+        Ghichu: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: "" }] },
+      },
+      include: [
+        {
+          model: Ent_checklist,
+          attributes: ["Checklist"],
+        },
+      ],
+    });
+
+    // Create a dictionary to aggregate data by project
+    const result = {};
+
+    dataChecklistCs.forEach((checklistC) => {
+      const projectId = checklistC.ID_Duan;
+      const projectName = checklistC.ent_duan.Duan;
+
+      // Initialize project data if it doesn't exist
+      if (!result[projectId]) {
+        result[projectId] = {
+          projectId,
+          projectName,
+          errorCount: 0,
+          errorDetails: [],
+        };
+      }
+    });
+
+    // Populate error details and count errors
+    checklistDetailItems.forEach((item) => {
+      const projectId = dataChecklistCs.find((checklistC) => checklistC.ID_ChecklistC === item.ID_ChecklistC).ID_Duan;
+
+      result[projectId].errorDetails.push({
+        checklistId: item.ID_Checklist,
+        checklistName: item.ent_checklist.Checklist,
+        image: `https://lh3.googleusercontent.com/d/${item.Anh}=s1000?authuser=0`,
+        note: item.Ghichu,
+      });
+
+      result[projectId].errorCount += 1;
+    });
+
+    // Convert result object to array
+    const resultArray = Object.values(result);
+
+    res.status(200).json({
+      message: "Danh sách checklist lỗi của ngày hôm qua",
+      data: resultArray,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+  }
+};
+
+exports.getProjectsChecklistStatus = async (req, res) => {
+  try {
+    // Get the date for yesterday
+    const yesterday = moment().subtract(1, 'days').format('YYYY-MM-DD');
+
+    // Fetch all checklistC data for yesterday, excluding projects 10 and 17
+    const dataChecklistCs = await Tb_checklistc.findAll({
+      attributes: [
+        "ID_ChecklistC",
+        "ID_Duan",
+        "Ngay",
+      ],
+      where: {
+        Ngay: yesterday,
+        ID_Duan: {
+          [Op.notIn]: [10, 17],
+        },
+      },
+      include: [
+        {
+          model: Ent_duan,
+          attributes: ["Duan"],
+        },
+      ],
+    });
+
+    // Fetch all checklist detail items for the related checklistC
+    const checklistDetailItems = await Tb_checklistchitiet.findAll({
+      attributes: [
+        "ID_ChecklistC",
+      ],
+      where: {
+        ID_ChecklistC: {
+          [Op.in]: dataChecklistCs.map((checklistC) => checklistC.ID_ChecklistC),
+        },
+      },
+    });
+
+    // Create a dictionary to aggregate data by project
+    const result = {};
+
+    dataChecklistCs.forEach((checklistC) => {
+      const projectId = checklistC.ID_Duan;
+      const projectName = checklistC.ent_duan.Duan;
+
+      // Initialize project data if it doesn't exist
+      if (!result[projectId]) {
+        result[projectId] = {
+          projectId,
+          projectName,
+          createdShifts: 0,
+          shiftsWithoutChecklist: 0,
+        };
+      }
+
+      // Increment created shifts
+      result[projectId].createdShifts += 1;
+    });
+
+    // Populate shifts without checklist
+    dataChecklistCs.forEach((checklistC) => {
+      const projectId = checklistC.ID_Duan;
+      const checklistExists = checklistDetailItems.some(item => item.ID_ChecklistC === checklistC.ID_ChecklistC);
+
+      if (!checklistExists) {
+        result[projectId].shiftsWithoutChecklist += 1;
+      }
+    });
+
+    // Convert result object to array
+    const resultArray = Object.values(result);
+
+    res.status(200).json({
+      message: "Trạng thái ca làm việc và checklist của các dự án trong ngày hôm qua",
+      data: resultArray,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+  }
+};
+
+// const projectCompletionRates = dataChecklistCs.map((checklistC) =>
+//   { const projectId = checklistC.ID_Duan;
+//     const totalChecklistCount = dataChecklistChiTiet.filter( (item) => item.ID_ChecklistC === checklistC.ID_ChecklistC ).length;
+//     const completedChecklistCount = arrPush.filter( (item) => item.ent_checklist.ID_Duan === projectId ).length;
+//     const completionRate = (completedChecklistCount / totalChecklistCount) * 100;
+//     return { projectId: projectId, projectName: checklistC.ent_duan.Duan, totalChecklistCount, completedChecklistCount, completionRate: completionRate.toFixed(2)
 //       // Format as percentage
 //        }; }); res.status(200).json({ message: "Tỉ lệ hoàn thành của các dự án", data: projectCompletionRates, });
 
-
-exports.checklistKhoiCVPercent = async(req, res) => {
-  try{
+exports.checklistKhoiCVPercent = async (req, res) => {
+  try {
     const userData = req.user.data;
 
     if (!userData) {
@@ -1839,15 +1770,12 @@ exports.checklistKhoiCVPercent = async(req, res) => {
       isDelete: 0,
       ID_Duan: userData.ID_Duan,
     };
-
-    
-
-  }catch(err){
+  } catch (err) {
     res
       .status(500)
       .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
-}
+};
 
 exports.fileChecklistSuCo = async (req, res) => {
   try {
@@ -1951,7 +1879,8 @@ exports.createExcelFile = async (req, res) => {
             "Maso",
             "MaQrCode",
             "Checklist",
-            "Giatridinhdanh", "isCheck",
+            "Giatridinhdanh",
+            "isCheck",
             "Giatrinhan",
           ],
           include: [

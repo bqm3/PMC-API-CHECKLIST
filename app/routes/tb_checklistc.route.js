@@ -26,7 +26,9 @@ module.exports = (app) => {
     tb_checklistc.checklistCalv
   );
 
-  router.get("/top3kythuatmax", tb_checklistc.top3kythuatMax);
+  router.get("/top3", tb_checklistc.top3kythuatMaxMin);
+  router.get("/list-checklist-error", tb_checklistc.getChecklistsErrorFromYesterday);
+  router.get("/list-project-none", tb_checklistc.getProjectsChecklistStatus);
   router.get("/year", [isAuthenticated], tb_checklistc.checklistYear);
   router.get("/percent", [isAuthenticated], tb_checklistc.checklistPercent);
   router.get("/", [isAuthenticated], tb_checklistc.getCheckListc);
@@ -36,7 +38,6 @@ module.exports = (app) => {
   router.put("/delete/:id", [isAuthenticated], tb_checklistc.delete);
   router.post("/baocao", [isAuthenticated], tb_checklistc.createExcelFile);
  
-
   router.post(
     "/update_images/:id",
     [isAuthenticated, upload.any()],
