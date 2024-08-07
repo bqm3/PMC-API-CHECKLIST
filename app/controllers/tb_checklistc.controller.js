@@ -1796,15 +1796,12 @@ const formatDate = (date) => {
 
 exports.createExcelFile = async (req, res) => {
   try {
-    const userData = req.user.data;
     const list_IDChecklistC = req.body.list_IDChecklistC || [];
     const startDate = req.body.startDate;
     const endDate = req.body.endDate;
+    const tenBoPhan = req.body.tenBoPhan;
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Checklist Report");
-
-    console.log("startDate", moment(startDate).format("DD/MM/YYYY"));
-    console.log("endDate", moment(endDate).format("DD/MM/YYYY"));
 
     let whereClause = {
       isDelete: 0,
@@ -1937,6 +1934,9 @@ exports.createExcelFile = async (req, res) => {
       { header: "Ca", key: "ca", width: 10 },
       { header: "Nhân viên", key: "nhanvien", width: 20 },
       { header: "Ghi nhận lỗi", key: "ghinhanloi", width: 20 },
+      { header: "Thời gian lỗi", key: "thoigianloi", width: 20 },
+      { header: "Hình ảnh", key: "thoigianloi", width: 20 },
+      { header: "Ghi chú", key: "ghichuloi", width: 20 },
       { header: "Tình trạng xử lý", key: "tinhtrang", width: 20 },
     ];
 
@@ -1949,17 +1949,17 @@ exports.createExcelFile = async (req, res) => {
 
     // Add sub-header
     worksheet.mergeCells("A3:B3");
-    worksheet.getCell("A3").value = `Từ ngày: ${moment(startDate).format(
+    worksheet.getCell("A3").value = startDate ? `Từ ngày: ${moment(startDate).format(
       "DD/MM/YYYY"
-    )}`;
+    )}` : `Từ ngày:`;
 
     worksheet.mergeCells("C3:D3");
-    worksheet.getCell("C3").value = `Đến ngày: ${moment(endDate).format(
+    worksheet.getCell("C3").value = endDate ? `Đến ngày: ${moment(endDate).format(
       "DD/MM/YYYY"
-    )}`;
+    )}` : `Đến ngày:`;
 
     worksheet.mergeCells("E3:F3");
-    worksheet.getCell("E3").value = "Tên Bộ phận: ";
+    worksheet.getCell("E3").value = `Tên Bộ phận: ${tenBoPhan}`;
 
     // Add table headers
     const tableHeaderRow = worksheet.getRow(5);
@@ -1973,6 +1973,9 @@ exports.createExcelFile = async (req, res) => {
       "Ca",
       "Nhân viên",
       "Ghi nhận lỗi",
+      "Thời gian lỗi",
+      "Hình ảnh",
+      "Ghi chú",
       "Tình trạng xử lý",
     ];
     tableHeaderRow.eachCell((cell) => {
@@ -1998,7 +2001,10 @@ exports.createExcelFile = async (req, res) => {
         dataChecklistC[i]?.tb_checklistc?.ent_calv?.Tenca,
         dataChecklistC[i]?.tb_checklistc?.ent_giamsat?.Hoten,
         dataChecklistC[i]?.Ketqua,
-        "",
+        dataChecklistC[i]?.Gioht,
+        `https://lh3.googleusercontent.com/d/${dataChecklistC[i]?.Anh}=s1000?authuser=0`,
+        dataChecklistC[i]?.Ghichu,
+        dataChecklistC[i]?.ent_checklist?.Tinhtrang == 1 ? "Chưa xử lý" : "Đã xử lý" ,
       ]);
     }
 
