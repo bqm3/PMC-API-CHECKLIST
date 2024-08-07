@@ -33,7 +33,7 @@ const Ent_user = sequelize.define("ent_user", {
         type: DataTypes.JSON,
        },
        updateTime: {
-        type: DataTypes.DATE,
+        type: DataTypes.CHAR,
        },
        Permission: {
         type: DataTypes.INTEGER,
