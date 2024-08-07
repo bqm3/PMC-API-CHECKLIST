@@ -16,7 +16,6 @@ exports.create = (req, res) => {
       return;
     }
     const { ID_Checklists, Description, checklistLength, ID_ChecklistC } = req.body;
-    console.log('ID_ChecklistsID_Checklists', ID_Checklists)
 
     if (!Description) {
       res.status(400).json({
@@ -39,8 +38,13 @@ exports.create = (req, res) => {
       try {
         // Find the checklist record to check current TongC
         const checklistC = await Tb_checklistc.findOne({
+          attributes: [
+            "ID_ChecklistC",
+            "TongC","Tong"
+          ],
           where: { ID_ChecklistC: ID_ChecklistC }
         });
+        console.log('checklistC',checklistC)
   
         if (checklistC) {
           const currentTongC = checklistC.TongC;

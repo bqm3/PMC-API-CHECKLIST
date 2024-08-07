@@ -117,6 +117,11 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       const uniqueIDChecklists = [...new Set(records.ID_Checklist)];
 
       await Tb_checklistc.findOne({
+        attributes: [
+          "ID_ChecklistC",
+          "Tong",
+          "TongC"
+        ],
         where: { ID_ChecklistC: records.ID_ChecklistC[0] },
         transaction,
       }).then(async (checklistC) => {
