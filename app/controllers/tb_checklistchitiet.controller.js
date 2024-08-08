@@ -16,6 +16,7 @@ const {
 const sequelize = require("../config/db.config");
 const { Op, where, Sequelize } = require("sequelize");
 const ExcelJS = require("exceljs");
+const cron = require("node-cron");
 var path = require("path");
 const { notiPush } = require("./ent_user.controller");
 
@@ -61,6 +62,11 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       const Gioht = records.Gioht[index];
       const Ghichu = records.Ghichu[index];
       const Checklist = records.Checklist[index];
+      const d = new Date();
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0"); // Months are zero-based
+      const day = String(d.getDate()).padStart(2, "0");
+      const formattedDate = `${year}-${month}-${day}`;
 
       let Anh = "";
       if (!isEmpty(images)) {
@@ -95,6 +101,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
         Ghichu,
         Checklist,
         Anh,
+        Ngay: formattedDate
       };
     });
 
@@ -117,7 +124,11 @@ exports.createCheckListChiTiet = async (req, res, next) => {
 
             if (currentTongC < totalTong) {
               await Tb_checklistc.update(
-                { TongC: Sequelize.literal(`TongC + ${records.ID_ChecklistC.length}`) },
+                {
+                  TongC: Sequelize.literal(
+                    `TongC + ${records.ID_ChecklistC.length}`
+                  ),
+                },
                 {
                   where: { ID_ChecklistC: records.ID_ChecklistC[0] },
                   transaction,
@@ -130,45 +141,50 @@ exports.createCheckListChiTiet = async (req, res, next) => {
           console.error("Error in updating TongC: ", error);
         });
 
-        const checklistsWithNotesAndImages = newRecords
-        .filter(record => (record.Ghichu !== null && record.Ghichu !== "") && (record.Anh !== null && record.Anh !== ""))
-        .map(record => record.ID_Checklist);
+      const checklistsWithNotesAndImages = newRecords
+        .filter(
+          (record) =>
+            record.Ghichu !== null &&
+            record.Ghichu !== "" &&
+            record.Anh !== null &&
+            record.Anh !== ""
+        )
+        .map((record) => record.ID_Checklist);
 
-
-        if (checklistsWithNotesAndImages.length > 0) {
-          await Ent_checklist.update(
-            { Tinhtrang: 1 },
-            {
-              where: {
-                ID_Checklist: {
-                  [Op.in]: checklistsWithNotesAndImages,
-                },
-                isDelete: 0,
+      if (checklistsWithNotesAndImages.length > 0) {
+        await Ent_checklist.update(
+          { Tinhtrang: 1 },
+          {
+            where: {
+              ID_Checklist: {
+                [Op.in]: checklistsWithNotesAndImages,
               },
-              transaction,
-            }
-          );
-        }
-
-        const checklistsWithoutNotesAndImages = uniqueIDChecklists.filter(
-          (id) => !checklistsWithNotesAndImages.includes(id)
+              isDelete: 0,
+            },
+            transaction,
+          }
         );
-        
-        // Kiểm tra và cập nhật isCheck = 0 cho các record không thuộc checklistsWithNotesAndImages
-        if (checklistsWithoutNotesAndImages.length > 0) {
-          await Ent_checklist.update(
-            { Tinhtrang: 0 },
-            {
-              where: {
-                ID_Checklist: {
-                  [Op.in]: checklistsWithoutNotesAndImages,
-                },
-                isDelete: 0,
+      }
+
+      const checklistsWithoutNotesAndImages = uniqueIDChecklists.filter(
+        (id) => !checklistsWithNotesAndImages.includes(id)
+      );
+
+      // Kiểm tra và cập nhật isCheck = 0 cho các record không thuộc checklistsWithNotesAndImages
+      if (checklistsWithoutNotesAndImages.length > 0) {
+        await Ent_checklist.update(
+          { Tinhtrang: 0 },
+          {
+            where: {
+              ID_Checklist: {
+                [Op.in]: checklistsWithoutNotesAndImages,
               },
-              transaction,
-            }
-          );
-        }
+              isDelete: 0,
+            },
+            transaction,
+          }
+        );
+      }
 
       await transaction.commit();
 
@@ -230,7 +246,6 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
 
 exports.getCheckListChiTiet = async (req, res, next) => {
   try {
@@ -975,3 +990,82 @@ exports.getWriteExcel = async (req, res, next) => {
       .json({ message: error.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
+
+
+cron.schedule("0 * * * *", async function () {
+  console.log("---------------------");
+  console.log("Running Cron Job");
+
+  const currentDateTime = new Date();
+  const currentDateString = currentDateTime.toISOString().split("T")[0];
+
+  // Tính toán ngày hiện tại trừ đi 1 ngày
+  const yesterdayDateTime = new Date(currentDateTime);
+  yesterdayDateTime.setDate(currentDateTime.getDate() - 1);
+  const yesterdayDateString = yesterdayDateTime.toISOString().split("T")[0];
+
+  try {
+    // Tìm các bản ghi thoả mãn điều kiện
+    const results = await Tb_checklistchitiet.findAll({
+      attributes: [
+        "ID_ChecklistC",
+        "ID_ChecklistChitiet",
+        "ID_Checklist",
+        "Ketqua",
+        "Anh",
+        "Ngay",
+        "Gioht",
+        "Ghichu",
+        "isDelete",
+      ],
+      where: {
+        isDelete: 0,
+        Ngay: {
+          [Op.lte]: new Date(currentDateString),
+          [Op.gte]: new Date(yesterdayDateString),
+        },
+      },
+    });
+
+    // Lọc ra các bản ghi trùng lặp
+    const seen = new Map();
+    const duplicates = [];
+
+    results.forEach(record => {
+      const key = `${record.ID_Checklist}_${record.ID_ChecklistC}_${record.Gioht}`;
+      if (seen.has(key)) {
+        duplicates.push(record);
+      } else {
+        seen.set(key, record);
+      }
+    });
+
+    // Xóa các bản ghi trùng lặp và cập nhật số lượng đã xóa
+    const deletePromises = duplicates.map(record => 
+      Tb_checklistchitiet.destroy({ where: { ID_ChecklistChitiet: record.ID_ChecklistChitiet } })
+    );
+    await Promise.all(deletePromises);
+
+    // Đếm số lượng bản ghi trùng lặp đã xóa theo từng ID_ChecklistC
+    const deletedCountByChecklistC = duplicates.reduce((acc, record) => {
+      if (!acc[record.ID_ChecklistC]) {
+        acc[record.ID_ChecklistC] = 0;
+      }
+      acc[record.ID_ChecklistC]++;
+      return acc;
+    }, {});
+
+    // Cập nhật lại bảng tb_checklistc
+    const updatePromises = Object.entries(deletedCountByChecklistC).map(([ID_ChecklistC, count]) =>
+      Tb_checklistc.update(
+        { TongC: Sequelize.literal(`TongC - ${count}`) },
+        { where: { ID_ChecklistC } }
+      )
+    );
+    await Promise.all(updatePromises);
+
+    console.log("Cron job completed successfully");
+  } catch (error) {
+    console.error("Error running cron job:", error);
+  }
+});
