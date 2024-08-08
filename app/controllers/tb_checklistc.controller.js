@@ -965,6 +965,35 @@ exports.delete = async (req, res) => {
   }
 };
 
+exports.updateTongC = async (req, res) => {
+  try {
+    if (req.params.id1) {
+      Tb_checklistc.update(
+        { TongC: req.params.id2 },
+        {
+          where: {
+            ID_ChecklistC: req.params.id1,
+          },
+        }
+      )
+        .then((data) => {
+          res.status(200).json({
+            message: "Done!",
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
 exports.checklistImages = async (req, res) => {
   try {
     const userData = req.user.data;
@@ -1644,7 +1673,9 @@ exports.getChecklistsErrorFromYesterday = async (req, res) => {
 
     // Populate error details and count errors
     checklistDetailItems.forEach((item) => {
-      const projectId = dataChecklistCs.find((checklistC) => checklistC.ID_ChecklistC === item.ID_ChecklistC).ID_Duan;
+      const projectId = dataChecklistCs.find(
+        (checklistC) => checklistC.ID_ChecklistC === item.ID_ChecklistC
+      ).ID_Duan;
 
       result[projectId].errorDetails.push({
         checklistId: item.ID_Checklist,
@@ -1664,22 +1695,20 @@ exports.getChecklistsErrorFromYesterday = async (req, res) => {
       data: resultArray,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res
+      .status(500)
+      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
 exports.getProjectsChecklistStatus = async (req, res) => {
   try {
     // Get the date for yesterday
-    const yesterday = moment().subtract(1, 'days').format('YYYY-MM-DD');
+    const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
 
     // Fetch all checklistC data for yesterday, excluding projects 10 and 17
     const dataChecklistCs = await Tb_checklistc.findAll({
-      attributes: [
-        "ID_ChecklistC",
-        "ID_Duan",
-        "Ngay",
-      ],
+      attributes: ["ID_ChecklistC", "ID_Duan", "Ngay"],
       where: {
         Ngay: yesterday,
         ID_Duan: {
@@ -1696,12 +1725,12 @@ exports.getProjectsChecklistStatus = async (req, res) => {
 
     // Fetch all checklist detail items for the related checklistC
     const checklistDetailItems = await Tb_checklistchitiet.findAll({
-      attributes: [
-        "ID_ChecklistC",
-      ],
+      attributes: ["ID_ChecklistC"],
       where: {
         ID_ChecklistC: {
-          [Op.in]: dataChecklistCs.map((checklistC) => checklistC.ID_ChecklistC),
+          [Op.in]: dataChecklistCs.map(
+            (checklistC) => checklistC.ID_ChecklistC
+          ),
         },
       },
     });
@@ -1730,7 +1759,9 @@ exports.getProjectsChecklistStatus = async (req, res) => {
     // Populate shifts without checklist
     dataChecklistCs.forEach((checklistC) => {
       const projectId = checklistC.ID_Duan;
-      const checklistExists = checklistDetailItems.some(item => item.ID_ChecklistC === checklistC.ID_ChecklistC);
+      const checklistExists = checklistDetailItems.some(
+        (item) => item.ID_ChecklistC === checklistC.ID_ChecklistC
+      );
 
       if (!checklistExists) {
         result[projectId].shiftsWithoutChecklist += 1;
@@ -1741,11 +1772,14 @@ exports.getProjectsChecklistStatus = async (req, res) => {
     const resultArray = Object.values(result);
 
     res.status(200).json({
-      message: "Trạng thái ca làm việc và checklist của các dự án trong ngày hôm qua",
+      message:
+        "Trạng thái ca làm việc và checklist của các dự án trong ngày hôm qua",
       data: resultArray,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res
+      .status(500)
+      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -1949,14 +1983,14 @@ exports.createExcelFile = async (req, res) => {
 
     // Add sub-header
     worksheet.mergeCells("A3:B3");
-    worksheet.getCell("A3").value = startDate ? `Từ ngày: ${moment(startDate).format(
-      "DD/MM/YYYY"
-    )}` : `Từ ngày:`;
+    worksheet.getCell("A3").value = startDate
+      ? `Từ ngày: ${moment(startDate).format("DD/MM/YYYY")}`
+      : `Từ ngày:`;
 
     worksheet.mergeCells("C3:D3");
-    worksheet.getCell("C3").value = endDate ? `Đến ngày: ${moment(endDate).format(
-      "DD/MM/YYYY"
-    )}` : `Đến ngày:`;
+    worksheet.getCell("C3").value = endDate
+      ? `Đến ngày: ${moment(endDate).format("DD/MM/YYYY")}`
+      : `Đến ngày:`;
 
     worksheet.mergeCells("E3:F3");
     worksheet.getCell("E3").value = `Tên Bộ phận: ${tenBoPhan}`;
@@ -2004,7 +2038,9 @@ exports.createExcelFile = async (req, res) => {
         dataChecklistC[i]?.Gioht,
         `https://lh3.googleusercontent.com/d/${dataChecklistC[i]?.Anh}=s1000?authuser=0`,
         dataChecklistC[i]?.Ghichu,
-        dataChecklistC[i]?.ent_checklist?.Tinhtrang == 1 ? "Chưa xử lý" : "Đã xử lý" ,
+        dataChecklistC[i]?.ent_checklist?.Tinhtrang == 1
+          ? "Chưa xử lý"
+          : "Đã xử lý",
       ]);
     }
 

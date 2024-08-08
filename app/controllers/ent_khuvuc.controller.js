@@ -541,7 +541,16 @@ exports.getKhuvucTotal = async (req, res) => {
     // Group and count by individual ID_KhoiCVs values
     const khuvucCounts = {};
     khuvucData.forEach((item) => {
-      const ID_KhoiCVs = item.ID_KhoiCVs; // Assuming ID_KhoiCVs is already an array
+      let ID_KhoiCVs = item.ID_KhoiCVs;
+      // Assuming ID_KhoiCVs is already an array
+      if (typeof ID_KhoiCVs === 'string') {
+        try {
+          ID_KhoiCVs = JSON.parse(ID_KhoiCVs);
+        } catch (error) {
+          return;
+        }
+      } 
+
       ID_KhoiCVs.forEach((id) => {
         const khoiCV = khoiCVMap[id];
         if (!khuvucCounts[khoiCV]) {
