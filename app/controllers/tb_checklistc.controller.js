@@ -2062,13 +2062,18 @@ async function processData(data) {
   return finalData;
 }
 
-// cron jib
+// cron job
 cron.schedule("0 * * * *", async function () {
   console.log("---------------------");
   console.log("Running Cron Job");
 
   const currentDateTime = new Date();
   const currentDateString = currentDateTime.toISOString().split("T")[0];
+
+  // Tính toán ngày hiện tại trừ đi 1 ngày
+  const yesterdayDateTime = new Date(currentDateTime);
+  yesterdayDateTime.setDate(currentDateTime.getDate() - 1);
+  const yesterdayDateString = yesterdayDateTime.toISOString().split("T")[0];
 
   try {
     // Tìm các bản ghi thoả mãn điều kiện
@@ -2108,6 +2113,7 @@ cron.schedule("0 * * * *", async function () {
         isDelete: 0,
         Ngay: {
           [Op.lte]: currentDateString,
+          [Op.gte]: yesterdayDateString,
         },
       },
     });

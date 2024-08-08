@@ -26,6 +26,9 @@ const Tb_checklistchitiet = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true
     },
+    Ngay: {
+      type: DataTypes.DATE,
+    },
     Gioht: {
       type: DataTypes.TIME,
     },
