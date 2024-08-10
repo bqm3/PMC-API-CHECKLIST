@@ -1567,7 +1567,7 @@ exports.top3kythuatMaxMin = async (req, res) => {
         const projectData = projectCompletionRates[projectId];
         const completionRate = projectData.totalChecklists
           ? (projectData.completedChecklists / projectData.totalChecklists) *
-            100
+          100
           : 0;
 
         return {
@@ -2148,30 +2148,40 @@ cron.schedule("0 * * * *", async function () {
       where: {
         isDelete: 0,
         Ngay: {
-          [Op.lte]: currentDateString,
-          [Op.gte]: yesterdayDateString,
+          [Op.between]: [yesterdayDateString, currentDateString],
         },
       },
     });
 
-    const updates = [];
-    for (const record of results) {
-      const { Gioketthuc } = record.ent_calv;
+    const updates = results.map((record) => {
+      const { Gioketthuc, Giobatdau } = record.ent_calv;
       const gioketthucDateTime = new Date(`${record.Ngay}T${Gioketthuc}`);
+      const giobatdauDateTime = new Date(`${record.Ngay}T${Giobatdau}`);
 
-      if (currentDateTime > gioketthucDateTime) {
-        updates.push(
-          Tb_checklistc.update(
-            { Tinhtrang: 1 },
-            { where: { ID_ChecklistC: record.ID_ChecklistC } }
-          )
+      if (
+        giobatdauDateTime < gioketthucDateTime &&
+        currentDateTime >= gioketthucDateTime
+      ) {
+        return Tb_checklistc.update(
+          { Tinhtrang: 1 },
+          { where: { ID_ChecklistC: record.ID_ChecklistC } }
         );
       }
-    }
+
+      if (giobatdauDateTime >= gioketthucDateTime && 
+        currentDateString < giobatdauDateTime &&
+        currentDateString >= gioketthucDateTime) {
+        return Tb_checklistc.update(
+          { Tinhtrang: 1 },
+          { where: { ID_ChecklistC: record.ID_ChecklistC } }
+        );
+
+      }
+    });
 
     await Promise.all(updates);
-
     console.log("Cron job completed successfully");
+    console.log("============================")
   } catch (error) {
     console.error("Error running cron job:", error);
   }
