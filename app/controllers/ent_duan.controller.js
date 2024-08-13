@@ -1,4 +1,4 @@
-const { Ent_duan, Ent_khuvuc, Ent_toanha, Ent_hangmuc } = require("../models/setup.model");
+const { Ent_duan, Ent_khuvuc, Ent_toanha, Ent_hangmuc, Ent_nhom } = require("../models/setup.model");
 const { Op } = require("sequelize");
 
 exports.create = (req, res) => {
@@ -21,6 +21,7 @@ exports.create = (req, res) => {
     // Create a Ent_duan
     const data = {
       Duan: req.body.Duan,
+      ID_Nhom: req.body.ID_Nhom,
       Diachi: req.body.Diachi,
       Vido: req.body.Vido,
       Kinhdo: req.body.Kinhdo,
@@ -163,6 +164,7 @@ exports.update = async (req, res) => {
           Vido: req.body.Vido,
           Kinhdo: req.body.Kinhdo,
           Logo: req.body.Logo,
+          ID_Nhom: req.body.ID_Nhom,
         },
         {
           where: {
@@ -226,6 +228,7 @@ exports.getKhuvucByDuan = async (req, res) => {
         "ID_Duan",
         "Duan",
         "Diachi",
+        "ID_Nhom",
         "Vido",
         "Kinhdo",
         "Logo",
@@ -239,6 +242,10 @@ exports.getKhuvucByDuan = async (req, res) => {
           where: { isDelete: 0 },
           required: false, // Use this to include projects without buildings
         },
+        {
+          model: Ent_nhom,
+          attributes: ["Nhom"],
+        }
       ],
       where: {
         isDelete: 0,
@@ -251,6 +258,7 @@ exports.getKhuvucByDuan = async (req, res) => {
       Diachi: duan.Diachi,
       Vido: duan.Vido,
       Kinhdo: duan.Kinhdo,
+      ID_Nhom: duan.ID_Nhom,
       Logo: duan.Logo,
       toanhas: duan.ent_toanha.map((khuvuc) => ({
         ID_Toanha: khuvuc.ID_Toanha,
@@ -282,6 +290,7 @@ exports.getThongtinduan = async (req, res) => {
         "Diachi",
         "Vido",
         "Kinhdo",
+        "ID_Nhom",
         "Logo",
         "isDelete",
       ],
@@ -311,6 +320,10 @@ exports.getThongtinduan = async (req, res) => {
             },
           ],
         },
+        {
+          model: Ent_nhom,
+          attributes: ["Nhom"]
+        }
       ],
       where: {
         isDelete: 0,
