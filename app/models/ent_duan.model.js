@@ -20,6 +20,9 @@ const Ent_duan = sequelize.define(
     Vido: {
       type: DataTypes.TEXT,
     },
+    ID_Nhom: {
+      type: DataTypes.INTEGER,
+    },
     Kinhdo: {
       type: DataTypes.TEXT,
     },
