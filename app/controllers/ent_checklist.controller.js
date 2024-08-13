@@ -50,6 +50,7 @@ exports.create = async (req, res) => {
         calv_4: JSON.stringify(sCalv[3]) || null,
         isDelete: 0,
         Tinhtrang: 0,
+        isImportant: req.body.isImportant || 0,
         isCheck: req.body.isCheck,
       };
 
@@ -105,7 +106,8 @@ exports.get = async (req, res) => {
         "Checklist",
         "Ghichu",
         "Tieuchuan",
-        "Giatridinhdanh", "isCheck",
+        "Giatridinhdanh",
+        "isCheck",
         "Giatrinhan",
         "ID_User",
         "isDelete",
@@ -190,7 +192,8 @@ exports.get = async (req, res) => {
         "Checklist",
         "Ghichu",
         "Tieuchuan",
-        "Giatridinhdanh", "isCheck",
+        "Giatridinhdanh",
+        "isCheck",
         "Giatrinhan",
         "sCalv",
         "Tinhtrang",
@@ -320,7 +323,8 @@ exports.getDetail = async (req, res) => {
           "Checklist",
           "Ghichu",
           "Tieuchuan",
-          "Giatridinhdanh", "isCheck",
+          "Giatridinhdanh",
+          "isCheck",
           "Giatrinhan",
           "sCalv",
           "calv_1",
@@ -435,20 +439,20 @@ exports.update = async (req, res) => {
       sCalv = sCalv.reverse();
 
       // Lấy các ID_Calv từ mảng sCalv
-      const idCalvArray = sCalv.map(id => parseInt(id, 10));
+      const idCalvArray = sCalv.map((id) => parseInt(id, 10));
 
       // Truy vấn cơ sở dữ liệu để lấy các giá trị isDelete của ID_Calv trong ent_calv
       const calvData = await Ent_calv.findAll({
         where: {
-          ID_Calv: idCalvArray
+          ID_Calv: idCalvArray,
         },
-        attributes: ['ID_Calv', 'isDelete']
+        attributes: ["ID_Calv", "isDelete"],
       });
 
       // Lọc các ID_Calv mà có isDelete = 0
       const validCalv = calvData
-        .filter(calv => `${calv.isDelete}` === '0')
-        .map(calv => calv.ID_Calv);
+        .filter((calv) => `${calv.isDelete}` === "0")
+        .map((calv) => calv.ID_Calv);
 
       // Chuẩn bị dữ liệu để cập nhật
       const reqData = {
@@ -461,7 +465,7 @@ exports.update = async (req, res) => {
         Checklist: req.body.Checklist,
         Ghichu: req.body.Ghichu || "",
         Giatridinhdanh: req.body.Giatridinhdanh || "",
-        Giatrinhan: req.body.Giatrinhan || "",  
+        Giatrinhan: req.body.Giatrinhan || "",
         isCheck: req.body.isCheck,
         Tieuchuan: req.body.Tieuchuan || "",
         sCalv: JSON.stringify(validCalv) || null,
@@ -470,6 +474,7 @@ exports.update = async (req, res) => {
         calv_3: JSON.stringify(validCalv[2]) || null,
         calv_4: JSON.stringify(validCalv[3]) || null,
         isDelete: 0,
+        isImportant: req.body.isImportant || 0,
       };
 
       // Thực hiện cập nhật dữ liệu
@@ -495,7 +500,6 @@ exports.update = async (req, res) => {
     });
   }
 };
-
 
 exports.delete = async (req, res) => {
   try {
@@ -647,7 +651,8 @@ exports.getFilter = async (req, res) => {
           "Checklist",
           "Ghichu",
           "Tieuchuan",
-          "Giatridinhdanh", "isCheck",
+          "Giatridinhdanh",
+          "isCheck",
           "Giatrinhan",
           "ID_User",
           "isDelete",
@@ -870,7 +875,8 @@ exports.getChecklist = async (req, res) => {
         "Checklist",
         "Ghichu",
         "Tieuchuan",
-        "Giatridinhdanh", "isCheck",
+        "Giatridinhdanh",
+        "isCheck",
         "Giatrinhan",
         "ID_User",
         "sCalv",
@@ -1030,7 +1036,8 @@ exports.getFilterSearch = async (req, res) => {
         "Checklist",
         "Ghichu",
         "Tieuchuan",
-        "Giatridinhdanh", "isCheck",
+        "Giatridinhdanh",
+        "isCheck",
         "Giatrinhan",
         "ID_User",
         "isDelete",
@@ -1115,7 +1122,8 @@ exports.getFilterSearch = async (req, res) => {
         "Checklist",
         "Ghichu",
         "Tieuchuan",
-        "Giatridinhdanh", "isCheck",
+        "Giatridinhdanh",
+        "isCheck",
         "Giatrinhan",
         "ID_User",
         "isDelete",
@@ -1352,7 +1360,8 @@ exports.filterChecklists = async (req, res) => {
         "Checklist",
         "Ghichu",
         "Tieuchuan",
-        "Giatridinhdanh", "isCheck",
+        "Giatridinhdanh",
+        "isCheck",
         "Giatrinhan",
         "Tinhtrang",
         "ID_User",
@@ -1471,7 +1480,6 @@ exports.KhuvucChecklists = async (req, res) => {
       },
     });
 
-    
     let whereCondition = {
       isDelete: 0,
       ID_Hangmuc,
@@ -1503,8 +1511,10 @@ exports.KhuvucChecklists = async (req, res) => {
         "Checklist",
         "Ghichu",
         "Tieuchuan",
-        "Giatridinhdanh", "isCheck",
+        "Giatridinhdanh",
+        "isCheck",
         "Giatrinhan",
+        "isImportant",
         "Tinhtrang",
         "ID_User",
         "sCalv",
@@ -1606,7 +1616,7 @@ exports.KhuvucChecklists = async (req, res) => {
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
-}
+};
 
 exports.getListChecklistWeb = async (req, res) => {
   try {
@@ -1636,7 +1646,9 @@ exports.getListChecklistWeb = async (req, res) => {
         "Checklist",
         "Ghichu",
         "Tieuchuan",
-        "Giatridinhdanh", "isCheck",
+        "Giatridinhdanh",
+        "isImportant",
+        "isCheck",
         "Giatrinhan",
         "sCalv",
         "Tinhtrang",
@@ -1770,7 +1782,9 @@ exports.getChecklistTotal = async (req, res) => {
         "Checklist",
         "Ghichu",
         "Tieuchuan",
-        "Giatridinhdanh", "isCheck",
+        "isImportant",
+        "Giatridinhdanh",
+        "isCheck",
         "Giatrinhan",
         "ID_User",
         "sCalv",
@@ -1942,15 +1956,16 @@ exports.uploadFiles = async (req, res) => {
         const tieuChuanChecklist = item["Tiêu chuẩn checklist"];
         const giaTriDanhDinh = item["Giá trị danh định"];
         const cacGiaTriNhan = item["Các giá trị nhận"];
+        const quanTrong = item["Quan trọng"];
         const ghiChu = item["Ghi chú"];
 
         if (!tenChecklist || !caChecklist) {
-          console.log('Skipping due to missing tenChecklist or caChecklist');
+          console.log("Skipping due to missing tenChecklist or caChecklist");
           continue;
         }
-    
+
         if (!tenTang) {
-          console.log('Skipping due to missing tenTang');
+          console.log("Skipping due to missing tenTang");
           continue;
         }
 
@@ -1961,7 +1976,7 @@ exports.uploadFiles = async (req, res) => {
             "ID_Khuvuc",
             "MaQrCode",
             "ID_Hangmuc",
-            "isDelete"
+            "isDelete",
           ],
           include: [
             {
@@ -1980,7 +1995,6 @@ exports.uploadFiles = async (req, res) => {
               where: {
                 isDelete: 0,
               },
-              
             },
           ],
           where: { MaQrCode: maQrCodeHangMuc, isDelete: 0 },
@@ -1991,12 +2005,15 @@ exports.uploadFiles = async (req, res) => {
           attributes: ["Tentang", "Sotang", "ID_Tang", "ID_Duan", "isDelete"],
           where: {
             Tentang: sequelize.where(
-              sequelize.fn("UPPER", sequelize.fn('TRIM', sequelize.col("Tentang"))),
+              sequelize.fn(
+                "UPPER",
+                sequelize.fn("TRIM", sequelize.col("Tentang"))
+              ),
               "LIKE",
               "%" + tenTang.trim().toUpperCase() + "%"
             ),
             ID_Duan: userData.ID_Duan,
-            isDelete: 0
+            isDelete: 0,
           },
           transaction,
         });
@@ -2007,22 +2024,30 @@ exports.uploadFiles = async (req, res) => {
           transaction,
         });
 
-        if(!caChecklist|| !tenChecklist){
+        if (!caChecklist || !tenChecklist) {
           console.log(`Bỏ qua`);
-        }else {
-          const caChecklistArray = caChecklist.split(",").map((ca) => ca.trim());
+        } else {
+          const caChecklistArray = caChecklist
+            .split(",")
+            .map((ca) => ca.trim());
           const calv = await Ent_calv.findAll({
-            attributes: ["ID_Calv", "ID_Duan", "ID_KhoiCV", "Tenca", "isDelete"],
+            attributes: [
+              "ID_Calv",
+              "ID_Duan",
+              "ID_KhoiCV",
+              "Tenca",
+              "isDelete",
+            ],
             where: {
               TenCa: caChecklistArray,
               ID_Duan: userData.ID_Duan,
               ID_KhoiCV: khoiCV.ID_Khoi,
-              isDelete: 0
+              isDelete: 0,
             },
             transaction,
           });
           const sCalv = calv.map((calvItem) => calvItem.ID_Calv);
-  
+
           const data = {
             ID_Khuvuc: hangmuc.ID_Khuvuc,
             ID_Tang: tang.ID_Tang,
@@ -2035,6 +2060,7 @@ exports.uploadFiles = async (req, res) => {
             Tieuchuan: tieuChuanChecklist || "",
             Giatridinhdanh: giaTriDanhDinh || "",
             Giatrinhan: cacGiaTriNhan || "",
+            isImportant: quanTrong !== undefined ? 1 : 0,
             ID_User: userData.ID_User,
             sCalv: JSON.stringify(sCalv) || null,
             calv_1: JSON.stringify(sCalv[0]) || null,
@@ -2045,12 +2071,53 @@ exports.uploadFiles = async (req, res) => {
             Tinhtrang: 0,
           };
 
-          console.log('data',data)
-  
+          const existingChecklist = await Ent_checklist.findOne({
+            attributes: [
+              "ID_Checklist",
+              "ID_Khuvuc",
+              "ID_Tang",
+              "ID_Hangmuc",
+              "Sothutu",
+              "Maso",
+              "MaQrCode",
+              "Checklist",
+              "Ghichu",
+              "Tieuchuan",
+              "Giatridinhdanh",
+              "isImportant",
+              "isCheck",
+              "Giatrinhan",
+              "sCalv",
+              "Tinhtrang",
+              "calv_1",
+              "calv_2",
+              "calv_3",
+              "calv_4",
+              "ID_User",
+              "isDelete",
+            ],
+            where: {
+              ID_Khuvuc: hangmuc.ID_Khuvuc,
+              ID_Tang: tang.ID_Tang,
+              ID_Hangmuc: hangmuc.ID_Hangmuc,
+              Tieuchuan: tieuChuanChecklist,
+              Giatridinhdanh: giaTriDanhDinh,
+              Giatrinhan: cacGiaTriNhan,
+              Checklist: tenChecklist
+            },
+            transaction,
+          });
+
+          // Nếu checklist đã tồn tại thì bỏ qua
+          if (existingChecklist) {
+            console.log("Checklist đã tồn tại, bỏ qua.");
+            continue;
+          }
+
+          console.log("data", data);
+
           await Ent_checklist.create(data, { transaction });
         }
-
-        
       }
     });
 

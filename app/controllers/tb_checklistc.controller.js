@@ -1523,6 +1523,22 @@ exports.top3kythuatMaxMin = async (req, res) => {
         "TongC",
         "Ngay",
         "ID_KhoiCV",
+        "ID_Calv",
+        "ID_User"
+      ],
+      include: [
+        {
+          model: Ent_khoicv,
+          attributes: ["KhoiCV"],
+        },
+        {
+          model: Ent_giamsat,
+          attributes: ["Hoten"],
+        },
+        {
+          model: Ent_calv,
+          attributes: ["Tenca", "Giobatdau", "Gioketthuc"],
+        },
       ],
       where: {
         ID_KhoiCV: 2,
@@ -1533,12 +1549,7 @@ exports.top3kythuatMaxMin = async (req, res) => {
           [Op.notIn]: [10, 17],
         },
       },
-      include: [
-        {
-          model: Ent_duan,
-          attributes: ["Duan"],
-        },
-      ],
+      
     });
 
     // Calculate total checklist and completed checklist for each project
@@ -1583,7 +1594,7 @@ exports.top3kythuatMaxMin = async (req, res) => {
 
     // Sort projects by completion rate
     projectCompletionRatesArray.sort(
-      (a, b) => a.completionRate - b.completionRate
+      (a, b) => b.completionRate - a.completionRate
     );
 
     // Get top 3 highest and bottom 3 lowest completion rates
@@ -1592,10 +1603,7 @@ exports.top3kythuatMaxMin = async (req, res) => {
 
     res.status(200).json({
       message: "Tỷ lệ hoàn thành của các dự án",
-      data: {
-        top3Max,
-        top3Min,
-      },
+      data: projectCompletionRatesArray,
     });
   } catch (err) {
     res
@@ -1618,6 +1626,22 @@ exports.getChecklistsErrorFromYesterday = async (req, res) => {
         "TongC",
         "Ngay",
         "ID_KhoiCV",
+        "ID_Calv",
+        "ID_User"
+      ],
+      include: [
+        {
+          model: Ent_khoicv,
+          attributes: ["KhoiCV"],
+        },
+        {
+          model: Ent_giamsat,
+          attributes: ["Hoten"],
+        },
+        {
+          model: Ent_calv,
+          attributes: ["Tenca", "Giobatdau", "Gioketthuc"],
+        },
       ],
       where: {
         Ngay: yesterday,
@@ -1635,7 +1659,7 @@ exports.getChecklistsErrorFromYesterday = async (req, res) => {
 
     // Fetch checklist detail items for the related checklistC
     const checklistDetailItems = await Tb_checklistchitiet.findAll({
-      attributes: ["ID_ChecklistC", "ID_Checklist", "Ketqua", "Anh", "Ghichu"],
+      attributes: ["ID_ChecklistC", "ID_Checklist", "Ketqua", "Anh", "Ghichu", "Gioht"],
       where: {
         ID_ChecklistC: {
           [Op.in]: dataChecklistCs.map(
@@ -1647,8 +1671,102 @@ exports.getChecklistsErrorFromYesterday = async (req, res) => {
       },
       include: [
         {
+          model: Tb_checklistc,
+          attributes: [
+            "ID_ChecklistC",
+            "ID_Khuvucs",
+            "ID_Duan",
+            "ID_KhoiCV",
+            "ID_Calv",
+            "ID_Toanha",
+            "ID_User",
+            "ID_Giamsat",
+            "Ngay",
+            "Tong",
+            "TongC",
+            "Giobd",
+            "Giochupanh1",
+            "Anh1",
+            "Giochupanh2",
+            "Anh2",
+            "Giochupanh3",
+            "Anh3",
+            "Giochupanh4",
+            "Anh4",
+            "Giokt",
+            "Ghichu",
+            "Tinhtrang",
+            "isDelete",
+          ],
+          include: [
+            {
+              model: Ent_khoicv,
+              attributes: ["KhoiCV"],
+            },
+            {
+              model: Ent_giamsat,
+              attributes: ["Hoten"],
+            },
+            {
+              model: Ent_calv,
+              attributes: ["Tenca", "Giobatdau", "Gioketthuc"],
+            },
+          ],
+        },
+        {
           model: Ent_checklist,
-          attributes: ["Checklist"],
+          attributes: [
+            "ID_Checklist",
+            "ID_Khuvuc",
+            "ID_Hangmuc",
+            "ID_Tang",
+            "Sothutu",
+            "Maso",
+            "MaQrCode",
+            "Checklist",
+            "Giatridinhdanh",
+            "isCheck",
+            "Giatrinhan",
+          ],
+          include: [
+            {
+              model: Ent_khuvuc,
+              attributes: ["Tenkhuvuc", "MaQrCode", "Makhuvuc", "Sothutu"],
+
+              include: [
+                {
+                  model: Ent_toanha,
+                  attributes: ["Toanha", "Sotang", "ID_Duan"],
+
+                  include: [
+                    {
+                      model: Ent_duan,
+                      attributes: ["Duan"],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              model: Ent_hangmuc,
+              attributes: [
+                "Hangmuc",
+                "Tieuchuankt",
+                "ID_Khuvuc",
+                "MaQrCode",
+                "ID_KhoiCV",
+                "ID_KhoiCV",
+              ],
+            },
+            {
+              model: Ent_tang,
+              attributes: ["Tentang", "Sotang"],
+            },
+            {
+              model: Ent_user,
+              attributes: ["UserName"],
+            },
+          ],
         },
       ],
     });
@@ -1682,6 +1800,11 @@ exports.getChecklistsErrorFromYesterday = async (req, res) => {
         checklistName: item.ent_checklist.Checklist,
         image: `https://lh3.googleusercontent.com/d/${item.Anh}=s1000?authuser=0`,
         note: item.Ghichu,
+        gioht: item.Gioht,
+        Ngay: item.tb_checklistc.Ngay,
+        calv: item.tb_checklistc.ent_calv?.Tenca,
+        Giamsat: item.tb_checklistc.ent_giamsat.Hoten,
+        khoilv: item.tb_checklistc.ent_khoicv?.KhoiCV,
       });
 
       result[projectId].errorCount += 1;

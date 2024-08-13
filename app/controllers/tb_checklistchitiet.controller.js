@@ -197,8 +197,8 @@ exports.createCheckListChiTiet = async (req, res, next) => {
         const checklistNames = await Promise.all(
           hasImageAndNote.map(async (record) => {
             const checklist = await Ent_checklist.findOne({
-              attributes: ["Checklist", "ID_Checklist", "isDelete"],
-              where: { ID_Checklist: record.ID_Checklist, isDelete: 0 },
+              attributes: ["Checklist", "ID_Checklist", "isDelete", "isImportant"],
+              where: { ID_Checklist: record.ID_Checklist, isDelete: 0, isImportant: 1 },
             });
             return checklist ? checklist.Checklist : null;
           })

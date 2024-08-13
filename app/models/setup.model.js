@@ -12,6 +12,7 @@ const Ent_user = require("./ent_user.model");
 const Tb_checklistc = require("./tb_checklistc.model");
 const Tb_checklistchitiet = require("./tb_checklistchitiet.model");
 const Tb_checklistchitietdone = require("./tb_checklistchitietdone.model");
+const Ent_ChecklistReplace = require('./ent_checklistreplace.model')
 
 
 // Toa nha
@@ -94,11 +95,17 @@ Ent_checklist.belongsTo(Ent_tang, {
 });
 
 
-
 Ent_user.hasMany(Ent_checklist);
 Ent_checklist.belongsTo(Ent_user, {
   foreignKey: "ID_User",
 });
+
+
+// Checklist Faild
+Ent_checklist.hasMany(Ent_ChecklistReplace, {as: 'ent_checklistreplace', foreignKey: "ID_Checklist"});
+Ent_ChecklistReplace.belongsTo(Ent_checklist, {
+  foreignKey: "ID_Checklist"
+})
 
 // Hạng mục
 Ent_khuvuc.hasMany(Ent_hangmuc,   { as: 'ent_hangmuc', foreignKey: 'ID_Khuvuc' });
@@ -184,6 +191,7 @@ module.exports = {
   Ent_tang,
   Ent_giamsat,
   Ent_checklist,
+  Ent_ChecklistReplace,
   Tb_checklistc,
   Tb_checklistchitiet,
   Tb_checklistchitietdone
