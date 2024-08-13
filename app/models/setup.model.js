@@ -13,6 +13,11 @@ const Tb_checklistc = require("./tb_checklistc.model");
 const Tb_checklistchitiet = require("./tb_checklistchitiet.model");
 const Tb_checklistchitietdone = require("./tb_checklistchitietdone.model");
 const Ent_ChecklistReplace = require('./ent_checklistreplace.model')
+const Ent_nhom = require('./ent_nhom.model')
+
+// Du an
+Ent_nhom.hasMany(Ent_duan, { as: 'ent_duan', foreignKey: 'ID_Nhom' });
+Ent_duan.belongsTo(Ent_nhom, { foreignKey: 'ID_Nhom'});
 
 
 // Toa nha
@@ -194,5 +199,6 @@ module.exports = {
   Ent_ChecklistReplace,
   Tb_checklistc,
   Tb_checklistchitiet,
-  Tb_checklistchitietdone
+  Tb_checklistchitietdone,
+  Ent_nhom
 };
