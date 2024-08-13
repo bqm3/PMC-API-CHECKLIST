@@ -14,6 +14,7 @@ const {
   Tb_checklistchitiet,
   Tb_checklistchitietdone,
   Ent_tang,
+  Ent_nhom,
 } = require("../models/setup.model");
 const { Op, Sequelize } = require("sequelize");
 const { uploadFile } = require("../middleware/auth_google");
@@ -1539,6 +1540,16 @@ exports.top3kythuatMaxMin = async (req, res) => {
           model: Ent_calv,
           attributes: ["Tenca", "Giobatdau", "Gioketthuc"],
         },
+        {
+          model: Ent_duan,
+          attributes: ["Duan", "ID_Nhom"],
+          include: [
+            {
+              model: Ent_nhom,
+              attributes: ["Nhom"],
+            }
+          ]
+        }
       ],
       where: {
         ID_KhoiCV: 2,
@@ -1549,7 +1560,7 @@ exports.top3kythuatMaxMin = async (req, res) => {
           [Op.notIn]: [10, 17],
         },
       },
-      
+
     });
 
     // Calculate total checklist and completed checklist for each project
@@ -1558,6 +1569,7 @@ exports.top3kythuatMaxMin = async (req, res) => {
 
       if (!acc[projectId]) {
         acc[projectId] = {
+          projectTeam: checklistC.ent_duan.ent_nhom.Nhom,
           projectName: checklistC.ent_duan.Duan,
           totalChecklists: 0,
           completedChecklists: 0,
@@ -1583,6 +1595,7 @@ exports.top3kythuatMaxMin = async (req, res) => {
 
         return {
           projectId: parseInt(projectId),
+          projectTeam: projectData.projectTeam,
           projectName: projectData.projectName,
           totalChecklists: projectData.totalChecklists,
           completedChecklists: projectData.completedChecklists,
@@ -1596,10 +1609,6 @@ exports.top3kythuatMaxMin = async (req, res) => {
     projectCompletionRatesArray.sort(
       (a, b) => b.completionRate - a.completionRate
     );
-
-    // Get top 3 highest and bottom 3 lowest completion rates
-    const top3Max = projectCompletionRatesArray.slice(-3).reverse();
-    const top3Min = projectCompletionRatesArray.slice(0, 3);
 
     res.status(200).json({
       message: "Tỷ lệ hoàn thành của các dự án",
@@ -1642,6 +1651,17 @@ exports.getChecklistsErrorFromYesterday = async (req, res) => {
           model: Ent_calv,
           attributes: ["Tenca", "Giobatdau", "Gioketthuc"],
         },
+        {
+          model: Ent_duan,
+          attributes: ["Duan", "ID_Nhom"],
+          include: [
+            {
+              model: Ent_nhom,
+              attributes: ["Nhom"],
+            }
+          ]
+
+        },
       ],
       where: {
         Ngay: yesterday,
@@ -1649,12 +1669,7 @@ exports.getChecklistsErrorFromYesterday = async (req, res) => {
           [Op.notIn]: [10, 17],
         },
       },
-      include: [
-        {
-          model: Ent_duan,
-          attributes: ["Duan"],
-        },
-      ],
+
     });
 
     // Fetch checklist detail items for the related checklistC
@@ -1741,7 +1756,13 @@ exports.getChecklistsErrorFromYesterday = async (req, res) => {
                   include: [
                     {
                       model: Ent_duan,
-                      attributes: ["Duan"],
+                      attributes: ["Duan", "ID_Nhom"],
+                      include: [
+                        {
+                          model: Ent_nhom,
+                          attributes: ["Nhom"],
+                        }
+                      ]
                     },
                   ],
                 },
@@ -2291,7 +2312,7 @@ cron.schedule("0 * * * *", async function () {
         );
       }
 
-      if (giobatdauDateTime >= gioketthucDateTime && 
+      if (giobatdauDateTime >= gioketthucDateTime &&
         currentDateString < giobatdauDateTime &&
         currentDateString >= gioketthucDateTime) {
         return Tb_checklistc.update(
