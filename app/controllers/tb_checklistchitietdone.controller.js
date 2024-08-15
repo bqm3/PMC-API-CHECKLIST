@@ -15,7 +15,7 @@ exports.create = (req, res) => {
       });
       return;
     }
-    const { ID_Checklists, Description, checklistLength, ID_ChecklistC } = req.body;
+    const { ID_Checklists, Description, checklistLength, ID_ChecklistC, Vido, Kinhdo, Docao } = req.body;
 
     if (!Description) {
       res.status(400).json({
@@ -28,6 +28,9 @@ exports.create = (req, res) => {
     // Create a Tb_checklistchitietdone
     const data = {
       Description: descriptions || "",
+      Vido: Vido || null,
+      Kinhdo: Kinhdo || null,
+      Docao: Docao || null,
       ID_ChecklistC: ID_ChecklistC || null,
       isDelete: 0,
     };
@@ -44,7 +47,6 @@ exports.create = (req, res) => {
           ],
           where: { ID_ChecklistC: ID_ChecklistC }
         });
-        console.log('checklistC',checklistC)
   
         if (checklistC) {
           const currentTongC = checklistC.TongC;

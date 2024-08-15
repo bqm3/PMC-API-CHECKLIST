@@ -2297,6 +2297,8 @@ cron.schedule("0 * * * *", async function () {
       },
     });
 
+    const formattedTime = currentDateTime.toLocaleTimeString('en-GB', { hour12: false });
+
     const updates = results.map((record) => {
       const { Gioketthuc, Giobatdau } = record.ent_calv;
       const gioketthucDateTime = new Date(`${record.Ngay}T${Gioketthuc}`);
@@ -2307,7 +2309,7 @@ cron.schedule("0 * * * *", async function () {
         currentDateTime >= gioketthucDateTime
       ) {
         return Tb_checklistc.update(
-          { Tinhtrang: 1 },
+          { Tinhtrang: 1, Giokt: formattedTime },
           { where: { ID_ChecklistC: record.ID_ChecklistC } }
         );
       }
@@ -2316,7 +2318,7 @@ cron.schedule("0 * * * *", async function () {
         currentDateString < giobatdauDateTime &&
         currentDateString >= gioketthucDateTime) {
         return Tb_checklistc.update(
-          { Tinhtrang: 1 },
+          { Tinhtrang: 1, Giokt: formattedTime },
           { where: { ID_ChecklistC: record.ID_ChecklistC } }
         );
 

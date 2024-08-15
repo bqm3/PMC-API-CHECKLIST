@@ -36,6 +36,15 @@ const Tb_checklistchitiet = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true
     },
+    Vido: {
+      type: DataTypes.CHAR,
+    },
+    Kinhdo: {
+      type: DataTypes.CHAR,
+    },
+    Docao: {
+      type: DataTypes.CHAR,
+    },
     isDelete: {
       type: DataTypes.INTEGER,
       defaultValue: 0,

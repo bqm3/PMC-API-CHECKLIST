@@ -37,6 +37,9 @@ exports.createCheckListChiTiet = async (req, res, next) => {
 
     records.ID_ChecklistC = ensureArray(records.ID_ChecklistC);
     records.ID_Checklist = ensureArray(records.ID_Checklist);
+    records.Vido = ensureArray(records.Vido);
+    records.Kinhdo = ensureArray(records.Kinhdo);
+    records.Docao = ensureArray(records.Docao);
     records.Ketqua = ensureArray(records.Ketqua);
     records.Ghichu = ensureArray(records.Ghichu);
     records.Gioht = ensureArray(records.Gioht);
@@ -58,7 +61,10 @@ exports.createCheckListChiTiet = async (req, res, next) => {
 
     const newRecords = records.ID_ChecklistC.map((ID_ChecklistC, index) => {
       const ID_Checklist = records.ID_Checklist[index];
-      const Ketqua = records.Ketqua[index];
+      const Vido = records.Vido[index] || "";
+      const Kinhdo = records.Kinhdo[index] || null;
+      const Docao = records.Docao[index] || null;
+      const Ketqua = records.Ketqua[index] || null;
       const Gioht = records.Gioht[index];
       const Ghichu = records.Ghichu[index];
       const Checklist = records.Checklist[index];
@@ -96,6 +102,8 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       return {
         ID_ChecklistC,
         ID_Checklist,
+        Vido,
+        Kinhdo,Docao,
         Ketqua,
         Gioht,
         Ghichu,
