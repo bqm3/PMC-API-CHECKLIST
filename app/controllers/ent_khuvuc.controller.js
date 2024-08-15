@@ -111,6 +111,7 @@ exports.get = async (req, res) => {
           { $ID_KhoiCVs$: { [Op.contains]: [userData?.ID_KhoiCV] } },
         ];
       }
+
       await Ent_khuvuc.findAll({
         attributes: [
           "ID_Khuvuc",
@@ -354,6 +355,8 @@ exports.getKhuVuc = async (req, res) => {
           });
         }
       }
+
+      console.log('whereCondition',whereCondition)
 
       // Fetch data
       Ent_khuvuc.findAll({
@@ -669,7 +672,7 @@ exports.uploadFiles = async (req, res) => {
 
         // Check if tenKhuvuc already exists in the database
         const existingKhuVuc = await Ent_khuvuc.findOne({
-          attributes: ["ID_KhuVuc", "Tenkhuvuc", "isDelete", "ID_Toanha", "isDelete"],
+          attributes: ["ID_KhuVuc", "Tenkhuvuc", "isDelete", "ID_Toanha", "ID_User"],
           where: {
             [Op.and]: [
               where(fn("UPPER", col("Tenkhuvuc")), {
@@ -680,10 +683,13 @@ exports.uploadFiles = async (req, res) => {
               }),
             ],
             ID_Toanha: toaNha.ID_Toanha,
-            isDelete: 0
+            isDelete: 0,
+            ID_User: userData.ID_User
           },
           transaction,
         });
+
+        console.log('existingKhuVuc',existingKhuVuc)
 
         if (!existingKhuVuc) {
           // If tenKhuvuc doesn't exist, create a new entry
