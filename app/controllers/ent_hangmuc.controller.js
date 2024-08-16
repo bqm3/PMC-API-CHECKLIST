@@ -662,12 +662,13 @@ exports.uploadFiles = async (req, res) => {
     });
 
     // Step 2: Update objects with common details
-    const updatedData = data.map((item) => {
+    const updatedData = data.map((item, index) => {
+     
       return {
         ...item,
       };
     });
-
+    
 
     await sequelize.transaction(async (transaction) => {
       for (const item of updatedData) {
@@ -679,6 +680,8 @@ exports.uploadFiles = async (req, res) => {
         const tenHangmuc = item["Tên Hạng Mục"];
         const tenTang = item["Tên tầng"];
 
+        console.log('maQrKhuvuc',maQrKhuvuc)
+
         const khuVuc = await Ent_khuvuc.findOne({
           attributes: [
             "ID_Khuvuc",
@@ -688,13 +691,16 @@ exports.uploadFiles = async (req, res) => {
           ],
           where: {
             MaQrCode: {
-              [Op.eq]: maQrKhuvuc.toUpperCase(),
+              [Op.eq]: maQrKhuvuc,
             },
             isDelete: 0
           },
           transaction,
         });
-        
+        if (!khuVuc) {
+          console.log(`Khu vực with MaQrCode ${maQrKhuvuc} not found or is deleted.`);
+          continue;  // Skip the current iteration and move to the next item
+        }
 
         const khoiCV = await Ent_khoicv.findOne({
           attributes: ["ID_Khoi", "KhoiCV"],
@@ -715,14 +721,16 @@ exports.uploadFiles = async (req, res) => {
             [Op.and]: [
               { Hangmuc: tenHangmuc.toUpperCase() },
               { MaQrCode: maQrHangmuc.toUpperCase() },
-              { ID_Khuvuc: khuVuc.ID_Khuvuc }
-            ]
+              { ID_Khuvuc: khuVuc.ID_Khuvuc },
+              {isDelete: 0}
+            ],
+            
           },
           transaction,
         });
 
 
-        if (!existingHangMuc) {
+        if (!existingHangMuc || !khuVuc || !khoiCV) {
           // If tenKhuvuc doesn't exist, create a new entry
           const dataInsert = {
             ID_Khuvuc: khuVuc.ID_Khuvuc,
