@@ -529,8 +529,8 @@ exports.getKhuvucTotal = async (req, res) => {
       });
     }
     const khoiCVData = [
-      { ID_Khoi: 1, KhoiCV: "Khối kỹ thuật" },
-      { ID_Khoi: 2, KhoiCV: "Khối làm sạch" },
+      { ID_Khoi: 2, KhoiCV: "Khối kỹ thuật" },
+      { ID_Khoi: 1, KhoiCV: "Khối làm sạch" },
       { ID_Khoi: 3, KhoiCV: "Khối bảo vệ" },
       { ID_Khoi: 4, KhoiCV: "Khối dự án" },
     ];
@@ -555,6 +555,7 @@ exports.getKhuvucTotal = async (req, res) => {
       } 
 
       ID_KhoiCVs.forEach((id) => {
+        console.log('id',id)
         const khoiCV = khoiCVMap[id];
         if (!khuvucCounts[khoiCV]) {
           khuvucCounts[khoiCV] = 0;
@@ -562,6 +563,8 @@ exports.getKhuvucTotal = async (req, res) => {
         khuvucCounts[khoiCV]++;
       });
     });
+
+    console.log('khuvucCounts',khuvucCounts)
 
     // Convert counts to desired format
     const result = Object.keys(khuvucCounts).map((khoiCV) => ({
