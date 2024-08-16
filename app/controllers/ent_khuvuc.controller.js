@@ -374,6 +374,13 @@ exports.getKhuVuc = async (req, res) => {
         ],
         include: [
           {
+            model: Ent_hangmuc,
+            as: "ent_hangmuc",
+            attributes: ["ID_Hangmuc", "ID_Khuvuc", "Hangmuc", "MaQrCode", "isDelete", "Tieuchuankt", "ID_KhoiCV"],
+            where: { isDelete: 0 },
+            required: false,
+          },
+          {
             model: Ent_toanha,
             attributes: ["Toanha", "Sotang", "ID_Toanha"],
           },
@@ -555,7 +562,6 @@ exports.getKhuvucTotal = async (req, res) => {
       } 
 
       ID_KhoiCVs.forEach((id) => {
-        console.log('id',id)
         const khoiCV = khoiCVMap[id];
         if (!khuvucCounts[khoiCV]) {
           khuvucCounts[khoiCV] = 0;
