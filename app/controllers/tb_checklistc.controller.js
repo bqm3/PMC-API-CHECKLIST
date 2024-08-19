@@ -1525,7 +1525,7 @@ exports.top3kythuatMaxMin = async (req, res) => {
         "Ngay",
         "ID_KhoiCV",
         "ID_Calv",
-        "ID_User"
+        "ID_User",
       ],
       include: [
         {
@@ -1547,9 +1547,9 @@ exports.top3kythuatMaxMin = async (req, res) => {
             {
               model: Ent_nhom,
               attributes: ["Nhom"],
-            }
-          ]
-        }
+            },
+          ],
+        },
       ],
       where: {
         ID_KhoiCV: 2,
@@ -1560,7 +1560,6 @@ exports.top3kythuatMaxMin = async (req, res) => {
           [Op.notIn]: [10, 17],
         },
       },
-
     });
 
     // Calculate total checklist and completed checklist for each project
@@ -1590,7 +1589,7 @@ exports.top3kythuatMaxMin = async (req, res) => {
         const projectData = projectCompletionRates[projectId];
         const completionRate = projectData.totalChecklists
           ? (projectData.completedChecklists / projectData.totalChecklists) *
-          100
+            100
           : 0;
 
         return {
@@ -1636,7 +1635,7 @@ exports.getChecklistsErrorFromYesterday = async (req, res) => {
         "Ngay",
         "ID_KhoiCV",
         "ID_Calv",
-        "ID_User"
+        "ID_User",
       ],
       include: [
         {
@@ -1658,9 +1657,8 @@ exports.getChecklistsErrorFromYesterday = async (req, res) => {
             {
               model: Ent_nhom,
               attributes: ["Nhom"],
-            }
-          ]
-
+            },
+          ],
         },
       ],
       where: {
@@ -1669,12 +1667,18 @@ exports.getChecklistsErrorFromYesterday = async (req, res) => {
           [Op.notIn]: [10, 17],
         },
       },
-
     });
 
     // Fetch checklist detail items for the related checklistC
     const checklistDetailItems = await Tb_checklistchitiet.findAll({
-      attributes: ["ID_ChecklistC", "ID_Checklist", "Ketqua", "Anh", "Ghichu", "Gioht"],
+      attributes: [
+        "ID_ChecklistC",
+        "ID_Checklist",
+        "Ketqua",
+        "Anh",
+        "Ghichu",
+        "Gioht",
+      ],
       where: {
         ID_ChecklistC: {
           [Op.in]: dataChecklistCs.map(
@@ -1761,8 +1765,8 @@ exports.getChecklistsErrorFromYesterday = async (req, res) => {
                         {
                           model: Ent_nhom,
                           attributes: ["Nhom"],
-                        }
-                      ]
+                        },
+                      ],
                     },
                   ],
                 },
@@ -1836,6 +1840,337 @@ exports.getChecklistsErrorFromYesterday = async (req, res) => {
 
     res.status(200).json({
       message: "Danh sách checklist lỗi của ngày hôm qua",
+      data: resultArray,
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+  }
+};
+
+exports.getChecklistsErrorFromWeek = async (req, res) => {
+  try {
+    const userData = req.user.data;
+
+    // Get the date for yesterday
+    const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
+    const now = moment().format("YYYY-MM-DD");
+
+    // Fetch all checklistC data for yesterday, excluding projects 10 and 17
+    const dataChecklistCs = await Tb_checklistc.findAll({
+      attributes: [
+        "ID_ChecklistC",
+        "ID_Duan",
+        "Tong",
+        "TongC",
+        "Ngay",
+        "ID_KhoiCV",
+        "ID_Calv",
+        "ID_User",
+      ],
+      include: [
+        {
+          model: Ent_khoicv,
+          attributes: ["KhoiCV"],
+        },
+        {
+          model: Ent_giamsat,
+          attributes: ["Hoten"],
+        },
+        {
+          model: Ent_calv,
+          attributes: ["Tenca", "Giobatdau", "Gioketthuc"],
+        },
+        {
+          model: Ent_duan,
+          attributes: ["Duan", "ID_Nhom"],
+          include: [
+            {
+              model: Ent_nhom,
+              attributes: ["Nhom"],
+            },
+          ],
+        },
+      ],
+      where: {
+        Ngay: {
+          [Op.between]: [yesterday, now],
+        },
+        ID_Duan: userData.ID_Duan,
+      },
+    });
+
+    // Fetch checklist detail items for the related checklistC
+    const checklistDetailItems = await Tb_checklistchitiet.findAll({
+      attributes: [
+        "ID_ChecklistC",
+        "ID_Checklist",
+        "Ketqua",
+        "Anh",
+        "Ghichu",
+        "Gioht",
+      ],
+      where: {
+        ID_ChecklistC: {
+          [Op.in]: dataChecklistCs.map(
+            (checklistC) => checklistC.ID_ChecklistC
+          ),
+        },
+        Anh: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: "" }] },
+        Ghichu: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: "" }] },
+      },
+      include: [
+        {
+          model: Tb_checklistc,
+          attributes: [
+            "ID_ChecklistC",
+            "ID_Khuvucs",
+            "ID_Duan",
+            "ID_KhoiCV",
+            "ID_Calv",
+            "ID_Toanha",
+            "ID_User",
+            "ID_Giamsat",
+            "Ngay",
+            "Tong",
+            "TongC",
+            "Giobd",
+            "Giochupanh1",
+            "Anh1",
+            "Giochupanh2",
+            "Anh2",
+            "Giochupanh3",
+            "Anh3",
+            "Giochupanh4",
+            "Anh4",
+            "Giokt",
+            "Ghichu",
+            "Tinhtrang",
+            "isDelete",
+          ],
+          include: [
+            {
+              model: Ent_khoicv,
+              attributes: ["KhoiCV"],
+            },
+            {
+              model: Ent_giamsat,
+              attributes: ["Hoten"],
+            },
+            {
+              model: Ent_calv,
+              attributes: ["Tenca", "Giobatdau", "Gioketthuc"],
+            },
+          ],
+        },
+        {
+          model: Ent_checklist,
+          attributes: [
+            "ID_Checklist",
+            "ID_Khuvuc",
+            "ID_Hangmuc",
+            "ID_Tang",
+            "Sothutu",
+            "Maso",
+            "MaQrCode",
+            "Checklist",
+            "Giatridinhdanh",
+            "isCheck",
+            "Giatrinhan",
+          ],
+          include: [
+            {
+              model: Ent_khuvuc,
+              attributes: ["Tenkhuvuc", "MaQrCode", "Makhuvuc", "Sothutu"],
+
+              include: [
+                {
+                  model: Ent_toanha,
+                  attributes: ["Toanha", "Sotang", "ID_Duan"],
+
+                  include: [
+                    {
+                      model: Ent_duan,
+                      attributes: ["Duan", "ID_Nhom"],
+                      include: [
+                        {
+                          model: Ent_nhom,
+                          attributes: ["Nhom"],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              model: Ent_hangmuc,
+              attributes: [
+                "Hangmuc",
+                "Tieuchuankt",
+                "ID_Khuvuc",
+                "MaQrCode",
+                "ID_KhoiCV",
+                "ID_KhoiCV",
+              ],
+            },
+            {
+              model: Ent_tang,
+              attributes: ["Tentang", "Sotang"],
+            },
+            {
+              model: Ent_user,
+              attributes: ["UserName"],
+            },
+          ],
+        },
+      ],
+    });
+
+    // Create a dictionary to aggregate data by project
+    const result = {};
+
+    dataChecklistCs.forEach((checklistC) => {
+      const projectId = checklistC.ID_Duan;
+      const projectName = checklistC.ent_duan.Duan;
+
+      // Initialize project data if it doesn't exist
+      if (!result[projectId]) {
+        result[projectId] = {
+          projectId,
+          projectName,
+          errorCount: 0,
+          errorDetails: [],
+        };
+      }
+    });
+
+    // Populate error details and count errors
+    checklistDetailItems.forEach((item) => {
+      const projectId = dataChecklistCs.find(
+        (checklistC) => checklistC.ID_ChecklistC === item.ID_ChecklistC
+      ).ID_Duan;
+
+      result[projectId].errorDetails.push({
+        checklistId: item.ID_Checklist,
+        checklistName: item.ent_checklist.Checklist,
+        Anh: item.Anh,
+        image: `https://lh3.googleusercontent.com/d/${item.Anh}=s1000?authuser=0`,
+        note: item.Ghichu,
+        gioht: item.Gioht,
+        Ngay: item.tb_checklistc.Ngay,
+        calv: item.tb_checklistc.ent_calv?.Tenca,
+        Giamsat: item.tb_checklistc.ent_giamsat.Hoten,
+        khoilv: item.tb_checklistc.ent_khoicv?.KhoiCV,
+      });
+
+      result[projectId].errorCount += 1;
+    });
+
+    // Convert result object to array
+    const resultArray = Object.values(result);
+
+    res.status(200).json({
+      message: "Danh sách checklist lỗi một tuần",
+      data: resultArray,
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+  }
+};
+
+exports.getChecklistsError = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    const orConditions = [];
+    orConditions.push({
+      "$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$": userData?.ID_Duan,
+    });
+
+    console.log('userData.ID_Duan',userData.ID_Duan)
+
+    // Fetch all checklistC data for yesterday, excluding projects 10 and 17
+    const dataChecklistCs = await Ent_checklist.findAll({
+      attributes: [
+        "ID_Checklist",
+        "ID_Hangmuc",
+        "ID_Tang",
+        "Sothutu",
+        "Maso",
+        "MaQrCode",
+        "Tinhtrang",
+        "Checklist",
+        "Giatridinhdanh",
+        "isCheck",
+        "Giatrinhan",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_hangmuc,
+          attributes: [
+            "Hangmuc",
+            "Tieuchuankt",
+            "ID_Khuvuc",
+            "MaQrCode",
+            "ID_KhoiCV",
+            "ID_KhoiCV",
+            "ID_Khuvuc",
+          ],
+          include: [
+            {
+              model: Ent_khuvuc,
+              attributes: ["Tenkhuvuc", "MaQrCode", "Makhuvuc", "Sothutu"],
+
+              include: [
+                {
+                  model: Ent_toanha,
+                  attributes: ["Toanha", "Sotang", "ID_Duan"],
+                  include: [
+                    {
+                      model: Ent_duan,
+                      attributes: ["Duan", "ID_Nhom", "ID_Duan"],
+                      include: [
+                        {
+                          model: Ent_nhom,
+                          attributes: ["Nhom"],
+                        },
+                      ],
+                      where: {
+                        ID_Duan: userData.ID_Duan,
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          model: Ent_tang,
+          attributes: ["Tentang", "Sotang"],
+        },
+        {
+          model: Ent_user,
+          attributes: ["UserName"],
+        },
+      ],
+      where: {
+        Tinhtrang: 1,
+        isDelete: 0,
+        [Op.and]: [orConditions],
+      },
+    });
+
+    // Convert result object to array
+    const resultArray = Object.values(dataChecklistCs);
+
+    res.status(200).json({
+      message: "Danh sách checklist lỗi trong dự án",
+      count: dataChecklistCs.length,
       data: resultArray,
     });
   } catch (err) {
@@ -2252,7 +2587,7 @@ cron.schedule("0 * * * *", async function () {
 
   // Tính toán ngày hiện tại trừ đi 1 ngày
   const yesterdayDateTime = new Date(currentDateTime);
-  yesterdayDateTime.setDate(currentDateTime.getDate() - 1);
+  yesterdayDateTime.setDate(currentDateTime.getDate() - 2);
   const yesterdayDateString = yesterdayDateTime.toISOString().split("T")[0];
 
   try {
@@ -2292,12 +2627,14 @@ cron.schedule("0 * * * *", async function () {
       where: {
         isDelete: 0,
         Ngay: {
-          [Op.between]: [yesterdayDateString, currentDateString],
+          [Op.between]: [currentDateString, yesterdayDateString],
         },
       },
     });
 
-    const formattedTime = currentDateTime.toLocaleTimeString('en-GB', { hour12: false });
+    const formattedTime = currentDateTime.toLocaleTimeString("en-GB", {
+      hour12: false,
+    });
 
     const updates = results.map((record) => {
       const { Gioketthuc, Giobatdau } = record.ent_calv;
@@ -2314,20 +2651,21 @@ cron.schedule("0 * * * *", async function () {
         );
       }
 
-      if (giobatdauDateTime >= gioketthucDateTime &&
+      if (
+        giobatdauDateTime >= gioketthucDateTime &&
         currentDateString < giobatdauDateTime &&
-        currentDateString >= gioketthucDateTime) {
+        currentDateString >= gioketthucDateTime
+      ) {
         return Tb_checklistc.update(
           { Tinhtrang: 1, Giokt: formattedTime },
           { where: { ID_ChecklistC: record.ID_ChecklistC } }
         );
-
       }
     });
 
     await Promise.all(updates);
     console.log("Cron job completed successfully");
-    console.log("============================")
+    console.log("============================");
   } catch (error) {
     console.error("Error running cron job:", error);
   }
