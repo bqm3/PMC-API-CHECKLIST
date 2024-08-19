@@ -16,7 +16,7 @@ const xlsx = require("xlsx");
 exports.create = async (req, res, next) => {
   // Validate request
   try {
-    if (!req.body.Hangmuc || !req.body.Tieuchuankt) {
+    if (!req.body.Hangmuc || !req.body.MaQrCode) {
       res.status(400).json({
         message: "Cần nhập đầy đủ thông tin!",
       });
@@ -53,8 +53,8 @@ exports.create = async (req, res, next) => {
         const data = {
           ID_Khuvuc: req.body.ID_Khuvuc,
           ID_KhoiCV: req.body.ID_KhoiCV,
-          MaQrCode: req.body.MaQrCode || null,
-          Hangmuc: req.body.Hangmuc || null,
+          MaQrCode: req.body.MaQrCode,
+          Hangmuc: req.body.Hangmuc,
           Tieuchuankt: req.body.Tieuchuankt || null,
           isDelete: 0,
         };

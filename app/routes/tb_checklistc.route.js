@@ -29,6 +29,9 @@ module.exports = (app) => {
   router.get("/top3", tb_checklistc.top3kythuatMaxMin);
   router.get("/list-checklist-error", tb_checklistc.getChecklistsErrorFromYesterday);
   router.get("/list-project-none", tb_checklistc.getProjectsChecklistStatus);
+  router.get("/list-checklist-error-project", [isAuthenticated], tb_checklistc.getChecklistsErrorFromWeek)
+  router.get("/list-checklist", [isAuthenticated], tb_checklistc.getChecklistsError)
+  
   router.get("/year", [isAuthenticated], tb_checklistc.checklistYear);
   router.get("/percent", [isAuthenticated], tb_checklistc.checklistPercent);
   router.get("/", [isAuthenticated], tb_checklistc.getCheckListc);
