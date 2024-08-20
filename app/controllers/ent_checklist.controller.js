@@ -202,6 +202,7 @@ exports.get = async (req, res) => {
         "calv_3",
         "calv_4",
         "ID_User",
+        "isImportant",
         "isDelete",
       ],
       include: [
@@ -333,6 +334,7 @@ exports.getDetail = async (req, res) => {
           "calv_4",
           "ID_User",
           "isDelete",
+          "isImportant",
           "Tinhtrang",
         ],
         include: [
@@ -434,6 +436,8 @@ exports.update = async (req, res) => {
       }
 
       let sCalv = req.body.sCalv;
+
+      console.log('req.body.isImportant',req.body.isImportant)
 
       // Đảo ngược mảng sCalv
       sCalv = sCalv.reverse();
@@ -656,6 +660,7 @@ exports.getFilter = async (req, res) => {
           "Giatrinhan",
           "ID_User",
           "isDelete",
+          "isImportant",
         ],
         include: [
           {
@@ -885,6 +890,7 @@ exports.getChecklist = async (req, res) => {
         "calv_3",
         "calv_4",
         "isDelete",
+        "isImportant",
       ],
       include: [
         {
@@ -1041,6 +1047,7 @@ exports.getFilterSearch = async (req, res) => {
         "Giatrinhan",
         "ID_User",
         "isDelete",
+        "isImportant",
       ],
       include: [
         {
@@ -1127,6 +1134,7 @@ exports.getFilterSearch = async (req, res) => {
         "Giatrinhan",
         "ID_User",
         "isDelete",
+        "isImportant",
       ],
       include: [
         {
@@ -1357,6 +1365,7 @@ exports.filterChecklists = async (req, res) => {
         "Sothutu",
         "Maso",
         "MaQrCode",
+        "isImportant",
         "Checklist",
         "Ghichu",
         "Tieuchuan",
@@ -1523,6 +1532,7 @@ exports.KhuvucChecklists = async (req, res) => {
         "calv_3",
         "calv_4",
         "isDelete",
+        
       ],
       include: [
         {

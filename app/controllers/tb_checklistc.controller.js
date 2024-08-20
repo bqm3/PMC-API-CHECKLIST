@@ -2090,7 +2090,7 @@ exports.getChecklistsError = async (req, res) => {
       "$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$": userData?.ID_Duan,
     });
 
-    console.log('userData.ID_Duan',userData.ID_Duan)
+    console.log("userData.ID_Duan", userData.ID_Duan);
 
     // Fetch all checklistC data for yesterday, excluding projects 10 and 17
     const dataChecklistCs = await Ent_checklist.findAll({
@@ -2587,7 +2587,7 @@ cron.schedule("0 * * * *", async function () {
 
   // Tính toán ngày hiện tại trừ đi 1 ngày
   const yesterdayDateTime = new Date(currentDateTime);
-  yesterdayDateTime.setDate(currentDateTime.getDate() - 2);
+  yesterdayDateTime.setDate(currentDateTime.getDate() - 4);
   const yesterdayDateString = yesterdayDateTime.toISOString().split("T")[0];
 
   try {
@@ -2626,8 +2626,9 @@ cron.schedule("0 * * * *", async function () {
       ],
       where: {
         isDelete: 0,
+        Tinhtrang: 0,
         Ngay: {
-          [Op.between]: [currentDateString, yesterdayDateString],
+          [Op.between]: [yesterdayDateString, currentDateString],
         },
       },
     });
@@ -2653,8 +2654,8 @@ cron.schedule("0 * * * *", async function () {
 
       if (
         giobatdauDateTime >= gioketthucDateTime &&
-        currentDateString < giobatdauDateTime &&
-        currentDateString >= gioketthucDateTime
+        currentDateTime < giobatdauDateTime &&
+        currentDateTime >= gioketthucDateTime
       ) {
         return Tb_checklistc.update(
           { Tinhtrang: 1, Giokt: formattedTime },
