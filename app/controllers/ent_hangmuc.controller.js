@@ -680,7 +680,6 @@ exports.uploadFiles = async (req, res) => {
         const tenHangmuc = item["Tên Hạng Mục"];
         const tenTang = item["Tên tầng"];
 
-        console.log('maQrKhuvuc',maQrKhuvuc)
 
         const khuVuc = await Ent_khuvuc.findOne({
           attributes: [
