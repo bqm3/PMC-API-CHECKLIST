@@ -334,26 +334,26 @@ exports.getKhuVuc = async (req, res) => {
         }
 
         // Add ID_KhoiCV condition if it exists
-        // if (userData.ID_KhoiCV !== null && userData.ID_KhoiCV !== undefined) {
-        //   whereCondition[Op.and].push(
-        //     Sequelize.literal(
-        //       `JSON_CONTAINS(ID_KhoiCVs, '${userData.ID_KhoiCV}')`
-        //     )
-        //   );
+        if (userData.ID_KhoiCV !== null && userData.ID_KhoiCV !== undefined) {
+          whereCondition[Op.and].push(
+            Sequelize.literal(
+              `JSON_CONTAINS(ID_KhoiCVs, '${userData.ID_KhoiCV}')`
+            )
+          );
 
-        //   // whereCondition[Op.and].push({
-        //   //   ID_KhoiCV: userData.ID_KhoiCV,
-        //   // });
+          // whereCondition[Op.and].push({
+          //   ID_KhoiCV: userData.ID_KhoiCV,
+          // });
 
-        //   // Replace Op.contains with Op.like for MySQL (adjust according to your DB)
-        // }
+          // Replace Op.contains with Op.like for MySQL (adjust according to your DB)
+        }
 
-        // // Add ID_Toanha condition if it exists in request body
-        // if (req.body.ID_Toanha !== null && req.body.ID_Toanha !== undefined) {
-        //   whereCondition[Op.and].push({
-        //     ID_Toanha: req.body.ID_Toanha,
-        //   });
-        // }
+        // Add ID_Toanha condition if it exists in request body
+        if (req.body.ID_Toanha !== null && req.body.ID_Toanha !== undefined) {
+          whereCondition[Op.and].push({
+            ID_Toanha: req.body.ID_Toanha,
+          });
+        }
       }
       // Fetch data
       Ent_khuvuc.findAll({
