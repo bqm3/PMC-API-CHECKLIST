@@ -1947,193 +1947,119 @@ exports.uploadFiles = async (req, res) => {
       }
     });
 
-    // Step 2: Update objects with common details
-    const updatedData = data.map((item) => {
-      return {
-        ...item,
-      };
-    });
-
     await sequelize.transaction(async (transaction) => {
-      for (const item of updatedData) {
-        const maQrCodeHangMuc = item["Mã QrCode hạng mục"];
-        const tenTang = item["Tên tầng"];
-        const tenKhoiCongViec = item["Tên khối công việc"];
-        const caChecklist = item["Ca checklist"];
-        const sttChecklist = item["STT"];
-        const maChecklist = item["Mã checklist"];
-        const tenChecklist = item["Tên checklist"];
-        const tieuChuanChecklist = item["Tiêu chuẩn checklist"];
-        const giaTriDanhDinh = item["Giá trị danh định"];
-        const cacGiaTriNhan = item["Các giá trị nhận"];
-        const quanTrong = item["Quan trọng"];
-        const ghiChu = item["Ghi chú"];
+      for (const [index, item] of data.entries()) {
+        try {
+          const maQrCodeHangMuc = item["Mã QrCode hạng mục"];
+          const tenTang = item["Tên tầng"];
+          const tenKhoiCongViec = item["Tên khối công việc"];
+          const caChecklist = item["Ca checklist"];
+          const sttChecklist = item["STT"];
+          const maChecklist = item["Mã checklist"];
+          const tenChecklist = item["Tên checklist"];
+          const tieuChuanChecklist = item["Tiêu chuẩn checklist"];
+          const giaTriDanhDinh = item["Giá trị danh định"];
+          const cacGiaTriNhan = item["Các giá trị nhận"];
+          const quanTrong = item["Quan trọng"];
+          const ghiChu = item["Ghi chú"];
 
-        if (!tenChecklist || !caChecklist) {
-          console.log("Skipping due to missing tenChecklist or caChecklist");
-          continue;
-        }
+          if (!tenChecklist || !caChecklist) {
+            console.log(`Skipping row ${index + 1} due to missing tenChecklist or caChecklist`);
+            continue;
+          }
 
-        if (!tenTang) {
-          console.log("Skipping due to missing tenTang");
-          continue;
-        }
+          if (!tenTang) {
+            console.log(`Skipping row ${index + 1} due to missing tenTang`);
+            continue;
+          }
 
-        const hangmuc = await Ent_hangmuc.findOne({
-          attributes: [
-            "Hangmuc",
-            "Tieuchuankt",
-            "ID_Khuvuc",
-            "MaQrCode",
-            "ID_Hangmuc",
-            "isDelete",
-          ],
-          include: [
-            {
-              model: Ent_khuvuc,
-              attributes: [
-                "ID_Toanha",
-                "ID_Khuvuc",
-                "ID_KhoiCV",
-                "ID_KhoiCVs",
-                "Sothutu",
-                "MaQrCode",
-                "Tenkhuvuc",
-                "ID_User",
-                "isDelete",
-              ],
-              where: {
-                isDelete: 0,
-              },
-            },
-          ],
-          where: { MaQrCode: maQrCodeHangMuc, isDelete: 0 },
-          transaction,
-        });
+          const hangmuc = await Ent_hangmuc.findOne({
+            where: { MaQrCode: maQrCodeHangMuc, isDelete: 0 },
+            include: [{ model: Ent_khuvuc, where: { isDelete: 0 } }],
+            transaction,
+          });
 
-        const tang = await Ent_tang.findOne({
-          attributes: ["Tentang", "Sotang", "ID_Tang", "ID_Duan", "isDelete"],
-          where: {
-            Tentang: sequelize.where(
-              sequelize.fn(
-                "UPPER",
-                sequelize.fn("TRIM", sequelize.col("Tentang"))
-              ),
-              "LIKE",
-              "%" + tenTang.trim().toUpperCase() + "%"
-            ),
-            ID_Duan: userData.ID_Duan,
-            isDelete: 0,
-          },
-          transaction,
-        });
-
-        const khoiCV = await Ent_khoicv.findOne({
-          attributes: ["ID_Khoi", "KhoiCV", "isDelete"],
-          where: { KhoiCV: tenKhoiCongViec, isDelete: 0 },
-          transaction,
-        });
-
-        if (!caChecklist || !tenChecklist) {
-          console.log(`Bỏ qua`);
-        } else {
-          const caChecklistArray = caChecklist
-            .split(",")
-            .map((ca) => ca.trim());
-          const calv = await Ent_calv.findAll({
-            attributes: [
-              "ID_Calv",
-              "ID_Duan",
-              "ID_KhoiCV",
-              "Tenca",
-              "isDelete",
-            ],
+          const tang = await Ent_tang.findOne({
             where: {
-              TenCa: caChecklistArray,
+              Tentang: sequelize.where(sequelize.fn("UPPER", sequelize.fn("TRIM", sequelize.col("Tentang"))), "LIKE", "%" + tenTang.trim().toUpperCase() + "%"),
               ID_Duan: userData.ID_Duan,
-              ID_KhoiCV: khoiCV.ID_Khoi,
               isDelete: 0,
             },
             transaction,
           });
-          const sCalv = calv.map((calvItem) => calvItem.ID_Calv);
 
-          const data = {
-            ID_Khuvuc: hangmuc.ID_Khuvuc,
-            ID_Tang: tang.ID_Tang,
-            ID_Hangmuc: hangmuc.ID_Hangmuc,
-            Sothutu: sttChecklist || 1,
-            Maso: maChecklist || "",
-            MaQrCode: maChecklist || "",
-            Checklist: tenChecklist,
-            Ghichu: ghiChu || "",
-            Tieuchuan: tieuChuanChecklist || "",
-            Giatridinhdanh: giaTriDanhDinh || "",
-            Giatrinhan: cacGiaTriNhan || "",
-            isImportant: quanTrong !== undefined ? 1 : 0,
-            ID_User: userData.ID_User,
-            sCalv: JSON.stringify(sCalv) || null,
-            calv_1: JSON.stringify(sCalv[0]) || null,
-            calv_2: JSON.stringify(sCalv[1]) || null,
-            calv_3: JSON.stringify(sCalv[2]) || null,
-            calv_4: JSON.stringify(sCalv[3]) || null,
-            isDelete: 0,
-            Tinhtrang: 0,
-          };
-
-          const existingChecklist = await Ent_checklist.findOne({
-            attributes: [
-              "ID_Checklist",
-              "ID_Khuvuc",
-              "ID_Tang",
-              "ID_Hangmuc",
-              "Sothutu",
-              "Maso",
-              "MaQrCode",
-              "Checklist",
-              "Ghichu",
-              "Tieuchuan",
-              "Giatridinhdanh",
-              "isImportant",
-              "isCheck",
-              "Giatrinhan",
-              "sCalv",
-              "Tinhtrang",
-              "calv_1",
-              "calv_2",
-              "calv_3",
-              "calv_4",
-              "ID_User",
-              "isDelete",
-            ],
-            where: {
-              ID_Khuvuc: hangmuc.ID_Khuvuc,
-              ID_Tang: tang.ID_Tang,
-              ID_Hangmuc: hangmuc.ID_Hangmuc,
-              Tieuchuan: tieuChuanChecklist,
-              Giatridinhdanh: giaTriDanhDinh,
-              Giatrinhan: cacGiaTriNhan,
-              Checklist: tenChecklist
-            },
+          const khoiCV = await Ent_khoicv.findOne({
+            where: { KhoiCV: tenKhoiCongViec, isDelete: 0 },
             transaction,
           });
 
-          // Nếu checklist đã tồn tại thì bỏ qua
-          if (existingChecklist) {
-            console.log("Checklist đã tồn tại, bỏ qua.");
-            continue;
+          if (!caChecklist || !tenChecklist) {
+            console.log(`Skipping row ${index + 1}`);
+          } else {
+            const caChecklistArray = caChecklist.split(",").map(ca => ca.trim());
+            const calv = await Ent_calv.findAll({
+              where: {
+                TenCa: caChecklistArray,
+                ID_Duan: userData.ID_Duan,
+                ID_KhoiCV: khoiCV.ID_Khoi,
+                isDelete: 0,
+              },
+              transaction,
+            });
+
+            const sCalv = calv.map(calvItem => calvItem.ID_Calv);
+
+            const data = {
+              ID_Khuvuc: hangmuc.ID_Khuvuc,
+              ID_Tang: tang.ID_Tang,
+              ID_Hangmuc: hangmuc.ID_Hangmuc,
+              Sothutu: sttChecklist || 1,
+              Maso: maChecklist || "",
+              MaQrCode: maChecklist || "",
+              Checklist: tenChecklist,
+              Ghichu: ghiChu || "",
+              Tieuchuan: tieuChuanChecklist || "",
+              Giatridinhdanh: giaTriDanhDinh || "",
+              Giatrinhan: cacGiaTriNhan || "",
+              isImportant: quanTrong !== undefined ? 1 : 0,
+              ID_User: userData.ID_User,
+              sCalv: JSON.stringify(sCalv) || null,
+              calv_1: JSON.stringify(sCalv[0]) || null,
+              calv_2: JSON.stringify(sCalv[1]) || null,
+              calv_3: JSON.stringify(sCalv[2]) || null,
+              calv_4: JSON.stringify(sCalv[3]) || null,
+              isDelete: 0,
+              Tinhtrang: 0,
+            };
+
+            const existingChecklist = await Ent_checklist.findOne({
+              where: {
+                ID_Khuvuc: hangmuc.ID_Khuvuc,
+                ID_Tang: tang.ID_Tang,
+                ID_Hangmuc: hangmuc.ID_Hangmuc,
+                Tieuchuan: tieuChuanChecklist,
+                Giatridinhdanh: giaTriDanhDinh,
+                Giatrinhan: cacGiaTriNhan,
+                Checklist: tenChecklist,
+              },
+              transaction,
+            });
+
+            if (!existingChecklist) {
+              await Ent_checklist.create(data, { transaction });
+            } else {
+              console.log(`Checklist already exists for row ${index + 1}`);
+            }
           }
-
-          console.log("data", data);
-
-          await Ent_checklist.create(data, { transaction });
+        } catch (error) {
+          console.error(`Error on row ${index + 1}:`, error);
+          throw new Error(`Error on row ${index + 1}: ${error.message}`);
         }
       }
     });
 
     res.send({
-      message: "File uploaded and data extracted successfully",
-      data,
+      message: "File uploaded and data processed successfully",
     });
   } catch (err) {
     return res.status(500).json({
@@ -2141,6 +2067,7 @@ exports.uploadFiles = async (req, res) => {
     });
   }
 };
+
 
 function capitalizeEachWord(str) {
   return str.toLowerCase().replace(/\b\w/g, function (match) {
