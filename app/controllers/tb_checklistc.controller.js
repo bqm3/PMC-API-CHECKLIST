@@ -23,6 +23,9 @@ const sequelize = require("../config/db.config");
 const cron = require("node-cron");
 const ExcelJS = require("exceljs");
 var FileSaver = require("file-saver");
+const fs = require('fs');
+const path = require('path');
+const axios = require('axios');
 
 function convertTimeFormat(timeStr) {
   if (!timeStr.includes("AM") && !timeStr.includes("PM")) {
@@ -2299,14 +2302,6 @@ exports.fileChecklistSuCo = async (req, res) => {
   }
 };
 
-const formatDate = (date) => {
-  const day = date.getDate().toString().padStart(2, "0");
-  const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Months are zero based
-  const year = date.getFullYear();
-
-  return `${day}/${month}/${year}`;
-};
-
 exports.createExcelFile = async (req, res) => {
   try {
     const list_IDChecklistC = req.body.list_IDChecklistC || [];
@@ -2448,19 +2443,17 @@ exports.createExcelFile = async (req, res) => {
       { header: "Nhân viên", key: "nhanvien", width: 20 },
       { header: "Ghi nhận lỗi", key: "ghinhanloi", width: 20 },
       { header: "Thời gian lỗi", key: "thoigianloi", width: 20 },
-      { header: "Hình ảnh", key: "thoigianloi", width: 20 },
+      { header: "Hình ảnh", key: "hinhanh", width: 100, height: 100 },
       { header: "Ghi chú", key: "ghichuloi", width: 20 },
       { header: "Tình trạng xử lý", key: "tinhtrang", width: 20 },
     ];
 
-    // Merge cells for the header
     worksheet.mergeCells("A1:J1");
     const headerRow = worksheet.getCell("A1");
     headerRow.value = "BÁO CÁO CHECKLIST CÓ VẤN ĐỀ";
     headerRow.alignment = { horizontal: "center", vertical: "middle" };
     headerRow.font = { size: 16, bold: true };
 
-    // Add sub-header
     worksheet.mergeCells("A3:B3");
     worksheet.getCell("A3").value = startDate
       ? `Từ ngày: ${moment(startDate).format("DD/MM/YYYY")}`
@@ -2474,7 +2467,6 @@ exports.createExcelFile = async (req, res) => {
     worksheet.mergeCells("E3:F3");
     worksheet.getCell("E3").value = `Tên Bộ phận: ${tenBoPhan}`;
 
-    // Add table headers
     const tableHeaderRow = worksheet.getRow(5);
     tableHeaderRow.values = [
       "STT",
@@ -2488,6 +2480,7 @@ exports.createExcelFile = async (req, res) => {
       "Ghi nhận lỗi",
       "Thời gian lỗi",
       "Hình ảnh",
+      "Đường dẫn ảnh",
       "Ghi chú",
       "Tình trạng xử lý",
     ];
@@ -2502,8 +2495,11 @@ exports.createExcelFile = async (req, res) => {
       };
     });
 
-    // Add empty rows for data
+    // Add data rows
     for (let i = 0; i < dataChecklistC.length; i++) {
+      const rowIndex = i + 6; // Adjust for header rows
+
+      // Add text data to the row
       worksheet.addRow([
         i + 1,
         dataChecklistC[i]?.ent_checklist?.Checklist,
@@ -2515,16 +2511,50 @@ exports.createExcelFile = async (req, res) => {
         dataChecklistC[i]?.tb_checklistc?.ent_giamsat?.Hoten,
         dataChecklistC[i]?.Ketqua,
         dataChecklistC[i]?.Gioht,
+        '', // Placeholder for the image
         `https://lh3.googleusercontent.com/d/${dataChecklistC[i]?.Anh}=s1000?authuser=0`,
         dataChecklistC[i]?.Ghichu,
         dataChecklistC[i]?.ent_checklist?.Tinhtrang == 1
           ? "Chưa xử lý"
           : "Đã xử lý",
       ]);
+
+      // Download the image and add it to the Excel file
+      if (dataChecklistC[i]?.Anh) {
+        const imageUrl = `https://lh3.googleusercontent.com/d/${dataChecklistC[i]?.Anh}=s1000?authuser=0`;
+        const imagePath = path.join(__dirname, `image_${i}.png`);
+
+        // Download the image
+        const response = await axios({
+          url: imageUrl,
+          responseType: 'arraybuffer',
+        });
+
+        fs.writeFileSync(imagePath, response.data);
+
+        // Add image to the worksheet
+        const imageId = workbook.addImage({
+          filename: imagePath,
+          extension: 'png',
+        });
+
+        worksheet.addImage(imageId, {
+          tl: { col: 10, row: rowIndex - 1 },
+          ext: { width: 100, height: 100 },
+        });
+      }
     }
 
     // Generate the Excel file buffer
     const buffer = await workbook.xlsx.writeBuffer();
+
+    // Clean up the downloaded images
+    for (let i = 0; i < dataChecklistC.length; i++) {
+      const imagePath = path.join(__dirname, `image_${i}.png`);
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
+    }
 
     res.setHeader(
       "Content-Disposition",
@@ -2541,7 +2571,6 @@ exports.createExcelFile = async (req, res) => {
       .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
-
 async function processData(data) {
   const aggregatedData = {};
 
