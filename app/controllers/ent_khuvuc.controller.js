@@ -334,30 +334,27 @@ exports.getKhuVuc = async (req, res) => {
         }
 
         // Add ID_KhoiCV condition if it exists
-        if (userData.ID_KhoiCV !== null && userData.ID_KhoiCV !== undefined) {
-          whereCondition[Op.and].push(
-            Sequelize.literal(
-              `JSON_CONTAINS(ID_KhoiCVs, '${userData.ID_KhoiCV}')`
-            )
-          );
+        // if (userData.ID_KhoiCV !== null && userData.ID_KhoiCV !== undefined) {
+        //   whereCondition[Op.and].push(
+        //     Sequelize.literal(
+        //       `JSON_CONTAINS(ID_KhoiCVs, '${userData.ID_KhoiCV}')`
+        //     )
+        //   );
 
-          // whereCondition[Op.and].push({
-          //   ID_KhoiCV: userData.ID_KhoiCV,
-          // });
+        //   // whereCondition[Op.and].push({
+        //   //   ID_KhoiCV: userData.ID_KhoiCV,
+        //   // });
 
-          // Replace Op.contains with Op.like for MySQL (adjust according to your DB)
-        }
+        //   // Replace Op.contains with Op.like for MySQL (adjust according to your DB)
+        // }
 
-        // Add ID_Toanha condition if it exists in request body
-        if (req.body.ID_Toanha !== null && req.body.ID_Toanha !== undefined) {
-          whereCondition[Op.and].push({
-            ID_Toanha: req.body.ID_Toanha,
-          });
-        }
+        // // Add ID_Toanha condition if it exists in request body
+        // if (req.body.ID_Toanha !== null && req.body.ID_Toanha !== undefined) {
+        //   whereCondition[Op.and].push({
+        //     ID_Toanha: req.body.ID_Toanha,
+        //   });
+        // }
       }
-
-      console.log('whereCondition',whereCondition)
-
       // Fetch data
       Ent_khuvuc.findAll({
         attributes: [
@@ -595,7 +592,6 @@ exports.uploadFiles = async (req, res) => {
     if (!req.file) {
       return res.status(400).send("No file uploaded.");
     }
-
     const userData = req.user.data;
 
     // Read the uploaded Excel file from buffer
@@ -637,7 +633,7 @@ exports.uploadFiles = async (req, res) => {
     await sequelize.transaction(async (transaction) => {
       const removeSpacesFromKeys = (obj) => {
         return Object.keys(obj).reduce((acc, key) => {
-          const newKey = key.replace(/\s+/g, "").toUpperCase();
+          const newKey = key?.replace(/\s+/g, "")?.toUpperCase();
           acc[newKey] = obj[key];
           return acc;
         }, {});
@@ -652,21 +648,18 @@ exports.uploadFiles = async (req, res) => {
         const maKhuvuc = transformedItem["MÃKHUVỰC"];
         const maQrKhuvuc = transformedItem["MÃQRCODEKHUVỰC"];
 
-        const sanitizedTenToanha = tenToanha.replace(/\t/g, ''); // Loại bỏ tất cả các ký tự tab
+        const sanitizedTenToanha = tenToanha?.replace(/\t/g, ''); // Loại bỏ tất cả các ký tự tab
 
         const toaNha = await Ent_toanha.findOne({
-          attributes: ["ID_Toanha", "Sotang", "Toanha"],
+          attributes: ["ID_Toanha", "Sotang", "Toanha", "ID_Duan"],
           where: {
-            Toanha: sanitizedTenToanha
+            Toanha: sanitizedTenToanha,
+            ID_Duan: userData.ID_Duan
             
           },
           transaction,
         });
         
-
-        console.log('toaNha',toaNha)
-        console.log('tenToanha',tenToanha)
-
         const khoiCV = await Ent_khoicv.findOne({
           attributes: ["ID_Khoi", "KhoiCV"],
           where: {
@@ -697,8 +690,6 @@ exports.uploadFiles = async (req, res) => {
           },
           transaction,
         });
-
-        console.log('existingKhuVuc',existingKhuVuc)
 
         if (!existingKhuVuc) {
           // If tenKhuvuc doesn't exist, create a new entry
