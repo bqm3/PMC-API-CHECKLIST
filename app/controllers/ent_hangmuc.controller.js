@@ -55,6 +55,8 @@ exports.create = async (req, res, next) => {
           ID_KhoiCV: req.body.ID_KhoiCV,
           MaQrCode: req.body.MaQrCode,
           Hangmuc: req.body.Hangmuc,
+          FileTieuChuan: req.body.FileTieuChuan,
+          
           Tieuchuankt: req.body.Tieuchuankt || null,
           isDelete: 0,
         };
@@ -105,6 +107,7 @@ exports.get = async (req, res) => {
           "MaQrCode",
           "Hangmuc",
           "Tieuchuankt",
+          "FileTieuChuan",
           "isDelete",
         ],
         include: [
@@ -196,6 +199,7 @@ exports.getDetail = async (req, res) => {
           "Hangmuc",
           "Tieuchuankt",
           "isDelete",
+          "FileTieuChuan"
         ],
         include: [
           {
@@ -265,6 +269,7 @@ exports.update = async (req, res) => {
         MaQrCode: req.body.MaQrCode,
         Hangmuc: req.body.Hangmuc,
         Tieuchuankt: req.body.Tieuchuankt,
+        FileTieuChuan: req.body.FileTieuChuan,
         isDelete: 0,
       };
 
@@ -388,6 +393,7 @@ exports.filterByKhuvuc = async (req, res) => {
           "Hangmuc",
           "Tieuchuankt",
           "isDelete",
+          "FileTieuChuan"
         ],
         include: [
           {
@@ -474,6 +480,7 @@ exports.filterByQr = async (req, res) => {
           "Hangmuc",
           "Tieuchuankt",
           "isDelete",
+          "FileTieuChuan"
         ],
         include: [
           {
@@ -548,6 +555,7 @@ exports.getHangmucTotal = async (req, res) => {
         "Hangmuc",
         "Tieuchuankt",
         "isDelete",
+        "FileTieuChuan"
       ],
       include: [
         {

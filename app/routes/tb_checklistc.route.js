@@ -26,6 +26,12 @@ module.exports = (app) => {
     tb_checklistc.checklistCalv
   );
 
+  router.get(
+    "/ca-dinh-ky/:id",
+    [isAuthenticated],
+    tb_checklistc.checklistCalvDinhKy
+  );
+
   router.get("/top3", tb_checklistc.top3kythuatMaxMin);
   router.get("/list-checklist-error", tb_checklistc.getChecklistsErrorFromYesterday);
   router.get("/list-project-none", tb_checklistc.getProjectsChecklistStatus);

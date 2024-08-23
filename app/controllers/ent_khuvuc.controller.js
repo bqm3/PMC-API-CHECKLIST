@@ -373,7 +373,7 @@ exports.getKhuVuc = async (req, res) => {
           {
             model: Ent_hangmuc,
             as: "ent_hangmuc",
-            attributes: ["ID_Hangmuc", "ID_Khuvuc", "Hangmuc", "MaQrCode", "isDelete", "Tieuchuankt", "ID_KhoiCV"],
+            attributes: ["ID_Hangmuc", "ID_Khuvuc", "Hangmuc", "MaQrCode", "isDelete", "Tieuchuankt", "ID_KhoiCV", "FileTieuChuan"],
             where: { isDelete: 0 },
             required: false,
           },
@@ -536,7 +536,7 @@ exports.getKhuvucTotal = async (req, res) => {
       { ID_Khoi: 2, KhoiCV: "Khối kỹ thuật" },
       { ID_Khoi: 1, KhoiCV: "Khối làm sạch" },
       { ID_Khoi: 3, KhoiCV: "Khối bảo vệ" },
-      { ID_Khoi: 4, KhoiCV: "Khối dự án" },
+      { ID_Khoi: 4, KhoiCV: "Khối dịch vụ" },
     ];
 
     // Create a map for quick lookup of KhoiCV by ID_Khoi

@@ -16,14 +16,17 @@ const Ent_Hangmuc = sequelize.define("ent_hangmuc", {
         type: DataTypes.INTEGER,
       },
        MaQrCode: {
-        type: DataTypes.TEXT,
+        type: DataTypes.CHAR,
        },
        Hangmuc: {
-        type: DataTypes.TEXT,
+        type: DataTypes.CHAR,
        },
        Tieuchuankt: {
         type: DataTypes.TEXT,
        },
+       FileTieuChuan: {
+          type: DataTypes.CHAR
+        },
        isDelete: {
         type: DataTypes.INTEGER,
         defaultValue: 0,

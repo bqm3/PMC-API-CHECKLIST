@@ -179,6 +179,7 @@ exports.createFirstChecklist = async (req, res, next) => {
             "ID_Hangmuc",
             "ID_Khuvuc",
             "ID_KhoiCV",
+             "FileTieuChuan"
           ],
           include: [
             {
@@ -483,6 +484,7 @@ exports.createChecklistInToanha = async (req, res, next) => {
               "ID_Hangmuc",
               "ID_Khuvuc",
               "ID_KhoiCV",
+              "FileTieuChuan"
             ],
             include: [
               {
@@ -1127,6 +1129,7 @@ exports.checklistCalv = async (req, res) => {
                   "ID_Khuvuc",
                   "MaQrCode",
                   "ID_KhoiCV",
+                  'FileTieuChuan'
                 ],
                 include: [
                   {
@@ -1239,6 +1242,7 @@ exports.checklistCalv = async (req, res) => {
               "ID_Khuvuc",
               "MaQrCode",
               "ID_KhoiCV",
+              'FileTieuChuan'
             ],
             include: [
               {
@@ -1368,6 +1372,323 @@ exports.checklistCalv = async (req, res) => {
       .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
+
+exports.checklistCalvDinhKy = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    if (userData) {
+      const ID_ChecklistC = req.params.id;
+      let whereClause = {
+        isDelete: 0,
+        ID_ChecklistC: ID_ChecklistC,
+      };
+
+      // Fetch checklist detail items
+      const dataChecklistChiTiet = await Tb_checklistchitiet.findAll({
+        attributes: [
+          "ID_Checklistchitiet",
+          "ID_ChecklistC",
+          "ID_Checklist",
+          "Ketqua",
+          "Anh",
+          "Gioht",
+          "Ghichu",
+          "isDelete",
+        ],
+        include: [
+          {
+            model: Tb_checklistc,
+            attributes: [
+              "ID_ChecklistC",
+              "Ngay",
+              "Giobd",
+              "Giokt",
+              "ID_KhoiCV",
+              "ID_Giamsat",
+              "ID_Calv",
+            ],
+            where: whereClause,
+            include: [
+              {
+                model: Ent_khoicv,
+                attributes: ["KhoiCV"],
+              },
+              {
+                model: Ent_giamsat,
+                attributes: ["Hoten"],
+              },
+              {
+                model: Ent_calv,
+                attributes: ["Tenca", "Giobatdau", "Gioketthuc"],
+              },
+            ],
+          },
+          {
+            model: Ent_checklist,
+            attributes: [
+              "ID_Checklist",
+              "ID_Hangmuc",
+              "ID_Tang",
+              "Sothutu",
+              "Maso",
+              "MaQrCode",
+              "Checklist",
+              "Giatridinhdanh",
+              "isCheck",
+              "Giatrinhan",
+            ],
+            include: [
+              {
+                model: Ent_hangmuc,
+                attributes: [
+                  "Hangmuc",
+                  "Tieuchuankt",
+                  "ID_Khuvuc",
+                  "MaQrCode",
+                  "ID_KhoiCV",
+                  'FileTieuChuan'
+                ],
+                include: [
+                  {
+                    model: Ent_khuvuc,
+                    attributes: [
+                      "Tenkhuvuc",
+                      "MaQrCode",
+                      "Makhuvuc",
+                      "Sothutu",
+                      "ID_Toanha",
+                      "ID_KhoiCV",
+                      "ID_Khuvuc",
+                    ],
+                    include: [
+                      {
+                        model: Ent_toanha,
+                        attributes: ["Toanha", "Sotang", "ID_Toanha"],
+                        include: {
+                          model: Ent_duan,
+                          attributes: [
+                            "ID_Duan",
+                            "Duan",
+                            "Diachi",
+                            "Vido",
+                            "Kinhdo",
+                          ],
+                          where: { ID_Duan: userData.ID_Duan },
+                        },
+                      },
+                    ],
+                  },
+                  {
+                    model: Ent_khoicv,
+                    attributes: ["KhoiCV"],
+                  },
+                ],
+              },
+              {
+                model: Ent_tang,
+                attributes: ["Tentang", "Sotang"],
+              },
+              {
+                model: Ent_user,
+                attributes: ["UserName"],
+              },
+            ],
+          },
+        ],
+      });
+
+      // Fetch checklist done items
+      const checklistDoneItems = await Tb_checklistchitietdone.findAll({
+        attributes: ["Description", "isDelete", "ID_ChecklistC"],
+        where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC },
+      });
+
+      const arrPush = [];
+
+      // Add status to dataChecklistChiTiet items if length > 0
+      if (dataChecklistChiTiet.length > 0) {
+        dataChecklistChiTiet.forEach((item) => {
+          arrPush.push({ ...item.dataValues, status: 0 });
+        });
+      }
+
+      // Extract all ID_Checklist from checklistDoneItems and fetch related data
+      let checklistIds = [];
+      if (checklistDoneItems.length > 0) {
+        checklistDoneItems.forEach((item) => {
+          const descriptionArray = JSON.parse(item.dataValues.Description);
+          if (Array.isArray(descriptionArray)) {
+            descriptionArray.forEach((description) => {
+              const splitByComma = description.split(",");
+              splitByComma.forEach((splitItem) => {
+                const [ID_Checklist] = splitItem.split("/");
+                checklistIds.push(parseInt(ID_Checklist));
+              });
+            });
+          } else {
+            console.log("descriptionArray is not an array.");
+          }
+        });
+      }
+
+      let initialChecklistIds = checklistIds.filter((id) => !isNaN(id));
+
+      // Fetch related checklist data
+      const relatedChecklists = await Ent_checklist.findAll({
+        attributes: [
+          "ID_Checklist",
+          "ID_Hangmuc",
+          "ID_Tang",
+          "Sothutu",
+          "Maso",
+          "MaQrCode",
+          "Checklist",
+          "Giatridinhdanh",
+          "isCheck",
+          "Giatrinhan",
+        ],
+        where: {
+          ID_Checklist: initialChecklistIds,
+        },
+        include: [
+          {
+            model: Ent_hangmuc,
+            attributes: [
+              "Hangmuc",
+              "Tieuchuankt",
+              "ID_Khuvuc",
+              "MaQrCode",
+              "ID_KhoiCV",
+              'FileTieuChuan'
+            ],
+            include: [
+              {
+                model: Ent_khuvuc,
+                attributes: [
+                  "Tenkhuvuc",
+                  "MaQrCode",
+                  "Makhuvuc",
+                  "Sothutu",
+                  "ID_Toanha",
+                  "ID_KhoiCV",
+                  "ID_Khuvuc",
+                ],
+                include: [
+                  {
+                    model: Ent_toanha,
+                    attributes: ["Toanha", "Sotang", "ID_Toanha"],
+                    include: {
+                      model: Ent_duan,
+                      attributes: [
+                        "ID_Duan",
+                        "Duan",
+                        "Diachi",
+                        "Vido",
+                        "Kinhdo",
+                      ],
+                      where: { ID_Duan: userData.ID_Duan },
+                    },
+                  },
+                ],
+              },
+              {
+                model: Ent_khoicv,
+                attributes: ["KhoiCV"],
+              },
+            ],
+          },
+          {
+            model: Ent_tang,
+            attributes: ["Tentang", "Sotang"],
+          },
+          {
+            model: Ent_user,
+            attributes: ["UserName"],
+          },
+        ],
+      });
+
+      // Merge checklistDoneItems data into arrPush
+      checklistDoneItems.forEach((item) => {
+        const descriptionArray = JSON.parse(item.dataValues.Description);
+        if (Array.isArray(descriptionArray)) {
+          descriptionArray.forEach((description) => {
+            const splitByComma = description.split(",");
+            splitByComma.forEach((splitItem) => {
+              const [ID_Checklist, valueCheck, gioht] = splitItem.split("/");
+              const relatedChecklist = relatedChecklists.find(
+                (rl) => rl.ID_Checklist === parseInt(ID_Checklist)
+              );
+              if (relatedChecklist) {
+                arrPush.push({
+                  ID_Checklist: parseInt(ID_Checklist),
+                  Ketqua: valueCheck,
+                  Gioht: gioht,
+                  status: 1,
+                  ent_checklist: relatedChecklist,
+                });
+              }
+            });
+          });
+        }
+      });
+
+      const dataChecklistC = await Tb_checklistc.findByPk(ID_ChecklistC, {
+        attributes: [
+          "Ngay",
+          "ID_KhoiCV",
+          "ID_Duan",
+          "Tinhtrang",
+          "Giobd",
+          "Giokt",
+          "ID_User",
+          "ID_Giamsat",
+          "ID_Calv",
+          "isDelete",
+        ],
+        include: [
+          {
+            model: Ent_duan,
+            attributes: ["Duan"],
+          },
+          {
+            model: Ent_khoicv,
+            attributes: ["KhoiCV"],
+          },
+          {
+            model: Ent_calv,
+            attributes: ["Tenca"],
+          },
+          {
+            model: Ent_user,
+            include: {
+              model: Ent_chucvu,
+              attributes: ["Chucvu"],
+            },
+            attributes: ["UserName", "Emails"],
+          },
+          {
+            model: Ent_giamsat,
+            attributes: ["Hoten"],
+          },
+        ],
+        where: {
+          isDelete: 0,
+        },
+      });
+
+      res.status(200).json({
+        message: "Danh sách checklist",
+        data: arrPush,
+        dataChecklistC: dataChecklistC,
+      });
+    }
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+  }
+}
 
 exports.checklistYear = async (req, res) => {
   try {
@@ -1784,6 +2105,7 @@ exports.getChecklistsErrorFromYesterday = async (req, res) => {
                 "MaQrCode",
                 "ID_KhoiCV",
                 "ID_KhoiCV",
+                "FileTieuChuan"
               ],
             },
             {
@@ -2015,6 +2337,7 @@ exports.getChecklistsErrorFromWeek = async (req, res) => {
                 "ID_Khuvuc",
                 "MaQrCode",
                 "ID_KhoiCV",
+                "FileTieuChuan",
                 "ID_KhoiCV",
               ],
             },
@@ -2122,6 +2445,7 @@ exports.getChecklistsError = async (req, res) => {
             "ID_KhoiCV",
             "ID_KhoiCV",
             "ID_Khuvuc",
+            "FileTieuChuan"
           ],
           include: [
             {
@@ -2416,6 +2740,8 @@ exports.createExcelFile = async (req, res) => {
                 "MaQrCode",
                 "ID_KhoiCV",
                 "ID_KhoiCV",
+                "FileTieuChuan",
+                "isDelete"
               ],
             },
             {

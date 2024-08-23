@@ -312,7 +312,7 @@ exports.getThongtinduan = async (req, res) => {
                 {
                   model: Ent_hangmuc,
                   as: "ent_hangmuc",
-                  attributes: ["ID_Hangmuc", "ID_Khuvuc", "Hangmuc", "MaQrCode", "isDelete", "Tieuchuankt", "ID_KhoiCV"],
+                  attributes: ["ID_Hangmuc", "ID_Khuvuc", "Hangmuc", "MaQrCode", "isDelete", "Tieuchuankt", "ID_KhoiCV", "FileTieuChuan"],
                   where: { isDelete: 0 },
                   required: false,
                 },
