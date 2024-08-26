@@ -19,11 +19,7 @@ module.exports = (app) => {
   
   router.put("/update/:id", [isAuthenticated], ent_checklist.update);
   router.put("/delete/:id", [isAuthenticated], ent_checklist.delete);
-  router.put(
-    "/delete-all/:ids",
-    isAuthenticated,
-    ent_checklist.deleteChecklists
-  );
+  router.put("/delete-mul", [isAuthenticated], ent_checklist.deleteMul)
   router.put(
     "/filter-mul/:idc/:id_calv",
     isAuthenticated,

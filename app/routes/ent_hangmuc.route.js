@@ -15,6 +15,7 @@ module.exports = (app) => {
     
     router.put("/update/:id",[isAuthenticated], ent_hangmuc.update);
     router.put("/delete/:id",isAuthenticated, ent_hangmuc.delete);
+    router.put("/delete-mul", [isAuthenticated], ent_hangmuc.deleteMul)
     router.get("/filter/:id",isAuthenticated, ent_hangmuc.filterByKhuvuc);
     router.post("/filter_qr", isAuthenticated, ent_hangmuc.filterByQr)
 
