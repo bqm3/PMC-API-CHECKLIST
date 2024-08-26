@@ -664,7 +664,6 @@ exports.getHangmucTotal = async (req, res) => {
   }
 };
 
-
 exports.uploadFiles = async (req, res) => {
   try {
     if (!req.file) {
@@ -716,7 +715,7 @@ exports.uploadFiles = async (req, res) => {
         const maKhuvuc = item["Mã khu vực"];
         const maQrKhuvuc = item["Mã QrCode khu vực"];
         const maQrHangmuc = item["Mã QrCode hạng mục"];
-        const tenHangmuc = item["Tên Hạng Mục"];
+        const tenHangmuc = item["Tên hạng mục"];
         const tenTang = item["Tên tầng"];
 
 
@@ -746,7 +745,7 @@ exports.uploadFiles = async (req, res) => {
             KhoiCV: sequelize.where(
               sequelize.fn("UPPER", sequelize.col("KhoiCV")),
               "LIKE",
-              "%" + tenKhoiCongViec.toUpperCase() + "%"
+              tenKhoiCongViec.toUpperCase()
             )
           },
           transaction,
