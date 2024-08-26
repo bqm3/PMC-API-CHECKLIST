@@ -2024,16 +2024,18 @@ exports.uploadFiles = async (req, res) => {
           transaction,
         });
 
+        console.log('tenTang',tenTang)
+
         const tang = await Ent_tang.findOne({
           attributes: ["Tentang", "Sotang", "ID_Tang", "ID_Duan", "isDelete"],
           where: {
             Tentang: sequelize.where(
               sequelize.fn(
                 "UPPER",
-                sequelize.fn("TRIM", sequelize.col("Tentang"))
+                sequelize.col("Tentang")
               ),
               "LIKE",
-               + tenTang.trim().toUpperCase() 
+              tenTang?.toUpperCase() 
             ),
             ID_Duan: userData.ID_Duan,
             isDelete: 0,
@@ -2150,6 +2152,7 @@ exports.uploadFiles = async (req, res) => {
       data,
     });
   } catch (err) {
+    console.log('err',err)
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
