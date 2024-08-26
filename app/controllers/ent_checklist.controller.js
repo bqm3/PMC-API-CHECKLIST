@@ -742,23 +742,23 @@ exports.getFilter = async (req, res) => {
   }
 };
 
-exports.deleteChecklists = async (req, res) => {
+exports.deleteMul = async (req, res)=> {
   try {
-    const ids = req.params.ids.split(",");
     const userData = req.user.data;
-
-    if (ids && userData) {
+    const deleteRows = req.body;
+    const idsToDelete = deleteRows.map(row => row.ID_Checklist);
+    if (userData) {
       Ent_checklist.update(
         { isDelete: 1 },
         {
           where: {
-            ID_Checklist: ids,
+            ID_Checklist: idsToDelete,
           },
         }
       )
         .then((data) => {
           res.status(200).json({
-            message: "Xóa checklist thành công!",
+            message: "Xóa khu vực thành công!",
           });
         })
         .catch((err) => {
@@ -767,12 +767,12 @@ exports.deleteChecklists = async (req, res) => {
           });
         });
     }
-  } catch (err) {
-    res.status(500).json({
+  }catch (err) {
+    return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
-};
+}
 
 // get data
 exports.getChecklist = async (req, res) => {
@@ -2033,7 +2033,7 @@ exports.uploadFiles = async (req, res) => {
                 sequelize.fn("TRIM", sequelize.col("Tentang"))
               ),
               "LIKE",
-              "%" + tenTang.trim().toUpperCase() + "%"
+               + tenTang.trim().toUpperCase() 
             ),
             ID_Duan: userData.ID_Duan,
             isDelete: 0,

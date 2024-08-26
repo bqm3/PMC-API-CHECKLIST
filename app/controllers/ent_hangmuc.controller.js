@@ -7,7 +7,7 @@ const {
   Ent_duan,
 } = require("../models/setup.model");
 const { Ent_khuvuc } = require("../models/setup.model");
-const { Op, Sequelize,fn, col, literal, where  } = require("sequelize");
+const { Op } = require("sequelize");
 const sequelize = require("../config/db.config");
 const xlsx = require("xlsx");
 
@@ -56,7 +56,6 @@ exports.create = async (req, res, next) => {
           MaQrCode: req.body.MaQrCode,
           Hangmuc: req.body.Hangmuc,
           FileTieuChuan: req.body.FileTieuChuan,
-          
           Tieuchuankt: req.body.Tieuchuankt || null,
           isDelete: 0,
         };
@@ -124,7 +123,6 @@ exports.get = async (req, res) => {
               "ID_Toanha",
               "ID_Khuvuc",
               "ID_KhoiCV",
-              "ID_KhoiCVs",
               "Sothutu",
               "MaQrCode",
               "Tenkhuvuc",
@@ -350,6 +348,39 @@ exports.delete = async (req, res) => {
     });
   }
 };
+
+exports.deleteMul = async (req, res)=> {
+  try {
+    const userData = req.user.data;
+    const deleteRows = req.body;
+    const idsToDelete = deleteRows.map(row => row.ID_Hangmuc);
+    if (userData) {
+      Ent_hangmuc.update(
+        { isDelete: 1 },
+        {
+          where: {
+            ID_Hangmuc: idsToDelete,
+          },
+        }
+      )
+        .then((data) => {
+          res.status(200).json({
+            message: "Xóa hạng mục thành công!",
+            data: data
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    }
+  }catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+}
 
 exports.filterByKhuvuc = async (req, res) => {
   try {
