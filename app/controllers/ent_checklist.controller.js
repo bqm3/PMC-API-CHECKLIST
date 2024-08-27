@@ -2024,8 +2024,6 @@ exports.uploadFiles = async (req, res) => {
           transaction,
         });
 
-        console.log('tenTang',tenTang)
-
         const tang = await Ent_tang.findOne({
           attributes: ["Tentang", "Sotang", "ID_Tang", "ID_Duan", "isDelete"],
           where: {
@@ -2128,7 +2126,8 @@ exports.uploadFiles = async (req, res) => {
               Tieuchuan: tieuChuanChecklist,
               Giatridinhdanh: giaTriDanhDinh,
               Giatrinhan: cacGiaTriNhan,
-              Checklist: tenChecklist
+              Checklist: tenChecklist,
+              isDelete: 0
             },
             transaction,
           });
