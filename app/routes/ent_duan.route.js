@@ -8,7 +8,7 @@ module.exports = (app) => {
     router.get("/",[isAuthenticated], ent_duan.get);
     router.get("/web",[isAuthenticated], ent_duan.getKhuvucByDuan);
 
-    router.get("/thong-tin-du-an",[isAuthenticated], ent_duan.getThongtinduan);
+    router.get("/thong-tin-du-an", ent_duan.getThongtinduan);
    
     router.get("/:id",[isAuthenticated], ent_duan.getDetail);
     router.put("/update/:id",[isAuthenticated], ent_duan.update);

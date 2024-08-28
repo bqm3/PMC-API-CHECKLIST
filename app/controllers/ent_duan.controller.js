@@ -327,6 +327,7 @@ exports.getThongtinduan = async (req, res) => {
       ],
       where: {
         isDelete: 0,
+        ID_Duan: { [Op.notIn]: [10, 17, 34] },
       },
     });
 
