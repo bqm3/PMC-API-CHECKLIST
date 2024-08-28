@@ -710,10 +710,10 @@ exports.uploadFiles = async (req, res) => {
           where: {
             [Op.and]: [
               where(fn("UPPER", col("Tenkhuvuc")), {
-                [Op.like]: `%${tenKhuvuc}%`,
+                [Op.like]: `${tenKhuvuc}`,
               }),
               where(fn("UPPER", col("MaQrCode")), {
-                [Op.like]: `%${maQrKhuvuc}%`,
+                [Op.like]: `${maQrKhuvuc}`,
               }),
             ],
             ID_Toanha: toaNha.ID_Toanha,
