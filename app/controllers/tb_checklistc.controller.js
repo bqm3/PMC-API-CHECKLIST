@@ -1908,38 +1908,44 @@ exports.checklistPercentDetail = async (req, res) => {
 
 exports.checklistPercent = async (req, res) => {
   try {
+    const userData = req.user.data;
+
+    if (!userData) {
+      return res.status(400).json({ message: "Dữ liệu không hợp lệ." });
+    }
+
     let whereClause = {
       isDelete: 0,
+      ID_Duan: userData.ID_Duan,
     };
 
     const results = await Tb_checklistc.findAll({
-      attributes: [
-        "ID_KhoiCV",
-        [sequelize.fn("SUM", sequelize.col("tongC")), "totalAmount"],
-        [sequelize.fn("SUM", sequelize.col("Tong")), "totalTong"],
-        [sequelize.col("ent_khoicv.KhoiCV"), "label"],
-      ],
       include: [
         {
           model: Ent_khoicv,
-          attributes: [], // Không cần lấy thuộc tính từ Ent_khoicv vào nữa
+          attributes: ["KhoiCV"],
         },
       ],
+      attributes: [
+        [sequelize.col("ent_khoicv.KhoiCV"), "label"],
+        [sequelize.col("tb_checklistc.tongC"), "totalAmount"],
+        [
+          sequelize.literal("tb_checklistc.tongC / tb_checklistc.tong * 100"),
+          "value",
+        ],
+      ],
       where: whereClause,
-      group: ["ID_KhoiCV", "ent_khoicv.KhoiCV"], // Nhóm theo ID_KhoiCV và tên khối
     });
 
-    // Tính toán phần trăm hoàn thành cho từng khối
+    // Chuyển đổi dữ liệu kết quả sang định dạng mong muốn
     const data = results.map((result) => {
-      const { label, totalAmount, totalTong } = result.get();
-      const value = (totalAmount / totalTong) * 100;
+      const { label, totalAmount, value } = result.get();
       return {
         label,
         totalAmount,
         value,
       };
     });
-
     processData(data).then((finalData) => {
       res.status(200).json({
         message: "Dữ liệu!",
