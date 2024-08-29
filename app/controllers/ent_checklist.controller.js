@@ -2131,7 +2131,7 @@ exports.uploadFiles = async (req, res) => {
             },
             transaction,
           });
-          console.log('existingChecklist',existingChecklistn)
+          console.log('existingChecklist',existingChecklist)
 
           // Nếu checklist đã tồn tại thì bỏ qua
           if (!existingChecklist) {

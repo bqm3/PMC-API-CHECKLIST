@@ -39,6 +39,8 @@ module.exports = (app) => {
   router.get("/list-checklist", [isAuthenticated], tb_checklistc.getChecklistsError)
   
   router.get("/year", [isAuthenticated], tb_checklistc.checklistYear);
+  router.get("/year-all",  tb_checklistc.checklistYearAll);
+  router.get("/detail-percent",  tb_checklistc.checklistPercentDetail);
   router.get("/percent", [isAuthenticated], tb_checklistc.checklistPercent);
   router.get("/", [isAuthenticated], tb_checklistc.getCheckListc);
   router.get("/:id", [isAuthenticated], tb_checklistc.getDetail);
