@@ -1855,6 +1855,18 @@ exports.checklistPercentDetail = async (req, res) => {
     };
 
     const results = await Tb_checklistc.findAll({
+      attributes: [
+ "Ngay",
+          "ID_KhoiCV",
+          "ID_Duan",
+          "Tinhtrang",
+          "Giobd",
+          "Giokt",
+          "ID_User",
+          "ID_Giamsat",
+          "ID_Calv",
+          "isDelete",
+      ],
       include: [
         {
           model: Ent_khoicv,
@@ -1893,46 +1905,41 @@ exports.checklistPercentDetail = async (req, res) => {
       .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
+
 exports.checklistPercent = async (req, res) => {
   try {
-    const userData = req.user.data;
-
-    if (!userData) {
-      return res.status(400).json({ message: "Dữ liệu không hợp lệ." });
-    }
-
     let whereClause = {
       isDelete: 0,
-      ID_Duan: userData.ID_Duan,
     };
 
     const results = await Tb_checklistc.findAll({
+      attributes: [
+        "ID_KhoiCV",
+        [sequelize.fn("SUM", sequelize.col("tongC")), "totalAmount"],
+        [sequelize.fn("SUM", sequelize.col("Tong")), "totalTong"],
+        [sequelize.col("ent_khoicv.KhoiCV"), "label"],
+      ],
       include: [
         {
           model: Ent_khoicv,
-          attributes: ["KhoiCV"],
+          attributes: [], // Không cần lấy thuộc tính từ Ent_khoicv vào nữa
         },
       ],
-      attributes: [
-        [sequelize.col("ent_khoicv.KhoiCV"), "label"],
-        [sequelize.col("tb_checklistc.tongC"), "totalAmount"],
-        [
-          sequelize.literal("tb_checklistc.tongC / tb_checklistc.tong * 100"),
-          "value",
-        ],
-      ],
       where: whereClause,
+      group: ["ID_KhoiCV", "ent_khoicv.KhoiCV"], // Nhóm theo ID_KhoiCV và tên khối
     });
 
-    // Chuyển đổi dữ liệu kết quả sang định dạng mong muốn
+    // Tính toán phần trăm hoàn thành cho từng khối
     const data = results.map((result) => {
-      const { label, totalAmount, value } = result.get();
+      const { label, totalAmount, totalTong } = result.get();
+      const value = (totalAmount / totalTong) * 100;
       return {
         label,
         totalAmount,
         value,
       };
     });
+
     processData(data).then((finalData) => {
       res.status(200).json({
         message: "Dữ liệu!",
