@@ -2023,7 +2023,7 @@ exports.uploadFiles = async (req, res) => {
           where: { MaQrCode: maQrCodeHangMuc, isDelete: 0 },
           transaction,
         });
-
+        
         const tang = await Ent_tang.findOne({
           attributes: ["Tentang", "Sotang", "ID_Tang", "ID_Duan", "isDelete"],
           where: {

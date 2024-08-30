@@ -2647,7 +2647,7 @@ exports.getProjectsChecklistStatus = async (req, res) => {
 
     // Lấy tất cả dữ liệu checklistC cho ngày hôm qua, bỏ qua các dự án 10 và 17
     const dataChecklistCs = await Tb_checklistc.findAll({
-      attributes: ["ID_ChecklistC", "ID_Duan", "Ngay", "TongC", "ID_Calv", "Tong", "ID_KhoiCV"],
+      attributes: ["ID_ChecklistC", "ID_Duan", "Ngay", "TongC", "Tong", "ID_KhoiCV"],
       where: {
         Ngay: yesterday,
         ID_Duan: {
@@ -2663,69 +2663,47 @@ exports.getProjectsChecklistStatus = async (req, res) => {
           model: Ent_khoicv,  // Thêm bảng Ent_khoicv để lấy tên khối
           attributes: ["KhoiCV"],
         },
-        {
-          model: Ent_calv,  // Thêm bảng Calv để lấy tên ca làm việc
-          attributes: ["Tenca"],
-        },
       ],
     });
 
-    // Tạo một dictionary để nhóm dữ liệu theo dự án, khối, và ca
+    // Tạo một dictionary để nhóm dữ liệu theo dự án và khối
     const result = {};
 
     dataChecklistCs.forEach((checklistC) => {
       const projectId = checklistC.ID_Duan;
       const projectName = checklistC.ent_duan.Duan;
       const khoiName = checklistC.ent_khoicv.KhoiCV; // Lấy tên khối từ dữ liệu checklistC
-      const shiftName = checklistC.ent_calv.Tenca; // Lấy tên ca làm việc
 
       // Khởi tạo dữ liệu dự án nếu chưa tồn tại
       if (!result[projectId]) {
         result[projectId] = {
           projectId,
           projectName,
-          createdShifts: {},
+          createdKhois: {},
         };
       }
 
       // Khởi tạo dữ liệu cho khối nếu chưa tồn tại
-      if (!result[projectId].createdShifts[khoiName]) {
-        result[projectId].createdShifts[khoiName] = {
-          shiftsCompletion: 0,  // Khởi tạo tỷ lệ hoàn thành của khối là 0
-          shifts: {}, // Lưu dữ liệu của từng ca làm việc trong khối
-        };
-      }
-
-      // Khởi tạo dữ liệu cho ca nếu chưa tồn tại
-      if (!result[projectId].createdShifts[khoiName].shifts[shiftName]) {
-        result[projectId].createdShifts[khoiName].shifts[shiftName] = {
+      if (!result[projectId].createdKhois[khoiName]) {
+        result[projectId].createdKhois[khoiName] = {
           totalTongC: 0,
-          Tong: 0,
+          totalTong: 0,
         };
       }
 
-      // Tính tổng TongC và Tong cho khối này trong ca này
-      result[projectId].createdShifts[khoiName].shifts[shiftName].totalTongC += checklistC.TongC;
-      result[projectId].createdShifts[khoiName].shifts[shiftName].Tong = checklistC.Tong;
+      // Cộng dồn TongC và Tong cho khối này
+      result[projectId].createdKhois[khoiName].totalTongC += checklistC.TongC;
+      result[projectId].createdKhois[khoiName].totalTong += checklistC.Tong;
     });
 
     // Tính toán phần trăm hoàn thành riêng cho mỗi khối
     Object.values(result).forEach((project) => {
-      Object.entries(project.createdShifts).forEach(([khoiName, khoiData]) => {
-        let totalTongCAllShifts = 0;
-        let totalTongAllShifts = 0;
-
-        Object.values(khoiData.shifts).forEach((shift) => {
-          totalTongCAllShifts += shift.totalTongC;
-          totalTongAllShifts += shift.Tong;
-        });
-
-        // Tính toán tỷ lệ hoàn thành riêng cho khối này
-        let completionRatio = (totalTongCAllShifts / totalTongAllShifts) * 100;
+      Object.entries(project.createdKhois).forEach(([khoiName, khoiData]) => {
+        let completionRatio = (khoiData.totalTongC / khoiData.totalTong) * 100;
         if (completionRatio > 100) {
           completionRatio = 100; // Giới hạn phần trăm hoàn thành tối đa là 100%
         }
-        khoiData.shiftsCompletion = completionRatio; // Gán tỷ lệ hoàn thành cho từng khối
+        khoiData.completionRatio = completionRatio; // Gán tỷ lệ hoàn thành cho từng khối
       });
     });
 
@@ -2734,7 +2712,7 @@ exports.getProjectsChecklistStatus = async (req, res) => {
 
     res.status(200).json({
       message:
-        "Trạng thái ca làm việc và checklist của các dự án trong ngày hôm qua",
+        "Trạng thái checklist của các dự án trong ngày hôm qua theo từng khối",
       data: resultArray,
     });
   } catch (err) {
@@ -2743,6 +2721,7 @@ exports.getProjectsChecklistStatus = async (req, res) => {
       .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
+
 
 
 // const projectCompletionRates = dataChecklistCs.map((checklistC) =>
