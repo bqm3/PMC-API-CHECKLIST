@@ -3068,16 +3068,17 @@ async function processData(data) {
 }
 
 // cron job
-cron.schedule("0 * * * *", async function () {
+cron.schedule("0 */2 * * *", async function () {
   console.log("---------------------");
   console.log("Running Cron Job");
 
-  const currentDateTime = new Date();
-  const currentDateString = currentDateTime.toISOString().split("T")[0];
+  const currentDate = new Date();
+  const currentDateString = currentDate.toISOString().split("T")[0];
+  const currentDateTime = moment(currentDate).format('HH:mm:ss')
 
   // Tính toán ngày hiện tại trừ đi 1 ngày
-  const yesterdayDateTime = new Date(currentDateTime);
-  yesterdayDateTime.setDate(currentDateTime.getDate() - 4);
+  const yesterdayDateTime = new Date(currentDate);
+  yesterdayDateTime.setDate(currentDate.getDate() - 1);
   const yesterdayDateString = yesterdayDateTime.toISOString().split("T")[0];
 
   try {
@@ -3123,18 +3124,16 @@ cron.schedule("0 * * * *", async function () {
       },
     });
 
-    const formattedTime = currentDateTime.toLocaleTimeString("en-GB", {
+    const formattedTime = currentDate.toLocaleTimeString("en-GB", {
       hour12: false,
     });
 
     const updates = results.map((record) => {
       const { Gioketthuc, Giobatdau } = record.ent_calv;
-      const gioketthucDateTime = new Date(`${record.Ngay}T${Gioketthuc}`);
-      const giobatdauDateTime = new Date(`${record.Ngay}T${Giobatdau}`);
 
       if (
-        giobatdauDateTime < gioketthucDateTime &&
-        currentDateTime >= gioketthucDateTime
+        Giobatdau < Gioketthuc &&
+        currentDateTime >= Gioketthuc
       ) {
         return Tb_checklistc.update(
           { Tinhtrang: 1, Giokt: formattedTime },
@@ -3143,9 +3142,9 @@ cron.schedule("0 * * * *", async function () {
       }
 
       if (
-        giobatdauDateTime >= gioketthucDateTime &&
-        currentDateTime < giobatdauDateTime &&
-        currentDateTime >= gioketthucDateTime
+        Giobatdau >= Gioketthuc &&
+        currentDateTime < Giobatdau &&
+        currentDateTime >= Gioketthuc
       ) {
         return Tb_checklistc.update(
           { Tinhtrang: 1, Giokt: formattedTime },
