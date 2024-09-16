@@ -658,7 +658,6 @@ const extractCheckedIDs = (data) => {
 
 async function sendPushNotification(expoPushToken, message) {
   // console.log('expoPushToken',expoPushToken)
-  console.log('expoPushToken',expoPushToken)
   const payload = {
     to: expoPushToken,
     sound: "default",

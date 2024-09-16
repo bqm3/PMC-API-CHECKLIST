@@ -2722,8 +2722,6 @@ exports.getProjectsChecklistStatus = async (req, res) => {
   }
 };
 
-
-
 // const projectCompletionRates = dataChecklistCs.map((checklistC) =>
 //   { const projectId = checklistC.ID_Duan;
 //     const totalChecklistCount = dataChecklistChiTiet.filter( (item) => item.ID_ChecklistC === checklistC.ID_ChecklistC ).length;
@@ -2760,6 +2758,7 @@ exports.fileChecklistSuCo = async (req, res) => {
       .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
+
 
 exports.createExcelFile = async (req, res) => {
   try {
@@ -3074,38 +3073,61 @@ cron.schedule("0 */2 * * *", async function () {
 
   const currentDate = new Date();
   const currentDateString = currentDate.toISOString().split("T")[0];
-  const currentDateTime = moment(currentDate).format('HH:mm:ss')
+  const currentDateTime = moment(currentDate).format('HH:mm:ss');
 
-  // Tính toán ngày hiện tại trừ đi 1 ngày
+  // Tính toán ngày hôm qua
   const yesterdayDateTime = new Date(currentDate);
   yesterdayDateTime.setDate(currentDate.getDate() - 1);
   const yesterdayDateString = yesterdayDateTime.toISOString().split("T")[0];
 
   try {
-    // Tìm các bản ghi thoả mãn điều kiện
-    const results = await Tb_checklistc.findAll({
+    // Tìm các bản ghi của ngày hôm qua
+    const yesterdayResults = await Tb_checklistc.findAll({
       attributes: [
         "ID_ChecklistC",
         "ID_Duan",
         "ID_KhoiCV",
         "ID_Calv",
-        "ID_Toanha",
         "ID_User",
-        "ID_Giamsat",
         "Ngay",
         "Tong",
         "TongC",
         "Giobd",
-        "Giochupanh1",
-        "Anh1",
-        "Giochupanh2",
-        "Anh2",
-        "Giochupanh3",
-        "Anh3",
-        "Giochupanh4",
-        "Anh4",
         "Giokt",
-        "Ghichu",
+        "Tinhtrang",
+        "isDelete",
+      ],
+      where: {
+        isDelete: 0,
+        Tinhtrang: 0,
+        Ngay: yesterdayDateString,
+      },
+    });
+
+    // Cập nhật tất cả bản ghi của ngày hôm qua với Tinhtrang: 1
+    const yesterdayUpdates = yesterdayResults.map((record) => {
+      return Tb_checklistc.update(
+        { Tinhtrang: 1, Giokt: currentDateTime },
+        { where: { ID_ChecklistC: record.ID_ChecklistC } }
+      );
+    });
+
+    await Promise.all(yesterdayUpdates);
+    console.log("Updated all records for yesterday");
+
+    // Tìm các bản ghi của ngày hôm nay
+    const todayResults = await Tb_checklistc.findAll({
+      attributes: [
+        "ID_ChecklistC",
+        "ID_Duan",
+        "ID_KhoiCV",
+        "ID_Calv",
+        "ID_User",
+        "Ngay",
+        "Tong",
+        "TongC",
+        "Giobd",
+        "Giokt",
         "Tinhtrang",
         "isDelete",
       ],
@@ -3118,9 +3140,7 @@ cron.schedule("0 */2 * * *", async function () {
       where: {
         isDelete: 0,
         Tinhtrang: 0,
-        Ngay: {
-          [Op.between]: [yesterdayDateString, currentDateString],
-        },
+        Ngay: currentDateString,
       },
     });
 
@@ -3128,13 +3148,10 @@ cron.schedule("0 */2 * * *", async function () {
       hour12: false,
     });
 
-    const updates = results.map((record) => {
+    const updates = todayResults.map((record) => {
       const { Gioketthuc, Giobatdau } = record.ent_calv;
 
-      if (
-        Giobatdau < Gioketthuc &&
-        currentDateTime >= Gioketthuc
-      ) {
+      if (Giobatdau < Gioketthuc && currentDateTime >= Gioketthuc) {
         return Tb_checklistc.update(
           { Tinhtrang: 1, Giokt: formattedTime },
           { where: { ID_ChecklistC: record.ID_ChecklistC } }
@@ -3154,9 +3171,11 @@ cron.schedule("0 */2 * * *", async function () {
     });
 
     await Promise.all(updates);
-    console.log("Cron job completed successfully");
+    console.log("Updated records for today based on ca conditions");
+
     console.log("============================");
   } catch (error) {
     console.error("Error running cron job:", error);
   }
 });
+
