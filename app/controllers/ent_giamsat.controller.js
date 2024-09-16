@@ -56,7 +56,7 @@ exports.create = async (req, res) => {
           "iQuyen",
           "isDelete",
         ],
-        where: { Sodienthoai },
+        where: { Sodienthoai: Sodienthoai, isDelete: 0 },
       });
       if (existingEntry) {
         return res.status(400).json({
@@ -253,6 +253,7 @@ exports.update = async (req, res) => {
           ID_Giamsat: {
             [Op.ne]: req.params.id, // Loại trừ bản ghi hiện tại đang được cập nhật
           },
+          isDelete: 0
         },
       });
 
