@@ -2642,12 +2642,11 @@ exports.getChecklistsError = async (req, res) => {
 
 exports.getProjectsChecklistStatus = async (req, res) => {
   try {
-    // Lấy ngày hôm qua
     const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
 
-    // Lấy tất cả dữ liệu checklistC cho ngày hôm qua, bỏ qua các dự án 10 và 17
+    // Fetch all checklist data for yesterday, excluding projects 10 and 17
     const dataChecklistCs = await Tb_checklistc.findAll({
-      attributes: ["ID_ChecklistC", "ID_Duan", "Ngay", "TongC", "Tong", "ID_KhoiCV"],
+      attributes: ["ID_ChecklistC", "ID_Duan", "Ngay", "TongC", "Tong", "ID_KhoiCV", "ID_User", "ID_Calv"],
       where: {
         Ngay: yesterday,
         ID_Duan: {
@@ -2660,21 +2659,26 @@ exports.getProjectsChecklistStatus = async (req, res) => {
           attributes: ["Duan"],
         },
         {
-          model: Ent_khoicv,  // Thêm bảng Ent_khoicv để lấy tên khối
+          model: Ent_khoicv,
           attributes: ["KhoiCV"],
+        },
+        {
+          model: Ent_user,
+          attributes: ["UserName", "ID_User"],
         },
       ],
     });
 
-    // Tạo một dictionary để nhóm dữ liệu theo dự án và khối
+    // Dictionary to group data by project, block, and shifts
     const result = {};
 
     dataChecklistCs.forEach((checklistC) => {
       const projectId = checklistC.ID_Duan;
       const projectName = checklistC.ent_duan.Duan;
-      const khoiName = checklistC.ent_khoicv.KhoiCV; // Lấy tên khối từ dữ liệu checklistC
+      const khoiName = checklistC.ent_khoicv.KhoiCV;
+      const caId = checklistC.ID_Calv; // Shift identifier
 
-      // Khởi tạo dữ liệu dự án nếu chưa tồn tại
+      // Initialize project data if not already present
       if (!result[projectId]) {
         result[projectId] = {
           projectId,
@@ -2683,44 +2687,66 @@ exports.getProjectsChecklistStatus = async (req, res) => {
         };
       }
 
-      // Khởi tạo dữ liệu cho khối nếu chưa tồn tại
+      // Initialize block data if not already present
       if (!result[projectId].createdKhois[khoiName]) {
         result[projectId].createdKhois[khoiName] = {
-          totalTongC: 0,
-          totalTong: 0,
+          totalCaPercent: 0, // Sum of completion percentages for all shifts
+          totalShifts: 0, // Number of shifts (ca) in a block (khoi)
+          calvData: {}, // Store data for each shift
         };
       }
 
-      // Cộng dồn TongC và Tong cho khối này
-      result[projectId].createdKhois[khoiName].totalTongC += checklistC.TongC;
-      result[projectId].createdKhois[khoiName].totalTong += checklistC.Tong;
+      // Initialize shift (ca) data if not already present
+      if (!result[projectId].createdKhois[khoiName].calvData[caId]) {
+        result[projectId].createdKhois[khoiName].calvData[caId] = {
+          totalTongC: 0,
+          Tong: checklistC.Tong, // Assume Tong is the same for all checklists in the shift
+        };
+      }
+
+      // Sum up `TongC` for all users in the shift
+      result[projectId].createdKhois[khoiName].calvData[caId].totalTongC += checklistC.TongC;
     });
 
-    // Tính toán phần trăm hoàn thành riêng cho mỗi khối
+    // Calculate the completion percentage for each shift, then for each block
     Object.values(result).forEach((project) => {
       Object.entries(project.createdKhois).forEach(([khoiName, khoiData]) => {
-        let completionRatio = (khoiData.totalTongC / khoiData.totalTong) * 100;
-        if (completionRatio > 100) {
-          completionRatio = 100; // Giới hạn phần trăm hoàn thành tối đa là 100%
+        Object.entries(khoiData.calvData).forEach(([caId, caData]) => {
+          // Calculate percentage for this shift (ca)
+          let caCompletionPercent = (caData.totalTongC / caData.Tong) * 100;
+
+          if (caCompletionPercent > 100) {
+            caCompletionPercent = 100; // Cap at 100%
+          }
+
+          // Add this shift's percentage to the total percentage for the block
+          khoiData.totalCaPercent += caCompletionPercent;
+          khoiData.totalShifts += 1; // Increment shift count
+        });
+
+        // Calculate the average completion percentage for the block
+        if (khoiData.totalShifts > 0) {
+          khoiData.completionRatio = khoiData.totalCaPercent / khoiData.totalShifts;
+        } else {
+          khoiData.completionRatio = 0;
         }
-        khoiData.completionRatio = completionRatio; // Gán tỷ lệ hoàn thành cho từng khối
       });
     });
 
-    // Chuyển result object thành mảng
+    // Convert result object to an array
     const resultArray = Object.values(result);
 
     res.status(200).json({
-      message:
-        "Trạng thái checklist của các dự án trong ngày hôm qua theo từng khối",
+      message: "Trạng thái checklist của các dự án trong ngày hôm qua theo từng khối",
       data: resultArray,
     });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
+
+
+
 
 // const projectCompletionRates = dataChecklistCs.map((checklistC) =>
 //   { const projectId = checklistC.ID_Duan;
