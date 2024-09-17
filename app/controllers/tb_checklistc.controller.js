@@ -2669,14 +2669,14 @@ exports.getProjectsChecklistStatus = async (req, res) => {
       ],
     });
 
-    // Dictionary to group data by project, block, and shifts
+    // Dictionary to group data by project and block
     const result = {};
 
     dataChecklistCs.forEach((checklistC) => {
       const projectId = checklistC.ID_Duan;
       const projectName = checklistC.ent_duan.Duan;
       const khoiName = checklistC.ent_khoicv.KhoiCV;
-      const caId = checklistC.ID_Calv; // Shift identifier
+      const caId = checklistC.ID_Calv;
 
       // Initialize project data if not already present
       if (!result[projectId]) {
@@ -2690,46 +2690,33 @@ exports.getProjectsChecklistStatus = async (req, res) => {
       // Initialize block data if not already present
       if (!result[projectId].createdKhois[khoiName]) {
         result[projectId].createdKhois[khoiName] = {
-          totalCaPercent: 0, // Sum of completion percentages for all shifts
-          totalShifts: 0, // Number of shifts (ca) in a block (khoi)
-          calvData: {}, // Store data for each shift
+          totalTongC: 0, // Total TongC for the entire day
+          totalTong: 0,  // Total Tong for the day (distinct shifts)
+          processedShifts: new Set(), // Track unique shifts (ca) processed
         };
       }
 
-      // Initialize shift (ca) data if not already present
-      if (!result[projectId].createdKhois[khoiName].calvData[caId]) {
-        result[projectId].createdKhois[khoiName].calvData[caId] = {
-          totalTongC: 0,
-          Tong: checklistC.Tong, // Assume Tong is the same for all checklists in the shift
-        };
-      }
+      // Sum up `TongC` for the block across the entire day
+      result[projectId].createdKhois[khoiName].totalTongC += checklistC.TongC;
 
-      // Sum up `TongC` for all users in the shift
-      result[projectId].createdKhois[khoiName].calvData[caId].totalTongC += checklistC.TongC;
+      // Only add the `Tong` once for each unique shift (ca)
+      if (!result[projectId].createdKhois[khoiName].processedShifts.has(caId)) {
+        result[projectId].createdKhois[khoiName].totalTong += checklistC.Tong;
+        result[projectId].createdKhois[khoiName].processedShifts.add(caId);
+      }
     });
 
-    // Calculate the completion percentage for each shift, then for each block
+    // Remove `processedShifts` from the final output and calculate completionRatio
     Object.values(result).forEach((project) => {
-      Object.entries(project.createdKhois).forEach(([khoiName, khoiData]) => {
-        Object.entries(khoiData.calvData).forEach(([caId, caData]) => {
-          // Calculate percentage for this shift (ca)
-          let caCompletionPercent = (caData.totalTongC / caData.Tong) * 100;
-
-          if (caCompletionPercent > 100) {
-            caCompletionPercent = 100; // Cap at 100%
-          }
-
-          // Add this shift's percentage to the total percentage for the block
-          khoiData.totalCaPercent += caCompletionPercent;
-          khoiData.totalShifts += 1; // Increment shift count
-        });
-
-        // Calculate the average completion percentage for the block
-        if (khoiData.totalShifts > 0) {
-          khoiData.completionRatio = khoiData.totalCaPercent / khoiData.totalShifts;
-        } else {
-          khoiData.completionRatio = 0;
+      Object.values(project.createdKhois).forEach((khoiData) => {
+        let completionRatio = (khoiData.totalTongC / khoiData.totalTong) * 100;
+        if (completionRatio > 100) {
+          completionRatio = 100; // Cap at 100%
         }
+        khoiData.completionRatio = completionRatio;
+
+        // Remove the processedShifts set from the final output
+        delete khoiData.processedShifts;
       });
     });
 
@@ -2744,9 +2731,6 @@ exports.getProjectsChecklistStatus = async (req, res) => {
     res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
-
-
-
 
 // const projectCompletionRates = dataChecklistCs.map((checklistC) =>
 //   { const projectId = checklistC.ID_Duan;
