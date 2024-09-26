@@ -22,7 +22,7 @@ const Ent_chucvu = sequelize.define(
   },
   {
     freezeTableName: true,
-    timestamps: false,
+    timestamps: true,
     tableName: "ent_chucvu",
   }
 );

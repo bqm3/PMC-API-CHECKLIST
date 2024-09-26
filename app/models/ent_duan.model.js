@@ -36,7 +36,7 @@ const Ent_duan = sequelize.define(
   },
   {
     freezeTableName: true,
-    timestamps: false,
+    timestamps: true,
     tableName: "ent_duan",
   }
 );

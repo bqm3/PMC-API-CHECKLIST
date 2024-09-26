@@ -1,36 +1,30 @@
 const { Sequelize, DataTypes } = require("sequelize");
 const sequelize = require("../config/db.config");
 
-const Ent_Hangmuc = sequelize.define(
-  "ent_hangmuc",
+const Ent_duan_khoicv = sequelize.define(
+  "ent_duan_khoicv",
   {
-    ID_Hangmuc: {
+    ID_Duan_KhoiCV: {
       type: DataTypes.INTEGER,
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
     },
-    ID_Khuvuc: {
+    ID_Duan: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    Important: {
+    ID_KhoiCV: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
-    Sothutu: {
+    Chuky: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
-    MaQrCode: {
-      type: DataTypes.CHAR,
-    },
-    Hangmuc: {
-      type: DataTypes.CHAR,
-    },
-    Tieuchuankt: {
-      type: DataTypes.TEXT,
-    },
-    FileTieuChuan: {
-      type: DataTypes.CHAR,
+    Ngaybatdau: {
+      type: DataTypes.DATE,
+      allowNull: false,
     },
     isDelete: {
       type: DataTypes.INTEGER,
@@ -40,8 +34,8 @@ const Ent_Hangmuc = sequelize.define(
   {
     freezeTableName: true,
     timestamps: true,
-    tableName: "ent_hangmuc",
+    tableName: "ent_duan_khoicv",
   }
 );
 
-module.exports = Ent_Hangmuc;
+module.exports = Ent_duan_khoicv;

@@ -1,7 +1,7 @@
 const asyncHandler = require('express-async-handler')
 const isAdmin = asyncHandler((req, res, next) => {
-    const { Permission } = req.user
-    if (Permission !== 1)
+    const { ID_Chucvu } = req.user
+    if (ID_Chucvu !== 1)
         return res.status(401).json({
             success: false,
             message: 'Không có quyền truy cập'

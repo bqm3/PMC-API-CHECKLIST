@@ -33,7 +33,7 @@ const Ent_ChecklistReplace = sequelize.define("ent_checklistreplace", {
 },
  {
     freezeTableName: true,
-    timestamps: false,
+    timestamps: true,
     tableName: 'ent_checklistreplace'
   }
 );

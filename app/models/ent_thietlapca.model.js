@@ -2,9 +2,9 @@
 const { Sequelize, DataTypes } = require("sequelize");
 const sequelize = require("../config/db.config");
 
-const Ent_calv = sequelize.define("ent_calv", {
+const Ent_thietlapca = sequelize.define("ent_thietlapca", {
     
-   ID_Calv: {
+   ID_ThietLapCa: {
     type: DataTypes.INTEGER,
     allowNull: false,
     autoIncrement: true,
@@ -13,22 +13,18 @@ const Ent_calv = sequelize.define("ent_calv", {
    ID_Duan: {
     type: DataTypes.INTEGER,
    },
-   ID_KhoiCV: {
+   ID_Calv: {
     type: DataTypes.INTEGER,
    },
-   Tenca: {
-     type: DataTypes.CHAR,
+   Ngaythu: {
+     type: DataTypes.INTEGER,
      
    },
-   Giobatdau: {
-    type: DataTypes.TIME,
+   ID_Hangmucs: {
+    type: DataTypes.JSON,
     
    },
-   Gioketthuc: {
-    type: DataTypes.TIME,
-    
-   },
-   ID_User: {
+   Sochecklist: {
     type: DataTypes.INTEGER,
     
    },
@@ -39,11 +35,11 @@ const Ent_calv = sequelize.define("ent_calv", {
 },
  {
     freezeTableName: true,
-    timestamps: true,
-    tableName: 'ent_calv'
+    timestamps: true, 
+    tableName: 'ent_thietlapca'
   }
 );
 
-module.exports = Ent_calv;
+module.exports = Ent_thietlapca;
 
 

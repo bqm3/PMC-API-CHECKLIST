@@ -90,8 +90,8 @@ exports.get = async (req, res) => {
         isDelete: 0,
       };
 
-      // Nếu quyền là 1 (Permission === 1) thì không cần thêm điều kiện ID_KhoiCV
-      if (userData.Permission !== 1) {
+      // Nếu quyền là 1 (ID_Chucvu === 1) thì không cần thêm điều kiện ID_KhoiCV
+      if (userData.ID_Chucvu !== 1 && userData.ID_Chucvu !== 2) {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
       }
 
@@ -113,7 +113,7 @@ exports.get = async (req, res) => {
           },
           {
             model: Ent_khoicv,
-            attributes: ["KhoiCV", "ID_Khoi"],
+            attributes: ["KhoiCV", "ID_KhoiCV"],
           },
           {
             model: Ent_user,
@@ -121,7 +121,7 @@ exports.get = async (req, res) => {
               model: Ent_chucvu,
               attributes: ["Chucvu"],
             },
-            attributes: ["UserName", "Emails"],
+            attributes: ["UserName", "Email"],
           },
         ],
         where: whereClause,
@@ -156,7 +156,7 @@ exports.getFilter = async (req, res) => {
         isDelete: 0,
       };
 
-      // Nếu quyền là 1 (Permission === 1) thì không cần thêm điều kiện ID_KhoiCV
+      // Nếu quyền là 1 (ID_Chucvu === 1) thì không cần thêm điều kiện ID_KhoiCV
       if (ID_KhoiCV !== null && ID_KhoiCV !== undefined) {
         whereClause.ID_KhoiCV = ID_KhoiCV;
       }
@@ -188,7 +188,7 @@ exports.getFilter = async (req, res) => {
               model: Ent_chucvu,
               attributes: ["Chucvu"],
             },
-            attributes: ["UserName", "Emails"],
+            attributes: ["UserName", "Email"],
           },
         ],
         where: whereClause,
@@ -234,7 +234,7 @@ exports.getDetail = async (req, res) => {
           },
           {
             model: Ent_khoicv,
-            attributes: ["KhoiCV"],
+            attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
           },
           {
             model: Ent_user,
@@ -242,7 +242,7 @@ exports.getDetail = async (req, res) => {
               model: Ent_chucvu,
               attributes: ["Chucvu"],
             },
-            attributes: ["UserName", "Emails"],
+            attributes: ["UserName", "Email"],
           },
         ],
         where: {

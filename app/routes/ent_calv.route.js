@@ -13,5 +13,5 @@ module.exports = (app) => {
     router.put("/update/:id",isAuthenticated, ent_calv.update);
   
   
-    app.use("/api/ent_calv", router);
+    app.use("/api/v2/ent_calv", router);
   };

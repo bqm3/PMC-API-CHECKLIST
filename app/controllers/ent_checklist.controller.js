@@ -14,6 +14,7 @@ const {
   Tb_checklistchitietdone,
   Tb_checklistc,
   Ent_calv,
+  Ent_khuvuc_khoicv,
 } = require("../models/setup.model");
 const { Op, Sequelize } = require("sequelize");
 
@@ -21,7 +22,7 @@ exports.create = async (req, res) => {
   try {
     const userData = req.user.data;
     if (userData) {
-      if (!req.body.Checklist || !req.body.Giatrinhan) {
+      if (!req.body.Checklist || !req.body.Giatrinhan || !req.body.ID_Hangmuc) {
         res.status(400).json({
           message: "Phải nhập đầy đủ dữ liệu!",
         });
@@ -43,11 +44,11 @@ exports.create = async (req, res) => {
           req.body.Giatridinhdanh || req.body.Giatrinhan.split("/")[0] || "",
         Giatrinhan: req.body.Giatrinhan || "",
         ID_User: userData.ID_User,
-        sCalv: JSON.stringify(sCalv) || null,
-        calv_1: JSON.stringify(sCalv[0]) || null,
-        calv_2: JSON.stringify(sCalv[1]) || null,
-        calv_3: JSON.stringify(sCalv[2]) || null,
-        calv_4: JSON.stringify(sCalv[3]) || null,
+        sCalv: sCalv ? sCalv : null,
+        calv_1: sCalv[0] || null,
+        calv_2: sCalv[1] || null,
+        calv_3: sCalv[2] || null,
+        calv_4: sCalv[3] || null,
         isDelete: 0,
         Tinhtrang: 0,
         isImportant: req.body.isImportant || 0,
@@ -91,7 +92,7 @@ exports.get = async (req, res) => {
     const orConditions = [];
     if (userData) {
       orConditions.push({
-        "$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$": userData?.ID_Duan,
+        "$ent_khuvuc.ent_toanha.ID_Duan$": userData?.ID_Duan,
       });
     }
 
@@ -99,6 +100,7 @@ exports.get = async (req, res) => {
       attributes: [
         "ID_Checklist",
         "ID_Khuvuc",
+        "ID_Hangmuc",
         "ID_Tang",
         "Sothutu",
         "Maso",
@@ -121,48 +123,50 @@ exports.get = async (req, res) => {
             "ID_Khuvuc",
             "MaQrCode",
             "FileTieuChuan",
-            "ID_KhoiCV",
-            "ID_KhoiCV",
+          ],
+        },
+        {
+          model: Ent_khuvuc,
+          attributes: [
+            "Tenkhuvuc",
+            "MaQrCode",
+            "Makhuvuc",
+            "Sothutu",
+            "ID_Toanha",
+            "ID_Khuvuc",
           ],
           include: [
             {
-              model: Ent_khuvuc,
-              attributes: [
-                "Tenkhuvuc",
-                "MaQrCode",
-                "Makhuvuc",
-                "Sothutu",
-                "ID_Toanha",
-                "ID_Khuvuc",
-              ],
-              include: [
-                {
-                  model: Ent_toanha,
-                  attributes: ["Toanha", "Sotang", "ID_Toanha"],
-                  include: {
-                    model: Ent_duan,
-                    attributes: [
-                      "ID_Duan",
-                      "Duan",
-                      "Diachi",
-                      "Vido",
-                      "Kinhdo",
-                      "Logo",
-                    ],
-                    where: { ID_Duan: userData.ID_Duan },
-                  },
-                },
-              ],
+              model: Ent_toanha,
+              attributes: ["Toanha", "ID_Toanha"],
+              include: {
+                model: Ent_duan,
+                attributes: [
+                  "ID_Duan",
+                  "Duan",
+                  "Diachi",
+                  "Vido",
+                  "Kinhdo",
+                  "Logo",
+                ],
+                where: { ID_Duan: userData.ID_Duan },
+              },
             },
             {
-              model: Ent_khoicv,
-              attributes: ["KhoiCV"],
+              model: Ent_khuvuc_khoicv,
+              attributes: ["ID_KhoiCV", "ID_Khuvuc", "ID_KV_CV"],
+              include: [
+                {
+                  model: Ent_khoicv,
+                  attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
+                },
+              ],
             },
           ],
         },
         {
           model: Ent_tang,
-          attributes: ["Tentang", "Sotang"],
+          attributes: ["Tentang"],
         },
         {
           model: Ent_user,
@@ -170,7 +174,7 @@ exports.get = async (req, res) => {
             model: Ent_chucvu,
             attributes: ["Chucvu"],
           },
-          attributes: ["UserName", "Emails"],
+          attributes: ["UserName", "Email"],
         },
       ],
       where: {
@@ -215,48 +219,50 @@ exports.get = async (req, res) => {
             "ID_Khuvuc",
             "MaQrCode",
             "FileTieuChuan",
-            "ID_KhoiCV",
-            "ID_KhoiCV",
+          ],
+        },
+        {
+          model: Ent_khuvuc,
+          attributes: [
+            "Tenkhuvuc",
+            "MaQrCode",
+            "Makhuvuc",
+            "Sothutu",
+            "ID_Toanha",
+            "ID_Khuvuc",
           ],
           include: [
             {
-              model: Ent_khuvuc,
-              attributes: [
-                "Tenkhuvuc",
-                "MaQrCode",
-                "Makhuvuc",
-                "Sothutu",
-                "ID_Toanha",
-                "ID_Khuvuc",
-              ],
-              include: [
-                {
-                  model: Ent_toanha,
-                  attributes: ["Toanha", "Sotang", "ID_Toanha"],
-                  include: {
-                    model: Ent_duan,
-                    attributes: [
-                      "ID_Duan",
-                      "Duan",
-                      "Diachi",
-                      "Vido",
-                      "Kinhdo",
-                      "Logo",
-                    ],
-                    where: { ID_Duan: userData.ID_Duan },
-                  },
-                },
-              ],
+              model: Ent_toanha,
+              attributes: ["Toanha", "ID_Toanha"],
+              include: {
+                model: Ent_duan,
+                attributes: [
+                  "ID_Duan",
+                  "Duan",
+                  "Diachi",
+                  "Vido",
+                  "Kinhdo",
+                  "Logo",
+                ],
+                where: { ID_Duan: userData.ID_Duan },
+              },
             },
             {
-              model: Ent_khoicv,
-              attributes: ["KhoiCV"],
+              model: Ent_khuvuc_khoicv,
+              attributes: ["ID_KhoiCV", "ID_Khuvuc", "ID_KV_CV"],
+              include: [
+                {
+                  model: Ent_khoicv,
+                  attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
+                },
+              ],
             },
           ],
         },
         {
           model: Ent_tang,
-          attributes: ["Tentang", "Sotang"],
+          attributes: ["Tentang"],
         },
         {
           model: Ent_user,
@@ -264,7 +270,7 @@ exports.get = async (req, res) => {
             model: Ent_chucvu,
             attributes: ["Chucvu"],
           },
-          attributes: ["UserName", "Emails"],
+          attributes: ["UserName", "Email"],
         },
       ],
       where: {
@@ -347,48 +353,51 @@ exports.getDetail = async (req, res) => {
               "Tieuchuankt",
               "ID_Khuvuc",
               "MaQrCode",
-              "ID_KhoiCV",
               "FileTieuChuan",
+            ],
+          },
+          {
+            model: Ent_khuvuc,
+            attributes: [
+              "Tenkhuvuc",
+              "MaQrCode",
+              "Makhuvuc",
+              "Sothutu",
+              "ID_Toanha",
+              "ID_Khuvuc",
             ],
             include: [
               {
-                model: Ent_khuvuc,
-                attributes: [
-                  "Tenkhuvuc",
-                  "MaQrCode",
-                  "Makhuvuc",
-                  "Sothutu",
-                  "ID_Toanha",
-                  "ID_Khuvuc",
-                ],
-                include: [
-                  {
-                    model: Ent_toanha,
-                    attributes: ["Toanha", "Sotang", "ID_Toanha"],
-                    include: {
-                      model: Ent_duan,
-                      attributes: [
-                        "ID_Duan",
-                        "Duan",
-                        "Diachi",
-                        "Vido",
-                        "Kinhdo",
-                        "Logo",
-                      ],
-                      where: { ID_Duan: userData.ID_Duan },
-                    },
-                  },
-                ],
+                model: Ent_toanha,
+                attributes: ["Toanha", "ID_Toanha"],
+                include: {
+                  model: Ent_duan,
+                  attributes: [
+                    "ID_Duan",
+                    "Duan",
+                    "Diachi",
+                    "Vido",
+                    "Kinhdo",
+                    "Logo",
+                  ],
+                  where: { ID_Duan: userData.ID_Duan },
+                },
               },
               {
-                model: Ent_khoicv,
-                attributes: ["KhoiCV"],
+                model: Ent_khuvuc_khoicv,
+                attributes: ["ID_KhoiCV", "ID_Khuvuc", "ID_KV_CV"],
+                include: [
+                  {
+                    model: Ent_khoicv,
+                    attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
+                  },
+                ],
               },
             ],
           },
           {
             model: Ent_tang,
-            attributes: ["Tentang", "Sotang"],
+            attributes: ["Tentang"],
           },
           {
             model: Ent_user,
@@ -396,7 +405,7 @@ exports.getDetail = async (req, res) => {
               model: Ent_chucvu,
               attributes: ["Chucvu"],
             },
-            attributes: ["UserName", "Emails"],
+            attributes: ["UserName", "Email"],
           },
         ],
         where: {
@@ -438,29 +447,6 @@ exports.update = async (req, res) => {
         });
       }
 
-      let sCalv = req.body.sCalv;
-
-      console.log("req.body.isImportant", req.body.isImportant);
-
-      // Đảo ngược mảng sCalv
-      sCalv = sCalv.reverse();
-
-      // Lấy các ID_Calv từ mảng sCalv
-      const idCalvArray = sCalv.map((id) => parseInt(id, 10));
-
-      // Truy vấn cơ sở dữ liệu để lấy các giá trị isDelete của ID_Calv trong ent_calv
-      const calvData = await Ent_calv.findAll({
-        where: {
-          ID_Calv: idCalvArray,
-        },
-        attributes: ["ID_Calv", "isDelete"],
-      });
-
-      // Lọc các ID_Calv mà có isDelete = 0
-      const validCalv = calvData
-        .filter((calv) => `${calv.isDelete}` === "0")
-        .map((calv) => calv.ID_Calv);
-
       // Chuẩn bị dữ liệu để cập nhật
       const reqData = {
         ID_Khuvuc: req.body.ID_Khuvuc,
@@ -475,11 +461,11 @@ exports.update = async (req, res) => {
         Giatrinhan: req.body.Giatrinhan || "",
         isCheck: req.body.isCheck,
         Tieuchuan: req.body.Tieuchuan || "",
-        sCalv: JSON.stringify(validCalv) || null,
-        calv_1: JSON.stringify(validCalv[0]) || null,
-        calv_2: JSON.stringify(validCalv[1]) || null,
-        calv_3: JSON.stringify(validCalv[2]) || null,
-        calv_4: JSON.stringify(validCalv[3]) || null,
+        // sCalv: JSON.stringify(validCalv) || null,
+        // calv_1: JSON.stringify(validCalv[0]) || null,
+        // calv_2: JSON.stringify(validCalv[1]) || null,
+        // calv_3: JSON.stringify(validCalv[2]) || null,
+        // calv_4: JSON.stringify(validCalv[3]) || null,
         isDelete: 0,
         isImportant: req.body.isImportant || 0,
       };
@@ -538,6 +524,38 @@ exports.delete = async (req, res) => {
   }
 };
 
+exports.deleteMul = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    const deleteRows = req.body;
+    const idsToDelete = deleteRows.map((row) => row.ID_Checklist);
+    if (userData) {
+      Ent_checklist.update(
+        { isDelete: 1 },
+        {
+          where: {
+            ID_Checklist: idsToDelete,
+          },
+        }
+      )
+        .then((data) => {
+          res.status(200).json({
+            message: "Xóa checklist thành công!",
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
 // filter data
 exports.getFilter = async (req, res) => {
   try {
@@ -580,47 +598,29 @@ exports.getFilter = async (req, res) => {
       });
 
       const arrPush = [];
-
-      // Duyệt qua từng phần tử trong mảng checklistDoneItems
       checklistDoneItems.forEach((item) => {
-        // Chuyển đổi chuỗi JSON thành một đối tượng JavaScript
-        const descriptionArray = JSON.parse(item.dataValues.Description);
-
-        // Lặp qua mỗi phần tử của mảng descriptionArray
-        descriptionArray.forEach((description) => {
-          // Tách các mục dữ liệu trước dấu phẩy (,)
-          const splitByComma = description.split(",");
-
-          // Lặp qua mỗi phần tử sau khi tách
-          splitByComma.forEach((splitItem) => {
-            // Trích xuất thông tin từ mỗi chuỗi
-            const [ID_Checklist, valueCheck, gioht] = splitItem.split("/");
-            // Kiểm tra điều kiện và thêm vào mảng arrPush nếu điều kiện đúng
-            arrPush.push({
-              ID_Checklist: parseInt(ID_Checklist),
-              valueCheck: valueCheck,
-              gioht: gioht,
-            });
+        const idChecklists = item.Description.split(",").map(Number);
+        if (idChecklists.length > 0) {
+          idChecklists.map((it) => {
+            if (Number(item.ID_ChecklistC) === Number(req.params.idc)) {
+              arrPush.push({
+                ID_ChecklistC: parseInt(item.ID_ChecklistC),
+                ID_Checklist: it,
+                Gioht: item.Gioht,
+              });
+            }
           });
-        });
+        }
       });
+      // // Duyệt qua từng phần tử trong mảng checklistDoneItems
 
       const checklistIds = checklistItems.map((item) => item.ID_Checklist);
       const checklistDoneIds = arrPush.map((item) => item.ID_Checklist);
 
       let whereCondition = {
         isDelete: 0,
-        ID_Hangmuc,
-        [Op.or]: [
-          { calv_1: ID_Calv },
-          { calv_2: ID_Calv },
-          { calv_3: ID_Calv },
-          { calv_4: ID_Calv },
-        ],
       };
-      whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] =
-        userData?.ID_Duan;
-      whereCondition["$ent_hangmuc.ID_KhoiCV$"] = ID_KhoiCV;
+      whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
 
       if (
         checklistIds &&
@@ -676,33 +676,51 @@ exports.getFilter = async (req, res) => {
               "ID_KhoiCV",
               "FileTieuChuan",
             ],
+          },
+          {
+            model: Ent_khuvuc,
+            attributes: [
+              "ID_Toanha",
+              "ID_Khuvuc",
+              "Sothutu",
+              "MaQrCode",
+              "ID_KhoiCVs",
+              "Tenkhuvuc",
+              "ID_User",
+              "isDelete",
+            ],
+            where: {
+              isDelete: 0,
+            },
             include: [
               {
-                model: Ent_khuvuc,
-                attributes: [
-                  "Tenkhuvuc",
-                  "MaQrCode",
-                  "Makhuvuc",
-                  "Sothutu",
-                  "ID_Toanha",
-                  "ID_KhoiCV",
-                ],
+                model: Ent_khuvuc_khoicv,
+                attributes: ["ID_KV_CV", "ID_Khuvuc", "ID_KhoiCV"],
                 include: [
                   {
-                    model: Ent_toanha,
-                    attributes: ["Toanha", "Sotang"],
-                  },
-                  {
                     model: Ent_khoicv,
-                    attributes: ["KhoiCV"],
+                    attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
                   },
                 ],
+              },
+              {
+                model: Ent_toanha,
+                attributes: [
+                  "ID_Toanha",
+                  "ID_Duan",
+                  "Toanha",
+                  "Sotang",
+                  "isDelete",
+                ],
+                where: {
+                  isDelete: 0,
+                },
               },
             ],
           },
           {
             model: Ent_tang,
-            attributes: ["Tentang", "Sotang"],
+            attributes: ["Tentang"],
           },
           {
             model: Ent_user,
@@ -710,7 +728,7 @@ exports.getFilter = async (req, res) => {
               model: Ent_chucvu,
               attributes: ["Chucvu"],
             },
-            attributes: ["UserName", "Emails"],
+            attributes: ["UserName", "Email"],
           },
         ],
         where: {
@@ -742,23 +760,23 @@ exports.getFilter = async (req, res) => {
   }
 };
 
-exports.deleteMul = async (req, res) => {
+exports.deleteChecklists = async (req, res) => {
   try {
+    const ids = req.params.ids.split(",");
     const userData = req.user.data;
-    const deleteRows = req.body;
-    const idsToDelete = deleteRows.map((row) => row.ID_Checklist);
-    if (userData) {
+
+    if (ids && userData) {
       Ent_checklist.update(
         { isDelete: 1 },
         {
           where: {
-            ID_Checklist: idsToDelete,
+            ID_Checklist: ids,
           },
         }
       )
         .then((data) => {
           res.status(200).json({
-            message: "Xóa khu vực thành công!",
+            message: "Xóa checklist thành công!",
           });
         })
         .catch((err) => {
@@ -768,7 +786,7 @@ exports.deleteMul = async (req, res) => {
         });
     }
   } catch (err) {
-    return res.status(500).json({
+    res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
@@ -797,51 +815,31 @@ exports.getChecklist = async (req, res) => {
     });
 
     const arrPush = [];
-
-    // Duyệt qua từng phần tử trong mảng checklistDoneItems
-    if (checklistDoneItems.length > 0) {
-      checklistDoneItems.forEach((item) => {
-        // Chuyển đổi chuỗi JSON thành một đối tượng JavaScript
-        const descriptionArray = JSON.parse(item.dataValues.Description);
-
-        // Kiểm tra xem descriptionArray có phải là mảng hay không
-        if (Array.isArray(descriptionArray)) {
-          // Nếu là mảng, thực hiện xử lý như trong mã của bạn
-          descriptionArray.forEach((description) => {
-            // Tách các mục dữ liệu trước dấu phẩy (,)
-            const splitByComma = description.split(",");
-
-            // Lặp qua mỗi phần tử sau khi tách
-            splitByComma.forEach((splitItem) => {
-              // Trích xuất thông tin từ mỗi chuỗi
-              const [ID_Checklist, valueCheck, gioht] = splitItem.split("/");
-
-              // Kiểm tra điều kiện và thêm vào mảng arrPush nếu điều kiện đúng
-              arrPush.push({
-                ID_Checklist: parseInt(ID_Checklist),
-                valueCheck: valueCheck,
-                gioht: gioht,
-              });
+    checklistDoneItems.forEach((item) => {
+      const idChecklists = item.Description.split(",").map(Number);
+      if (idChecklists.length > 0) {
+        idChecklists.map((it) => {
+          if (Number(item.ID_ChecklistC) === Number(req.params.idc)) {
+            arrPush.push({
+              ID_ChecklistC: parseInt(item.ID_ChecklistC),
+              ID_Checklist: it,
+              Gioht: item.Gioht,
             });
-          });
-        } else {
-          console.log("descriptionArray không phải là một mảng.");
-        }
-      });
-    }
+          }
+        });
+      }
+    });
 
     const checklistIds = checklistItems.map((item) => item?.ID_Checklist) || [];
     const checklistDoneIds = arrPush.map((item) => item?.ID_Checklist) || [];
 
     let whereCondition = {
       isDelete: 0,
-      ID_Hangmuc,
       [Op.or]: { sCalv: { [Op.like]: `%${ID_Calv}%` } },
     };
 
-    whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] =
-      userData?.ID_Duan;
-    whereCondition["$ent_hangmuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
+    whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
+    // whereCondition["$ent_hangmuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
 
     if (
       checklistIds &&
@@ -899,7 +897,7 @@ exports.getChecklist = async (req, res) => {
       include: [
         {
           model: Ent_tang,
-          attributes: ["Tentang", "Sotang"],
+          attributes: ["Tentang"],
         },
         {
           model: Ent_hangmuc,
@@ -909,42 +907,47 @@ exports.getChecklist = async (req, res) => {
             "ID_Khuvuc",
             "MaQrCode",
             "FileTieuChuan",
-            "ID_KhoiCV",
-            "ID_KhoiCV",
+          ],
+        },
+        {
+          model: Ent_khuvuc,
+          attributes: [
+            "Tenkhuvuc",
+            "MaQrCode",
+            "Makhuvuc",
+            "Sothutu",
+            "ID_Toanha",
+            "ID_Khuvuc",
           ],
           include: [
             {
-              model: Ent_khuvuc,
-              attributes: [
-                "Tenkhuvuc",
-                "MaQrCode",
-                "Makhuvuc",
-                "Sothutu",
-                "ID_Toanha",
-                "ID_KhoiCV",
-                "ID_Khuvuc",
-              ],
-              include: [
-                {
-                  model: Ent_toanha,
-                  attributes: ["Toanha", "Sotang", "ID_Toanha"],
-                  include: {
-                    model: Ent_duan,
-                    attributes: [
-                      "ID_Duan",
-                      "Duan",
-                      "Diachi",
-                      "Vido",
-                      "Kinhdo",
-                      "Logo",
-                    ],
-                  },
-                },
-              ],
+              model: Ent_toanha,
+              attributes: ["Toanha", "ID_Toanha"],
+              include: {
+                model: Ent_duan,
+                attributes: [
+                  "ID_Duan",
+                  "Duan",
+                  "Diachi",
+                  "Vido",
+                  "Kinhdo",
+                  "Logo",
+                ],
+                where: { ID_Duan: userData.ID_Duan },
+              },
             },
             {
-              model: Ent_khoicv,
-              attributes: ["KhoiCV"],
+              model: Ent_khuvuc_khoicv,
+              attributes: ["ID_KhoiCV", "ID_Khuvuc", "ID_KV_CV"],
+              include: [
+                {
+                  model: Ent_khoicv,
+                  attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
+                },
+              ],
+              where: {
+                ID_KhoiCV: userData?.ID_KhoiCV,
+              },
             },
           ],
         },
@@ -954,7 +957,7 @@ exports.getChecklist = async (req, res) => {
             model: Ent_chucvu,
             attributes: ["Chucvu"],
           },
-          attributes: ["UserName", "Emails"],
+          attributes: ["UserName", "Email"],
         },
       ],
       where: whereCondition,
@@ -1063,48 +1066,50 @@ exports.getFilterSearch = async (req, res) => {
             "ID_Khuvuc",
             "MaQrCode",
             "FileTieuChuan",
-            "ID_KhoiCV",
-            "ID_KhoiCV",
+          ],
+        },
+        {
+          model: Ent_khuvuc,
+          attributes: [
+            "Tenkhuvuc",
+            "MaQrCode",
+            "Makhuvuc",
+            "Sothutu",
+            "ID_Toanha",
+            "ID_Khuvuc",
           ],
           include: [
             {
-              model: Ent_khuvuc,
-              attributes: [
-                "Tenkhuvuc",
-                "MaQrCode",
-                "Makhuvuc",
-                "Sothutu",
-                "ID_Toanha",
-                "ID_Khuvuc",
-              ],
-              include: [
-                {
-                  model: Ent_toanha,
-                  attributes: ["Toanha", "Sotang", "ID_Toanha"],
-                  include: {
-                    model: Ent_duan,
-                    attributes: [
-                      "ID_Duan",
-                      "Duan",
-                      "Diachi",
-                      "Vido",
-                      "Kinhdo",
-                      "Logo",
-                    ],
-                    where: { ID_Duan: userData.ID_Duan },
-                  },
-                },
-              ],
+              model: Ent_toanha,
+              attributes: ["Toanha", "ID_Toanha"],
+              include: {
+                model: Ent_duan,
+                attributes: [
+                  "ID_Duan",
+                  "Duan",
+                  "Diachi",
+                  "Vido",
+                  "Kinhdo",
+                  "Logo",
+                ],
+                where: { ID_Duan: userData.ID_Duan },
+              },
             },
             {
-              model: Ent_khoicv,
-              attributes: ["KhoiCV"],
+              model: Ent_khuvuc_khoicv,
+              attributes: ["ID_KhoiCV", "ID_Khuvuc", "ID_KV_CV"],
+              include: [
+                {
+                  model: Ent_khoicv,
+                  attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
+                },
+              ],
             },
           ],
         },
         {
           model: Ent_tang,
-          attributes: ["Tentang", "Sotang"],
+          attributes: ["Tentang"],
         },
         {
           model: Ent_user,
@@ -1112,7 +1117,7 @@ exports.getFilterSearch = async (req, res) => {
             model: Ent_chucvu,
             attributes: ["Chucvu"],
           },
-          attributes: ["UserName", "Emails"],
+          attributes: ["UserName", "Email"],
         },
       ],
       where: {
@@ -1151,48 +1156,50 @@ exports.getFilterSearch = async (req, res) => {
             "ID_Khuvuc",
             "MaQrCode",
             "FileTieuChuan",
-            "ID_KhoiCV",
-            "ID_KhoiCV",
+          ],
+        },
+        {
+          model: Ent_khuvuc,
+          attributes: [
+            "Tenkhuvuc",
+            "MaQrCode",
+            "Makhuvuc",
+            "Sothutu",
+            "ID_Toanha",
+            "ID_Khuvuc",
           ],
           include: [
             {
-              model: Ent_khuvuc,
-              attributes: [
-                "Tenkhuvuc",
-                "MaQrCode",
-                "Makhuvuc",
-                "Sothutu",
-                "ID_Toanha",
-                "ID_Khuvuc",
-              ],
-              include: [
-                {
-                  model: Ent_toanha,
-                  attributes: ["Toanha", "Sotang", "ID_Toanha"],
-                  include: {
-                    model: Ent_duan,
-                    attributes: [
-                      "ID_Duan",
-                      "Duan",
-                      "Diachi",
-                      "Vido",
-                      "Kinhdo",
-                      "Logo",
-                    ],
-                    where: { ID_Duan: userData.ID_Duan },
-                  },
-                },
-              ],
+              model: Ent_toanha,
+              attributes: ["Toanha", "ID_Toanha"],
+              include: {
+                model: Ent_duan,
+                attributes: [
+                  "ID_Duan",
+                  "Duan",
+                  "Diachi",
+                  "Vido",
+                  "Kinhdo",
+                  "Logo",
+                ],
+                where: { ID_Duan: userData.ID_Duan },
+              },
             },
             {
-              model: Ent_khoicv,
-              attributes: ["KhoiCV"],
+              model: Ent_khuvuc_khoicv,
+              attributes: ["ID_KhoiCV", "ID_Khuvuc", "ID_KV_CV"],
+              include: [
+                {
+                  model: Ent_khoicv,
+                  attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
+                },
+              ],
             },
           ],
         },
         {
           model: Ent_tang,
-          attributes: ["Tentang", "Sotang"],
+          attributes: ["Tentang"],
         },
         {
           model: Ent_user,
@@ -1200,7 +1207,7 @@ exports.getFilterSearch = async (req, res) => {
             model: Ent_chucvu,
             attributes: ["Chucvu"],
           },
-          attributes: ["UserName", "Emails"],
+          attributes: ["UserName", "Email"],
         },
       ],
       where: {
@@ -1251,16 +1258,15 @@ exports.filterChecklists = async (req, res) => {
     const userData = req.user.data;
     const ID_ChecklistC = req.params.idc;
     const ID_Calv = req.params.id_calv;
-    const ID_Hangmuc = req.body.ID_Hangmuc;
+    const ID_Hangmucs = req.body.dataHangmuc;
 
     const tbChecklist = await Tb_checklistc.findByPk(ID_ChecklistC, {
-      attributes: ["ID_Toanha", "ID_Khuvucs", "isDelete"],
+      attributes: ["ID_Hangmucs", "isDelete"],
       where: {
         isDelete: 0,
       },
     });
 
-    // const pageMaxSize =
     const checklistItems = await Tb_checklistchitiet.findAll({
       attributes: ["isDelete", "ID_Checklist", "ID_ChecklistC"],
       where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC },
@@ -1272,40 +1278,21 @@ exports.filterChecklists = async (req, res) => {
     });
 
     const arrPush = [];
-
-    // Duyệt qua từng phần tử trong mảng checklistDoneItems
-    if (checklistDoneItems.length > 0) {
-      checklistDoneItems.forEach((item) => {
-        // Chuyển đổi chuỗi JSON thành một đối tượng JavaScript
-        const descriptionArray = JSON.parse(item.dataValues.Description);
-
-        // Kiểm tra xem descriptionArray có phải là mảng hay không
-        if (Array.isArray(descriptionArray)) {
-          // Nếu là mảng, thực hiện xử lý như trong mã của bạn
-          descriptionArray.forEach((description) => {
-            // Tách các mục dữ liệu trước dấu phẩy (,)
-            const splitByComma = description.split(",");
-
-            // Lặp qua mỗi phần tử sau khi tách
-            splitByComma.forEach((splitItem) => {
-              // Trích xuất thông tin từ mỗi chuỗi
-              const [ID_Checklist, valueCheck, gioht] = splitItem.split("/");
-
-              // Kiểm tra điều kiện và thêm vào mảng arrPush nếu điều kiện đúng
-              arrPush.push({
-                ID_Checklist: parseInt(ID_Checklist),
-                valueCheck: valueCheck,
-                gioht: gioht,
-              });
+    checklistDoneItems.forEach((item) => {
+      const idChecklists = item.Description.split(",").map(Number);
+      if (idChecklists.length > 0) {
+        idChecklists.map((it) => {
+          if (Number(item.ID_ChecklistC) === Number(req.params.idc)) {
+            arrPush.push({
+              ID_ChecklistC: parseInt(item.ID_ChecklistC),
+              ID_Checklist: it,
+              Gioht: item.Gioht,
             });
-          });
-        } else {
-          console.log("descriptionArray không phải là một mảng.");
-        }
-      });
-    }
+          }
+        });
+      }
+    });
 
-    // const validChecklistIds = checklistIds.filter(item => !isNaN(item));
     const checklistIds =
       checklistItems
         .map((item) => item?.ID_Checklist)
@@ -1317,22 +1304,13 @@ exports.filterChecklists = async (req, res) => {
 
     let whereCondition = {
       isDelete: 0,
-      ID_Hangmuc,
-      [Op.or]: { sCalv: { [Op.like]: `%${ID_Calv}%` } },
+      ID_Hangmuc: {
+        [Op.in]: ID_Hangmucs,
+      },
     };
 
-    if (
-      Array.isArray(tbChecklist.ID_Khuvucs) &&
-      tbChecklist.ID_Khuvucs.length > 0
-    ) {
-      whereCondition.ID_Khuvuc = {
-        [Op.in]: tbChecklist.ID_Khuvucs,
-      };
-    }
-
-    whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] =
-      userData?.ID_Duan;
-    whereCondition["$ent_hangmuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
+    whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
+    // whereCondition["$ent_hangmuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
 
     if (
       checklistIds &&
@@ -1394,51 +1372,61 @@ exports.filterChecklists = async (req, res) => {
           attributes: [
             "Hangmuc",
             "Tieuchuankt",
-            "ID_Khuvuc",
+            "ID_Hangmuc",
             "MaQrCode",
             "FileTieuChuan",
-            "ID_KhoiCV",
-            "ID_KhoiCV",
+          ],
+          where: {
+            ID_Hangmuc: {
+              [Op.in]: tbChecklist.ID_Hangmucs,
+            },
+          },
+        },
+        {
+          model: Ent_khuvuc,
+          attributes: [
+            "Tenkhuvuc",
+            "MaQrCode",
+            "Makhuvuc",
+            "Sothutu",
+            "ID_Toanha",
+            "ID_Khuvuc",
           ],
           include: [
             {
-              model: Ent_khuvuc,
-              attributes: [
-                "Tenkhuvuc",
-                "MaQrCode",
-                "Makhuvuc",
-                "Sothutu",
-                "ID_Toanha",
-                "ID_Khuvuc",
-              ],
-              include: [
-                {
-                  model: Ent_toanha,
-                  attributes: ["Toanha", "Sotang", "ID_Toanha"],
-                  include: {
-                    model: Ent_duan,
-                    attributes: [
-                      "ID_Duan",
-                      "Duan",
-                      "Diachi",
-                      "Vido",
-                      "Kinhdo",
-                      "Logo",
-                    ],
-                    where: { ID_Duan: userData.ID_Duan },
-                  },
-                },
-              ],
+              model: Ent_toanha,
+              attributes: ["Toanha", "ID_Toanha"],
+              include: {
+                model: Ent_duan,
+                attributes: [
+                  "ID_Duan",
+                  "Duan",
+                  "Diachi",
+                  "Vido",
+                  "Kinhdo",
+                  "Logo",
+                ],
+                where: { ID_Duan: userData.ID_Duan },
+              },
             },
             {
-              model: Ent_khoicv,
-              attributes: ["KhoiCV"],
+              model: Ent_khuvuc_khoicv,
+              attributes: ["ID_KhoiCV", "ID_Khuvuc", "ID_KV_CV"],
+              include: [
+                {
+                  model: Ent_khoicv,
+                  attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
+                },
+              ],
+              where: {
+                ID_KhoiCV: userData?.ID_KhoiCV,
+              },
             },
           ],
         },
         {
           model: Ent_tang,
-          attributes: ["Tentang", "Sotang"],
+          attributes: ["Tentang"],
         },
         {
           model: Ent_user,
@@ -1446,7 +1434,7 @@ exports.filterChecklists = async (req, res) => {
             model: Ent_chucvu,
             attributes: ["Chucvu"],
           },
-          attributes: ["UserName", "Emails"],
+          attributes: ["UserName", "Email"],
         },
       ],
       where: whereCondition,
@@ -1483,38 +1471,34 @@ exports.filterChecklists = async (req, res) => {
   }
 };
 
-exports.KhuvucChecklists = async (req, res) => {
+exports.filterReturn = async (req, res) => {
   try {
     const userData = req.user.data;
     const ID_ChecklistC = req.params.idc;
-    const ID_Calv = req.params.id_calv;
-    const ID_Hangmuc = req.body.ID_Hangmuc;
+    const ID_ThietLapCa = req.params.id_calv;
 
     const tbChecklist = await Tb_checklistc.findByPk(ID_ChecklistC, {
-      attributes: ["ID_Toanha", "ID_Khuvucs", "isDelete"],
+      attributes: ["ID_Hangmucs", "isDelete", "ID_ThietLapCa"],
       where: {
         isDelete: 0,
+        ID_ThietLapCa: ID_ThietLapCa,
       },
     });
 
     let whereCondition = {
       isDelete: 0,
-      ID_Hangmuc,
-      [Op.or]: { sCalv: { [Op.like]: `%${ID_Calv}%` } },
     };
 
     if (
-      Array.isArray(tbChecklist.ID_Khuvucs) &&
-      tbChecklist.ID_Khuvucs.length > 0
+      Array.isArray(tbChecklist.ID_Hangmucs) &&
+      tbChecklist.ID_Hangmucs.length > 0
     ) {
-      whereCondition.ID_Khuvuc = {
-        [Op.in]: tbChecklist.ID_Khuvucs,
+      whereCondition.ID_Hangmuc = {
+        [Op.in]: tbChecklist.ID_Hangmucs,
       };
     }
 
-    whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] =
-      userData?.ID_Duan;
-    whereCondition["$ent_hangmuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
+    whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
 
     const checklistData = await Ent_checklist.findAll({
       attributes: [
@@ -1550,48 +1534,50 @@ exports.KhuvucChecklists = async (req, res) => {
             "ID_Khuvuc",
             "MaQrCode",
             "FileTieuChuan",
-            "ID_KhoiCV",
-            "ID_KhoiCV",
+          ],
+        },
+        {
+          model: Ent_khuvuc,
+          attributes: [
+            "Tenkhuvuc",
+            "MaQrCode",
+            "Makhuvuc",
+            "Sothutu",
+            "ID_Toanha",
+            "ID_Khuvuc",
           ],
           include: [
             {
-              model: Ent_khuvuc,
-              attributes: [
-                "Tenkhuvuc",
-                "MaQrCode",
-                "Makhuvuc",
-                "Sothutu",
-                "ID_Toanha",
-                "ID_Khuvuc",
-              ],
-              include: [
-                {
-                  model: Ent_toanha,
-                  attributes: ["Toanha", "Sotang", "ID_Toanha"],
-                  include: {
-                    model: Ent_duan,
-                    attributes: [
-                      "ID_Duan",
-                      "Duan",
-                      "Diachi",
-                      "Vido",
-                      "Kinhdo",
-                      "Logo",
-                    ],
-                    where: { ID_Duan: userData.ID_Duan },
-                  },
-                },
-              ],
+              model: Ent_toanha,
+              attributes: ["Toanha", "ID_Toanha"],
+              include: {
+                model: Ent_duan,
+                attributes: [
+                  "ID_Duan",
+                  "Duan",
+                  "Diachi",
+                  "Vido",
+                  "Kinhdo",
+                  "Logo",
+                ],
+                where: { ID_Duan: userData.ID_Duan },
+              },
             },
             {
-              model: Ent_khoicv,
-              attributes: ["KhoiCV"],
+              model: Ent_khuvuc_khoicv,
+              attributes: ["ID_KhoiCV", "ID_Khuvuc", "ID_KV_CV"],
+              include: [
+                {
+                  model: Ent_khoicv,
+                  attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
+                },
+              ],
             },
           ],
         },
         {
           model: Ent_tang,
-          attributes: ["Tentang", "Sotang"],
+          attributes: ["Tentang"],
         },
         {
           model: Ent_user,
@@ -1599,7 +1585,7 @@ exports.KhuvucChecklists = async (req, res) => {
             model: Ent_chucvu,
             attributes: ["Chucvu"],
           },
-          attributes: ["UserName", "Emails"],
+          attributes: ["UserName", "Email"],
         },
       ],
       where: whereCondition,
@@ -1645,11 +1631,12 @@ exports.getListChecklistWeb = async (req, res) => {
         .json({ message: "Không tìm thấy thông tin người dùng." });
     }
 
-    const orConditions = [];
-    if (userData) {
-      orConditions.push({
-        "$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$": userData?.ID_Duan,
-      });
+    const whereCondition = {
+      isDelete: 0
+    }
+
+    if(userData){
+      whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
     }
 
     const data = await Ent_checklist.findAll({
@@ -1686,48 +1673,39 @@ exports.getListChecklistWeb = async (req, res) => {
             "ID_Khuvuc",
             "MaQrCode",
             "FileTieuChuan",
-            "ID_KhoiCV",
-            "ID_KhoiCV",
+          ],
+        },
+        {
+          model: Ent_khuvuc,
+          attributes: [
+            "Tenkhuvuc",
+            "MaQrCode",
+            "Makhuvuc",
+            "Sothutu",
+            "ID_KhoiCVs",
+            "ID_Toanha",
+            "ID_Khuvuc",
           ],
           include: [
             {
-              model: Ent_khuvuc,
-              attributes: [
-                "Tenkhuvuc",
-                "MaQrCode",
-                "Makhuvuc",
-                "Sothutu",
-                "ID_Toanha",
-                "ID_Khuvuc",
-              ],
-              include: [
-                {
-                  model: Ent_toanha,
-                  attributes: ["Toanha", "Sotang", "ID_Toanha"],
-                  include: {
-                    model: Ent_duan,
-                    attributes: [
-                      "ID_Duan",
-                      "Duan",
-                      "Diachi",
-                      "Vido",
-                      "Kinhdo",
-                      "Logo",
-                    ],
-                    where: { ID_Duan: userData.ID_Duan },
-                  },
-                },
-              ],
+              model: Ent_toanha,
+              attributes: ["Toanha", "ID_Toanha", "ID_Duan"],
             },
             {
-              model: Ent_khoicv,
-              attributes: ["KhoiCV"],
+              model: Ent_khuvuc_khoicv,
+              attributes: ["ID_KV_CV", "ID_Khuvuc", "ID_KhoiCV"],
+              include: [
+                {
+                  model: Ent_khoicv,
+                  attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
+                },
+              ],
             },
           ],
         },
         {
           model: Ent_tang,
-          attributes: ["Tentang", "Sotang"],
+          attributes: ["Tentang"],
         },
         {
           model: Ent_user,
@@ -1735,13 +1713,10 @@ exports.getListChecklistWeb = async (req, res) => {
             model: Ent_chucvu,
             attributes: ["Chucvu"],
           },
-          attributes: ["UserName", "Emails"],
+          attributes: ["UserName", "Email"],
         },
       ],
-      where: {
-        isDelete: 0,
-        [Op.and]: [orConditions],
-      },
+      where: whereCondition,
       order: [
         ["ID_Khuvuc", "ASC"],
         ["Sothutu", "ASC"],
@@ -1754,20 +1729,11 @@ exports.getListChecklistWeb = async (req, res) => {
         data: [],
       });
     }
-
-    const filteredData = data.filter((item) => item.ent_khuvuc !== null);
-
-    if (filteredData.length > 0) {
-      return res.status(200).json({
-        message: "Danh sách checklist!",
-        data: filteredData,
-      });
-    } else {
-      return res.status(200).json({
-        message: "Không còn checklist cho ca làm việc này!",
-        data: [],
-      });
-    }
+    return res.status(200).json({
+      message: "Danh sách checklist!",
+      data: data,
+    });
+   
   } catch (err) {
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
@@ -1786,8 +1752,7 @@ exports.getChecklistTotal = async (req, res) => {
       isDelete: 0,
     };
 
-    whereCondition["$ent_hangmuc.ent_khuvuc.ent_toanha.ID_Duan$"] =
-      userData?.ID_Duan;
+    whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
 
     const checklistData = await Ent_checklist.findAll({
       attributes: [
@@ -1822,48 +1787,51 @@ exports.getChecklistTotal = async (req, res) => {
             "ID_Khuvuc",
             "MaQrCode",
             "FileTieuChuan",
-            "ID_KhoiCV",
-            "ID_KhoiCV",
+          ],
+        },
+        {
+          model: Ent_khuvuc,
+          attributes: [
+            "Tenkhuvuc",
+            "MaQrCode",
+            "Makhuvuc",
+            "Sothutu",
+            "ID_Toanha",
+            "ID_Khuvuc",
+            "ID_KhoiCVs",
           ],
           include: [
             {
-              model: Ent_khuvuc,
-              attributes: [
-                "Tenkhuvuc",
-                "MaQrCode",
-                "Makhuvuc",
-                "Sothutu",
-                "ID_Toanha",
-                "ID_Khuvuc",
-              ],
-              include: [
-                {
-                  model: Ent_toanha,
-                  attributes: ["Toanha", "Sotang", "ID_Toanha"],
-                  include: {
-                    model: Ent_duan,
-                    attributes: [
-                      "ID_Duan",
-                      "Duan",
-                      "Diachi",
-                      "Vido",
-                      "Kinhdo",
-                      "Logo",
-                    ],
-                    where: { ID_Duan: userData.ID_Duan },
-                  },
-                },
-              ],
+              model: Ent_toanha,
+              attributes: ["Toanha", "ID_Toanha"],
+              include: {
+                model: Ent_duan,
+                attributes: [
+                  "ID_Duan",
+                  "Duan",
+                  "Diachi",
+                  "Vido",
+                  "Kinhdo",
+                  "Logo",
+                ],
+                where: { ID_Duan: userData.ID_Duan },
+              },
             },
             {
-              model: Ent_khoicv,
-              attributes: ["KhoiCV"],
+              model: Ent_khuvuc_khoicv,
+              attributes: ["ID_KV_CV", "ID_Khuvuc", "ID_KhoiCV"],
+              include: [
+                {
+                  model: Ent_khoicv,
+                  attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
+                },
+              ],
             },
           ],
         },
         {
           model: Ent_tang,
-          attributes: ["Tentang", "Sotang"],
+          attributes: ["Tentang"],
         },
         {
           model: Ent_user,
@@ -1871,7 +1839,7 @@ exports.getChecklistTotal = async (req, res) => {
             model: Ent_chucvu,
             attributes: ["Chucvu"],
           },
-          attributes: ["UserName", "Emails"],
+          attributes: ["UserName", "Email"],
         },
       ],
       where: whereCondition,
@@ -1889,14 +1857,37 @@ exports.getChecklistTotal = async (req, res) => {
       (item) => item.ent_hangmuc !== null
     );
 
+    const khoiCVData = [
+      { ID_KhoiCV: 1, KhoiCV: "Khối làm sạch" },
+      { ID_KhoiCV: 2, KhoiCV: "Khối kỹ thuật" },
+      { ID_KhoiCV: 3, KhoiCV: "Khối bảo vệ" },
+      { ID_KhoiCV: 4, KhoiCV: "Khối dịch vụ" },
+    ];
+
+    // Create a map for quick lookup of KhoiCV by ID_Khoi
+    const khoiCVMap = {};
+    khoiCVData.forEach((item) => {
+      khoiCVMap[item.ID_KhoiCV] = item.KhoiCV;
+    });
+
     // Count checklists by ID_KhoiCV
     const checklistCounts = {};
     filteredData.forEach((item) => {
-      const khoiCV = item.ent_hangmuc.ent_khoicv.KhoiCV;
-      if (!checklistCounts[khoiCV]) {
-        checklistCounts[khoiCV] = 0;
+      let ID_KhoiCVs = item.ent_khuvuc.ID_KhoiCVs;
+      if (typeof ID_KhoiCVs === "string") {
+        try {
+          ID_KhoiCVs = JSON.parse(ID_KhoiCVs);
+        } catch (error) {
+          return;
+        }
       }
-      checklistCounts[khoiCV]++;
+      ID_KhoiCVs.forEach((id) => {
+        const khoiCV = khoiCVMap[id];
+        if (!checklistCounts[khoiCV]) {
+          checklistCounts[khoiCV] = 0;
+        }
+        checklistCounts[khoiCV]++;
+      });
     });
 
     // Convert counts to desired format
@@ -1936,57 +1927,38 @@ exports.uploadFiles = async (req, res) => {
     const worksheet = workbook.Sheets[sheetName];
     const data = xlsx.utils.sheet_to_json(worksheet);
 
-    const commonDetailsMap = {};
-
-    data.forEach((item) => {
-      const maChecklist = item["Mã checklist"];
-      if (!commonDetailsMap[maChecklist]) {
-        commonDetailsMap[maChecklist] = {
-          "Tên dự án": item["Tên dự án"],
-          "Tên tòa nhà": item["Tên tòa nhà"],
-          "Mã khu vực": item["Mã khu vực"],
-          "Mã QrCode khu vực": item["Mã QrCode khu vực"],
-          "Tên khu vực": item["Tên khu vực"],
-          "Mã QrCode hạng mục": item["Mã QrCode hạng mục"],
-          "Tên Hạng Mục": item["Tên Hạng Mục"],
-          "Tên tầng": item["Tên tầng"],
-          "Tên khối công việc": item["Tên khối công việc"],
-          "Mã checklist": item["Mã checklist"],
-          STT: item["STT"],
-        };
-      }
-    });
-
-    // Step 2: Update objects with common details
-    const updatedData = data.map((item) => {
-      return {
-        ...item,
-      };
-    });
-
     await sequelize.transaction(async (transaction) => {
+      const removeSpacesFromKeys = (obj) => {
+        return Object.keys(obj).reduce((acc, key) => {
+          const newKey = key?.replace(/\s+/g, "")?.toUpperCase();
+          acc[newKey] = obj[key];
+          return acc;
+        }, {});
+      };
+
       for (const [index, item] of data.entries()) {
         try {
-          const maQrCodeHangMuc = item["Mã QrCode hạng mục"];
-          const tenTang = item["Tên tầng"];
-          const tenKhoiCongViec = item["Tên khối công việc"];
-          const caChecklist = item["Ca checklist"];
-          const sttChecklist = item["STT"];
-          const maChecklist = item["Mã checklist"];
-          const tenChecklist = item["Tên checklist"];
-          const tieuChuanChecklist = item["Tiêu chuẩn checklist"];
-          const giaTriDanhDinh = item["Giá trị danh định"];
-          const cacGiaTriNhan = item["Các giá trị nhận"];
-          const quanTrong = item["Quan trọng"];
-          const ghiChu = item["Ghi chú"];
+          const transformedItem = removeSpacesFromKeys(item);
+          const maQrHangmuc = transformedItem["MÃQRCODEHẠNGMỤC"];
+          const tenHangmuc = transformedItem["TÊNHẠNGMỤC"];
+          const tenTang = transformedItem["TÊNTẦNG"];
+          const tenKhoiCongViec = transformedItem["TÊNKHỐICÔNGVIỆC"];
+          const sttChecklist = transformedItem["STT"];
+          const maChecklist = transformedItem["MÃCHECKLIST"];
+          const tenChecklist = transformedItem["TÊNCHECKLIST"];
+          const tieuChuanChecklist = transformedItem["TIÊUCHUẨNCHECKLIST"];
+          const giaTriDanhDinh = transformedItem["GIÁTRỊĐỊNHDANH"];
+          const cacGiaTriNhan = transformedItem["CÁCGIÁTRỊNHẬN"];
+          const quanTrong = transformedItem["QUANTRỌNG"];
+          const ghiChu = transformedItem["GHICHÚ"];
 
-          if (!tenChecklist || !caChecklist) {
-            console.log("Skipping due to missing tenChecklist or caChecklist");
+          if (!tenChecklist ) {
+            console.log("Bỏ qua do thiếu tên checklist");
             continue;
           }
 
           if (!tenTang) {
-            console.log("Skipping due to missing tenTang");
+            console.log("Bỏ qua do thiếu tên tầng");
             continue;
           }
 
@@ -2006,7 +1978,6 @@ exports.uploadFiles = async (req, res) => {
                 attributes: [
                   "ID_Toanha",
                   "ID_Khuvuc",
-                  "ID_KhoiCV",
                   "ID_KhoiCVs",
                   "Sothutu",
                   "MaQrCode",
@@ -2019,17 +1990,24 @@ exports.uploadFiles = async (req, res) => {
                 },
               },
             ],
-            where: { MaQrCode: maQrCodeHangMuc, isDelete: 0 },
+            where: {
+              MaQrCode: maQrHangmuc,
+              Hangmuc: tenHangmuc,
+              isDelete: 0,
+            },
             transaction,
           });
 
           const tang = await Ent_tang.findOne({
-            attributes: ["Tentang", "Sotang", "ID_Tang", "ID_Duan", "isDelete"],
+            attributes: ["Tentang", "ID_Tang", "ID_Duan", "isDelete"],
             where: {
               Tentang: sequelize.where(
-                sequelize.fn("UPPER", sequelize.col("Tentang")),
+                sequelize.fn(
+                  "UPPER",
+                  sequelize.fn("TRIM", sequelize.col("Tentang"))
+                ),
                 "LIKE",
-                tenTang?.toUpperCase()
+                tenTang.trim().toUpperCase()
               ),
               ID_Duan: userData.ID_Duan,
               isDelete: 0,
@@ -2037,126 +2015,79 @@ exports.uploadFiles = async (req, res) => {
             transaction,
           });
 
-          const khoiCV = await Ent_khoicv.findOne({
-            attributes: ["ID_Khoi", "KhoiCV", "isDelete"],
-            where: { KhoiCV: tenKhoiCongViec, isDelete: 0 },
-            transaction,
-          });
+          const data = {
+            ID_Khuvuc: hangmuc.ID_Khuvuc,
+            ID_Tang: tang.ID_Tang,
+            ID_Hangmuc: hangmuc.ID_Hangmuc,
+            Sothutu: sttChecklist || 1,
+            Maso: maChecklist || "",
+            MaQrCode: maChecklist || "",
+            Checklist: tenChecklist,
+            Ghichu: ghiChu || "",
+            Tieuchuan: tieuChuanChecklist || "",
+            Giatridinhdanh: giaTriDanhDinh || "",
+            Giatrinhan: cacGiaTriNhan || "",
+            isImportant: quanTrong !== undefined ? 1 : 0,
+            ID_User: userData.ID_User,
 
-          if (!caChecklist || !tenChecklist) {
-            console.log(`Bỏ qua`);
-          } else {
-            const caChecklistArray = caChecklist
-              .split(",")
-              .map((ca) => ca.trim());
-            const calv = await Ent_calv.findAll({
-              attributes: [
-                "ID_Calv",
-                "ID_Duan",
-                "ID_KhoiCV",
-                "Tenca",
-                "isDelete",
-              ],
-              where: {
-                TenCa: caChecklistArray,
-                ID_Duan: userData.ID_Duan,
-                ID_KhoiCV: khoiCV.ID_Khoi,
-                isDelete: 0,
-              },
-              transaction,
-            });
-            const sCalv = calv.map((calvItem) => calvItem.ID_Calv);
+            isDelete: 0,
+            Tinhtrang: 0,
+          };
 
-            const data = {
+          const existingChecklist = await Ent_checklist.findOne({
+            attributes: [
+              "ID_Checklist",
+              "ID_Khuvuc",
+              "ID_Tang",
+              "ID_Hangmuc",
+              "Sothutu",
+              "Maso",
+              "MaQrCode",
+              "Checklist",
+              "Ghichu",
+              "Tieuchuan",
+              "Giatridinhdanh",
+              "isImportant",
+              "isCheck",
+              "Giatrinhan",
+              "sCalv",
+              "Tinhtrang",
+              "calv_1",
+              "calv_2",
+              "calv_3",
+              "calv_4",
+              "ID_User",
+              "isDelete",
+            ],
+            where: {
               ID_Khuvuc: hangmuc.ID_Khuvuc,
               ID_Tang: tang.ID_Tang,
               ID_Hangmuc: hangmuc.ID_Hangmuc,
-              Sothutu: sttChecklist || 1,
-              Maso: maChecklist || "",
-              MaQrCode: maChecklist || "",
               Checklist: tenChecklist,
-              Ghichu: ghiChu || "",
-              Tieuchuan: tieuChuanChecklist || "",
-              Giatridinhdanh: giaTriDanhDinh || "",
-              Giatrinhan: cacGiaTriNhan || "",
-              isImportant: quanTrong !== undefined ? 1 : 0,
-              ID_User: userData.ID_User,
-              sCalv: JSON.stringify(sCalv) || null,
-              calv_1: JSON.stringify(sCalv[0]) || null,
-              calv_2: JSON.stringify(sCalv[1]) || null,
-              calv_3: JSON.stringify(sCalv[2]) || null,
-              calv_4: JSON.stringify(sCalv[3]) || null,
               isDelete: 0,
-              Tinhtrang: 0,
-            };
+            },
+            transaction,
+          });
 
-            const existingChecklist = await Ent_checklist.findOne({
-              attributes: [
-                "ID_Checklist",
-                "ID_Khuvuc",
-                "ID_Tang",
-                "ID_Hangmuc",
-                "Sothutu",
-                "Maso",
-                "MaQrCode",
-                "Checklist",
-                "Ghichu",
-                "Tieuchuan",
-                "Giatridinhdanh",
-                "isImportant",
-                "isCheck",
-                "Giatrinhan",
-                "sCalv",
-                "Tinhtrang",
-                "calv_1",
-                "calv_2",
-                "calv_3",
-                "calv_4",
-                "ID_User",
-                "isDelete",
-              ],
-              where: {
-                ID_Khuvuc: hangmuc.ID_Khuvuc,
-                ID_Tang: tang.ID_Tang,
-                ID_Hangmuc: hangmuc.ID_Hangmuc,
-                Tieuchuan: tieuChuanChecklist,
-                Giatridinhdanh: giaTriDanhDinh,
-                Giatrinhan: cacGiaTriNhan,
-                Checklist: tenChecklist,
-                isDelete: 0,
-              },
-              transaction,
-            });
-            console.log("existingChecklist", existingChecklist);
-
-            // Nếu checklist đã tồn tại thì bỏ qua
-            if (!existingChecklist) {
-              await Ent_checklist.create(data, { transaction });
-            } else {
-              console.log(`Checklist already exists for row ${index + 1}`);
-            }
+          // Nếu checklist đã tồn tại thì bỏ qua
+          if (!existingChecklist) {
+            await Ent_checklist.create(data, { transaction });
+          } else {
+            console.log(`Checklist đã có ở dòng ${index + 1}`);
           }
         } catch (error) {
-          console.error(`Error on row ${index + 1}:`, error);
-          throw new Error(`Error on row ${index + 1}: ${error.message}`);
+          throw new Error(`Lỗi ở dòng ${index + 1}: ${error.message}`);
         }
       }
     });
 
     res.send({
-      message: "File uploaded and data extracted successfully",
+      message: "Upload dữ liệu thành công",
       data,
     });
   } catch (err) {
-    console.log("err", err);
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
 };
-
-function capitalizeEachWord(str) {
-  return str.toLowerCase().replace(/\b\w/g, function (match) {
-    return match.toUpperCase();
-  });
-}

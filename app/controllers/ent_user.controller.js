@@ -10,6 +10,8 @@ const jsonwebtoken = require("jsonwebtoken");
 const { Op } = require("sequelize");
 const fetch = require("node-fetch");
 const moment = require("moment-timezone");
+const sequelize = require("../config/db.config");
+const xlsx = require("xlsx");
 
 // Login User
 exports.login = async (req, res) => {
@@ -29,11 +31,11 @@ exports.login = async (req, res) => {
       attributes: [
         "ID_User",
         "UserName",
-        "Permission",
+        "ID_Chucvu",
         "ID_Duan",
         "Password",
         "ID_KhoiCV",
-        "Emails",
+        "Email",
         "isDelete",
       ],
       include: [
@@ -44,10 +46,6 @@ exports.login = async (req, res) => {
         {
           model: Ent_chucvu,
           attributes: ["Chucvu"],
-        },
-        {
-          model: Ent_khoicv,
-          attributes: ["KhoiCV"],
         },
       ],
     });
@@ -106,25 +104,40 @@ exports.login = async (req, res) => {
 // Create User
 exports.register = async (req, res, next) => {
   try {
-    if (!req.body.UserName || !req.body.Password || !req.body.Permission) {
+    const {
+      UserName,
+      Password,
+      ID_Chucvu,
+      Hoten,
+      Sodienthoai,
+      Gioitinh,
+      Ngaysinh,
+      ID_KhoiCV,
+      Email,
+      ID_Duan
+    } = req.body;
+    if (!UserName || !Password || !ID_Chucvu) {
       return res.status(400).json({
         message: "Phải nhập đầy đủ dữ liệu.",
       });
     }
-    const UserName = req.body.UserName;
-    const Emails = req.body.Emails;
+    const userData = req.user.data;
     const user = await Ent_user.findOne({
       where: {
-        [Op.or]: [{ UserName: UserName }, { Emails: Emails }],
+        [Op.and]: [
+          { UserName: UserName },
+          { Email: Email },
+          {ID_Duan: ID_Duan}
+        ],
       },
       attributes: [
         "ID_User",
         "UserName",
-        "Permission",
+        "ID_Chucvu",
         "ID_Duan",
         "Password",
         "ID_KhoiCV",
-        "Emails",
+        "Email",
       ],
       include: [
         {
@@ -134,10 +147,6 @@ exports.register = async (req, res, next) => {
         {
           model: Ent_chucvu,
           attributes: ["Chucvu"],
-        },
-        {
-          model: Ent_khoicv,
-          attributes: ["KhoiCV"],
         },
       ],
     });
@@ -150,12 +159,16 @@ exports.register = async (req, res, next) => {
 
     const salt = genSaltSync(10);
     var data = {
-      UserName: req.body.UserName,
-      Emails: req.body.Emails,
-      Password: await hashSync(req.body.Password, salt),
-      Permission: req.body.Permission,
-      ID_Duan: req.body.ID_Duan || null,
-      ID_KhoiCV: req.body.Permission == 1 ? null : req.body.ID_KhoiCV,
+      UserName: UserName,
+      Email: Email,
+      Password: await hashSync(Password, salt),
+      ID_Chucvu: ID_Chucvu,
+      ID_Duan: ID_Duan || null,
+      Hoten: Hoten || null,
+      Sodienthoai: Sodienthoai || null,
+      Gioitinh: Gioitinh || null,
+      Ngaysinh: Ngaysinh || null,
+      ID_KhoiCV: ID_Chucvu == 1 || ID_Chucvu == 2 ? null : ID_KhoiCV,
       isDelete: 0,
     };
 
@@ -169,6 +182,7 @@ exports.register = async (req, res, next) => {
         });
       });
   } catch (err) {
+    console.log("err", err);
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau",
     });
@@ -253,16 +267,28 @@ exports.updateUser = async (req, res) => {
         .json({ message: "Không tìm thấy thông tin người dùng." });
     }
 
-    const { ID_Duan, Permission, ID_KhoiCV, UserName, Emails, Password } =
-      req.body;
+    const {
+      ID_Duan,
+      ID_Chucvu,
+      ID_KhoiCV,
+      UserName,
+      Email,
+      Password,
+      Hoten,
+      Sodienthoai,
+      Gioitinh,
+    } = req.body;
 
     // Kiểm tra xem có dữ liệu mật khẩu được gửi không
     let updateData = {
       ID_Duan,
-      Permission,
-      ID_KhoiCV: Permission == 1 ? null : ID_KhoiCV,
+      ID_Chucvu,
+      ID_KhoiCV: ID_KhoiCV === null || ID_KhoiCV === "" ? null : ID_KhoiCV,
       UserName,
-      Emails,
+      Hoten,
+      Sodienthoai,
+      Gioitinh,
+      Email,
       isDelete: 0,
     };
 
@@ -327,7 +353,7 @@ exports.getUserOnline = async (req, res, next) => {
       isDelete: 0,
     };
 
-    if (userData.Permission !== 3 || userData.ent_chucvu.Chucvu !== "PSH") {
+    if (userData.ID_Chucvu !== 1 || userData.ent_chucvu.Chucvu !== "PSH") {
       whereClause.ID_Duan = userData.ID_Duan;
     }
 
@@ -335,12 +361,13 @@ exports.getUserOnline = async (req, res, next) => {
       attributes: [
         "ID_User",
         "UserName",
-        "Emails",
+        "Email",
         "Password",
+        "Hoten",
+        "Sodienthoai",
         "ID_Duan",
         "ID_KhoiCV",
-        "ID_Khuvucs",
-        "Permission",
+        "ID_Chucvu",
         "isDelete",
       ],
       include: [
@@ -354,13 +381,13 @@ exports.getUserOnline = async (req, res, next) => {
         },
         {
           model: Ent_khoicv,
-          attributes: ["KhoiCV"],
+          attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
         },
       ],
       where: whereClause,
       order: [
         ["ID_Duan", "ASC"],
-        ["Permission", "ASC"],
+        ["ID_Chucvu", "ASC"],
       ],
     })
       .then((data) => {
@@ -389,7 +416,7 @@ exports.getDetail = async (req, res) => {
         isDelete: 0,
       };
 
-      if (userData.Permission !== 3 || userData.ent_chucvu.Chucvu !== "PSH") {
+      if (userData.ID_Chucvu !== 1 || userData.ent_chucvu.Chucvu !== "PSH") {
         whereClause.ID_Duan = userData.ID_Duan;
       }
 
@@ -397,16 +424,21 @@ exports.getDetail = async (req, res) => {
         attributes: [
           "ID_User",
           "UserName",
-          "Emails",
-          "ID_Khuvucs",
+          "Email",
+          "Hoten",
+          "Sodienthoai",
+          "Ngaysinh",
+          "Gioitinh",
           "Password",
           "ID_Duan",
           "ID_KhoiCV",
-          "Permission",
+          "ID_Chucvu",
+          "isDelete",
+          "ID_Chucvu",
         ],
         order: [
           ["ID_Duan", "ASC"],
-          ["Permission", "ASC"],
+          ["ID_Chucvu", "ASC"],
         ],
         include: [
           {
@@ -419,7 +451,7 @@ exports.getDetail = async (req, res) => {
           },
           {
             model: Ent_khoicv,
-            attributes: ["KhoiCV"],
+            attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
           },
         ],
         where: {
@@ -453,13 +485,16 @@ exports.checkAuth = async (req, res, next) => {
       attributes: [
         "ID_User",
         "UserName",
-        "Emails",
+        "Email",
         "Password",
-        "ID_Khuvucs",
+        "Hoten",
+        "Gioitinh",
+        "Sodienthoai",
+        "Ngaysinh",
         "ID_Duan",
         "ID_KhoiCV",
         "deviceToken",
-        "Permission",
+        "ID_Chucvu",
       ],
       include: [
         {
@@ -472,7 +507,7 @@ exports.checkAuth = async (req, res, next) => {
         },
         {
           model: Ent_khoicv,
-          attributes: ["KhoiCV"],
+          attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
         },
       ],
       where: {
@@ -501,22 +536,22 @@ exports.checkAuth = async (req, res, next) => {
 exports.getGiamSat = async (req, res, next) => {
   try {
     const userData = req.user.data;
-    if (userData && userData.Permission === 1) {
+    if (userData) {
       const whereCondition = {
         isDelete: 0,
-        Permission: 2,
+        ID_Chucvu: 4,
         ID_Duan: userData.ID_Duan,
       };
       await Ent_user.findAll({
         attributes: [
           "ID_User",
           "UserName",
-          "Emails",
-          "ID_Khuvucs",
+          "Email",
+
           "Password",
           "ID_Duan",
           "ID_KhoiCV",
-          "Permission",
+          "ID_Chucvu",
           "isDelete",
         ],
         include: [
@@ -530,7 +565,7 @@ exports.getGiamSat = async (req, res, next) => {
           },
           {
             model: Ent_khoicv,
-            attributes: ["KhoiCV"],
+            attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
           },
         ],
         where: whereCondition,
@@ -565,19 +600,19 @@ exports.deviceToken = async (req, res, next) => {
         attributes: [
           "ID_User",
           "UserName",
-          "Emails",
+          "Email",
           "Password",
-          "ID_Khuvucs",
           "ID_Duan",
           "ID_KhoiCV",
           "deviceToken",
-          "Permission",
+          "ID_Chucvu",
         ],
         where: {
           deviceToken: deviceToken,
           ID_User: { [Op.ne]: userData.ID_User },
         },
       });
+      console.log('existingUser', existingUser)
 
       // Nếu tìm thấy user khác có deviceToken này, cập nhật deviceToken của họ thành null
       if (existingUser) {
@@ -619,43 +654,6 @@ exports.deviceToken = async (req, res, next) => {
   }
 };
 
-exports.setUpKhuVuc = async (req, res, next) => {
-  try {
-    const userData = req.user.data;
-    const ID_User = req.params.id;
-
-    const data = req.body;
-    const checkedIDs = extractCheckedIDs(data);
-
-    if (userData) {
-      await Ent_user.update(
-        {
-          ID_Khuvucs: checkedIDs,
-        },
-        {
-          where: {
-            ID_User: ID_User,
-          },
-        }
-      );
-    }
-    return res.status(200).json({ message: "Cập nhật thông tin thành công!" });
-  } catch (error) {
-    return res.status(500).json({
-      message: error.message || "Lỗi! Vui lòng thử lại sau.",
-    });
-  }
-};
-
-const extractCheckedIDs = (data) => {
-  return data.flatMap(
-    (buildingAreas) =>
-      buildingAreas
-        .filter((area) => area.checked) // Filter areas with checked === true
-        .map((area) => area.ID_Khuvuc) // Map to ID_Khuvuc
-  );
-};
-
 async function sendPushNotification(expoPushToken, message) {
   // console.log('expoPushToken',expoPushToken)
   const payload = {
@@ -695,12 +693,12 @@ exports.notiPush = async (message) => {
         "deviceToken",
         "ID_User",
         "UserName",
-        "Emails",
+        "Email",
         "Password",
         "ID_Duan",
         "ID_KhoiCV",
-        "ID_Khuvucs",
-        "Permission",
+
+        "ID_Chucvu",
         "isDelete",
       ],
       where: { isDelete: 0 },
@@ -740,5 +738,139 @@ exports.notiPush = async (message) => {
   } catch (error) {
     console.error("Error sending notifications:", error);
     return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+exports.uploadFileUsers = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).send("No file uploaded.");
+    }
+    const userData = req.user.data;
+
+    // Read the uploaded Excel file from buffer
+    const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
+
+    // Extract data from the first sheet
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const data = xlsx.utils.sheet_to_json(worksheet);
+
+    await sequelize.transaction(async (transaction) => {
+      const removeSpacesFromKeys = (obj) => {
+        return Object.keys(obj).reduce((acc, key) => {
+          const newKey = key?.replace(/\s+/g, "")?.toUpperCase();
+          acc[newKey] = obj[key];
+          return acc;
+        }, {});
+      };
+
+      for (const item of data) {
+        const transformedItem = removeSpacesFromKeys(item);
+
+        const tenKhoiCongViec = transformedItem["KHỐICÔNGVIỆC"];
+        const duAn = transformedItem["DỰÁN"];
+        const hoTen = transformedItem["HỌTÊN"];
+        const gioiTinh = transformedItem["GIỚITÍNH"];
+        const namSinh = transformedItem["NĂMSINH"];
+        const soDienThoai = transformedItem["SỐĐIỆNTHOẠI"];
+        const chucVu = transformedItem["CHỨCVỤ"];
+        const gmail = transformedItem["GMAIL"];
+        const taiKhoan = transformedItem["TÀIKHOẢN"];
+        const matKhau = transformedItem["MẬTKHẨU"];
+
+        const sanitizedTenToanha = duAn?.replace(/\t/g, ""); // Loại bỏ tất cả các ký tự tab
+
+        const dataChucvu = await Ent_chucvu.findOne({
+          attributes: ["ID_Chucvu", "Chucvu", "isDelete"],
+
+          where: {
+            Chucvu: sequelize.where(
+              sequelize.fn("UPPER", sequelize.col("Chucvu")),
+              "LIKE",
+              chucVu.toUpperCase()
+            ),
+            isDelete: 0,
+          },
+        });
+        if (!dataChucvu) {
+          return res.status(500).json({
+            message: "Không tìm chức vụ phù hợp",
+          });
+        }
+
+        const dataKhoiCV = await Ent_khoicv.findOne({
+          attributes: ["ID_KhoiCV", "KhoiCV", "isDelete"],
+
+          where: {
+            KhoiCV: sequelize.where(
+              sequelize.fn("UPPER", sequelize.col("KhoiCV")),
+              "LIKE",
+              tenKhoiCongViec.toUpperCase()
+            ),
+            isDelete: 0,
+          },
+        });
+        if (!dataKhoiCV) {
+          return res.status(500).json({
+            message: "Không tìm khối công việc phù hợp",
+          });
+        }
+
+        
+        const dataUser = await Ent_user.findOne({
+          attributes: [
+            "ID_User",
+            "ID_Duan",
+            "ID_Chucvu",
+            "ID_KhoiCV",
+            "isDelete",
+            "Hoten",
+            "UserName",
+            "Email",
+          ],
+          where: {
+            UserName: taiKhoan,
+            ID_Duan: userData.ID_Duan,
+            isDelete: 0,
+          },
+          transaction,
+        });
+
+        if (dataUser) {
+          console.log(`User đã tồn tại, bỏ qua`);
+          continue; // Skip the current iteration and move to the next item
+        }
+        const salt = genSaltSync(10);
+        const dataInsert = {
+          ID_Duan: userData.ID_Duan,
+          ID_Chucvu: dataChucvu.ID_Chucvu,
+          ID_KhoiCV: dataKhoiCV.ID_KhoiCV,
+          Password: await hashSync(`${matKhau}`, salt),
+          Email: gmail,
+          UserName: taiKhoan,
+          Hoten: hoTen,
+          Gioitinh: gioiTinh,
+          Sodienthoai: soDienThoai,
+          Ngaysinh: namSinh,
+          isDelete: 0,
+        };
+
+        await Ent_user.create(dataInsert, {
+          transaction,
+        });
+      }
+    });
+
+    res.send({
+      message: "File uploaded and data processed successfully",
+      data,
+    });
+  } catch (err) {
+    console.error("Error at line", err.stack.split("\n")[1].trim());
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+      error: err.stack,
+    });
   }
 };
