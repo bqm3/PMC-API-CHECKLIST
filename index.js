@@ -7,9 +7,7 @@ const admin = require("firebase-admin");
 const { getMessaging } = require("firebase-admin/messaging");
 const app = express();
 
-
 var serviceAccount = require("./pmc-cskh-firebase-adminsdk-y7378-5122f6edc7.json");
-
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -17,38 +15,37 @@ admin.initializeApp({
 
 // This registration token comes from the client FCM SDKs.
 app.get("/test-noti", async (req, res) => {
-
   const registrationTokens = [
-  "ExponentPushToken[CzoGcLH9L4wqJGVB9V-68-]",
-  "ExponentPushToken[0eplaPHQHUcrFvaEm24iMe]"
+    "ExponentPushToken[CzoGcLH9L4wqJGVB9V-68-]",
+    "ExponentPushToken[0eplaPHQHUcrFvaEm24iMe]",
   ];
 
   const message = {
-    
     notification: {
       title: "Hello World 2",
-      body: "Test Body 2"
+      body: "Test Body 2",
     },
     tokens: registrationTokens,
   };
 
-  getMessaging().sendEachForMulticast(message)
+  getMessaging()
+    .sendEachForMulticast(message)
     .then((response) => {
-      res.json({ response })
-      console.log(response.successCount + ' messages were sent successfully');
+      res.json({ response });
+      console.log(response.successCount + " messages were sent successfully");
     })
-    .catch(err => {
-      console.log(err);  
-    })
+    .catch((err) => {
+      console.log(err);
+    });
 });
-
 
 var corsOptions = {
   origin: [
     "*",
     "http://localhost:3000",
-    "http://localhost:3006",
+    "http://localhost:3636",
     "https://checklist.pmcweb.vn",
+    "https://demo.pmcweb.vn",
     "https://qlts.pmcweb.vn",
   ],
 
@@ -56,7 +53,7 @@ var corsOptions = {
   optionSuccessStatus: 200,
 };
 
-app.use(cors(corsOptions))
+app.use(cors(corsOptions));
 
 app.use(cookieParser());
 app.use(express.json());
@@ -74,15 +71,18 @@ require("./app/routes/ent_user.route")(app);
 require("./app/routes/ent_tang.route")(app);
 require("./app/routes/ent_toanha.route")(app);
 require("./app/routes/ent_khuvuc.route")(app);
+require("./app/routes/ent_thietlapca.route")(app);
 require("./app/routes/ent_duan.route")(app);
 require("./app/routes/ent_hangmuc.route")(app);
 require("./app/routes/ent_khoicv.route")(app);
 require("./app/routes/ent_checklist.route")(app);
 require("./app/routes/ent_chucvu.route")(app);
-require("./app/routes/ent_giamsat.route")(app);
 require("./app/routes/tb_checklistc.route")(app);
 require("./app/routes/tb_checklistchitiet.route")(app);
 require("./app/routes/tb_checklistchitietdone.route")(app);
+require("./app/routes/ent_duan_khoicv.route")(app);
+require("./app/routes/tb_sucongoai.route")(app);
+require("./app/routes/mail.route")(app);
 
 const PORT = process.env.PORT || 6969;
 app.listen(PORT, () => {

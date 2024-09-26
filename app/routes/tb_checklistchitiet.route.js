@@ -46,5 +46,5 @@ module.exports = (app) => {
     tb_checklistchitiet.getWriteExcel
   );
   
-  app.use("/api/tb_checklistchitiet", router);
+  app.use("/api/v2/tb_checklistchitiet", router);
 };

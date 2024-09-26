@@ -13,10 +13,10 @@ const Ent_checklist = sequelize.define(
     ID_Khuvuc: {
       type: DataTypes.INTEGER,
     },
-    ID_Tang: {
+    ID_Hangmuc: {
       type: DataTypes.INTEGER,
     },
-    ID_Hangmuc: {
+    ID_Tang: {
       type: DataTypes.INTEGER,
     },
     Sothutu: {
@@ -42,7 +42,7 @@ const Ent_checklist = sequelize.define(
       type: DataTypes.CHAR,
     },
     sCalv: {
-      type: DataTypes.CHAR,
+      type: DataTypes.JSON,
     },
     Tinhtrang: {
       type: DataTypes.INTEGER,
@@ -82,9 +82,10 @@ const Ent_checklist = sequelize.define(
   },
   {
     freezeTableName: true,
-    timestamps: false,
+    timestamps: true,
     tableName: "ent_checklist",
   }
 );
 
 module.exports = Ent_checklist;
+

@@ -18,18 +18,16 @@ const Ent_checklistc = sequelize.define(
     ID_User: {
       type: DataTypes.INTEGER,
     },
-    ID_Toanha: {
+    ID_ThietLapCa: {
       type: DataTypes.TEXT,
     },
-    ID_Khuvucs: {
+    ID_Hangmucs: {
       type: DataTypes.JSON,
     },
     ID_Calv: {
       type: DataTypes.INTEGER,
     },
-    ID_Giamsat: {
-      type: DataTypes.INTEGER,
-    },
+    
     TongC: {
       type: DataTypes.INTEGER,
     },
@@ -88,7 +86,7 @@ const Ent_checklistc = sequelize.define(
   },
   {
     freezeTableName: true,
-    timestamps: false,
+    timestamps: true,
     tableName: "tb_checklistc",
   },
   {

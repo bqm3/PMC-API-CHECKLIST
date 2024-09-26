@@ -1,21 +1,20 @@
 const { Sequelize, DataTypes } = require("sequelize");
 const sequelize = require("../config/db.config");
 
-const Ent_tang = sequelize.define("ent_tang", {
-    ID_Tang: {
+const Ent_khuvuc_khoicv = sequelize.define("ent_khuvuc_khoicv", {
+    ID_KV_CV: {
         type: DataTypes.INTEGER,
         allowNull: false,
         autoIncrement: true,
         primaryKey: true
        },
-       Tentang: {
-         type: DataTypes.CHAR,
+       ID_Khuvuc: {
+         type: DataTypes.INTEGER,
          allowNull: false,
        },
-      
-   
-       ID_Duan: {
+       ID_KhoiCV: {
         type: DataTypes.INTEGER,
+        allowNull: false,
        },
        isDelete: {
         type: DataTypes.INTEGER,
@@ -24,7 +23,7 @@ const Ent_tang = sequelize.define("ent_tang", {
 },{
     freezeTableName: true,
     timestamps: true,
-    tableName: 'ent_tang'
+    tableName: 'ent_khuvuc_khoicv'
 });
 
-module.exports = Ent_tang;
+module.exports = Ent_khuvuc_khoicv;

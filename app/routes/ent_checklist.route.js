@@ -9,7 +9,7 @@ module.exports = (app) => {
 
   router.post("/create", [isAuthenticated], ent_checklist.create);
   router.get("/", [isAuthenticated], ent_checklist.get);
-  router.get("/web", [isAuthenticated], ent_checklist.getListChecklistWeb)
+  router.get("/all", [isAuthenticated], ent_checklist.getListChecklistWeb)
   router.get("/total", [isAuthenticated], ent_checklist.getChecklistTotal)
 
   router.get("/:id", [isAuthenticated], ent_checklist.getDetail);
@@ -19,7 +19,11 @@ module.exports = (app) => {
   
   router.put("/update/:id", [isAuthenticated], ent_checklist.update);
   router.put("/delete/:id", [isAuthenticated], ent_checklist.delete);
-  router.put("/delete-mul", [isAuthenticated], ent_checklist.deleteMul);
+  router.put(
+    "/delete-all/:ids",
+    isAuthenticated,
+    ent_checklist.deleteChecklists
+  );
   router.put(
     "/filter-mul/:idc/:id_calv",
     isAuthenticated,
@@ -27,11 +31,13 @@ module.exports = (app) => {
   );
 
   router.put(
-    "/filter/:idc/:id_calv",
+    "/filter-return/:idc/:id_calv",
     isAuthenticated,
-    ent_checklist.KhuvucChecklists
+    ent_checklist.filterReturn
   );
+
+  router.put("/delete-mul", [isAuthenticated], ent_checklist.deleteMul)
   router.post("/uploads", [isAuthenticated, upload.single('files')], ent_checklist.uploadFiles)
 
-  app.use("/api/ent_checklist", router);
+  app.use("/api/v2/ent_checklist", router);
 };

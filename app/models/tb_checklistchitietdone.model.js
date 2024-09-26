@@ -2,7 +2,7 @@ const { Sequelize, DataTypes } = require("sequelize");
 const sequelize = require("../config/db.config");
 
 const Tb_checklistchitietdone = sequelize.define("tb_checklistchitietdone", {
-    ID_ChecklistChitietDone: {
+    ID_Checklistchitietdone: {
         type: DataTypes.INTEGER,
         allowNull: false,
         autoIncrement: true,
@@ -12,7 +12,10 @@ const Tb_checklistchitietdone = sequelize.define("tb_checklistchitietdone", {
         type: DataTypes.INTEGER,
       },
        Description: {
-         type: DataTypes.JSON,
+         type: DataTypes.TEXT,
+       },
+       Gioht: {
+        type: DataTypes.TIME
        },
        Vido: {
         type: DataTypes.CHAR,
@@ -29,7 +32,7 @@ const Tb_checklistchitietdone = sequelize.define("tb_checklistchitietdone", {
        },
 },{
     freezeTableName: true,
-    timestamps: false,
+    timestamps: true,
     tableName: 'tb_checklistchitietdone'
 });
 
