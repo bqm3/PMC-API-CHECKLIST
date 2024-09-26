@@ -27,7 +27,7 @@ const Ent_toanha = sequelize.define("ent_toanha", {
        },
 },{
     freezeTableName: true,
-    timestamps: false,
+    timestamps: true,
     tableName: 'ent_toanha'
 });
 

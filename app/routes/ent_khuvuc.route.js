@@ -9,15 +9,15 @@ module.exports = (app) => {
 
   router.post("/create", [isAuthenticated], ent_khuvuc.create);
   router.get("/", [isAuthenticated], ent_khuvuc.get);
-  router.post("/filter",[isAuthenticated], ent_khuvuc.getKhuVuc);
+  router.post("/filter",[isAuthenticated], ent_khuvuc.getKhuVucFilter);
   router.get("/total", [isAuthenticated], ent_khuvuc.getKhuvucTotal)
   router.get("/:id", [isAuthenticated], ent_khuvuc.getDetail);
   router.put("/delete/:id",[isAuthenticated], ent_khuvuc.delete);
   router.put("/update/:id",[isAuthenticated], ent_khuvuc.update);
-  router.post("/filter_qr", [isAuthenticated], ent_khuvuc.filterByQr)
   router.put("/delete-mul", [isAuthenticated], ent_khuvuc.deleteMul)
+  // router.post("/filter_qr", [isAuthenticated], ent_khuvuc.filterByQr)
 
   router.post("/uploads", [isAuthenticated, upload.single('files')], ent_khuvuc.uploadFiles)
 
-  app.use("/api/ent_khuvuc", router);
+  app.use("/api/v2/ent_khuvuc", router);
 };

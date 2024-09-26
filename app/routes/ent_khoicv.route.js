@@ -7,5 +7,5 @@ module.exports = (app) => {
     router.get("/", ent_khoicv.get);
     router.get("/:id", ent_khoicv.getDetail);
   
-    app.use("/api/ent_khoicv", router);
+    app.use("/api/v2/ent_khoicv", router);
   };

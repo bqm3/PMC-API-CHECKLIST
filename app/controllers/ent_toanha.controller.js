@@ -3,6 +3,10 @@ const {
   Ent_duan,
   Ent_khuvuc,
   Ent_user,
+  Ent_hangmuc,
+  Ent_khuvuc_khoicv,
+  Ent_khoicv,
+  Ent_duan_khoicv,
 } = require("../models/setup.model");
 const { Op, Sequelize } = require("sequelize");
 
@@ -46,7 +50,7 @@ exports.get = async (req, res) => {
         isDelete: 0,
       };
 
-      if (userData.Permission !== 3 || userData.ent_chucvu.Chucvu !== "PSH") {
+      if (userData.ID_Chucvu !== 1 || userData.ent_chucvu.Chucvu !== "PSH") {
         whereClause.ID_Duan = userData.ID_Duan;
       }
 
@@ -55,6 +59,13 @@ exports.get = async (req, res) => {
         include: {
           model: Ent_duan,
           attributes: ["Duan"],
+          include: [
+            {
+              model: Ent_duan_khoicv,
+              as: "ent_duan_khoicv",
+              attributes: ["ID_KhoiCV", "Chuky", "Ngaybatdau"]
+            }
+          ]
         },
         where: whereClause,
         order: [["ID_Duan", "ASC"]],
@@ -86,7 +97,7 @@ exports.getDetail = async (req, res) => {
         isDelete: 0,
       };
 
-      if (userData.Permission !== 3 || userData.ent_chucvu.Chucvu !== "PSH") {
+      if (userData.ID_Chucvu !== 1 || userData.ent_chucvu.Chucvu !== "PSH") {
         whereClause.ID_Duan = userData.ID_Duan;
       }
 
@@ -95,6 +106,13 @@ exports.getDetail = async (req, res) => {
         include: {
           model: Ent_duan,
           attributes: ["Duan"],
+          include: [
+            {
+              model: Ent_duan_khoicv,
+              as: "ent_duan_khoicv",
+              attributes: ["ID_KhoiCV", "Chuky", "Ngaybatdau"]
+            }
+          ]
         },
         where: whereClause,
         order: [["ID_Duan", "ASC"]],
@@ -161,7 +179,7 @@ exports.delete = async (req, res) => {
         isDelete: 0,
       };
 
-      if (userData.Permission !== 3 || userData.ent_chucvu.Chucvu !== "PSH") {
+      if (userData.ID_Chucvu !== 1 || userData.ent_chucvu.Chucvu !== "PSH") {
         whereClause.ID_Duan = userData.ID_Duan;
       }
 
@@ -202,7 +220,7 @@ exports.getKhuvucByToanha = async (req, res) => {
         isDelete: 0,
       };
 
-      if (userData.Permission !== 3 || userData.ent_chucvu.Chucvu !== "PSH") {
+      if (userData.ID_Chucvu !== 1 || userData.ent_chucvu.Chucvu !== "PSH") {
         whereClause.ID_Duan = userData.ID_Duan;
       }
 
@@ -210,68 +228,55 @@ exports.getKhuvucByToanha = async (req, res) => {
         attributes: [
           "ID_User",
           "UserName",
-          "ID_Khuvucs",
-          "Permission",
+          "ID_Chucvu",
           "ID_Duan",
           "Password",
           "ID_KhoiCV",
-          "Emails",
+          "Email",
           "isDelete",
         ],
       });
 
-      await Ent_toanha.findAll({
+      await Ent_khuvuc.findAll({
         attributes: [
+          "ID_Khuvuc",
           "ID_Toanha",
-          "Toanha",
-          "Sotang",
-          "ID_Duan",
-          "Vido",
-          "Kinhdo",
+          "Sothutu",
+          "ID_KhoiCVs",
+          "Makhuvuc",
+          "MaQrCode",
+          "Tenkhuvuc",
+          "ID_User",
           "isDelete",
         ],
-        where: { isDelete: 0 },
         include: [
           {
-            model: Ent_khuvuc,
-            as: "ent_khuvuc",
-            attributes: [
-              "ID_Khuvuc",
-              "ID_KhoiCV",
-              "ID_KhoiCVs",
-              "Makhuvuc",
-              "MaQrCode",
-              "Tenkhuvuc",
-              "isDelete",
+            model: Ent_toanha,
+            attributes: ["Toanha", "Sotang"],
+          },
+          {
+            model: Ent_khuvuc_khoicv,
+            attributes: ["ID_KhoiCV", "ID_Khuvuc", "ID_KV_CV"],
+            include: [
+              {
+                model: Ent_khoicv,
+                attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
+              },
             ],
-            where: {
-              isDelete: 0,
-              // Kiểm tra user.ID_KhoiCV có nằm trong mảng ID_KhoiCVs
-              [Sequelize.Op.or]: [
-                Sequelize.where(
-                  Sequelize.fn('JSON_CONTAINS', Sequelize.col('ID_KhoiCVs'), JSON.stringify(user.ID_KhoiCV)),
-                  '=',
-                  1
-                ),
-                Sequelize.where(
-                  Sequelize.fn('FIND_IN_SET', user.ID_KhoiCV, Sequelize.col('ID_KhoiCVs')),
-                  '>',
-                  0
-                ),
-              ],
-            },
-            required: false
+          },
+          {
+            model: Ent_hangmuc,
+            as: "ent_hangmuc",
+            attributes: ["ID_Hangmuc", "Hangmuc", "MaQrCode", "Tieuchuankt"],
           },
         ],
-        where: whereClause,
-        order: [["ID_Toanha", "ASC"]],
+        where: { isDelete: 0 },
       })
         .then((data) => {
-
           res.status(200).json({
             message: "Danh sách tòa nhà!",
             data: data,
-            user: user
+            user: user,
           });
         })
         .catch((err) => {

@@ -5,7 +5,7 @@ const multer = require("multer");
 const { google } = require("googleapis");
 const app = express();
 const upload = multer();
-const sharp = require("sharp");
+const sharp = require('sharp');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -20,8 +20,9 @@ const credentials = {
   token_uri: process.env.TOKEN_URI,
   auth_provider_x509_cert_url: process.env.AUTH_PROVIDER_X509_CERT_URL,
   client_x509_cert_url: process.env.CLIENT_X509_CERT_URL,
-  universe_domain: process.env.UNIVERSE_DOMAIN,
+  universe_domain: process.env.UNIVERSE_DOMAIN
 };
+
 
 const SCOPES = ["https://www.googleapis.com/auth/drive"];
 
@@ -32,8 +33,8 @@ const auth = new google.auth.GoogleAuth({
 
 const uploadFile = async (fileObject) => {
   const resizedBuffer = await sharp(fileObject.buffer)
-    .resize({ width: 800, height: 1000 }) // Set desired width
-    .toBuffer();
+  .resize({ width: 600, height: 800 }) // Set desired width
+  .toBuffer();
   const bufferStream = new stream.PassThrough();
   bufferStream.end(resizedBuffer);
   const { data } = await google.drive({ version: "v3", auth }).files.create({
@@ -50,7 +51,7 @@ const uploadFile = async (fileObject) => {
   return {
     name: data.name,
     id: data.id,
-  };
+  }
 };
 
 module.exports = { uploadFile };

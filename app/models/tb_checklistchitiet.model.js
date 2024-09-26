@@ -4,7 +4,7 @@ const sequelize = require("../config/db.config");
 const Tb_checklistchitiet = sequelize.define(
   "tb_checklistchitiet",
   {
-    ID_ChecklistChitiet: {
+    ID_Checklistchitiet: {
       type: DataTypes.BIGINT,
       allowNull: false,
       autoIncrement: true,
@@ -20,11 +20,9 @@ const Tb_checklistchitiet = sequelize.define(
     },
     Ketqua: {
       type: DataTypes.CHAR,
-      allowNull: true
     },
     Anh: {
-      type: DataTypes.TEXT,
-      allowNull: true
+      type: DataTypes.CHAR,
     },
     Ngay: {
       type: DataTypes.DATE,
@@ -34,7 +32,6 @@ const Tb_checklistchitiet = sequelize.define(
     },
     Ghichu: {
       type: DataTypes.TEXT,
-      allowNull: true
     },
     Vido: {
       type: DataTypes.CHAR,
@@ -52,7 +49,7 @@ const Tb_checklistchitiet = sequelize.define(
   },
   {
     freezeTableName: true,
-    timestamps: false,
+    timestamps: true,
     tableName: "tb_checklistchitiet",
   }
 );

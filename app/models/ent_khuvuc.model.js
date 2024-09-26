@@ -12,32 +12,26 @@ const Ent_khuvuc = sequelize.define("ent_khuvuc", {
          type: DataTypes.INTEGER,
          allowNull: false,
        },
-       ID_KhoiCV: {
+       ID_Tang: {
         type: DataTypes.INTEGER,
-        allowNull: false,
-       },
-       ID_KhoiCVs: {
-        type: DataTypes.JSON,
-       },
+      },
        Sothutu: {
         type: DataTypes.INTEGER,
-        allowNull: false,
        },
        Makhuvuc: {
         type: DataTypes.CHAR,
-        allowNull: false,
        },
        MaQrCode: {
         type: DataTypes.CHAR,
-        allowNull: false,
+       },
+       ID_KhoiCVs : {
+        type: DataTypes.JSON,
        },
        Tenkhuvuc: {
         type: DataTypes.CHAR,
-        allowNull: false,
        },
        ID_User: {
         type: DataTypes.INTEGER,
-        allowNull: false,
        },
        isDelete: {
         type: DataTypes.INTEGER,
@@ -45,7 +39,7 @@ const Ent_khuvuc = sequelize.define("ent_khuvuc", {
        },
 },{
     freezeTableName: true,
-    timestamps: false,
+    timestamps: true,
     tableName: 'ent_khuvuc'
 });
 

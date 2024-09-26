@@ -3,7 +3,7 @@ const { Ent_toanha, Ent_khuvuc, Ent_khoicv } = require("../models/setup.model");
 exports.get = async (req, res) => {
   try {
     await Ent_khoicv.findAll({
-      attributes: ["ID_Khoi", "KhoiCV"],
+      attributes: ["ID_KhoiCV", "KhoiCV", "Chuky", "Ngaybatdau"],
 
       where: {
         isDelete: 0,
@@ -32,7 +32,7 @@ exports.getDetail = async (req, res) => {
     const userData = req.user.data;
     if (req.params.id && userData) {
       await Ent_khoicv.findByPk(req.params.id, {
-        attributes: ["ID_Khoi", "KhoiCV"],
+        attributes: ["ID_KhoiCV", "KhoiCV"],
 
         where: {
           isDelete: 0,
