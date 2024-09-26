@@ -10,14 +10,17 @@ const Ent_nhom = sequelize.define(
       autoIncrement: true,
       primaryKey: true,
     },
-    Nhom: {
+    Tennhom: {
       type: DataTypes.CHAR,
-      allowNull: false,
+    },
+    isDelete: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
     },
   },
   {
     freezeTableName: true,
-    timestamps: false,
+    timestamps: true,
     tableName: "ent_nhom",
   }
 );

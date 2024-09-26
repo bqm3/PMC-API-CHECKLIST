@@ -14,5 +14,5 @@ module.exports = (app) => {
   router.put("/update/:id", [isAuthenticated], ent_toanha.update);
   router.put("/delete/:id", [isAuthenticated], ent_toanha.delete);
 
-  app.use("/api/ent_toanha", router);
+  app.use("/api/v2/ent_toanha", router);
 };

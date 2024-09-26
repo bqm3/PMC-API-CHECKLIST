@@ -9,5 +9,5 @@ module.exports = (app) => {
   router.get("/", isAuthenticated, ent_chucvu.get);
   router.get("/:id", isAuthenticated, ent_chucvu.getDetail);
 
-  app.use("/api/ent_chucvu", router);
+  app.use("/api/v2/ent_chucvu", router);
 };

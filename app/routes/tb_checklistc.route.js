@@ -14,12 +14,6 @@ module.exports = (app) => {
     tb_checklistc.createFirstChecklist
   );
 
-  router.post(
-    "/toanha",
-    [isAuthenticated],
-    tb_checklistc.createChecklistInToanha
-  );
-
   router.get(
     "/ca/:id",
     [isAuthenticated],
@@ -32,16 +26,33 @@ module.exports = (app) => {
     tb_checklistc.checklistCalvDinhKy
   );
 
-  router.get("/top3", tb_checklistc.top3kythuatMaxMin);
+  // Xuất báo cáo
+  //==================================
+  router.post("/cac-loai-bao-cao/:id", [isAuthenticated], tb_checklistc.createExcelTongHopCa);
+  router.post("/thong-ke-tra-cuu", [isAuthenticated], tb_checklistc.createExcelThongKeTraCuu);
+  router.post("/baocao", [isAuthenticated], tb_checklistc.createExcelFile);
+  router.post("/thong-ke", [isAuthenticated], tb_checklistc.getThongKe);
+  router.post("/thong-ke-hang-muc-quan-trong", [isAuthenticated], tb_checklistc.getThongKeHangMucQuanTrong);
+  
+  // Role: VIP
+  //========================================== 
+  router.get("/top-10-max", tb_checklistc.top10max )
+  router.get("/top3", tb_checklistc.topCompletionRate);
   router.get("/list-checklist-error", tb_checklistc.getChecklistsErrorFromYesterday);
   router.get("/list-project-none", tb_checklistc.getProjectsChecklistStatus);
-  router.get("/list-checklist-error-project", [isAuthenticated], tb_checklistc.getChecklistsErrorFromWeek)
-  router.get("/list-checklist", [isAuthenticated], tb_checklistc.getChecklistsError)
+  router.get("/quan-ly-vi-tri", tb_checklistc.getLocationsChecklist);
+  router.get("/ti-le-hoan-thanh", tb_checklistc.tiLeHoanThanh);
+  router.get("/ti-le-su-co", tb_checklistc.tiLeSuco);
 
-  
-  router.get("/year", [isAuthenticated], tb_checklistc.checklistYear);
-  router.get("/year-all",  tb_checklistc.checklistYearAll);
-  router.get("/detail-percent",  tb_checklistc.checklistPercentDetail);
+  // Role: GDDA
+  //==========================================
+  router.get("/percent-checklist-days", [isAuthenticated], tb_checklistc.getProjectChecklistDays);
+
+  // ===========================================
+  router.get("/list-checklist-error-project", [isAuthenticated], tb_checklistc.getChecklistsErrorFromWeekbyDuan)
+  router.get("/list-checklist", [isAuthenticated], tb_checklistc.getChecklistsError)
+  router.get("/year", [isAuthenticated], tb_checklistc.checklistYearByKhoiCV);
+  router.get("/year-su-co", [isAuthenticated], tb_checklistc.checklistYearByKhoiCVSuCo);
   router.get("/percent", [isAuthenticated], tb_checklistc.checklistPercent);
   router.get("/", [isAuthenticated], tb_checklistc.getCheckListc);
   router.get("/:id", [isAuthenticated], tb_checklistc.getDetail);
@@ -49,7 +60,7 @@ module.exports = (app) => {
   router.put("/open/:id", [isAuthenticated], tb_checklistc.open);
   router.get("/update-tongC/:id1/:id2", tb_checklistc.updateTongC);
   router.put("/delete/:id", [isAuthenticated], tb_checklistc.delete);
-  router.post("/baocao", [isAuthenticated], tb_checklistc.createExcelFile);
+
  
   router.post(
     "/update_images/:id",
@@ -57,5 +68,5 @@ module.exports = (app) => {
     tb_checklistc.checklistImages
   );
 
-  app.use("/api/tb_checklistc", router);
+  app.use("/api/v2/tb_checklistc", router);
 };

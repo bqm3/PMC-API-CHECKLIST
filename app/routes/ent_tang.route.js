@@ -11,5 +11,5 @@ module.exports = (app) => {
   router.get("/", [isAuthenticated], ent_tang.get);
   router.put("/delete-mul", [isAuthenticated], ent_tang.deleteMul)
 
-  app.use("/api/ent_tang", router);
+  app.use("/api/v2/ent_tang", router);
 };
