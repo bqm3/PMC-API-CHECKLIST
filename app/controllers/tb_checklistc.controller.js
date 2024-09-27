@@ -858,7 +858,7 @@ exports.getThongKeHangMucQuanTrong = async (req, res, next) => {
 
     worksheet.addImage(imageId, {
       tl: { col: 0, row: 0 }, // Position for the image within the merged cells
-       br: { col: 2, row: 1 },
+      br: { col: 2, row: 1 },
     });
     worksheet.getRow(1).height = 60;
     worksheet.getRow(2).height = 50;
@@ -1577,7 +1577,7 @@ exports.checklistCalv = async (req, res) => {
         arrPush.push({
           ID_ChecklistC: parseInt(req.params.id),
           ID_Checklist: it,
-          Gioht: matchedGioht|| checklistDoneItems[0].Gioht,
+          Gioht: matchedGioht || checklistDoneItems[0].Gioht,
           Ketqua: relatedChecklist.Giatridinhdanh,
           status: 1,
           ent_checklist: relatedChecklist,
@@ -4291,7 +4291,6 @@ exports.createExcelTongHopCa = async (req, res) => {
         { header: "Tỷ lệ thực hiện (%)", key: "tylethuchien", width: 20 },
         { header: "Ghi chú", key: "ghichuloi", width: 30 },
       ];
-
       const projectData =
         dataChecklist.length > 0 ? dataChecklist[0].ent_duan : {};
       const projectName = projectData?.Duan || "Tên dự án không có";
