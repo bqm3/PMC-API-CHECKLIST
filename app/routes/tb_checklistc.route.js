@@ -28,11 +28,13 @@ module.exports = (app) => {
 
   // Xuất báo cáo
   //==================================
-  router.post("/cac-loai-bao-cao/:id", [isAuthenticated], tb_checklistc.createExcelTongHopCa);
+  router.post("/reports/:id", [isAuthenticated], tb_checklistc.createExcelTongHopCa);
+  router.post("/preview-reports/:id", [isAuthenticated], tb_checklistc.createPreviewReports);
   router.post("/thong-ke-tra-cuu", [isAuthenticated], tb_checklistc.createExcelThongKeTraCuu);
   router.post("/baocao", [isAuthenticated], tb_checklistc.createExcelFile);
   router.post("/thong-ke", [isAuthenticated], tb_checklistc.getThongKe);
-  router.post("/thong-ke-hang-muc-quan-trong", [isAuthenticated], tb_checklistc.getThongKeHangMucQuanTrong);
+  router.post("/report-article-important", [isAuthenticated], tb_checklistc.getThongKeHangMucQuanTrong);
+  router.post("/preview-report-article-important", [isAuthenticated], tb_checklistc.getPreviewThongKeHangMucQuanTrong);
   
   // Role: VIP
   //========================================== 
