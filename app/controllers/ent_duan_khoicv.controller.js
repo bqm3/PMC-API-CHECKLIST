@@ -35,6 +35,7 @@ exports.create = async (req, res) => {
         where: {
           ID_Duan: ID_Duan,
           ID_KhoiCV: ID_KhoiCV,
+          isDelete: 0
         },
       });
 
