@@ -29,6 +29,20 @@ exports.create = async (req, res) => {
         ID_KhoiCV: ID_KhoiCV,
         Ngaybatdau: Ngaybatdau,
       };
+
+      const dataChuky = await Ent_duan_khoicv.findOne({
+        attributes: ["Chuky", "ID_Duan", "ID_KhoiCV", "Ngaybatdau"],
+        where: {
+          ID_Duan: ID_Duan,
+          ID_KhoiCV: ID_KhoiCV,
+        },
+      });
+
+      if (dataChuky) {
+        return res.status(400).json({
+          message: "Chỉ được tạo một chu kỳ của một khối !",
+        });
+      }
       // Tạo khu vực mới
       const newReturn = await Ent_duan_khoicv.create(data);
 
@@ -47,7 +61,6 @@ exports.create = async (req, res) => {
 
 exports.get = async (req, res) => {
   try {
-
     const userData = req.user.data;
     await Ent_duan_khoicv.findAll({
       attributes: [
@@ -76,8 +89,8 @@ exports.get = async (req, res) => {
       ],
       where: {
         isDelete: 0,
-        ID_Duan: userData.ID_Duan
-      }
+        ID_Duan: userData.ID_Duan,
+      },
     })
       .then((data) => {
         res.status(200).json({
