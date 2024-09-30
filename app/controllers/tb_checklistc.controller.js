@@ -731,6 +731,9 @@ exports.getThongKeHangMucQuanTrong = async (req, res, next) => {
     const startDateFormat = formatDate(startDate);
     const endDateFormat = formatDate(endDate);
 
+    const startDateShow = formatDateShow(startDate);
+    const endDateShow = formatDateEnd(endDate);
+
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(
       "BÁO CÁO TỔNG HỢP CHECKLIST NGĂN NGỪA RỦI RO"
@@ -857,13 +860,12 @@ exports.getThongKeHangMucQuanTrong = async (req, res, next) => {
     });
 
     worksheet.addImage(imageId, {
-      tl: { col: 0, row: 0 }, // Position for the image within the merged cells
-      br: { col: 2, row: 1 },
+      tl: { col: 0, row: 0 },
+      ext: { width: 120, height: 60 },
     });
     worksheet.getRow(1).height = 60;
-    worksheet.getRow(2).height = 50;
-    // Set project name in the merged cell A1:B1
-    worksheet.mergeCells("A2:B2");
+    worksheet.getRow(2).height = 25;
+
     worksheet.getCell("A2").value = projectName; // Đặt tên dự án vào ô A2
     worksheet.getCell("A2").alignment = {
       horizontal: "center",
@@ -872,29 +874,30 @@ exports.getThongKeHangMucQuanTrong = async (req, res, next) => {
     };
     worksheet.getCell("A2").font = { size: 14, bold: true }; // Định dạng tên dự án
 
-    worksheet.mergeCells("C1:G1");
-    const headerRow = worksheet.getCell("C1");
+    worksheet.mergeCells("A1:G1");
+    const headerRow = worksheet.getCell("A1");
     headerRow.value = "BÁO CÁO TỔNG HỢP CHECKLIST NGĂN NGỪA RỦI RO";
     headerRow.alignment = { horizontal: "center", vertical: "middle" };
-    headerRow.font = { size: 18, bold: true };
+    headerRow.font = { size: 16, bold: true };
 
-    worksheet.mergeCells("C2:G2");
-    worksheet.getCell(
-      "C2"
-    ).value = `Từ ngày: ${startDateFormat}   Đến ngày: ${endDateFormat}`;
-    worksheet.getCell("C2").alignment = {
+    worksheet.mergeCells("A2:G2");
+    worksheet.getCell("A2").value =
+      startDateShow && endDateShow
+        ? `Từ ngày: ${startDateShow}  Đến ngày: ${endDateShow}`
+        : `Từ ngày: `;
+    worksheet.getCell("A2").alignment = {
       horizontal: "center",
       vertical: "middle",
     };
-    worksheet.getCell("C2").font = { size: 13, bold: true };
+    worksheet.getCell("A2").font = { size: 13, bold: true };
 
-    worksheet.mergeCells("C3:G3");
-    worksheet.getCell("C3").value = `Tên bộ phận: ${tenBoPhan}`;
-    worksheet.getCell("C3").alignment = {
+    worksheet.mergeCells("A3:G3");
+    worksheet.getCell("A3").value = `Tên bộ phận: ${tenBoPhan}`;
+    worksheet.getCell("A3").alignment = {
       horizontal: "center",
       vertical: "middle",
     };
-    worksheet.getCell("C3").font = { size: 13, bold: true };
+    worksheet.getCell("A3").font = { size: 13, bold: true };
 
     const tableHeaderRow = worksheet.getRow(5);
     tableHeaderRow.values = [
@@ -974,6 +977,202 @@ exports.getThongKeHangMucQuanTrong = async (req, res, next) => {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     );
     res.send(buffer);
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+exports.getPreviewThongKeHangMucQuanTrong = async (req, res, next) => {
+  try {
+    const { startDate, endDate, ID_KhoiCVs } = req.body;
+    const userData = req.user.data;
+    const startDateFormat = formatDate(startDate);
+    const endDateFormat = formatDate(endDate);
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet(
+      "BÁO CÁO TỔNG HỢP CHECKLIST NGĂN NGỪA RỦI RO"
+    );
+
+    let whereClause = {
+      isDelete: 0,
+      Ngay: {
+        [Op.gte]: startDateFormat,
+        [Op.lte]: endDateFormat,
+      },
+      "$tb_checklistc.ID_KhoiCV$": {
+        [Op.in]: ID_KhoiCVs,
+      },
+      "$tb_checklistc.ID_Duan$": userData.ID_Duan,
+    };
+
+    let whereClauseHangMuc = {
+      isDelete: 0,
+    };
+    whereClauseHangMuc["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData.ID_Duan;
+    whereClauseHangMuc["$ent_khuvuc.ent_khuvuc_khoicvs.ID_KhoiCV$"] =
+      ID_KhoiCVs;
+
+    // Lấy thông tin hạng mục quan trọng
+    const dataHangMucImportant = await Ent_hangmuc.findAll({
+      attributes: ["ID_Hangmuc", "Hangmuc"],
+      include: [
+        {
+          model: Ent_khuvuc,
+          as: "ent_khuvuc",
+          attributes: ["Tenkhuvuc", "MaQrCode", "Makhuvuc", "Sothutu"],
+          include: [
+            {
+              model: Ent_khuvuc_khoicv,
+              as: "ent_khuvuc_khoicvs",
+              attributes: ["ID_KhoiCV"],
+            },
+            {
+              model: Ent_toanha,
+              attributes: ["Toanha", "ID_Duan"],
+
+              include: [
+                {
+                  model: Ent_duan,
+                  attributes: ["Duan", "Logo"],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      where: whereClauseHangMuc,
+    });
+
+    // Tạo map để tra cứu tên hạng mục từ ID_Hangmuc
+    const hangMucMap = {};
+    dataHangMucImportant.forEach((item) => {
+      hangMucMap[item.ID_Hangmuc] = item.Hangmuc;
+    });
+
+    // Lấy dữ liệu checklist chi tiết
+    const dataChecklistC = await Tb_checklistchitiet.findAll({
+      attributes: [
+        "ID_Checklistchitiet",
+        "Ketqua",
+        "Ghichu",
+        "Ngay",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Tb_checklistc,
+          as: "tb_checklistc",
+          attributes: ["ID_KhoiCV", "ID_Duan", "ID_Calv", "Ngay", "isDelete"],
+          where: whereClause,
+        },
+        {
+          model: Ent_checklist,
+          attributes: ["ID_Hangmuc", "Tinhtrang"],
+        },
+      ],
+    });
+
+    worksheet.columns = [
+      { header: "STT", key: "stt", width: 5 },
+      { header: "Tên Hạng mục", key: "ten_hangmuc", width: 25 },
+      { header: "Đạt", key: "dat", width: 10 },
+      { header: "Không đạt", key: "khongdat", width: 15 },
+      { header: "Lý do", key: "lydo", width: 20 },
+      { header: "Ghi chú", key: "ghichu", width: 25 },
+      { header: "Hướng xử lý", key: "huong_xuly", width: 25 },
+    ];
+
+    const tableHeaderRow = worksheet.getRow(1);
+    tableHeaderRow.values = [
+      "STT",
+      "Tên Hạng mục",
+      "Đạt",
+      "Không đạt",
+      "Lý do",
+      "Ghi chú",
+      "Hướng xử lý",
+    ];
+    tableHeaderRow.eachCell((cell) => {
+      cell.font = { bold: true };
+      cell.alignment = {
+        horizontal: "center",
+        vertical: "middle",
+        wrapText: true, // Bật wrap text
+      };
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      };
+    });
+
+    // Thêm dữ liệu vào bảng
+    dataHangMucImportant.forEach((item, index) => {
+      // Lấy thông tin lỗi từ bảng checklist chi tiết
+      const checklistCoLoi = dataChecklistC.filter(
+        (checklist) => checklist.ent_checklist.ID_Hangmuc === item.ID_Hangmuc
+      );
+
+      const soLuongLoi = checklistCoLoi.length;
+      const dat = soLuongLoi === 0 ? "X" : "";
+      const khongDat = soLuongLoi > 0 ? "X" : "";
+      const lyDo = soLuongLoi > 0 ? `Lỗi ${soLuongLoi} điểm` : "";
+      const ghiChu =
+        checklistCoLoi.length > 0 ? checklistCoLoi[0].Ghichu || "" : "";
+
+      // Kiểm tra tình trạng để điền hướng xử lý
+      const tinhTrang =
+        checklistCoLoi.length > 0
+          ? checklistCoLoi[0].ent_checklist.Tinhtrang
+          : null;
+      const huongXuLy = tinhTrang === 1 ? "Đang chờ xử lý" : "Đã xử lý xong";
+
+      // Add a new row
+      const newRow = worksheet.addRow({
+        stt: index + 1,
+        ten_hangmuc: hangMucMap[item.ID_Hangmuc] || "",
+        dat: dat,
+        khongdat: khongDat,
+        lydo: lyDo,
+        ghichu: ghiChu,
+        huong_xuly: huongXuLy,
+      });
+
+      // Set alignment and wrap text for the newly added row
+      newRow.eachCell({ includeEmpty: true }, (cell) => {
+        cell.alignment = {
+          horizontal: "center",
+          vertical: "middle",
+          wrapText: true,
+        };
+      });
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=Checklist_Report.xlsx"
+    );
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    await workbook.xlsx.load(buffer);
+    const rows = [];
+    worksheet.eachRow((row, rowNumber) => {
+      const rowData = [];
+      row.eachCell((cell, colNumber) => {
+        rowData.push(cell.value);
+      });
+      rows.push(rowData);
+    });
+
+    res.json(rows);
   } catch (error) {
     return res.status(500).json({
       message: error.message || "Lỗi! Vui lòng thử lại sau.",
@@ -4218,6 +4417,9 @@ exports.createExcelTongHopCa = async (req, res) => {
     const startDateFormat = formatDate(startDate);
     const endDateFormat = formatDate(endDate);
 
+    const startDateShow = formatDateShow(startDate);
+    const endDateShow = formatDateEnd(endDate);
+
     const workbook = new ExcelJS.Workbook();
     if (keyCreate == 1) {
       const worksheet = workbook.addWorksheet("Tổng hợp ca Checklist");
@@ -4311,13 +4513,11 @@ exports.createExcelTongHopCa = async (req, res) => {
       });
       worksheet.addImage(imageId, {
         tl: { col: 0, row: 0 },
-        br: { col: 2, row: 1 }, // Bottom-right position (B1)
+        ext: { width: 120, height: 60 },
       });
       worksheet.getRow(1).height = 60; // Adjust row height to fit the image
-      worksheet.getRow(2).height = 50; // Adjust row height
+      worksheet.getRow(2).height = 25; // Adjust row height
 
-      // Merge cells A2:B2 for the project name
-      worksheet.mergeCells("A2:B2");
       worksheet.getCell("A2").value = projectName; // Set project name in A2
       worksheet.getCell("A2").alignment = {
         horizontal: "center",
@@ -4338,17 +4538,17 @@ exports.createExcelTongHopCa = async (req, res) => {
       worksheet.getCell("A1").font = { size: 16, bold: true };
 
       // Merge cells and set values for the date range in row 2 (C2:H2)
-      worksheet.mergeCells("C2:H2");
-      worksheet.getCell("C2").value =
-        startDateFormat && endDateFormat
-          ? `Từ ngày: ${startDateFormat}  Đến ngày: ${endDateFormat}`
+      worksheet.mergeCells("A2:H2");
+      worksheet.getCell("A2").value =
+        startDateShow && endDateShow
+          ? `Từ ngày: ${startDateShow}  Đến ngày: ${endDateShow}`
           : `Từ ngày: `;
-      worksheet.getCell("C2").alignment = {
+      worksheet.getCell("A2").alignment = {
         horizontal: "center",
         vertical: "middle",
         wrapText: true,
       };
-      worksheet.getCell("C1").font = { size: 13, bold: true };
+      worksheet.getCell("A2").font = { size: 13, bold: true };
 
       // Set the table headers starting from row 4
       const tableHeaderRow = worksheet.getRow(4);
@@ -4428,7 +4628,8 @@ exports.createExcelTongHopCa = async (req, res) => {
         const whereFiler = {
           isDelete: 0,
           Ngaysuco: {
-            [Op.between]: [startDateFormat, endDateFormat],
+            [Op.gte]: startDateFormat,
+            [Op.lte]: endDateFormat,
           },
         };
         const dataSuCoNgoai = await Tb_sucongoai.findAll({
@@ -4504,15 +4705,17 @@ exports.createExcelTongHopCa = async (req, res) => {
         headerRow.font = { size: 16, bold: true };
 
         worksheet.mergeCells("A2:E2");
-        worksheet.getCell("A2").value = startDateFormat
-          ? `Từ ngày: ${startDateFormat} Đến ngày: ${endDateFormat}`
-          : `Từ ngày:`;
+        worksheet.getCell("A2").value =
+          startDateShow && endDateShow
+            ? `Từ ngày: ${startDateShow}  Đến ngày: ${endDateShow}`
+            : `Từ ngày: `;
         worksheet.getCell("A2").alignment = {
           horizontal: "center",
           vertical: "middle",
         };
+        worksheet.getCell("A2").font = { size: 13, bold: true };
 
-        const tableHeaderRow = worksheet.getRow(5);
+        const tableHeaderRow = worksheet.getRow(4);
         tableHeaderRow.values = [
           "STT",
           "Ngày",
@@ -4533,8 +4736,6 @@ exports.createExcelTongHopCa = async (req, res) => {
 
         // Add data rows
         for (let i = 0; i < dataSuCoNgoai.length; i++) {
-          const rowIndex = i + 6; // Adjust for header rows
-
           // Add text data to the row
           worksheet.addRow([
             i + 1,
@@ -4600,6 +4801,7 @@ exports.createExcelTongHopCa = async (req, res) => {
             "Ketqua",
             "Anh",
             "Gioht",
+            "Ngay",
             "Ghichu",
             "isDelete",
           ],
@@ -4758,8 +4960,6 @@ exports.createExcelTongHopCa = async (req, res) => {
         });
 
         const imageBuffer = Buffer.from(imageResponse.data, "binary");
-        // Merge cells A1 and B1
-        worksheet.mergeCells("A1:B1");
         worksheet.getCell("A1").alignment = {
           horizontal: "center",
           vertical: "middle",
@@ -4776,49 +4976,40 @@ exports.createExcelTongHopCa = async (req, res) => {
           ext: { width: 120, height: 60 },
         });
         worksheet.getRow(1).height = 60;
-        worksheet.getRow(2).height = 50;
-        // Set project name in the merged cell A1:B1
-        worksheet.mergeCells("A2:B2");
-        worksheet.getCell("A2").value = projectName; // Đặt tên dự án vào ô A2
-        worksheet.getCell("A2").alignment = {
-          horizontal: "center",
-          vertical: "middle",
-          wrapText: true,
-        };
-        worksheet.getCell("A2").font = { size: 13, bold: true }; // Định dạng tên dự án
+        worksheet.getRow(2).height = 25;
 
-        worksheet.mergeCells("C1:M1");
-        const headerRow = worksheet.getCell("C1");
+        worksheet.mergeCells("A1:M1");
+        const headerRow = worksheet.getCell("A1");
         headerRow.value = "BÁO CÁO CHECKLIST CÓ VẤN ĐỀ";
         headerRow.alignment = { horizontal: "center", vertical: "middle" };
         headerRow.font = { size: 16, bold: true };
 
-        worksheet.mergeCells("C2:M2");
-        worksheet.getCell("C2").value =
-          startDateFormat &&
-          endDateFormat &&
-          `Từ ngày: ${startDateFormat}   Đến ngày: ${endDateFormat}`;
-        worksheet.getCell("C2").alignment = {
+        worksheet.mergeCells("A2:M2");
+        worksheet.getCell("A2").value =
+          startDateShow && endDateShow
+            ? `Từ ngày: ${startDateShow}  Đến ngày: ${endDateShow}`
+            : `Từ ngày: `;
+        worksheet.getCell("A2").alignment = {
           horizontal: "center",
           vertical: "middle",
         };
-        worksheet.getCell("C2").font = {
+        worksheet.getCell("A2").font = {
           size: 13,
           bold: true,
         };
-        worksheet.mergeCells("C3:M3");
-        worksheet.getCell("C3").value =
+        worksheet.mergeCells("A3:M3");
+        worksheet.getCell("A3").value =
           startDateFormat && endDateFormat && `Tên bộ phận: ${tenBoPhan}`;
-        worksheet.getCell("C3").alignment = {
+        worksheet.getCell("A3").alignment = {
           horizontal: "center",
           vertical: "middle",
         };
-        worksheet.getCell("C3").font = {
+        worksheet.getCell("A3").font = {
           size: 13,
           bold: true,
         };
 
-        const tableHeaderRow = worksheet.getRow(6);
+        const tableHeaderRow = worksheet.getRow(5);
         tableHeaderRow.values = [
           "STT",
           "Checklist",
@@ -4916,6 +5107,572 @@ exports.createExcelTongHopCa = async (req, res) => {
   }
 };
 
+exports.createPreviewReports = async (req, res) => {
+  try {
+    const keyCreate = req.params.id;
+    const { startDate, endDate, ID_KhoiCVs } = req.body;
+    const userData = req.user.data;
+    const startDateFormat = formatDate(startDate);
+    const endDateFormat = formatDate(endDate);
+
+    const workbook = new ExcelJS.Workbook();
+    if (keyCreate == 1) {
+      const worksheet = workbook.addWorksheet("Tổng hợp ca Checklist");
+
+      let whereClause = {
+        isDelete: 0,
+        ID_Duan: userData.ID_Duan,
+        Ngay: {
+          [Op.gte]: startDateFormat,
+          [Op.lte]: endDateFormat,
+        },
+      };
+
+      const dataChecklist = await Tb_checklistc.findAll({
+        attributes: [
+          "ID_ChecklistC",
+          "ID_Duan",
+          "ID_KhoiCV",
+          "ID_Calv",
+          "ID_ThietLapCa",
+          "ID_User",
+          "Ngay",
+          "Tong",
+          "TongC",
+          "Ghichu",
+        ],
+        include: [
+          {
+            model: Ent_khoicv,
+            attributes: ["KhoiCV"],
+          },
+          {
+            model: Ent_calv,
+            attributes: ["Tenca"],
+          },
+          {
+            model: Ent_duan,
+            attributes: ["Duan", "Logo"],
+          },
+        ],
+        where: whereClause,
+      });
+
+      // Create a map to aggregate data by shift (ca) and date
+      const aggregatedData = {};
+
+      dataChecklist.forEach((item, index) => {
+        const shiftKey = `${item.Ngay}-${item.ent_calv.Tenca}`;
+
+        if (!aggregatedData[shiftKey]) {
+          aggregatedData[shiftKey] = {
+            STT: index + 1,
+            Ngay: item.Ngay,
+            Tenca: item.ent_calv.Tenca,
+            KhoiCV: item.ent_khoicv?.KhoiCV,
+            TongC: 0,
+            Tong: item.Tong,
+            Ghichu: item.Ghichu,
+          };
+        }
+
+        aggregatedData[shiftKey].TongC += item.TongC;
+      });
+
+      worksheet.columns = [
+        { header: "STT", key: "stt", width: 5 },
+        { header: "Ngày", key: "ngay", width: 15 },
+        { header: "Ca", key: "ca", width: 15 },
+        { header: "Bộ phận", key: "bophan", width: 15 },
+        { header: "Tổng phải Checklist", key: "tongphaichecklist", width: 20 },
+        { header: "Đã thực hiện", key: "dathuchien", width: 20 },
+        { header: "Tỷ lệ thực hiện (%)", key: "tylethuchien", width: 20 },
+        { header: "Ghi chú", key: "ghichuloi", width: 30 },
+      ];
+
+      const tableHeaderRow = worksheet.getRow(0);
+      tableHeaderRow.values = [
+        "STT", // Header "STT" in column A, row 4
+        "Ngày",
+        "Ca",
+        "Bộ phận",
+        "Tổng phải Checklist",
+        "Đã thực hiện",
+        "Tỷ lệ thực hiện(%)",
+        "Ghi chú",
+      ];
+      tableHeaderRow.eachCell((cell) => {
+        cell.font = { bold: true };
+        cell.alignment = {
+          horizontal: "center",
+          vertical: "middle",
+          wrapText: true, // Enable wrap text
+        };
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
+
+      // Add data rows starting from row 5 (after the headers in row 4)
+      Object.keys(aggregatedData).forEach((key, index) => {
+        const item = aggregatedData[key];
+        const completion = item.TongC;
+        const total = item.Tong;
+        const completionPercentage =
+          completion >= total ? 100 : (completion / total) * 100;
+        const formattedPercentage = Number.isInteger(completionPercentage)
+          ? completionPercentage.toString() // Convert to string if integer
+          : completionPercentage.toFixed(2); // Use toFixed(2) for non-integer
+
+        const newRow = worksheet.addRow([
+          index + 1, // STT
+          item.Ngay, // Ngày
+          item.Tenca, // Ca
+          item.KhoiCV, // Bộ phận
+          item.Tong, // Tổng phải Checklist
+          completion, // Đã thực hiện
+          formattedPercentage, // Tỷ lệ thực hiện
+          item.Ghichu || "", // Ghi chú
+        ]);
+
+        // Center align and enable wrap text for each cell in the new row
+        newRow.eachCell((cell) => {
+          cell.alignment = {
+            horizontal: "center",
+            vertical: "middle",
+            wrapText: true, // Enable wrap text
+          };
+        });
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+
+      res.setHeader(
+        "Content-Disposition",
+        "attachment; filename=TongHopCa.xlsx"
+      );
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      );
+      await workbook.xlsx.load(buffer);
+      const rows = [];
+      worksheet.eachRow((row, rowNumber) => {
+        const rowData = [];
+        row.eachCell((cell, colNumber) => {
+          rowData.push(cell.value);
+        });
+        rows.push(rowData);
+      });
+
+      res.json(rows);
+      // res.send(buffer);
+    }
+
+    if (keyCreate == 2) {
+      try {
+        const worksheet = workbook.addWorksheet("Khẩn cấp ngoài Checklist");
+        const whereFiler = {
+          isDelete: 0,
+          Ngaysuco: {
+            [Op.gte]: startDateFormat,
+            [Op.lte]: endDateFormat,
+          },
+        };
+        const dataSuCoNgoai = await Tb_sucongoai.findAll({
+          attributes: [
+            "ID_Suco",
+            "ID_Hangmuc",
+            "ID_User",
+            "Ngaysuco",
+            "Giosuco",
+            "Noidungsuco",
+            "Tinhtrangxuly",
+            "Ngayxuly",
+            "isDelete",
+          ],
+          include: [
+            {
+              model: Ent_hangmuc,
+              attributes: [
+                "Hangmuc",
+                "Tieuchuankt",
+                "ID_Khuvuc",
+                "MaQrCode",
+                "FileTieuChuan",
+                "isDelete",
+              ],
+              include: [
+                {
+                  model: Ent_khuvuc,
+                  attributes: ["Tenkhuvuc", "MaQrCode", "Makhuvuc", "Sothutu"],
+
+                  include: [
+                    {
+                      model: Ent_toanha,
+                      attributes: ["Toanha", "ID_Duan"],
+                      include: [
+                        {
+                          model: Ent_duan,
+                          attributes: ["Duan"],
+                        },
+                      ],
+                      where: {
+                        ID_Duan: userData.ID_Duan,
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              model: Ent_user,
+              include: {
+                model: Ent_chucvu,
+                attributes: ["Chucvu"],
+              },
+              attributes: ["UserName", "Email", "Hoten"],
+            },
+          ],
+          where: whereFiler,
+        });
+
+        worksheet.columns = [
+          { header: "STT", key: "stt", width: 5 },
+          { header: "Ngày", key: "ngay", width: 15 },
+          { header: "Giờ", key: "gio", width: 10 },
+          { header: "Nội dung sự cố", key: "nhanvien", width: 25 },
+          { header: "Người báo cáo", key: "ghinhanloi", width: 20 },
+        ];
+
+        const tableHeaderRow = worksheet.getRow(1);
+        tableHeaderRow.values = [
+          "STT",
+          "Ngày",
+          "Giờ",
+          "Nội dung sự cố",
+          "Người báo cáo",
+        ];
+        tableHeaderRow.eachCell((cell) => {
+          cell.font = { bold: true };
+          cell.alignment = { horizontal: "center" };
+          cell.border = {
+            top: { style: "thin" },
+            left: { style: "thin" },
+            bottom: { style: "thin" },
+            right: { style: "thin" },
+          };
+        });
+
+        // Add data rows
+        for (let i = 0; i < dataSuCoNgoai.length; i++) {
+          // Add text data to the row
+          worksheet.addRow([
+            i + 1,
+            dataSuCoNgoai[i]?.Ngaysuco,
+            dataSuCoNgoai[i]?.Giosuco,
+            dataSuCoNgoai[i]?.Noidungsuco,
+            dataSuCoNgoai[i]?.ent_user?.Hoten,
+          ]);
+        }
+
+        // Generate the Excel file buffer
+        const buffer = await workbook.xlsx.writeBuffer();
+
+        res.setHeader(
+          "Content-Disposition",
+          "attachment; filename=KhancapngoaiCheckList.xlsx"
+        );
+        res.setHeader(
+          "Content-Type",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        );
+        await workbook.xlsx.load(buffer);
+        const rows = [];
+        worksheet.eachRow((row, rowNumber) => {
+          const rowData = [];
+          row.eachCell((cell, colNumber) => {
+            rowData.push(cell.value);
+          });
+          rows.push(rowData);
+        });
+
+        res.json(rows);
+      } catch (err) {
+        res
+          .status(500)
+          .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+      }
+    }
+
+    if (keyCreate == 3) {
+      try {
+        const worksheet = workbook.addWorksheet("BÁO CÁO CHECKLIST CÓ VẤN ĐỀ");
+
+        let whereClause = {
+          isDelete: 0,
+          ID_Duan: userData.ID_Duan,
+          ID_KhoiCV: {
+            [Op.in]: ID_KhoiCVs,
+          },
+          Ngay: {
+            [Op.gte]: startDateFormat,
+            [Op.lte]: endDateFormat,
+          },
+        };
+
+        const dataChecklistC = await Tb_checklistchitiet.findAll({
+          attributes: [
+            "ID_Checklistchitiet",
+            "ID_ChecklistC",
+            "ID_Checklist",
+            "Ketqua",
+            "Anh",
+            "Ngay",
+            "Gioht",
+            "Ghichu",
+            "isDelete",
+          ],
+          include: [
+            {
+              model: Tb_checklistc,
+              as: "tb_checklistc",
+              attributes: [
+                "ID_ChecklistC",
+                "ID_Hangmucs",
+                "ID_Duan",
+                "ID_KhoiCV",
+                "ID_Calv",
+                "ID_User",
+                "Ngay",
+                "Tong",
+                "TongC",
+                "Giobd",
+                "Giochupanh1",
+                "Anh1",
+                "Giochupanh2",
+                "Anh2",
+                "Giochupanh3",
+                "Anh3",
+                "Giochupanh4",
+                "Anh4",
+                "Giokt",
+                "Ghichu",
+                "Tinhtrang",
+                "isDelete",
+              ],
+              include: [
+                {
+                  model: Ent_khoicv,
+                  attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
+                },
+                {
+                  model: Ent_user,
+                  attributes: ["ID_User", "Hoten", "ID_Chucvu"],
+                },
+                {
+                  model: Ent_calv,
+                  attributes: ["Tenca", "Giobatdau", "Gioketthuc"],
+                },
+                {
+                  model: Ent_duan,
+                  attributes: ["Duan", "Logo"],
+                },
+              ],
+              where: whereClause,
+            },
+            {
+              model: Ent_checklist,
+              attributes: [
+                "ID_Checklist",
+                "ID_Khuvuc",
+                "ID_Hangmuc",
+                "ID_Tang",
+                "Sothutu",
+                "Maso",
+                "MaQrCode",
+                "Checklist",
+                "Giatridinhdanh",
+                "Tinhtrang",
+                "isCheck",
+                "Giatrinhan",
+              ],
+              include: [
+                {
+                  model: Ent_khuvuc,
+                  attributes: ["Tenkhuvuc", "MaQrCode", "Makhuvuc", "Sothutu"],
+
+                  include: [
+                    {
+                      model: Ent_toanha,
+                      attributes: ["Toanha", "ID_Duan"],
+
+                      include: [
+                        {
+                          model: Ent_duan,
+                          attributes: ["Duan"],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  model: Ent_hangmuc,
+                  attributes: [
+                    "Hangmuc",
+                    "Tieuchuankt",
+                    "ID_Khuvuc",
+                    "MaQrCode",
+                    "FileTieuChuan",
+                    "isDelete",
+                  ],
+                },
+                {
+                  model: Ent_tang,
+                  attributes: ["Tentang"],
+                },
+                {
+                  model: Ent_user,
+                  attributes: [
+                    "UserName",
+                    "Email",
+                    "Hoten",
+                    "Ngaysinh",
+                    "Gioitinh",
+                    "Sodienthoai",
+                  ],
+                },
+              ],
+            },
+          ],
+          where: {
+            Ngay: {
+              [Op.gte]: startDateFormat,
+              [Op.lte]: endDateFormat,
+            },
+            isDelete: 0,
+          },
+        });
+
+        worksheet.columns = [
+          { header: "STT", key: "stt", width: 5 },
+          { header: "Checklist", key: "checklist", width: 15 },
+          { header: "Tầng", key: "tang", width: 10 },
+          { header: "Khu vực", key: "khuvuc", width: 10 },
+          { header: "Hạng mục", key: "hangmuc", width: 10 },
+          { header: "Ngày", key: "ngay", width: 10 },
+          { header: "Ca", key: "ca", width: 10 },
+          { header: "Nhân viên", key: "nhanvien", width: 10 },
+          { header: "Ghi nhận lỗi", key: "ghinhanloi", width: 10 },
+          { header: "Thời gian lỗi", key: "thoigianloi", width: 10 },
+          { header: "Ghi chú", key: "ghichuloi", width: 20 },
+          { header: "Tình trạng xử lý", key: "tinhtrang", width: 10 },
+        ];
+
+        const tableHeaderRow = worksheet.getRow(1);
+        tableHeaderRow.values = [
+          "STT",
+          "Checklist",
+          "Tầng",
+          "Khu vực",
+          "Hạng mục",
+          "Ngày",
+          "Ca",
+          "Nhân viên",
+          "Ghi nhận lỗi",
+          "Thời gian lỗi",
+          "Ghi chú",
+          "Tình trạng xử lý",
+        ];
+        tableHeaderRow.eachCell((cell) => {
+          cell.font = { bold: true };
+          cell.border = {
+            top: { style: "thin" },
+            left: { style: "thin" },
+            bottom: { style: "thin" },
+            right: { style: "thin" },
+          };
+          cell.alignment = {
+            horizontal: "center",
+            vertical: "middle",
+            wrapText: true,
+          }; // Căn giữa và wrap text cho header
+        });
+
+        // Add data rows
+        for (let i = 0; i < dataChecklistC.length; i++) {
+          const rowIndex = i + 1; // Adjust for header rows
+
+          // Add text data to the row
+          worksheet.addRow([
+            i + 1,
+            dataChecklistC[i]?.ent_checklist?.Checklist,
+            dataChecklistC[i]?.ent_checklist?.ent_tang?.Tentang,
+            dataChecklistC[i]?.ent_checklist?.ent_khuvuc?.Tenkhuvuc,
+            dataChecklistC[i]?.ent_checklist?.ent_hangmuc?.Hangmuc,
+            dataChecklistC[i]?.tb_checklistc?.Ngay,
+            dataChecklistC[i]?.tb_checklistc?.ent_calv?.Tenca,
+            dataChecklistC[i]?.tb_checklistc?.ent_user?.Hoten,
+            dataChecklistC[i]?.Ketqua,
+            dataChecklistC[i]?.Gioht,
+
+            dataChecklistC[i]?.Ghichu,
+            dataChecklistC[i]?.ent_checklist?.Tinhtrang == 1
+              ? "Chưa xử lý"
+              : "Đã xử lý",
+          ]);
+
+          // Add hyperlink to the image URL
+          const row = worksheet.getRow(rowIndex);
+
+          // Center align and wrap text for each cell in the row
+          row.eachCell({ includeEmpty: true }, (cell) => {
+            cell.alignment = {
+              horizontal: "center",
+              vertical: "middle",
+              wrapText: true, // Enable wrap text
+            };
+          });
+        }
+
+        // Generate the Excel file buffer
+        const buffer = await workbook.xlsx.writeBuffer();
+
+        res.setHeader(
+          "Content-Disposition",
+          "attachment; filename=Checklist_Report.xlsx"
+        );
+        res.setHeader(
+          "Content-Type",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        );
+        await workbook.xlsx.load(buffer);
+        const rows = [];
+        worksheet.eachRow((row, rowNumber) => {
+          const rowData = [];
+          row.eachCell((cell, colNumber) => {
+            rowData.push(cell.value);
+          });
+          rows.push(rowData);
+        });
+
+        res.json(rows);
+      } catch (error) {
+        res.status(500).json({
+          message: error.message || "Loi",
+        });
+      }
+    }
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+  }
+};
+
 exports.createExcelThongKeTraCuu = async (req, res) => {
   try {
     const {
@@ -4971,7 +5728,40 @@ function formatDate(dateStr) {
   if (isNaN(date)) {
     return "Invalid Date"; // Handle any invalid date input
   }
-  date.setUTCDate(date.getUTCDate() + 1);
+
+  date.setUTCDate(date.getUTCDate() + 1); // Adjusting date if needed
+  date.setUTCHours(0, 0, 0, 0); // Set hour, minute, second, and millisecond to zero
+
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0"); // Months are zero-based
+  const year = date.getUTCFullYear();
+
+  return `${year}-${month}-${day} 00:00:00`;
+}
+
+function formatDateShow(dateStr) {
+  const date = new Date(dateStr); // Convert the string to a Date object
+  if (isNaN(date)) {
+    return "Invalid Date"; // Handle any invalid date input
+  }
+
+  date.setUTCDate(date.getUTCDate() + 1); // Adjusting date if needed
+
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0"); // Months are zero-based
+  const year = date.getUTCFullYear();
+
+  return `${year}-${month}-${day}`;
+}
+
+function formatDateEnd(dateStr) {
+  const date = new Date(dateStr); // Convert the string to a Date object
+  if (isNaN(date)) {
+    return "Invalid Date"; // Handle any invalid date input
+  }
+
+  date.setUTCDate(date.getUTCDate()); // Adjusting date if needed
+
   const day = String(date.getUTCDate()).padStart(2, "0");
   const month = String(date.getUTCMonth() + 1).padStart(2, "0"); // Months are zero-based
   const year = date.getUTCFullYear();
