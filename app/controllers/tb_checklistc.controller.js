@@ -71,8 +71,8 @@ exports.createFirstChecklist = async (req, res, next) => {
     });
 
     const khoiData = await Ent_duan_khoicv.findOne({
-      where: { ID_KhoiCV: ID_KhoiCV, ID_Duan: userData.ID_Duan },
-      attributes: ["Ngaybatdau", "Chuky"],
+      where: { ID_KhoiCV: ID_KhoiCV, ID_Duan: userData.ID_Duan, isDelete: 0 },
+      attributes: ["Ngaybatdau", "Chuky", "isDelete"],
     });
 
     const formattedDateNow = moment(Ngay).startOf("day").format("YYYY-MM-DD");

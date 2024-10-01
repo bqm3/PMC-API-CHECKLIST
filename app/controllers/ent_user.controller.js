@@ -276,6 +276,7 @@ exports.updateUser = async (req, res) => {
       Password,
       Hoten,
       Sodienthoai,
+      Ngaysinh,
       Gioitinh,
     } = req.body;
 
@@ -289,6 +290,7 @@ exports.updateUser = async (req, res) => {
       Sodienthoai,
       Gioitinh,
       Email,
+      Ngaysinh,
       isDelete: 0,
     };
 
@@ -772,8 +774,8 @@ exports.uploadFileUsers = async (req, res) => {
         const duAn = transformedItem["DỰÁN"];
         const hoTen = transformedItem["HỌTÊN"];
         const gioiTinh = transformedItem["GIỚITÍNH"];
-        const namSinh = transformedItem["NĂMSINH"];
         const soDienThoai = transformedItem["SỐĐIỆNTHOẠI"];
+        const namSinh = transformedItem["NĂMSINH"];
         const chucVu = transformedItem["CHỨCVỤ"];
         const gmail = transformedItem["GMAIL"];
         const taiKhoan = transformedItem["TÀIKHOẢN"];
@@ -842,11 +844,18 @@ exports.uploadFileUsers = async (req, res) => {
           continue; // Skip the current iteration and move to the next item
         }
         const salt = genSaltSync(10);
+        if (!matKhau) {
+          return res.status(400).json({
+            message: "Mật khẩu không được để trống",
+          });
+        }
+        
+        const mk = hashSync(`${matKhau}`, salt);
         const dataInsert = {
           ID_Duan: userData.ID_Duan,
           ID_Chucvu: dataChucvu.ID_Chucvu,
           ID_KhoiCV: dataKhoiCV.ID_KhoiCV,
-          Password: await hashSync(`${matKhau}`, salt),
+          Password: mk ,
           Email: gmail,
           UserName: taiKhoan,
           Hoten: hoTen,
