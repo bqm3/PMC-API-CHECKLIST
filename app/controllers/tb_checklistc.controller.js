@@ -481,9 +481,6 @@ exports.getCheckListc = async (req, res, next) => {
           {
             model: Ent_thietlapca,
             attributes: ["Ngaythu", "isDelete"],
-            where: {
-              isDelete: 0,
-            },
           },
           {
             model: Ent_khoicv,
@@ -2208,11 +2205,17 @@ exports.checklistYearByKhoiCV = async (req, res) => {
       include: [
         {
           model: Ent_khoicv,
-          attributes: ["KhoiCV"], // Fetch KhoiCV (work unit) name
+          attributes: ["KhoiCV", "isDelete"], // Fetch KhoiCV (work unit) name
+          where:{
+            isDelete: 0
+          }
         },
         {
           model: Ent_calv,
-          attributes: ["Tenca"], // Fetch the name of the shift (Calv)
+          attributes: ["Tenca", "isDelete"], // Fetch the name of the shift (Calv)
+          where:{
+            isDelete: 0
+          }
         },
       ],
     });
@@ -2247,38 +2250,32 @@ exports.checklistYearByKhoiCV = async (req, res) => {
       const shiftName = checklist.ent_calv.Tenca;
       const checklistDate = new Date(checklist.Ngay);
       const checklistMonth = checklistDate.getMonth(); // Get month (0 = January)
-
-      // Ensure the structure exists for each KhoiCV and shift
+      const day = checklistDate.getDate();
+    
+      // Ensure the structure exists for each KhoiCV, shift, and day
       if (!result[months[checklistMonth]][khoiName]) {
         result[months[checklistMonth]][khoiName] = {};
       }
-
+    
       if (!result[months[checklistMonth]][khoiName][shiftName]) {
-        result[months[checklistMonth]][khoiName][shiftName] = {
+        result[months[checklistMonth]][khoiName][shiftName] = {};
+      }
+    
+      if (!result[months[checklistMonth]][khoiName][shiftName][day]) {
+        result[months[checklistMonth]][khoiName][shiftName][day] = {
           totalTongC: 0,
-          totalTong: 0,
+          Tong: checklist.Tong,
         };
       }
-
-      // Sum up TongC and Tong for each KhoiCV and shift
-      result[months[checklistMonth]][khoiName][shiftName].totalTongC +=
-        checklist.TongC;
-      result[months[checklistMonth]][khoiName][shiftName].totalTong +=
-        checklist.Tong;
+    
+      // Sum up TongC for each day
+      result[months[checklistMonth]][khoiName][shiftName][day].totalTongC += checklist.TongC;
     });
-
-    // Helper function to calculate percentage
-    const calculatePercentage = (totalTongC, totalTong) => {
-      const percentage = (totalTongC / totalTong) * 100;
-      return Math.round(percentage) === percentage
-        ? percentage
-        : parseFloat(percentage.toFixed(2));
-    };
-
+    
     // Convert the result into the required format
     const formatSeriesData = (result) => {
       const khoiCVs = new Set();
-
+    
       // Extract unique KhoiCVs
       months.forEach((month) => {
         const khoiCVMonth = result[month];
@@ -2286,36 +2283,42 @@ exports.checklistYearByKhoiCV = async (req, res) => {
           khoiCVs.add(khoiCV);
         });
       });
-
+    
       const series = [];
-
+    
       // Loop through each KhoiCV to create the series
       khoiCVs.forEach((khoiCV) => {
         const data = months.map((month) => {
           const khoiCVMonth = result[month][khoiCV] || {};
           const shiftData = Object.values(khoiCVMonth);
-          const totalTongC = shiftData.reduce(
-            (sum, shift) => sum + shift.totalTongC,
-            0
-          );
-          const totalTong = shiftData.reduce(
-            (sum, shift) => sum + shift.totalTong,
-            0
-          );
-          return totalTong > 0 ? calculatePercentage(totalTongC, totalTong) : 0;
+          
+          let monthlyTotalPercentage = 0;
+          let countDays = 0;
+    
+          shiftData.forEach((shift) => {
+            Object.values(shift).forEach((dayData) => {
+              const { totalTongC, Tong } = dayData;
+              if (Tong > 0) {
+                monthlyTotalPercentage += (totalTongC / Tong) * 100;
+                countDays += 1;
+              }
+            });
+          });
+    
+          return countDays > 0 ? parseFloat((monthlyTotalPercentage / countDays).toFixed(2)) : 0;
         });
-
+    
         series.push({
           name: khoiCV,
           data: data,
         });
       });
-
+    
       return series;
     };
-
+    
     const formattedSeries = formatSeriesData(result);
-
+    
     // Prepare response data
     const resultArray = {
       categories: months, // Replace projectNames with months
@@ -4424,6 +4427,8 @@ exports.createExcelTongHopCa = async (req, res) => {
     if (keyCreate == 1) {
       const worksheet = workbook.addWorksheet("Tổng hợp ca Checklist");
 
+      console.log('keyCreate',keyCreate)
+      console.log('userData',userData)
       let whereClause = {
         isDelete: 0,
         ID_Duan: userData.ID_Duan,
@@ -4445,6 +4450,7 @@ exports.createExcelTongHopCa = async (req, res) => {
           "Tong",
           "TongC",
           "Ghichu",
+          "isDelete"
         ],
         include: [
           {
@@ -5128,6 +5134,8 @@ exports.createPreviewReports = async (req, res) => {
         },
       };
 
+      console.log('whereClause', whereClause)
+
       const dataChecklist = await Tb_checklistc.findAll({
         attributes: [
           "ID_ChecklistC",
@@ -5140,6 +5148,7 @@ exports.createPreviewReports = async (req, res) => {
           "Tong",
           "TongC",
           "Ghichu",
+          "isDelete"
         ],
         include: [
           {
@@ -5158,11 +5167,13 @@ exports.createPreviewReports = async (req, res) => {
         where: whereClause,
       });
 
+      console.log('dataChecklist', dataChecklist)
+
       // Create a map to aggregate data by shift (ca) and date
       const aggregatedData = {};
 
       dataChecklist.forEach((item, index) => {
-        const shiftKey = `${item.Ngay}-${item.ent_calv.Tenca}`;
+        const shiftKey = `${item.Ngay}-${item.ent_calv.Tenca}-${item.ent_khoicv?.KhoiCV}`;
 
         if (!aggregatedData[shiftKey]) {
           aggregatedData[shiftKey] = {
