@@ -2588,7 +2588,7 @@ exports.tiLeHoanThanh = async (req, res) => {
       if (!result[projectId].khois[khoiName].shifts[shiftName]) {
         result[projectId].khois[khoiName].shifts[shiftName] = {
           totalTongC: 0,
-          totalTong: 0,
+          totalTong: checklistC.Tong,
           userCompletionRates: [],
         };
       }
@@ -2596,8 +2596,7 @@ exports.tiLeHoanThanh = async (req, res) => {
       // Accumulate data for shifts
       result[projectId].khois[khoiName].shifts[shiftName].totalTongC +=
         checklistC.TongC;
-      result[projectId].khois[khoiName].shifts[shiftName].totalTong +=
-        checklistC.Tong;
+      
 
       // Calculate user completion rate and add to the list
       const userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
@@ -3829,7 +3828,7 @@ exports.getProjectChecklistDays = async (req, res) => {
       if (!result[date].createdKhois[khoiName].shifts[shiftName]) {
         result[date].createdKhois[khoiName].shifts[shiftName] = {
           totalTongC: 0,
-          totalTong: 0,
+          totalTong: checklistC.Tong,
           userCompletionRates: [],
         };
       }
@@ -3837,8 +3836,6 @@ exports.getProjectChecklistDays = async (req, res) => {
       // Cộng dồn TongC và Tong cho ca
       result[date].createdKhois[khoiName].shifts[shiftName].totalTongC +=
         checklistC.TongC;
-      result[date].createdKhois[khoiName].shifts[shiftName].totalTong +=
-        checklistC.Tong;
 
       // Lưu tỷ lệ hoàn thành của từng người
       const userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
@@ -3960,7 +3957,7 @@ exports.getLocationsChecklist = async (req, res) => {
       if (!result[projectId].createdKhois[khoiName].shifts[shiftName]) {
         result[projectId].createdKhois[khoiName].shifts[shiftName] = {
           totalTongC: 0,
-          totalTong: 0,
+          totalTong: checklistC.Tong,
           userCompletionRates: [], // Lưu danh sách tỷ lệ hoàn thành của từng người
         };
       }
@@ -3968,8 +3965,6 @@ exports.getLocationsChecklist = async (req, res) => {
       // Cộng dồn TongC và Tong cho ca
       result[projectId].createdKhois[khoiName].shifts[shiftName].totalTongC +=
         checklistC.TongC;
-      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTong +=
-        checklistC.Tong;
 
       // Lưu tỷ lệ hoàn thành của từng người
       const userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
@@ -5166,8 +5161,6 @@ exports.createPreviewReports = async (req, res) => {
         ],
         where: whereClause,
       });
-
-      console.log('dataChecklist', dataChecklist)
 
       // Create a map to aggregate data by shift (ca) and date
       const aggregatedData = {};
