@@ -1951,6 +1951,7 @@ exports.uploadFiles = async (req, res) => {
           const cacGiaTriNhan = transformedItem["CÁCGIÁTRỊNHẬN"];
           const quanTrong = transformedItem["QUANTRỌNG"];
           const ghiChu = transformedItem["GHICHÚ"];
+          const nhap = transformedItem["NHẬP"];
 
           if (!tenChecklist ) {
             console.log("Bỏ qua do thiếu tên checklist");
@@ -2028,6 +2029,7 @@ exports.uploadFiles = async (req, res) => {
             Giatridinhdanh: giaTriDanhDinh || "",
             Giatrinhan: cacGiaTriNhan || "",
             isImportant: quanTrong !== undefined ? 1 : 0,
+            isCheck: (nhap !== undefined || nhap !== null || nhap !== "") ? 1: 0,
             ID_User: userData.ID_User,
 
             isDelete: 0,

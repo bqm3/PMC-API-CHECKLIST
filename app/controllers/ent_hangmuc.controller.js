@@ -678,7 +678,7 @@ exports.uploadFiles = async (req, res) => {
             ID_Khuvuc: khuVuc.ID_Khuvuc,
             MaQrCode: maQrHangmuc,
             Hangmuc: tenHangmuc,
-            Important: quanTrong ? 1: 0,
+            Important: (quanTrong !== undefined || quanTrong !== null || quanTrong !== "") ? 1: 0,
             isDelete: 0,
           };
 
