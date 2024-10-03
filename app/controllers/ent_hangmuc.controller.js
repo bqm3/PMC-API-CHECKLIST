@@ -281,8 +281,9 @@ exports.update = async (req, res) => {
           ID_Hangmuc: { [Op.ne]: req.params.id },
           isDelete: 0,
         },
-        attributes: ["MaQrCode", "ID_Hangmuc"],
+        attributes: ["MaQrCode", "ID_Hangmuc", "isDelete"],
       });
+
 
       const existingKhuVuc = await Ent_khuvuc.findOne({
         attributes: ["ID_Khuvuc", "MaQrCode", "isDelete"],
@@ -292,7 +293,7 @@ exports.update = async (req, res) => {
         },
       });
 
-      if (existingHangMuc || existingKhuVuc) {
+      if (existingHangMuc && existingKhuVuc) {
         res.status(400).json({
           message: "Mã QR Code đã tồn tại!",
         });
@@ -641,6 +642,7 @@ exports.uploadFiles = async (req, res) => {
         const maQrKhuvuc = transformedItem["MÃQRCODEKHUVỰC"];
         const maQrHangmuc = transformedItem["MÃQRCODEHẠNGMỤC"];
         const tenHangmuc = transformedItem["TÊNHẠNGMỤC"];
+        const quanTrong = transformedItem["QUANTRỌNG"];
 
         const khuVuc = await Ent_khuvuc.findOne({
           attributes: ["ID_Khuvuc", "MaQrCode", "Tenkhuvuc", "isDelete"],
@@ -676,6 +678,7 @@ exports.uploadFiles = async (req, res) => {
             ID_Khuvuc: khuVuc.ID_Khuvuc,
             MaQrCode: maQrHangmuc,
             Hangmuc: tenHangmuc,
+            Important: quanTrong ? 1: 0,
             isDelete: 0,
           };
 
