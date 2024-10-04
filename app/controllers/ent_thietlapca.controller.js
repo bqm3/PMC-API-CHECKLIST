@@ -273,6 +273,7 @@ exports.update = async (req, res) => {
         ID_Hangmuc: {
           [Op.in]: ID_Hangmucs, // Assuming ID_Hangmucs is an array
         },
+        isDelete: 0
       },
     });
 
