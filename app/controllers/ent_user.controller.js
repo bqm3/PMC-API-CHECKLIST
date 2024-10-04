@@ -27,6 +27,7 @@ exports.login = async (req, res) => {
     const user = await Ent_user.findOne({
       where: {
         UserName: req.body.UserName,
+        isDelete: 0
       },
       attributes: [
         "ID_User",
@@ -855,7 +856,7 @@ exports.uploadFileUsers = async (req, res) => {
           ID_Duan: userData.ID_Duan,
           ID_Chucvu: dataChucvu.ID_Chucvu,
           ID_KhoiCV: dataKhoiCV.ID_KhoiCV,
-          Password: mk ,
+          Password: mk,
           Email: gmail,
           UserName: taiKhoan,
           Hoten: hoTen,
