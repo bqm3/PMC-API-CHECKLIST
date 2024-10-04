@@ -32,6 +32,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       }
       return data;
     };
+    console.log('records', records)
 
     const isEmpty = (obj) => Object.keys(obj).length === 0;
 
@@ -59,9 +60,10 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       }
     }
 
+
     const newRecords = records.ID_ChecklistC.map((ID_ChecklistC, index) => {
       const ID_Checklist = records.ID_Checklist[index];
-      const Vido = records.Vido[index] || "";
+      const Vido = records.Vido[index] || null;
       const Kinhdo = records.Kinhdo[index] || null;
       const Docao = records.Docao[index] || null;
       const Ketqua = records.Ketqua[index] || null;
@@ -73,32 +75,29 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       const month = String(d.getMonth() + 1).padStart(2, "0"); // Months are zero-based
       const day = String(d.getDate()).padStart(2, "0");
       const formattedDate = `${year}-${month}-${day}`;
-
+    
       let Anh = "";
       if (!isEmpty(images)) {
         let inputAnh = Array.isArray(records.Anh)
           ? records.Anh[index]
           : records.Anh;
-
-        if (inputAnh) {
-          if (typeof inputAnh === "object") {
-            inputAnh = inputAnh.name;
-          }
-
+    
+        if (inputAnh && inputAnh === images[0].originalname) {
+          // Only assign the image if it matches the corresponding index
           const matchingImage = uploadedFileIds.find(
             (file) => file.name === inputAnh
           );
-
+    
           if (matchingImage) {
             Anh = matchingImage.id.id;
           } else {
             console.log(`No matching image found for Anh: ${inputAnh}`);
           }
-        } else {
-          console.log(`Unexpected Anh format: ${JSON.stringify(inputAnh)}`);
         }
       }
-
+    
+      console.log('ID_ChecklistC', ID_ChecklistC);
+    
       return {
         ID_ChecklistC,
         ID_Checklist,
@@ -113,6 +112,9 @@ exports.createCheckListChiTiet = async (req, res, next) => {
         Ngay: formattedDate,
       };
     });
+    
+    console.log('images', images)
+    console.log('newRecords', newRecords)
 
     const transaction = await sequelize.transaction();
 
