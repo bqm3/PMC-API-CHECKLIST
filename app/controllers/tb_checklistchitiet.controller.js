@@ -32,7 +32,9 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       }
       return data;
     };
+
     console.log('records', records)
+    console.log('images', images)
 
     const isEmpty = (obj) => Object.keys(obj).length === 0;
 
@@ -56,14 +58,12 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     if (!isEmpty(images)) {
       for (const image of images) {
         const fileId = await uploadFile(image);
-        uploadedFileIds.push({ id: fileId, name: image.originalname });
+        uploadedFileIds.push({ fileId, fieldname: image.fieldname });
       }
     }
-
-
-    const newRecords = records.ID_ChecklistC.map((ID_ChecklistC, index) => {
-      const ID_Checklist = records.ID_Checklist[index];
-      const Vido = records.Vido[index] || null;
+    
+    const newRecords = records.ID_Checklist.map((ID_Checklist, index) => {
+      const Vido = records.Vido[index] || "";
       const Kinhdo = records.Kinhdo[index] || null;
       const Docao = records.Docao[index] || null;
       const Ketqua = records.Ketqua[index] || null;
@@ -78,28 +78,21 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     
       let Anh = "";
       if (!isEmpty(images)) {
-        let inputAnh = Array.isArray(records.Anh)
-          ? records.Anh[index]
-          : records.Anh;
+        // Find the corresponding image based on the fieldname format
+        const imageIndex = `Images_${index}`;
+        const matchingImage = uploadedFileIds.find(
+          (file) => file.fieldname === imageIndex
+        );
     
-        if (inputAnh && inputAnh === images[0].originalname) {
-          // Only assign the image if it matches the corresponding index
-          const matchingImage = uploadedFileIds.find(
-            (file) => file.name === inputAnh
-          );
-    
-          if (matchingImage) {
-            Anh = matchingImage.id.id;
-          } else {
-            console.log(`No matching image found for Anh: ${inputAnh}`);
-          }
+        if (matchingImage) {
+          Anh = matchingImage.fileId.id;
+        } else {
+          console.log(`No matching image found for Anh: ${imageIndex}`);
         }
       }
     
-      console.log('ID_ChecklistC', ID_ChecklistC);
-    
       return {
-        ID_ChecklistC,
+        ID_ChecklistC: records.ID_ChecklistC[0],
         ID_Checklist,
         Vido,
         Kinhdo,
@@ -112,9 +105,6 @@ exports.createCheckListChiTiet = async (req, res, next) => {
         Ngay: formattedDate,
       };
     });
-    
-    console.log('images', images)
-    console.log('newRecords', newRecords)
 
     const transaction = await sequelize.transaction();
 
@@ -262,7 +252,6 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       });
     }
   } catch (error) {
-    console.error("Error creating checklist details:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
