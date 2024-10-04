@@ -3,7 +3,7 @@ const { Ent_toanha, Ent_khuvuc, Ent_khoicv } = require("../models/setup.model");
 exports.get = async (req, res) => {
   try {
     await Ent_khoicv.findAll({
-      attributes: ["ID_KhoiCV", "KhoiCV", "Chuky", "Ngaybatdau"],
+      attributes: ["ID_KhoiCV", "KhoiCV", "Chuky", "Ngaybatdau", "isDelete"],
 
       where: {
         isDelete: 0,
