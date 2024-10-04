@@ -1952,7 +1952,7 @@ exports.uploadFiles = async (req, res) => {
           const quanTrong = transformedItem["QUANTRỌNG"];
           const ghiChu = transformedItem["GHICHÚ"];
           const nhap = transformedItem["NHẬP"];
-
+          
           if (!tenChecklist ) {
             console.log("Bỏ qua do thiếu tên checklist");
             continue;
@@ -2028,10 +2028,9 @@ exports.uploadFiles = async (req, res) => {
             Tieuchuan: tieuChuanChecklist || "",
             Giatridinhdanh: giaTriDanhDinh || "",
             Giatrinhan: cacGiaTriNhan || "",
-            isImportant: quanTrong !== undefined ? 1 : 0,
-            isCheck: (nhap !== undefined || nhap !== null || nhap !== "") ? 1: 0,
+            isImportant: (quanTrong !== undefined && quanTrong !== null && quanTrong !== "") ? 1 : 0,
+            isCheck: (nhap !== undefined && nhap !== null && nhap !== "") ? 1: 0,
             ID_User: userData.ID_User,
-
             isDelete: 0,
             Tinhtrang: 0,
           };

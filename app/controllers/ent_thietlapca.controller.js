@@ -165,7 +165,10 @@ exports.getDetail = async (req, res) => {
         include: [
           {
             model: Ent_calv,
-            attributes: ["Tenca", "ID_KhoiCV"],
+            attributes: ["Tenca", "ID_KhoiCV", "ID_Calv", "isDelete"],
+            where: {
+              isDelete: 0
+            }
           },
           {
             model: Ent_duan,

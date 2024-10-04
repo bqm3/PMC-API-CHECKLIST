@@ -31,7 +31,7 @@ exports.create = async (req, res) => {
       };
 
       const dataChuky = await Ent_duan_khoicv.findOne({
-        attributes: ["Chuky", "ID_Duan", "ID_KhoiCV", "Ngaybatdau"],
+        attributes: ["Chuky", "ID_Duan", "ID_KhoiCV", "Ngaybatdau", "isDelete"],
         where: {
           ID_Duan: ID_Duan,
           ID_KhoiCV: ID_KhoiCV,
