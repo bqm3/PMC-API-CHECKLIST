@@ -63,7 +63,10 @@ exports.get = async (req, res) => {
             {
               model: Ent_duan_khoicv,
               as: "ent_duan_khoicv",
-              attributes: ["ID_KhoiCV", "Chuky", "Ngaybatdau"]
+              attributes: ["ID_KhoiCV", "Chuky", "Ngaybatdau", "isDelete"],
+              where: {
+                isDelete: 0
+              }
             }
           ]
         },
