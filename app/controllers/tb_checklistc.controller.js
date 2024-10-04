@@ -86,13 +86,13 @@ exports.createFirstChecklist = async (req, res, next) => {
       "days"
     );
 
-    const remainder = daysDifference % khoiData.Chuky;
-
+    const remainder = (daysDifference + 1) % khoiData.Chuky;
     let ngayCheck = 0;
-    if (remainder > 0) {
-      ngayCheck = remainder;
+
+    if (khoiData.Chuky == 1) {
+      ngayCheck = 1;
     } else {
-      ngayCheck = Math.abs(remainder);
+      ngayCheck = remainder === 0 ? khoiData.Chuky : remainder;
     }
 
     if (!calvData) {
@@ -147,7 +147,7 @@ exports.createFirstChecklist = async (req, res, next) => {
       ],
       where: [
         {
-          Ngaythu: ngayCheck == 0 ? 1 : ngayCheck,
+          Ngaythu: ngayCheck,
           ID_Calv: ID_Calv,
           ID_Duan: userData.ID_Duan,
           isDelete: 0,
@@ -2206,16 +2206,16 @@ exports.checklistYearByKhoiCV = async (req, res) => {
         {
           model: Ent_khoicv,
           attributes: ["KhoiCV", "isDelete"], // Fetch KhoiCV (work unit) name
-          where:{
-            isDelete: 0
-          }
+          where: {
+            isDelete: 0,
+          },
         },
         {
           model: Ent_calv,
           attributes: ["Tenca", "isDelete"], // Fetch the name of the shift (Calv)
-          where:{
-            isDelete: 0
-          }
+          where: {
+            isDelete: 0,
+          },
         },
       ],
     });
@@ -2251,31 +2251,32 @@ exports.checklistYearByKhoiCV = async (req, res) => {
       const checklistDate = new Date(checklist.Ngay);
       const checklistMonth = checklistDate.getMonth(); // Get month (0 = January)
       const day = checklistDate.getDate();
-    
+
       // Ensure the structure exists for each KhoiCV, shift, and day
       if (!result[months[checklistMonth]][khoiName]) {
         result[months[checklistMonth]][khoiName] = {};
       }
-    
+
       if (!result[months[checklistMonth]][khoiName][shiftName]) {
         result[months[checklistMonth]][khoiName][shiftName] = {};
       }
-    
+
       if (!result[months[checklistMonth]][khoiName][shiftName][day]) {
         result[months[checklistMonth]][khoiName][shiftName][day] = {
           totalTongC: 0,
           Tong: checklist.Tong,
         };
       }
-    
+
       // Sum up TongC for each day
-      result[months[checklistMonth]][khoiName][shiftName][day].totalTongC += checklist.TongC;
+      result[months[checklistMonth]][khoiName][shiftName][day].totalTongC +=
+        checklist.TongC;
     });
-    
+
     // Convert the result into the required format
     const formatSeriesData = (result) => {
       const khoiCVs = new Set();
-    
+
       // Extract unique KhoiCVs
       months.forEach((month) => {
         const khoiCVMonth = result[month];
@@ -2283,18 +2284,18 @@ exports.checklistYearByKhoiCV = async (req, res) => {
           khoiCVs.add(khoiCV);
         });
       });
-    
+
       const series = [];
-    
+
       // Loop through each KhoiCV to create the series
       khoiCVs.forEach((khoiCV) => {
         const data = months.map((month) => {
           const khoiCVMonth = result[month][khoiCV] || {};
           const shiftData = Object.values(khoiCVMonth);
-          
+
           let monthlyTotalPercentage = 0;
           let countDays = 0;
-    
+
           shiftData.forEach((shift) => {
             Object.values(shift).forEach((dayData) => {
               const { totalTongC, Tong } = dayData;
@@ -2304,21 +2305,23 @@ exports.checklistYearByKhoiCV = async (req, res) => {
               }
             });
           });
-    
-          return countDays > 0 ? parseFloat((monthlyTotalPercentage / countDays).toFixed(2)) : 0;
+
+          return countDays > 0
+            ? parseFloat((monthlyTotalPercentage / countDays).toFixed(2))
+            : 0;
         });
-    
+
         series.push({
           name: khoiCV,
           data: data,
         });
       });
-    
+
       return series;
     };
-    
+
     const formattedSeries = formatSeriesData(result);
-    
+
     // Prepare response data
     const resultArray = {
       categories: months, // Replace projectNames with months
@@ -2596,7 +2599,6 @@ exports.tiLeHoanThanh = async (req, res) => {
       // Accumulate data for shifts
       result[projectId].khois[khoiName].shifts[shiftName].totalTongC +=
         checklistC.TongC;
-      
 
       // Calculate user completion rate and add to the list
       const userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
@@ -4422,8 +4424,8 @@ exports.createExcelTongHopCa = async (req, res) => {
     if (keyCreate == 1) {
       const worksheet = workbook.addWorksheet("Tổng hợp ca Checklist");
 
-      console.log('keyCreate',keyCreate)
-      console.log('userData',userData)
+      console.log("keyCreate", keyCreate);
+      console.log("userData", userData);
       let whereClause = {
         isDelete: 0,
         ID_Duan: userData.ID_Duan,
@@ -4445,7 +4447,7 @@ exports.createExcelTongHopCa = async (req, res) => {
           "Tong",
           "TongC",
           "Ghichu",
-          "isDelete"
+          "isDelete",
         ],
         include: [
           {
@@ -5129,7 +5131,7 @@ exports.createPreviewReports = async (req, res) => {
         },
       };
 
-      console.log('whereClause', whereClause)
+      console.log("whereClause", whereClause);
 
       const dataChecklist = await Tb_checklistc.findAll({
         attributes: [
@@ -5143,7 +5145,7 @@ exports.createPreviewReports = async (req, res) => {
           "Tong",
           "TongC",
           "Ghichu",
-          "isDelete"
+          "isDelete",
         ],
         include: [
           {
