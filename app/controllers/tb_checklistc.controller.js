@@ -86,14 +86,16 @@ exports.createFirstChecklist = async (req, res, next) => {
       "days"
     );
 
-    const remainder = (daysDifference + 1) % khoiData.Chuky;
-    let ngayCheck = 0;
+    // const remainder = (daysDifference + 1) % khoiData.Chuky;
+    // let ngayCheck = 0;
 
-    if (khoiData.Chuky == 1) {
-      ngayCheck = 1;
-    } else {
-      ngayCheck = remainder === 0 ? khoiData.Chuky : remainder;
-    }
+    // if (khoiData.Chuky == 1) {
+    //   ngayCheck = 1;
+    // } else {
+    //   ngayCheck = remainder === 0 ? khoiData.Chuky : remainder;
+    // }
+    const remainder = (daysDifference) % khoiData.Chuky;
+    let ngayCheck = 0;
 
     if (!calvData) {
       return res.status(400).json({
@@ -106,6 +108,12 @@ exports.createFirstChecklist = async (req, res, next) => {
     const giobdMoment = moment(convertTimeFormat(Giobd), "HH:mm:ss");
     const giobatdauMoment = moment(Giobatdau, "HH:mm:ss");
     const gioketthucMoment = moment(Gioketthuc, "HH:mm:ss");
+
+    if(giobdMoment < giobatdauMoment){
+      ngayCheck = remainder
+    } else {
+      ngayCheck = remainder + 1;
+    }
 
     if (gioketthucMoment.isBefore(giobatdauMoment)) {
       if (
