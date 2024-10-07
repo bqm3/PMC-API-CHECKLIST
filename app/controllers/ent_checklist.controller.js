@@ -1445,6 +1445,8 @@ exports.filterChecklists = async (req, res) => {
       ],
     });
 
+   
+
     if (!checklistData || checklistData.length === 0) {
       return res.status(200).json({
         message: "Không còn checklist cho ca làm việc này!",
@@ -1455,6 +1457,8 @@ exports.filterChecklists = async (req, res) => {
     const filteredData = checklistData.filter(
       (item) => item.ent_hangmuc !== null
     );
+
+    console.log('filteredData', filteredData.length)
 
     return res.status(200).json({
       message:

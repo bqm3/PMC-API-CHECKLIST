@@ -94,7 +94,7 @@ exports.createFirstChecklist = async (req, res, next) => {
     // } else {
     //   ngayCheck = remainder === 0 ? khoiData.Chuky : remainder;
     // }
-    const remainder = (daysDifference) % khoiData.Chuky;
+    const remainder = daysDifference % khoiData.Chuky;
     let ngayCheck = 0;
 
     if (!calvData) {
@@ -109,8 +109,8 @@ exports.createFirstChecklist = async (req, res, next) => {
     const giobatdauMoment = moment(Giobatdau, "HH:mm:ss");
     const gioketthucMoment = moment(Gioketthuc, "HH:mm:ss");
 
-    if(giobdMoment < giobatdauMoment){
-      ngayCheck = remainder
+    if (giobdMoment < giobatdauMoment) {
+      ngayCheck = remainder;
     } else {
       ngayCheck = remainder + 1;
     }
@@ -194,6 +194,7 @@ exports.createFirstChecklist = async (req, res, next) => {
       include: [
         {
           model: Ent_hangmuc,
+          as: "ent_hangmuc",
           attributes: [
             "Hangmuc",
             "Tieuchuankt",
@@ -1592,6 +1593,7 @@ exports.checklistCalv = async (req, res) => {
             include: [
               {
                 model: Ent_hangmuc,
+                as: "ent_hangmuc",
                 attributes: [
                   "Hangmuc",
                   "Tieuchuankt",
@@ -1692,6 +1694,7 @@ exports.checklistCalv = async (req, res) => {
         attributes: [
           "ID_Checklist",
           "ID_Hangmuc",
+          "ID_Khuvuc",
           "ID_Tang",
           "Sothutu",
           "Maso",
@@ -1699,14 +1702,12 @@ exports.checklistCalv = async (req, res) => {
           "Checklist",
           "Giatridinhdanh",
           "isCheck",
-          "Giatrinhan",
+          "Giatrinhan"
         ],
-        where: {
-          ID_Checklist: checklistIds,
-        },
         include: [
           {
             model: Ent_hangmuc,
+            as: "ent_hangmuc",
             attributes: [
               "Hangmuc",
               "Tieuchuankt",
@@ -1717,12 +1718,12 @@ exports.checklistCalv = async (req, res) => {
           },
           {
             model: Ent_khuvuc,
+            as: 'ent_khuvuc',
             attributes: [
               "Tenkhuvuc",
               "MaQrCode",
               "Makhuvuc",
               "Sothutu",
-
               "ID_Khuvuc",
             ],
             include: [
@@ -1758,31 +1759,26 @@ exports.checklistCalv = async (req, res) => {
             model: Ent_tang,
             attributes: ["Tentang"],
           },
-          {
-            model: Ent_user,
-            attributes: [
-              "UserName",
-              "Email",
-              "Hoten",
-              "Ngaysinh",
-              "Gioitinh",
-              "Sodienthoai",
-            ],
-          },
+        
         ],
+        where: {
+          ID_Checklist: {
+            [Op.in]: checklistIds,
+          },
+        },
       });
 
       checklistIds.map((it) => {
         const relatedChecklist = relatedChecklists.find(
           (rl) => rl.ID_Checklist == it
         );
-        const matchedGioht = checklistGiohtMap.get(it); // Get the matching Gioht from the map
+        const matchedGioht = checklistGiohtMap.get(it); 
 
         arrPush.push({
           ID_ChecklistC: parseInt(req.params.id),
           ID_Checklist: it,
           Gioht: matchedGioht || checklistDoneItems[0].Gioht,
-          Ketqua: relatedChecklist.Giatridinhdanh,
+          Ketqua: relatedChecklist?.Giatridinhdanh || '',
           status: 1,
           ent_checklist: relatedChecklist,
         });
@@ -1911,6 +1907,7 @@ exports.checklistCalvDinhKy = async (req, res) => {
             include: [
               {
                 model: Ent_hangmuc,
+                as: "ent_hangmuc",
                 attributes: [
                   "Hangmuc",
                   "Tieuchuankt",
@@ -2031,6 +2028,7 @@ exports.checklistCalvDinhKy = async (req, res) => {
         include: [
           {
             model: Ent_hangmuc,
+            as: "ent_hangmuc",
             attributes: [
               "Hangmuc",
               "Tieuchuankt",
@@ -2213,17 +2211,11 @@ exports.checklistYearByKhoiCV = async (req, res) => {
       include: [
         {
           model: Ent_khoicv,
-          attributes: ["KhoiCV", "isDelete"], // Fetch KhoiCV (work unit) name
-          where: {
-            isDelete: 0,
-          },
+          attributes: ["KhoiCV", "isDelete"], 
         },
         {
           model: Ent_calv,
-          attributes: ["Tenca", "isDelete"], // Fetch the name of the shift (Calv)
-          where: {
-            isDelete: 0,
-          },
+          attributes: ["Tenca", "isDelete"],
         },
       ],
     });
@@ -2378,60 +2370,60 @@ exports.checklistYearByKhoiCVSuCo = async (req, res) => {
       };
     }
 
-    // Truy vấn cơ sở dữ liệu
-    const relatedChecklists = await Tb_checklistc.findAll({
+    const relatedChecklists = await Tb_checklistchitiet.findAll({
       attributes: [
-        "ID_KhoiCV",
+        "ID_Checklistchitiet",
+        "ID_ChecklistC",
+        "ID_Checklist",
+        "Ketqua",
+        "Anh",
         "Ngay",
-        "TongC",
-        "Tong",
-        "Tinhtrang",
+        "Gioht",
+        "Ghichu",
         "isDelete",
       ],
-      where: whereClause,
+      
       include: [
         {
-          model: Ent_khoicv,
-          attributes: ["KhoiCV"], // Tên khối
-        },
-        {
-          model: Tb_checklistchitiet,
-          as: "tb_checklistchitiets",
+          model: Tb_checklistc,
+          as: "tb_checklistc",
           attributes: [
-            "ID_Checklistchitiet",
-            "ID_ChecklistC",
-            "ID_Checklist",
-            "Ketqua",
-            "Anh",
+            "ID_KhoiCV",
             "Ngay",
-            "Gioht",
-            "Ghichu",
+            "TongC",
+            "Tong",
+            "Tinhtrang",
+            "ID_Duan",
             "isDelete",
           ],
           include: [
             {
-              model: Ent_checklist,
-              attributes: [
-                "ID_Checklist",
-                "ID_Hangmuc",
-                "ID_Tang",
-                "Sothutu",
-                "Maso",
-                "MaQrCode",
-                "Checklist",
-                "Giatridinhdanh",
-                "isCheck",
-                "Giatrinhan",
-                "Tinhtrang",
-              ],
-              where: {
-                Tinhtrang: 1,
-              },
+              model: Ent_khoicv,
+              attributes: ["KhoiCV"], // Tên khối
             },
           ],
+          where: whereClause,
+        },
+        {
+          model: Ent_checklist,
+          attributes: [
+            "ID_Checklist",
+            "ID_Hangmuc",
+            "ID_Tang",
+            "Sothutu",
+            "Maso",
+            "MaQrCode",
+            "Checklist",
+            "Giatridinhdanh",
+            "isCheck",
+            "Giatrinhan",
+            "Tinhtrang",
+          ],
+          where: {
+            Tinhtrang: 1,
+          },
         },
       ],
-      raw: true,
     });
 
     // Tạo đối tượng để lưu số lượng sự cố theo khối công việc và tháng
@@ -2439,8 +2431,8 @@ exports.checklistYearByKhoiCVSuCo = async (req, res) => {
 
     // Xử lý dữ liệu để đếm số lượng sự cố cho từng khối theo tháng
     relatedChecklists.forEach((checklistC) => {
-      const khoiName = checklistC["ent_khoicv.KhoiCV"]; // Lấy tên khối
-      const checklistDate = new Date(checklistC.Ngay);
+      const khoiName = checklistC.tb_checklistc.ent_khoicv.KhoiCV; // Lấy tên khối
+      const checklistDate = new Date(checklistC.tb_checklistc.Ngay);
       const checklistMonth = checklistDate.getMonth(); // Lấy tháng (0 = January)
 
       if (!khoiIncidentCount[khoiName]) {
@@ -3212,6 +3204,7 @@ exports.getChecklistsErrorFromYesterday = async (req, res) => {
             },
             {
               model: Ent_hangmuc,
+              as: "ent_hangmuc",
               attributes: [
                 "Hangmuc",
                 "Tieuchuankt",
@@ -3424,6 +3417,7 @@ exports.getChecklistsErrorFromWeekbyDuan = async (req, res) => {
             },
             {
               model: Ent_hangmuc,
+              as: "ent_hangmuc",
               attributes: [
                 "Hangmuc",
                 "Tieuchuankt",
@@ -3533,6 +3527,7 @@ exports.getChecklistsError = async (req, res) => {
       include: [
         {
           model: Ent_hangmuc,
+          as: "ent_hangmuc",
           attributes: [
             "Hangmuc",
             "Tieuchuankt",
@@ -4247,6 +4242,7 @@ exports.createExcelFile = async (req, res) => {
             },
             {
               model: Ent_hangmuc,
+              as: "ent_hangmuc",
               attributes: [
                 "Hangmuc",
                 "Tieuchuankt",
@@ -4658,6 +4654,7 @@ exports.createExcelTongHopCa = async (req, res) => {
           include: [
             {
               model: Ent_hangmuc,
+              as: "ent_hangmuc",
               attributes: [
                 "Hangmuc",
                 "Tieuchuankt",
@@ -4901,6 +4898,7 @@ exports.createExcelTongHopCa = async (req, res) => {
                 },
                 {
                   model: Ent_hangmuc,
+                  as: "ent_hangmuc",
                   attributes: [
                     "Hangmuc",
                     "Tieuchuankt",
@@ -5311,6 +5309,7 @@ exports.createPreviewReports = async (req, res) => {
           include: [
             {
               model: Ent_hangmuc,
+              as: "ent_hangmuc",
               attributes: [
                 "Hangmuc",
                 "Tieuchuankt",
@@ -5535,6 +5534,7 @@ exports.createPreviewReports = async (req, res) => {
                 },
                 {
                   model: Ent_hangmuc,
+                  as: "ent_hangmuc",
                   attributes: [
                     "Hangmuc",
                     "Tieuchuankt",
