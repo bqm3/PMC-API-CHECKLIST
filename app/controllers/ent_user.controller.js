@@ -128,7 +128,8 @@ exports.register = async (req, res, next) => {
         [Op.and]: [
           { UserName: UserName },
           { Email: Email },
-          {ID_Duan: ID_Duan}
+          {ID_Duan: ID_Duan},
+          {isDelete: 0}
         ],
       },
       attributes: [
@@ -139,6 +140,7 @@ exports.register = async (req, res, next) => {
         "Password",
         "ID_KhoiCV",
         "Email",
+        "isDelete",
       ],
       include: [
         {

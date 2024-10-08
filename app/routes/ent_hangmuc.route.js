@@ -21,6 +21,7 @@ module.exports = (app) => {
     router.get("/filter/:id",isAuthenticated, ent_hangmuc.filterByKhuvuc);
 
     router.post("/uploads", [isAuthenticated, upload.single('files')], ent_hangmuc.uploadFiles)
+    router.post("/generate-qr-codes", ent_hangmuc.downloadQrCodes)
   
   
     app.use("/api/v2/ent_hangmuc", router);
