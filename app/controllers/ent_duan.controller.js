@@ -22,6 +22,10 @@ exports.create = (req, res) => {
     const data = {
       Duan: req.body.Duan,
       ID_Nhom: req.body.ID_Nhom,
+      ID_Chinhanh: req.body.ID_Chinhanh,
+      ID_Linhvuc: req.body.ID_Linhvuc,
+      ID_Loaihinh: req.body.ID_Loaihinh,
+      ID_Phanloai: req.body.ID_Phanloai,
       Diachi: req.body.Diachi,
       Vido: req.body.Vido,
       Kinhdo: req.body.Kinhdo,
@@ -58,7 +62,7 @@ exports.get = async (req, res) => {
           "ID_Duan",
           "Duan",
           "Diachi",
-          "ID_Nhom",
+          "ID_Nhom", "ID_Chinhanh","ID_Linhvuc","ID_Loaihinh","ID_Phanloai",
           "Vido",
           "Kinhdo",
           "Logo",
@@ -67,10 +71,10 @@ exports.get = async (req, res) => {
         include: [
           {
             model: Ent_toanha,
-            as: "ent_toanha", // Ensure this matches the alias used in your model definition
+            as: "ent_toanha", 
             attributes: ["Toanha", "Sotang", "ID_Duan", "Vido", "Kinhdo"],
             where: { isDelete: 0 },
-            required: false, // Use this to include projects without buildings
+            required: false, 
           },
           {
             model: Ent_nhom,
@@ -99,7 +103,7 @@ exports.get = async (req, res) => {
           "ID_Duan",
           "Duan",
           "Diachi",
-          "ID_Nhom",
+          "ID_Nhom", "ID_Chinhanh","ID_Linhvuc","ID_Loaihinh","ID_Phanloai",
           "Vido",
           "Kinhdo",
           "Logo",
@@ -108,10 +112,10 @@ exports.get = async (req, res) => {
         include: [
           {
             model: Ent_toanha,
-            as: "ent_toanha", // Ensure this matches the alias used in your model definition
+            as: "ent_toanha", 
             attributes: ["Toanha", "Sotang", "ID_Duan", "Vido", "Kinhdo"],
             where: { isDelete: 0 },
-            required: false, // Use this to include projects without buildings
+            required: false, 
           },
           {
             model: Ent_nhom,
@@ -213,6 +217,10 @@ exports.update = async (req, res) => {
           Kinhdo: req.body.Kinhdo,
           Logo: req.body.Logo,
           ID_Nhom: req.body.ID_Nhom,
+          ID_Chinhanh: req.body.ID_Chinhanh,
+          ID_Linhvuc: req.body.ID_Linhvuc,
+          ID_Loaihinh: req.body.ID_Loaihinh,
+          ID_Phanloai: req.body.ID_Phanloai,
         },
         {
           where: {
@@ -276,7 +284,7 @@ exports.getKhuvucByDuan = async (req, res) => {
         "ID_Duan",
         "Duan",
         "Diachi",
-        "ID_Nhom",
+        "ID_Nhom", "ID_Chinhanh","ID_Linhvuc","ID_Loaihinh","ID_Phanloai",
         "Vido",
         "Kinhdo",
         "Logo",
@@ -285,13 +293,14 @@ exports.getKhuvucByDuan = async (req, res) => {
       include: [
         {
           model: Ent_toanha,
-          as: "ent_toanha", // Ensure this matches the alias used in your model definition
+          as: "ent_toanha", 
           attributes: ["Toanha", "Sotang", "ID_Duan", "Vido", "Kinhdo"],
           where: { isDelete: 0 },
-          required: false, // Use this to include projects without buildings
+          required: false, 
         },
         {
           model: Ent_nhom,
+          as: "ent_nhom",
           attributes: ["Tennhom","ID_Nhom"],
         }
       ],
@@ -337,7 +346,7 @@ exports.getThongtinduan = async (req, res) => {
         "Diachi",
         "Vido",
         "Kinhdo",
-        "ID_Nhom",
+        "ID_Nhom", "ID_Chinhanh","ID_Linhvuc","ID_Loaihinh","ID_Phanloai",
         "Logo",
         "isDelete",
       ],
@@ -475,7 +484,7 @@ exports.getThongtinduantheonhom = async(req, res) => {
         "Diachi",
         "Vido",
         "Kinhdo",
-        "ID_Nhom",
+        "ID_Nhom", "ID_Chinhanh","ID_Linhvuc","ID_Loaihinh","ID_Phanloai",
         "Logo",
         "isDelete",
       ],
