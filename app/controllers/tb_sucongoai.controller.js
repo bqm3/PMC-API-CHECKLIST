@@ -124,7 +124,7 @@ exports.get = async (req, res) => {
             },
             {
               model: Ent_chucvu,
-              attributes: ["Chucvu"],
+              attributes: ["Chucvu", "Role"],
             },
           ],
         },
@@ -279,7 +279,7 @@ exports.getDetail = async (req, res) => {
             },
             {
               model: Ent_chucvu,
-              attributes: ["Chucvu"],
+              attributes: ["Chucvu", "Role"],
             },
           ],
         },
@@ -669,7 +669,7 @@ exports.getSucoNam = async (req, res) => {
             },
             {
               model: Ent_chucvu,
-              attributes: ["Chucvu"],
+              attributes: ["Chucvu", "Role"],
             },
           ],
         },
@@ -807,7 +807,7 @@ exports.getSuCoBenNgoai = async (req, res) => {
             },
             {
               model: Ent_chucvu,
-              attributes: ["Chucvu"],
+              attributes: ["Chucvu", "Role"],
             },
           ],
         },

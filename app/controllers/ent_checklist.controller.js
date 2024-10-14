@@ -172,7 +172,7 @@ exports.get = async (req, res) => {
           model: Ent_user,
           include: {
             model: Ent_chucvu,
-            attributes: ["Chucvu"],
+            attributes: ["Chucvu", "Role"],
           },
           attributes: ["UserName", "Email"],
         },
@@ -268,7 +268,7 @@ exports.get = async (req, res) => {
           model: Ent_user,
           include: {
             model: Ent_chucvu,
-            attributes: ["Chucvu"],
+            attributes: ["Chucvu", "Role"],
           },
           attributes: ["UserName", "Email"],
         },
@@ -403,7 +403,7 @@ exports.getDetail = async (req, res) => {
             model: Ent_user,
             include: {
               model: Ent_chucvu,
-              attributes: ["Chucvu"],
+              attributes: ["Chucvu", "Role"],
             },
             attributes: ["UserName", "Email"],
           },
@@ -726,7 +726,7 @@ exports.getFilter = async (req, res) => {
             model: Ent_user,
             include: {
               model: Ent_chucvu,
-              attributes: ["Chucvu"],
+              attributes: ["Chucvu", "Role"],
             },
             attributes: ["UserName", "Email"],
           },
@@ -955,7 +955,7 @@ exports.getChecklist = async (req, res) => {
           model: Ent_user,
           include: {
             model: Ent_chucvu,
-            attributes: ["Chucvu"],
+            attributes: ["Chucvu", "Role"],
           },
           attributes: ["UserName", "Email"],
         },
@@ -1115,7 +1115,7 @@ exports.getFilterSearch = async (req, res) => {
           model: Ent_user,
           include: {
             model: Ent_chucvu,
-            attributes: ["Chucvu"],
+            attributes: ["Chucvu", "Role"],
           },
           attributes: ["UserName", "Email"],
         },
@@ -1205,7 +1205,7 @@ exports.getFilterSearch = async (req, res) => {
           model: Ent_user,
           include: {
             model: Ent_chucvu,
-            attributes: ["Chucvu"],
+            attributes: ["Chucvu", "Role"],
           },
           attributes: ["UserName", "Email"],
         },
@@ -1432,7 +1432,7 @@ exports.filterChecklists = async (req, res) => {
           model: Ent_user,
           include: {
             model: Ent_chucvu,
-            attributes: ["Chucvu"],
+            attributes: ["Chucvu", "Role"],
           },
           attributes: ["UserName", "Email"],
         },
@@ -1587,7 +1587,7 @@ exports.filterReturn = async (req, res) => {
           model: Ent_user,
           include: {
             model: Ent_chucvu,
-            attributes: ["Chucvu"],
+            attributes: ["Chucvu", "Role"],
           },
           attributes: ["UserName", "Email"],
         },
@@ -1715,7 +1715,7 @@ exports.getListChecklistWeb = async (req, res) => {
           model: Ent_user,
           include: {
             model: Ent_chucvu,
-            attributes: ["Chucvu"],
+            attributes: ["Chucvu", "Role"],
           },
           attributes: ["UserName", "Email"],
         },
@@ -1841,7 +1841,7 @@ exports.getChecklistTotal = async (req, res) => {
           model: Ent_user,
           include: {
             model: Ent_chucvu,
-            attributes: ["Chucvu"],
+            attributes: ["Chucvu", "Role"],
           },
           attributes: ["UserName", "Email"],
         },

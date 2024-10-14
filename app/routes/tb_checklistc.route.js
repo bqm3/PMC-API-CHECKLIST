@@ -49,6 +49,9 @@ module.exports = (app) => {
   router.get("/report-checklist-percent-yesterday", tb_checklistc.reportPercentYesterday);
   router.get("/report-problem-percent-week", tb_checklistc.soSanhSuCo);
 
+  // Role: PSH
+  router.get("/report-location", tb_checklistc.reportLocation);
+
   // Role: GDDA
   //==========================================
   router.get("/percent-checklist-days", [isAuthenticated], tb_checklistc.getProjectChecklistDays);

@@ -253,7 +253,7 @@ exports.createFirstChecklist = async (req, res, next) => {
           model: Ent_user,
           include: {
             model: Ent_chucvu,
-            attributes: ["Chucvu"],
+            attributes: ["Chucvu", "Role"],
           },
           attributes: ["UserName", "Email"],
         },
@@ -447,7 +447,7 @@ exports.getCheckListc = async (req, res, next) => {
             include: [
               {
                 model: Ent_chucvu,
-                attributes: ["Chucvu"],
+                attributes: ["Chucvu", "Role"],
               },
             ],
           },
@@ -505,7 +505,7 @@ exports.getCheckListc = async (req, res, next) => {
             include: [
               {
                 model: Ent_chucvu,
-                attributes: ["Chucvu"],
+                attributes: ["Chucvu", "Role"],
               },
             ],
           },
@@ -622,7 +622,7 @@ exports.getThongKe = async (req, res, next) => {
             include: [
               {
                 model: Ent_chucvu,
-                attributes: ["Chucvu"],
+                attributes: ["Chucvu", "Role"],
               },
             ],
           },
@@ -683,7 +683,7 @@ exports.getThongKe = async (req, res, next) => {
             include: [
               {
                 model: Ent_chucvu,
-                attributes: ["Chucvu"],
+                attributes: ["Chucvu", "Role"],
               },
             ],
           },
@@ -1232,7 +1232,7 @@ exports.getDetail = async (req, res) => {
             include: [
               {
                 model: Ent_chucvu,
-                attributes: ["Chucvu"],
+                attributes: ["Chucvu", "Role"],
               },
             ],
           },
@@ -1349,7 +1349,7 @@ exports.open = async (req, res) => {
             include: [
               {
                 model: Ent_chucvu,
-                attributes: ["Chucvu"],
+                attributes: ["Chucvu", "Role"],
               },
             ],
           },
@@ -1816,7 +1816,7 @@ exports.checklistCalv = async (req, res) => {
             model: Ent_user,
             include: {
               model: Ent_chucvu,
-              attributes: ["Chucvu"],
+              attributes: ["Chucvu", "Role"],
             },
             attributes: ["UserName", "Email", "Hoten"],
           },
@@ -1836,6 +1836,195 @@ exports.checklistCalv = async (req, res) => {
     res
       .status(500)
       .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+  }
+};
+
+exports.reportLocation = async (req, res) => {
+  try {
+    const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
+
+    // Fetch checklist data with related information
+    const dataChecklistC = await Tb_checklistc.findAll({
+      attributes: [
+        "Ngay",
+        "ID_KhoiCV",
+        "ID_ChecklistC",
+        "ID_ThietLapCa",
+        "ID_Duan",
+        "Tinhtrang",
+        "Giobd",
+        "Giokt",
+        "ID_User",
+        "ID_Calv",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_duan,
+          attributes: ["Duan"],
+        },
+        {
+          model: Ent_thietlapca,
+          attributes: ["Ngaythu"],
+        },
+        {
+          model: Ent_khoicv,
+          attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
+        },
+        {
+          model: Ent_calv,
+          attributes: ["Tenca"],
+        },
+        {
+          model: Ent_user,
+          include: {
+            model: Ent_chucvu,
+            attributes: ["Chucvu", "Role"],
+          },
+          attributes: ["UserName", "Email", "Hoten"],
+        },
+        {
+          model: Tb_checklistchitietdone,
+          as: "tb_checklistchitietdones",
+          attributes: ["Description", "isDelete", "ID_ChecklistC", "Gioht", "Vido", "Kinhdo"],
+        }
+      ],
+      where: {
+        isDelete: 0,
+        Ngay: yesterday
+      },
+    });
+
+    const results = dataChecklistC.map((checklist) => {
+      const tbChecklistChiTiet = checklist.tb_checklistchitietdones;
+
+      // Create a Map to group checklist items by Vido and Kinhdo
+      const coordinatesMap = new Map();
+
+      // Loop through checklistChiTiet to group by Vido and Kinhdo
+      tbChecklistChiTiet.forEach((item) => {
+        const { Vido, Kinhdo, Description } = item;
+
+        // If Vido and Kinhdo exist, proceed
+        if (Vido && Kinhdo) {
+          const coordKey = `${Vido},${Kinhdo}`; // Create a unique key based on Vido and Kinhdo
+
+          // If the coordinates exist in the map, push the current item
+          if (coordinatesMap.has(coordKey)) {
+            coordinatesMap.get(coordKey).push(item);
+          } else {
+            // Otherwise, create a new entry for the coordinates
+            coordinatesMap.set(coordKey, [item]);
+          }
+        }
+      });
+
+      // Now, coordinatesMap contains groups of checklist items with the same coordinates
+      // To get the result, filter out entries with more than one item (duplicates)
+      const duplicateCoordinates = [];
+      coordinatesMap.forEach((items, key) => {
+        if (items.length > 1) {
+          duplicateCoordinates.push({
+            coordinates: key, // Vido, Kinhdo key
+            checklistItems: items.map(item => {
+              // Extract checklist IDs from Description
+              const checklistIds = item.Description.split(",").map(Number);
+              return {
+                Gioht: item.Gioht,
+                checklistIds, // IDs from Description
+              };
+            })
+          });
+        }
+      });
+
+      return {
+        project: checklist.ent_duan.Duan,
+        id: checklist.ID_ChecklistC,
+        ca: checklist.ent_calv.Tenca,
+        nguoi: checklist.ent_user.Hoten,
+        cv: checklist.ent_khoicv.KhoiCV,
+        duplicateCoordinates, // Group of duplicate coordinates
+      };
+    });
+
+    // Fetch related checklist details, including Hangmuc, Khuvuc, and Tang (Floor)
+    const relatedChecklists = await Ent_checklist.findAll({
+      attributes: [
+        "ID_Checklist",
+      ],
+      include: [
+        {
+          model: Ent_hangmuc,
+          as: "ent_hangmuc",
+          attributes: ["Hangmuc"], // Fetch only the Hangmuc (category name)
+        },
+        {
+          model: Ent_khuvuc,
+          as: "ent_khuvuc",
+          attributes: ["Tenkhuvuc"], // Fetch Khuvuc (Area)
+          include: [
+            {
+              model: Ent_toanha,
+              as: "ent_toanha",
+              attributes: ["Toanha"]
+            }
+          ]
+        },
+        {
+          model: Ent_tang,
+          attributes: ["Tentang"], // Fetch Tang (Floor)
+        },
+      ],
+      where: {
+        ID_Checklist: {
+          [Op.in]: results.flatMap(result =>
+            result.duplicateCoordinates.flatMap(entry =>
+              entry.checklistItems.flatMap(item => item.checklistIds)
+            )
+          ),
+        },
+      },
+    });
+
+    // Merge related checklist details with duplicate coordinates
+    const resultWithDetails = results.map((result) => {
+      const detailedCoordinates = result.duplicateCoordinates.map((entry) => {
+        const detailedItems = entry.checklistItems.map((item) => {
+          // Get the first related Hangmuc, Khuvuc, and Tentang from the checklist
+          const relatedItem = relatedChecklists.find((checklist) =>
+            item.checklistIds.includes(checklist.ID_Checklist)
+          );
+          return {
+            Gioht: item.Gioht,
+            relatedHangmuc: relatedItem
+              ? `${relatedItem.ent_hangmuc.Hangmuc} - ${relatedItem.ent_khuvuc.Tenkhuvuc} - ${relatedItem.ent_tang.Tentang} - ${relatedItem.ent_khuvuc.ent_toanha.Toanha}`
+              : null, // Show Hangmuc, Khuvuc (Area), and Tentang (Floor)
+          };
+        });
+        return {
+          coordinates: entry.coordinates,
+          detailedItems, // Simplified list of detailed items with Hangmuc, Khuvuc, and Tentang
+        };
+      });
+      return {
+        id: result.id,
+        project: result.project,
+        ca: result.ca,
+        nguoi: result.nguoi,
+        cv: result.cv,
+        detailedCoordinates, // Coordinates with simplified detailed checklist items (Hangmuc, Khuvuc, Tentang)
+      };
+    });
+
+    // Send the final result with details
+    res.status(200).json({
+      message: "Thống kê checklist với tọa độ trùng",
+      data: resultWithDetails, // Send simplified result with Hangmuc, Khuvuc, Tentang
+    });
+  } catch (err) {
+    // Handle errors and send appropriate response
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -2143,7 +2332,7 @@ exports.checklistCalvDinhKy = async (req, res) => {
             model: Ent_user,
             include: {
               model: Ent_chucvu,
-              attributes: ["Chucvu"],
+              attributes: ["Chucvu", "Role"],
             },
             attributes: ["UserName", "Email"],
           },
@@ -5119,7 +5308,7 @@ exports.createExcelTongHopCa = async (req, res) => {
               model: Ent_user,
               include: {
                 model: Ent_chucvu,
-                attributes: ["Chucvu"],
+                attributes: ["Chucvu", "Role"],
               },
               attributes: ["UserName", "Email", "Hoten"],
             },
@@ -5774,7 +5963,7 @@ exports.createPreviewReports = async (req, res) => {
               model: Ent_user,
               include: {
                 model: Ent_chucvu,
-                attributes: ["Chucvu"],
+                attributes: ["Chucvu", "Role"],
               },
               attributes: ["UserName", "Email", "Hoten"],
             },

@@ -14,7 +14,9 @@ const Ent_chucvu = sequelize.define(
       type: DataTypes.CHAR,
       allowNull: false,
     },
-
+    Role: {
+      type: DataTypes.INTEGER,
+    },
     isDelete: {
       type: DataTypes.INTEGER,
       defaultValue: 0,

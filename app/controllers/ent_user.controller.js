@@ -46,7 +46,7 @@ exports.login = async (req, res) => {
         },
         {
           model: Ent_chucvu,
-          attributes: ["Chucvu"],
+          attributes: ["Chucvu", "Role"],
         },
       ],
     });
@@ -137,7 +137,6 @@ exports.register = async (req, res, next) => {
         "UserName",
         "ID_Chucvu",
         "ID_Duan",
-        "Password",
         "ID_KhoiCV",
         "Email",
         "isDelete",
@@ -149,7 +148,7 @@ exports.register = async (req, res, next) => {
         },
         {
           model: Ent_chucvu,
-          attributes: ["Chucvu"],
+          attributes: ["Chucvu", "Role"],
         },
       ],
     });
@@ -367,7 +366,6 @@ exports.getUserOnline = async (req, res, next) => {
         "ID_User",
         "UserName",
         "Email",
-        "Password",
         "Hoten",
         "Sodienthoai",
         "ID_Duan",
@@ -382,7 +380,7 @@ exports.getUserOnline = async (req, res, next) => {
         },
         {
           model: Ent_chucvu,
-          attributes: ["Chucvu"],
+          attributes: ["Chucvu", "Role"],
         },
         {
           model: Ent_khoicv,
@@ -434,7 +432,6 @@ exports.getDetail = async (req, res) => {
           "Sodienthoai",
           "Ngaysinh",
           "Gioitinh",
-          "Password",
           "ID_Duan",
           "ID_KhoiCV",
           "ID_Chucvu",
@@ -452,7 +449,7 @@ exports.getDetail = async (req, res) => {
           },
           {
             model: Ent_chucvu,
-            attributes: ["Chucvu"],
+            attributes: ["Chucvu", "Role"],
           },
           {
             model: Ent_khoicv,
@@ -491,7 +488,6 @@ exports.checkAuth = async (req, res, next) => {
         "ID_User",
         "UserName",
         "Email",
-        "Password",
         "Hoten",
         "Gioitinh",
         "Sodienthoai",
@@ -508,7 +504,7 @@ exports.checkAuth = async (req, res, next) => {
         },
         {
           model: Ent_chucvu,
-          attributes: ["Chucvu"],
+          attributes: ["Chucvu", "Role"],
         },
         {
           model: Ent_khoicv,
@@ -552,8 +548,6 @@ exports.getGiamSat = async (req, res, next) => {
           "ID_User",
           "UserName",
           "Email",
-
-          "Password",
           "ID_Duan",
           "ID_KhoiCV",
           "ID_Chucvu",
@@ -566,7 +560,7 @@ exports.getGiamSat = async (req, res, next) => {
           },
           {
             model: Ent_chucvu,
-            attributes: ["Chucvu"],
+            attributes: ["Chucvu", "Role"],
           },
           {
             model: Ent_khoicv,
@@ -606,7 +600,6 @@ exports.deviceToken = async (req, res, next) => {
           "ID_User",
           "UserName",
           "Email",
-          "Password",
           "ID_Duan",
           "ID_KhoiCV",
           "deviceToken",
@@ -617,7 +610,6 @@ exports.deviceToken = async (req, res, next) => {
           ID_User: { [Op.ne]: userData.ID_User },
         },
       });
-      console.log('existingUser', existingUser)
 
       // Nếu tìm thấy user khác có deviceToken này, cập nhật deviceToken của họ thành null
       if (existingUser) {
@@ -699,17 +691,13 @@ exports.notiPush = async (message) => {
         "ID_User",
         "UserName",
         "Email",
-        "Password",
         "ID_Duan",
         "ID_KhoiCV",
-
         "ID_Chucvu",
         "isDelete",
       ],
       where: { isDelete: 0 },
     });
-    // users.map((user) => console.log(user.ID_Duan, "|", user.ID_KhoiCV))
-    // console.log('message.data.userData.ID_KhoiCV',message.data.userData.ID_KhoiCV)
     const tokens = users
       .filter(
         (user) =>

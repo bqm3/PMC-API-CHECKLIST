@@ -119,7 +119,7 @@ exports.get = async (req, res) => {
             model: Ent_user,
             include: {
               model: Ent_chucvu,
-              attributes: ["Chucvu"],
+              attributes: ["Chucvu", "Role"],
             },
             attributes: ["UserName", "Email"],
           },
@@ -186,7 +186,7 @@ exports.getFilter = async (req, res) => {
             model: Ent_user,
             include: {
               model: Ent_chucvu,
-              attributes: ["Chucvu"],
+              attributes: ["Chucvu", "Role"],
             },
             attributes: ["UserName", "Email"],
           },
@@ -240,7 +240,7 @@ exports.getDetail = async (req, res) => {
             model: Ent_user,
             include: {
               model: Ent_chucvu,
-              attributes: ["Chucvu"],
+              attributes: ["Chucvu", "Role"],
             },
             attributes: ["UserName", "Email"],
           },
