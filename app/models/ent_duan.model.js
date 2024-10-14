@@ -10,6 +10,9 @@ const Ent_duan = sequelize.define(
       autoIncrement: true,
       primaryKey: true,
     },
+    Ngaybatdau: {
+      type: DataTypes.DATE,
+    },
     Duan: {
       type: DataTypes.CHAR,
       allowNull: false,
