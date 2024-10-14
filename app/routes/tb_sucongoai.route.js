@@ -16,6 +16,8 @@ module.exports = (app) => {
   router.get("/dashboard-by-duan", [isAuthenticated], tb_sucongoai.dashboardByDuAn);
   router.get("/dashboard", tb_sucongoai.dashboardAll);
   router.get("/su-co-ngoai", tb_sucongoai.getSucoNam);
+  router.get("/report-incident-percent-week", tb_sucongoai.getSucoNam);
+  router.get("/report-external-incident-percent-week", tb_sucongoai.getSuCoBenNgoai);
   
   app.use("/api/v2/tb_sucongoai", router);
 };

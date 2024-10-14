@@ -41,10 +41,13 @@ module.exports = (app) => {
   router.get("/top-10-max", tb_checklistc.top10max )
   router.get("/top3", tb_checklistc.topCompletionRate);
   router.get("/list-checklist-error", tb_checklistc.getChecklistsErrorFromYesterday);
-  router.get("/list-project-none", tb_checklistc.getProjectsChecklistStatus);
+  router.get("/percent-checklist-project", tb_checklistc.getProjectsChecklistStatus);
   router.get("/quan-ly-vi-tri", tb_checklistc.getLocationsChecklist);
   router.get("/ti-le-hoan-thanh", tb_checklistc.tiLeHoanThanh);
   router.get("/ti-le-su-co", tb_checklistc.tiLeSuco);
+  router.get("/report-checklist-percent-week", tb_checklistc.reportPercentWeek);
+  router.get("/report-checklist-percent-yesterday", tb_checklistc.reportPercentYesterday);
+  router.get("/report-problem-percent-week", tb_checklistc.soSanhSuCo);
 
   // Role: GDDA
   //==========================================

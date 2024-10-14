@@ -25,7 +25,6 @@ const Ent_checklistc = require("../models/tb_checklistc.model");
 const sequelize = require("../config/db.config");
 const cron = require("node-cron");
 const ExcelJS = require("exceljs");
-var FileSaver = require("file-saver");
 const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
@@ -1702,7 +1701,7 @@ exports.checklistCalv = async (req, res) => {
           "Checklist",
           "Giatridinhdanh",
           "isCheck",
-          "Giatrinhan"
+          "Giatrinhan",
         ],
         include: [
           {
@@ -1718,7 +1717,7 @@ exports.checklistCalv = async (req, res) => {
           },
           {
             model: Ent_khuvuc,
-            as: 'ent_khuvuc',
+            as: "ent_khuvuc",
             attributes: [
               "Tenkhuvuc",
               "MaQrCode",
@@ -1759,7 +1758,6 @@ exports.checklistCalv = async (req, res) => {
             model: Ent_tang,
             attributes: ["Tentang"],
           },
-        
         ],
         where: {
           ID_Checklist: {
@@ -1772,13 +1770,13 @@ exports.checklistCalv = async (req, res) => {
         const relatedChecklist = relatedChecklists.find(
           (rl) => rl.ID_Checklist == it
         );
-        const matchedGioht = checklistGiohtMap.get(it); 
+        const matchedGioht = checklistGiohtMap.get(it);
 
         arrPush.push({
           ID_ChecklistC: parseInt(req.params.id),
           ID_Checklist: it,
           Gioht: matchedGioht || checklistDoneItems[0].Gioht,
-          Ketqua: relatedChecklist?.Giatridinhdanh || '',
+          Ketqua: relatedChecklist?.Giatridinhdanh || "",
           status: 1,
           ent_checklist: relatedChecklist,
         });
@@ -2211,7 +2209,7 @@ exports.checklistYearByKhoiCV = async (req, res) => {
       include: [
         {
           model: Ent_khoicv,
-          attributes: ["KhoiCV", "isDelete"], 
+          attributes: ["KhoiCV", "isDelete"],
         },
         {
           model: Ent_calv,
@@ -2382,7 +2380,7 @@ exports.checklistYearByKhoiCVSuCo = async (req, res) => {
         "Ghichu",
         "isDelete",
       ],
-      
+
       include: [
         {
           model: Tb_checklistc,
@@ -2498,14 +2496,13 @@ exports.checklistYearByKhoiCVSuCo = async (req, res) => {
 
 exports.tiLeHoanThanh = async (req, res) => {
   try {
-    const year = req.query.year || new Date().getFullYear(); // Get the year from the request, default to current year
-    const month = req.query.month || new Date().getMonth() + 1; // Get the month from the request, default to current month
+    const year = req.query.year || new Date().getFullYear();
+    const month = req.query.month || new Date().getMonth() + 1;
     const khoi = req.query.khoi;
     const nhom = req.query.nhom;
-    const tangGiam = req.query.tangGiam || "desc"; // Get sorting order from query (asc or desc), default to 'asc'
-    const top = req.query.top || "5"; // Get sorting order from query (asc or desc), default to 'asc'
+    const tangGiam = req.query.tangGiam || "desc";
+    const top = req.query.top || "5";
 
-    // Define the where clause for the query
     let whereClause = {
       isDelete: 0,
     };
@@ -2522,21 +2519,29 @@ exports.tiLeHoanThanh = async (req, res) => {
       whereClause["$ent_duan.ID_Nhom$"] = nhom; // Add condition for nhom
     }
 
-    if (year && month === "all") {
-      whereClause.Ngay = {
-        [Op.gte]: `${year}-01-01`,
-        [Op.lte]: `${year}-12-31`,
-      };
-    }
+    const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
 
-    if (year && month !== "all") {
-      const lastDay = getLastDayOfMonth(year, month); // Get the correct last day for the given month
-      const formattedMonth = month < 10 ? `0${month}` : `${month}`; // Ensure the month is formatted as two digits
-      whereClause.Ngay = {
-        [Op.gte]: `${year}-${formattedMonth}-01`,
-        [Op.lte]: `${year}-${formattedMonth}-${lastDay}`,
-      };
-    }
+    // Use this in place of the current date logic in the `whereClause`
+    whereClause.Ngay = {
+      [Op.gte]: `${yesterday} 00:00:00`,
+      [Op.lte]: `${yesterday} 23:59:59`,
+    };
+
+    // if (year && month === "all") {
+    //   whereClause.Ngay = {
+    //     [Op.gte]: `${year}-01-01`,
+    //     [Op.lte]: `${year}-12-31`,
+    //   };
+    // }
+
+    // if (year && month !== "all") {
+    //   const lastDay = getLastDayOfMonth(year, month); // Get the correct last day for the given month
+    //   const formattedMonth = month < 10 ? `0${month}` : `${month}`; // Ensure the month is formatted as two digits
+    //   whereClause.Ngay = {
+    //     [Op.gte]: `${year}-${formattedMonth}-01`,
+    //     [Op.lte]: `${year}-${formattedMonth}-${lastDay}`,
+    //   };
+    // }
 
     // Fetch related checklist data along with project and khối information
     const relatedChecklists = await Tb_checklistc.findAll({
@@ -2725,22 +2730,28 @@ exports.tiLeSuco = async (req, res) => {
       whereClause["$ent_duan.ID_Nhom$"] = nhom;
     }
 
-    if (year && month === "all") {
-      whereClause.Ngay = {
-        [Op.gte]: `${year}-01-01`,
-        [Op.lte]: `${year}-12-31`,
-      };
-    }
+    // if (year && month === "all") {
+    //   whereClause.Ngay = {
+    //     [Op.gte]: `${year}-01-01`,
+    //     [Op.lte]: `${year}-12-31`,
+    //   };
+    // }
 
-    if (year && month !== "all") {
-      const lastDay = getLastDayOfMonth(year, month);
-      const formattedMonth = month < 10 ? `0${month}` : `${month}`;
-      whereClause.Ngay = {
-        [Op.gte]: `${year}-${formattedMonth}-01`,
-        [Op.lte]: `${year}-${formattedMonth}-${lastDay}`,
-      };
-    }
+    // if (year && month !== "all") {
+    //   const lastDay = getLastDayOfMonth(year, month);
+    //   const formattedMonth = month < 10 ? `0${month}` : `${month}`;
+    //   whereClause.Ngay = {
+    //     [Op.gte]: `${year}-${formattedMonth}-01`,
+    //     [Op.lte]: `${year}-${formattedMonth}-${lastDay}`,
+    //   };
+    // }
+    const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
 
+    // Use this in place of the current date logic in the `whereClause`
+    whereClause.Ngay = {
+      [Op.gte]: `${yesterday} 00:00:00`,
+      [Op.lte]: `${yesterday} 23:59:59`,
+    };
     // Truy vấn cơ sở dữ liệu
     const relatedChecklists = await Tb_checklistc.findAll({
       attributes: [
@@ -2864,6 +2875,426 @@ exports.tiLeSuco = async (req, res) => {
       data: result,
     });
   } catch (err) {
+    res
+      .status(500)
+      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+  }
+};
+
+exports.soSanhSuCo = async (req, res) => {
+  try {
+    const weekAgo = moment().subtract(1, "week");
+    const twoWeeksAgo = moment().subtract(2, "week");
+
+    // Đặt ngày bắt đầu và kết thúc cho hai tuần trước
+    const startOfLastWeek = weekAgo
+      .clone()
+      .startOf("isoWeek")
+      .format("YYYY-MM-DD HH:mm:ss");
+    const endOfLastWeek = weekAgo
+      .clone()
+      .endOf("isoWeek")
+      .format("YYYY-MM-DD HH:mm:ss");
+
+    const startOfTwoWeeksAgo = twoWeeksAgo
+      .clone()
+      .startOf("isoWeek")
+      .format("YYYY-MM-DD HH:mm:ss");
+    const endOfTwoWeeksAgo = twoWeeksAgo
+      .clone()
+      .endOf("isoWeek")
+      .format("YYYY-MM-DD HH:mm:ss");
+
+    // Xây dựng điều kiện where cho truy vấn
+    let whereClause = {
+      isDelete: 0,
+    };
+
+    // if (khoi !== "all") {
+    //   whereClause.ID_KhoiCV = khoi;
+    // }
+
+    // if (nhom !== "all") {
+    //   whereClause["$ent_duan.ID_Nhom$"] = nhom;
+    // }
+
+    // Truy vấn số lượng sự cố cho tuần trước
+    const lastWeekIncidents = await Tb_checklistc.findAll({
+      attributes: [
+        [sequelize.fn("COUNT", sequelize.col("ID_Duan")), "lastWeekTotalCount"],
+      ],
+      where: {
+        ...whereClause,
+        Ngay: {
+          [Op.gte]: startOfLastWeek,
+          [Op.lte]: endOfLastWeek,
+        },
+      },
+      raw: true,
+    });
+
+    // Truy vấn số lượng sự cố cho tuần trước nữa
+    const twoWeeksAgoIncidents = await Tb_checklistc.findAll({
+      attributes: [
+        [
+          sequelize.fn("COUNT", sequelize.col("ID_Duan")),
+          "twoWeeksAgoTotalCount",
+        ],
+      ],
+      where: {
+        ...whereClause,
+        Ngay: {
+          [Op.gte]: startOfTwoWeeksAgo,
+          [Op.lte]: endOfTwoWeeksAgo,
+        },
+      },
+      raw: true,
+    });
+
+    // Lấy tổng số lượng sự cố từ kết quả truy vấn
+    const lastWeekCount =
+      parseInt(lastWeekIncidents[0]?.lastWeekTotalCount, 10) || 0;
+    const twoWeeksAgoCount =
+      parseInt(twoWeeksAgoIncidents[0]?.twoWeeksAgoTotalCount, 10) || 0;
+
+    // Tính phần trăm thay đổi
+    let percentageChange = 0;
+    if (twoWeeksAgoCount > 0) {
+      // Tránh chia cho 0
+      percentageChange =
+        ((lastWeekCount - twoWeeksAgoCount) / twoWeeksAgoCount) * 100;
+    } else if (lastWeekCount > 0) {
+      percentageChange = 100; // Nếu tuần trước có sự cố mà tuần này không có
+    }
+
+    // Trả về kết quả
+    res.status(200).json({
+      message: "So sánh số lượng sự cố giữa hai tuần",
+      data: {
+        lastWeekTotalCount: lastWeekCount,
+        twoWeeksAgoTotalCount: twoWeeksAgoCount,
+        percentageChange: percentageChange.toFixed(2), // Làm tròn đến 2 chữ số thập phân
+      },
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+  }
+};
+
+const calculateCompletionPercentagePerProject = (checklists) => {
+  const projectCompletionRates = {};
+
+  // Group checklists by project and calculate individual project completion rates
+  checklists.forEach((checklist) => {
+    const projectId = checklist.ID_Duan;
+
+    if (!projectCompletionRates[projectId]) {
+      projectCompletionRates[projectId] = {
+        totalTongC: 0,
+        totalTong: 0,
+      };
+    }
+
+    // Sum up TongC and Tong for each project
+    projectCompletionRates[projectId].totalTongC += checklist.TongC;
+    projectCompletionRates[projectId].totalTong += checklist.Tong;
+  });
+
+  let totalCompletionPercentage = 0;
+  const numberOfProjects = Object.keys(projectCompletionRates).length;
+
+  // Calculate percentage for each project and sum them
+  Object.values(projectCompletionRates).forEach((project) => {
+    const projectPercentage =
+      project.totalTong > 0
+        ? (project.totalTongC / project.totalTong) * 100
+        : 0;
+    totalCompletionPercentage += projectPercentage;
+  });
+
+  // Return average completion percentage for all projects
+  return numberOfProjects > 0
+    ? totalCompletionPercentage / numberOfProjects
+    : 0;
+};
+
+exports.reportPercentWeek = async (req, res) => {
+  try {
+    const khoi = req.query.khoi;
+    const nhom = req.query.nhom;
+
+    let lastWhereClause = {
+      isDelete: 0,
+    };
+
+    let prevWhereClause = {
+      isDelete: 0,
+    };
+
+    // if (khoi !== "all") {
+    //   lastWhereClause.ID_KhoiCV = khoi;
+    //   prevWhereClause.ID_KhoiCV = khoi;
+    // }
+
+    // if (nhom !== "all") {
+    //   lastWhereClause["$ent_duan.ID_Nhom$"] = nhom;
+    //   prevWhereClause["$ent_duan.ID_Nhom$"] = nhom;
+    // }
+
+    // Get date ranges for last week and the previous week
+    const lastWeekStart = moment()
+      .subtract(7, "days")
+      .startOf("day")
+      .format("YYYY-MM-DD");
+    const lastWeekEnd = moment()
+      .subtract(1, "days")
+      .endOf("day")
+      .format("YYYY-MM-DD");
+    const previousWeekStart = moment()
+      .subtract(14, "days")
+      .startOf("day")
+      .format("YYYY-MM-DD");
+    const previousWeekEnd = moment()
+      .subtract(8, "days")
+      .endOf("day")
+      .format("YYYY-MM-DD");
+
+    lastWhereClause.Ngay = {
+      [Op.gte]: `${lastWeekStart} 00:00:00`,
+      [Op.lte]: `${lastWeekEnd} 23:59:59`,
+    };
+
+    prevWhereClause.Ngay = {
+      [Op.gte]: `${previousWeekStart} 00:00:00`,
+      [Op.lte]: `${previousWeekEnd} 23:59:59`,
+    };
+
+    // Fetch data for last week
+    const lastWeekData = await Tb_checklistc.findAll({
+      attributes: [
+        "ID_ChecklistC",
+        "ID_Duan",
+        "ID_Calv",
+        "Ngay",
+        "TongC",
+        "Tong",
+        "ID_KhoiCV",
+        "isDelete",
+      ],
+      where: lastWhereClause,
+      include: [
+        { model: Ent_duan, attributes: ["Duan", "ID_Nhom"] },
+        { model: Ent_khoicv, attributes: ["KhoiCV"] },
+        { model: Ent_calv, attributes: ["Tenca"] },
+      ],
+    });
+
+    // Fetch data for previous week
+    const previousWeekData = await Tb_checklistc.findAll({
+      attributes: [
+        "ID_ChecklistC",
+        "ID_Duan",
+        "ID_Calv",
+        "Ngay",
+        "TongC",
+        "Tong",
+        "ID_KhoiCV",
+        "isDelete",
+      ],
+      where: prevWhereClause,
+      include: [
+        { model: Ent_duan, attributes: ["Duan", "ID_Nhom", "ID_Duan"] },
+        { model: Ent_khoicv, attributes: ["KhoiCV"] },
+        { model: Ent_calv, attributes: ["Tenca"] },
+      ],
+    });
+
+    // Calculate total completion percentage for last week and previous week
+    const lastWeekPercentage =
+      calculateCompletionPercentagePerProject(lastWeekData);
+    const previousWeekPercentage =
+      calculateCompletionPercentagePerProject(previousWeekData);
+
+    // Calculate the difference between the two weeks
+    const percentageDifference = lastWeekPercentage - previousWeekPercentage;
+
+    res.status(200).json({
+      message: "Completion percentages comparison between two weeks",
+      data: {
+        lastWeekPercentage: lastWeekPercentage.toFixed(2),
+        previousWeekPercentage: previousWeekPercentage.toFixed(2),
+        percentageDifference: percentageDifference.toFixed(2),
+      },
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: err.message || "Error! Please try again later." });
+  }
+};
+
+exports.reportPercentYesterday = async (req, res) => {
+  try {
+    // Lấy ngày hôm qua
+    const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
+
+    // Lấy tất cả dữ liệu checklistC cho ngày hôm qua
+    const dataChecklistCs = await Tb_checklistc.findAll({
+      attributes: [
+        "ID_ChecklistC",
+        "ID_Duan",
+        "ID_Calv",
+        "Ngay",
+        "TongC",
+        "Tong",
+        "ID_KhoiCV",
+        "isDelete",
+      ],
+      where: {
+        Ngay: yesterday,
+        isDelete: 0,
+      },
+      include: [
+        {
+          model: Ent_duan,
+          attributes: ["Duan"],
+        },
+        {
+          model: Ent_khoicv,
+          attributes: ["KhoiCV"],
+        },
+        {
+          model: Ent_calv,
+          attributes: ["Tenca"],
+        },
+      ],
+    });
+
+    // Tạo một dictionary để nhóm dữ liệu theo dự án và khối
+    const result = {};
+
+    dataChecklistCs.forEach((checklistC) => {
+      const projectId = checklistC.ID_Duan;
+      const projectName = checklistC.ent_duan.Duan;
+      const khoiName = checklistC.ent_khoicv.KhoiCV;
+      const shiftName = checklistC.ent_calv.Tenca;
+
+      // Khởi tạo dữ liệu dự án nếu chưa tồn tại
+      if (!result[projectId]) {
+        result[projectId] = {
+          projectId,
+          projectName,
+          createdKhois: {},
+        };
+      }
+
+      // Khởi tạo dữ liệu cho khối nếu chưa tồn tại
+      if (!result[projectId].createdKhois[khoiName]) {
+        result[projectId].createdKhois[khoiName] = {
+          shifts: {},
+        };
+      }
+
+      // Khởi tạo dữ liệu cho ca nếu chưa tồn tại
+      if (!result[projectId].createdKhois[khoiName].shifts[shiftName]) {
+        result[projectId].createdKhois[khoiName].shifts[shiftName] = {
+          totalTongC: 0,
+          totalTong: 0,
+          userCompletionRates: [],
+        };
+      }
+
+      // Cộng dồn TongC và Tong cho ca
+      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTongC +=
+        checklistC.TongC;
+      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTong =
+        checklistC.Tong;
+
+      // Lưu tỷ lệ hoàn thành của từng người
+      if (checklistC.Tong > 0) {
+        // Check to prevent division by zero
+        const userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
+        result[projectId].createdKhois[khoiName].shifts[
+          shiftName
+        ].userCompletionRates.push(userCompletionRate);
+      }
+    });
+
+    // Tính toán phần trăm hoàn thành riêng cho từng ca và tổng khối
+    Object.values(result).forEach((project) => {
+      Object.values(project.createdKhois).forEach((khoi) => {
+        let totalKhoiCompletionRatio = 0;
+        let totalShifts = 0;
+
+        Object.values(khoi.shifts).forEach((shift) => {
+          let shiftCompletionRatio = shift.userCompletionRates.reduce(
+            (sum, rate) => sum + rate,
+            0
+          );
+          shiftCompletionRatio = Math.min(shiftCompletionRatio, 100); // Giới hạn phần trăm hoàn thành tối đa là 100%
+
+          totalKhoiCompletionRatio += shiftCompletionRatio;
+          totalShifts += 1;
+        });
+
+        // Tính phần trăm hoàn thành trung bình cho khối
+        const avgKhoiCompletionRatio = totalKhoiCompletionRatio / totalShifts;
+        khoi.completionRatio = Number.isInteger(avgKhoiCompletionRatio)
+          ? avgKhoiCompletionRatio
+          : avgKhoiCompletionRatio.toFixed(2);
+      });
+    });
+
+    // Chuyển result object thành mảng
+    const resultArray = Object.values(result);
+
+    // Tạo đối tượng để lưu tổng completionRatio và đếm số dự án có khối tương ứng
+    const avgKhoiCompletion = {
+      "Khối kỹ thuật": { totalCompletion: 0, projectCount: 0 },
+      "Khối làm sạch": { totalCompletion: 0, projectCount: 0 },
+      "Khối dịch vụ": { totalCompletion: 0, projectCount: 0 },
+      "Khối bảo vệ": { totalCompletion: 0, projectCount: 0 },
+    };
+
+    // Tính toán tổng completionRatio cho từng khối từ tất cả các dự án
+    Object.values(result).forEach((project) => {
+      Object.keys(avgKhoiCompletion).forEach((khoiName) => {
+        const khoi = project.createdKhois[khoiName];
+        if (khoi && khoi.completionRatio) {
+          avgKhoiCompletion[khoiName].totalCompletion += parseFloat(
+            khoi.completionRatio
+          );
+          avgKhoiCompletion[khoiName].projectCount += 1;
+        }
+      });
+    });
+
+    // Tính trung bình completionRatio cho từng khối
+    const avgCompletionRatios = {};
+    Object.keys(avgKhoiCompletion).forEach((khoiName) => {
+      const { totalCompletion, projectCount } = avgKhoiCompletion[khoiName];
+      avgCompletionRatios[khoiName] =
+        projectCount > 0
+          ? (totalCompletion / projectCount).toFixed(2)
+          : null;
+    });
+
+    // Bạn có thể trả về kết quả này trong response của API
+    res.status(200).json({
+      message:
+        "Trạng thái checklist của các dự án theo từng khối và ca làm việc",
+      data: resultArray,
+      avgCompletionRatios, // Thêm tỷ lệ trung bình vào kết quả trả về
+    });
+
+    // res.status(200).json({
+    //   message: "Trạng thái checklist của các dự án theo từng khối và ca làm việc",
+    //   data: resultArray,
+    // });
+  } catch (err) {
+    console.error("Error fetching checklist data: ", err); // Log the error for debugging
     res
       .status(500)
       .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
@@ -3633,7 +4064,7 @@ exports.getProjectsChecklistStatus = async (req, res) => {
   try {
     // Lấy ngày hôm qua
     const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
-    const now = moment().format("YYYY-MM-DD");
+    const now = moment().subtract(1, "days").format("YYYY-MM-DD");
 
     // Lấy tất cả dữ liệu checklistC cho ngày hôm qua
     const dataChecklistCs = await Tb_checklistc.findAll({
@@ -3648,9 +4079,7 @@ exports.getProjectsChecklistStatus = async (req, res) => {
         "isDelete",
       ],
       where: {
-        Ngay: {
-          [Op.between]: [yesterday, now],
-        },
+        Ngay: yesterday,
         isDelete: 0,
       },
       include: [

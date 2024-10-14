@@ -11,7 +11,8 @@ const {
   Ent_toanha,
   Ent_khuvuc_khoicv,
 } = require("../models/setup.model");
-const { Op } = require("sequelize");
+const { Op, fn, col } = require("sequelize");
+const sequelize = require("../config/db.config");
 
 exports.create = async (req, res) => {
   try {
@@ -702,3 +703,156 @@ exports.getSucoNam = async (req, res) => {
     });
   }
 };
+
+exports.getSuCoBenNgoai = async (req, res) => {
+  try {
+    const name = req.query.name;
+
+    // Xác định ngày bắt đầu và kết thúc của tuần này và tuần trước
+    const today = new Date();
+    const startOfCurrentWeek = new Date(today.setDate(today.getDate() - today.getDay()));
+    const endOfCurrentWeek = new Date(startOfCurrentWeek);
+    endOfCurrentWeek.setDate(endOfCurrentWeek.getDate() + 6); // Thêm 6 ngày để có ngày kết thúc tuần này
+
+    const startOfLastWeek = new Date(startOfCurrentWeek);
+    startOfLastWeek.setDate(startOfCurrentWeek.getDate() - 7); // Lùi 7 ngày để có ngày bắt đầu tuần trước
+    const endOfLastWeek = new Date(startOfLastWeek);
+    endOfLastWeek.setDate(endOfLastWeek.getDate() + 6); // Thêm 6 ngày để có ngày kết thúc tuần trước
+
+    // Truy vấn số lượng sự cố cho tuần này
+    const currentWeekIncidents = await Tb_sucongoai.findAll({
+      attributes: [
+        [fn("COUNT", col("ID_Suco")), "currentWeekCount"],
+      ],
+      where: {
+        isDelete: 0,
+        Ngaysuco: {
+          [Op.gte]: startOfCurrentWeek,
+          [Op.lte]: endOfCurrentWeek,
+        },
+      },
+      raw: true,
+    });
+
+    // Truy vấn số lượng sự cố cho tuần trước
+    const lastWeekIncidents = await Tb_sucongoai.findAll({
+      attributes: [
+        [fn("COUNT", col("ID_Suco")), "lastWeekCount"],
+      ],
+      where: {
+        isDelete: 0,
+        Ngaysuco: {
+          [Op.gte]: startOfLastWeek,
+          [Op.lte]: endOfLastWeek,
+        },
+      },
+      raw: true,
+    });
+
+    // Lấy tổng số lượng sự cố từ kết quả truy vấn
+    const currentWeekCount = parseInt(currentWeekIncidents[0]?.currentWeekCount, 10) || 0;
+    const lastWeekCount = parseInt(lastWeekIncidents[0]?.lastWeekCount, 10) || 0;
+
+    // Tính phần trăm thay đổi
+    let percentageChange = 0;
+    if (lastWeekCount > 0) { // Tránh chia cho 0
+      percentageChange = ((currentWeekCount - lastWeekCount) / lastWeekCount) * 100;
+    } else if (currentWeekCount > 0) {
+      percentageChange = 100; // Nếu tuần này có sự cố mà tuần trước không có
+    }
+
+    // Truy vấn chi tiết sự cố theo tên dự án
+    const data = await Tb_sucongoai.findAll({
+      attributes: [
+        "ID_Suco",
+        "ID_Hangmuc",
+        "Ngaysuco",
+        "Giosuco",
+        "Noidungsuco",
+        "Duongdancacanh",
+        "ID_User",
+        "Tinhtrangxuly",
+        "Anhkiemtra",
+        "Ghichu",
+        "Ngayxuly",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_hangmuc,
+          as: "ent_hangmuc",
+          attributes: [
+            "Hangmuc",
+            "Tieuchuankt",
+            "ID_Khuvuc",
+            "MaQrCode",
+            "FileTieuChuan",
+            "ID_Khuvuc",
+          ],
+        },
+        {
+          model: Ent_user,
+          attributes: ["UserName", "Email", "Hoten", "ID_Duan"],
+          include: [
+            {
+              model: Ent_duan,
+              attributes: [
+                "ID_Duan",
+                "Duan",
+                "Diachi",
+                "Vido",
+                "Kinhdo",
+                "Logo",
+              ]
+            },
+            {
+              model: Ent_chucvu,
+              attributes: ["Chucvu"],
+            },
+          ],
+        },
+      ],
+      where: {
+        isDelete: 0,
+        Ngaysuco: {
+          [Op.gte]: startOfCurrentWeek,
+          [Op.lte]: endOfCurrentWeek,
+        },
+      },
+      order: [
+        ["Tinhtrangxuly", "ASC"],
+        ["Ngaysuco", "DESC"],
+        ["Ngayxuly", "DESC"],
+      ],
+    });
+
+    const filteredData = data.filter((item) => {
+      return item.ent_user && item.ent_user.ent_duan && item.ent_user.ent_duan.Duan == name;
+    });
+
+    if (filteredData.length === 0) {
+      return res.status(200).json({
+        data: {
+          currentWeekCount,
+          lastWeekCount,
+          percentageChange: percentageChange.toFixed(2),
+        },
+      });
+    }
+
+    return res.status(200).json({
+      message: "Sự cố ngoài!",
+      data: filteredData,
+      totalCounts: {
+        currentWeekCount,
+        lastWeekCount,
+        percentageChange: percentageChange.toFixed(2),
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
