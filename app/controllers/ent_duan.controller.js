@@ -21,6 +21,7 @@ exports.create = (req, res) => {
     // Create a Ent_duan
     const data = {
       Duan: req.body.Duan,
+      Ngaybatdau: req.body.Ngaybatdau,
       ID_Nhom: req.body.ID_Nhom || null,
       ID_Chinhanh: req.body.ID_Chinhanh || null,
       ID_Linhvuc: req.body.ID_Linhvuc || null,
@@ -216,6 +217,7 @@ exports.update = async (req, res) => {
           Vido: req.body.Vido,
           Kinhdo: req.body.Kinhdo,
           Logo: req.body.Logo,
+          Ngaybatdau: req.body.Ngaybatdau,
           ID_Nhom: req.body.ID_Nhom || null,
           ID_Chinhanh: req.body.ID_Chinhanh || null,
           ID_Linhvuc: req.body.ID_Linhvuc || null,
