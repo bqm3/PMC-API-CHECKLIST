@@ -18,9 +18,26 @@ const Ent_khuvuc_khoicv = require('./ent_khuvuc_khoicv.model')
 const Ent_thietlapca = require('./ent_thietlapca.model')
 const Ent_duan_khoicv = require('./ent_duan_khoicv.model')
 
+const Ent_chinhanh = require('./ent_chinhanh.model')
+const Ent_linhvuc = require('./ent_linhvuc.model')
+const Ent_loaihinhbds = require('./ent_loaihinhbds.model')
+const Ent_phanloaida = require('./ent_phanloaida.model')
+
 //Duan an + khoi cv  ====================================================================
 Ent_duan.hasMany(Ent_duan_khoicv, {as: "ent_duan_khoicv",foreignKey: 'ID_Duan'})
 Ent_duan_khoicv.belongsTo(Ent_duan, {foreignKey: "ID_Duan"})
+
+Ent_chinhanh.hasMany(Ent_duan, {as: "ent_chinhanh",foreignKey: 'ID_Chinhanh'})
+Ent_duan.belongsTo(Ent_chinhanh, {foreignKey: "ID_Chinhanh"})
+
+Ent_linhvuc.hasMany(Ent_duan, {as: "ent_linhvuc",foreignKey: 'ID_Linhvuc'})
+Ent_duan.belongsTo(Ent_linhvuc, {foreignKey: "ID_Linhvuc"})
+
+Ent_loaihinhbds.hasMany(Ent_duan, {as: "ent_loaihinhbds",foreignKey: 'ID_Loaihinh'})
+Ent_duan.belongsTo(Ent_loaihinhbds, {foreignKey: "ID_Loaihinh"})
+
+Ent_phanloaida.hasMany(Ent_duan, {as: "ent_phanloaida",foreignKey: 'ID_Phanloai'})
+Ent_duan.belongsTo(Ent_phanloaida, {foreignKey: "ID_Phanloai"})
 
 Ent_khoicv.hasMany(Ent_duan_khoicv, {as: "ent_duan_khoicv",foreignKey: 'ID_KhoiCV'})
 Ent_duan_khoicv.belongsTo(Ent_khoicv, {foreignKey: "ID_KhoiCV"})
@@ -224,5 +241,9 @@ module.exports = {
   Ent_nhom,
   Ent_thietlapca,
   Tb_sucongoai,
-  Ent_duan_khoicv
+  Ent_duan_khoicv,
+  Ent_chinhanh,
+  Ent_linhvuc,
+  Ent_loaihinhbds,
+  Ent_phanloaida
 };
