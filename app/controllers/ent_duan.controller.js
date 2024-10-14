@@ -21,11 +21,11 @@ exports.create = (req, res) => {
     // Create a Ent_duan
     const data = {
       Duan: req.body.Duan,
-      ID_Nhom: req.body.ID_Nhom,
-      ID_Chinhanh: req.body.ID_Chinhanh,
-      ID_Linhvuc: req.body.ID_Linhvuc,
-      ID_Loaihinh: req.body.ID_Loaihinh,
-      ID_Phanloai: req.body.ID_Phanloai,
+      ID_Nhom: req.body.ID_Nhom || null,
+      ID_Chinhanh: req.body.ID_Chinhanh || null,
+      ID_Linhvuc: req.body.ID_Linhvuc || null,
+      ID_Loaihinh: req.body.ID_Loaihinh || null,
+      ID_Phanloai: req.body.ID_Phanloai || null,
       Diachi: req.body.Diachi,
       Vido: req.body.Vido,
       Kinhdo: req.body.Kinhdo,
@@ -216,11 +216,11 @@ exports.update = async (req, res) => {
           Vido: req.body.Vido,
           Kinhdo: req.body.Kinhdo,
           Logo: req.body.Logo,
-          ID_Nhom: req.body.ID_Nhom,
-          ID_Chinhanh: req.body.ID_Chinhanh,
-          ID_Linhvuc: req.body.ID_Linhvuc,
-          ID_Loaihinh: req.body.ID_Loaihinh,
-          ID_Phanloai: req.body.ID_Phanloai,
+          ID_Nhom: req.body.ID_Nhom || null,
+          ID_Chinhanh: req.body.ID_Chinhanh || null,
+          ID_Linhvuc: req.body.ID_Linhvuc || null,
+          ID_Loaihinh: req.body.ID_Loaihinh || null,
+          ID_Phanloai: req.body.ID_Phanloai || null,
         },
         {
           where: {
