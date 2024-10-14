@@ -85,7 +85,7 @@ exports.main = async (req, res) => {
           model: Ent_user,
           include: {
             model: Ent_chucvu,
-            attributes: ["Chucvu"],
+            attributes: ["Chucvu", "Role"],
           },
           attributes: ["UserName", "Email", "Hoten"],
         },
@@ -109,7 +109,7 @@ exports.main = async (req, res) => {
         },
         {
           model: Ent_chucvu,
-          attributes: ["Chucvu"],
+          attributes: ["Chucvu", "Role"],
         },
       ],
       where: {

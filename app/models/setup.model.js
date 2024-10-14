@@ -197,7 +197,10 @@ Tb_checklistc.hasMany(Tb_checklistchitiet, {
 
 
 // Checklist Chi tiet Done ===========================================================================
-Tb_checklistc.hasMany(Tb_checklistchitietdone);
+Tb_checklistc.hasMany(Tb_checklistchitietdone, {
+  as: "tb_checklistchitietdones",  // The actual alias used in the model
+  foreignKey: "ID_ChecklistC",
+});
 Tb_checklistchitietdone.belongsTo(Tb_checklistc, {
   foreignKey: "ID_ChecklistC",
 });
