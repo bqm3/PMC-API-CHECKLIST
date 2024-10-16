@@ -1,4 +1,13 @@
-const { Ent_duan, Ent_khuvuc, Ent_toanha, Ent_hangmuc, Ent_nhom, Ent_khuvuc_khoicv, Ent_khoicv } = require("../models/setup.model");
+const {
+  Ent_duan,
+  Ent_khuvuc,
+  Ent_toanha,
+  Ent_hangmuc,
+  Ent_nhom,
+  Ent_khuvuc_khoicv,
+  Ent_khoicv,
+  Ent_phanloaida,
+} = require("../models/setup.model");
 const { Op } = require("sequelize");
 
 exports.create = (req, res) => {
@@ -63,7 +72,11 @@ exports.get = async (req, res) => {
           "ID_Duan",
           "Duan",
           "Diachi",
-          "ID_Nhom", "ID_Chinhanh","ID_Linhvuc","ID_Loaihinh","ID_Phanloai",
+          "ID_Nhom",
+          "ID_Chinhanh",
+          "ID_Linhvuc",
+          "ID_Loaihinh",
+          "ID_Phanloai",
           "Vido",
           "Kinhdo",
           "Logo",
@@ -72,16 +85,16 @@ exports.get = async (req, res) => {
         include: [
           {
             model: Ent_toanha,
-            as: "ent_toanha", 
+            as: "ent_toanha",
             attributes: ["Toanha", "Sotang", "ID_Duan", "Vido", "Kinhdo"],
             where: { isDelete: 0 },
-            required: false, 
+            required: false,
           },
           {
             model: Ent_nhom,
             as: "ent_nhom",
-            attributes: ["Tennhom","ID_Nhom"],
-          }
+            attributes: ["Tennhom", "ID_Nhom"],
+          },
         ],
         where: {
           isDelete: 0,
@@ -104,7 +117,11 @@ exports.get = async (req, res) => {
           "ID_Duan",
           "Duan",
           "Diachi",
-          "ID_Nhom", "ID_Chinhanh","ID_Linhvuc","ID_Loaihinh","ID_Phanloai",
+          "ID_Nhom",
+          "ID_Chinhanh",
+          "ID_Linhvuc",
+          "ID_Loaihinh",
+          "ID_Phanloai",
           "Vido",
           "Kinhdo",
           "Logo",
@@ -113,16 +130,16 @@ exports.get = async (req, res) => {
         include: [
           {
             model: Ent_toanha,
-            as: "ent_toanha", 
+            as: "ent_toanha",
             attributes: ["Toanha", "Sotang", "ID_Duan", "Vido", "Kinhdo"],
             where: { isDelete: 0 },
-            required: false, 
+            required: false,
           },
           {
             model: Ent_nhom,
-            as:"ent_nhom",
-            attributes: ["Tennhom","ID_Nhom"],
-          }
+            as: "ent_nhom",
+            attributes: ["Tennhom", "ID_Nhom"],
+          },
         ],
         where: {
           [Op.and]: {
@@ -286,7 +303,11 @@ exports.getKhuvucByDuan = async (req, res) => {
         "ID_Duan",
         "Duan",
         "Diachi",
-        "ID_Nhom", "ID_Chinhanh","ID_Linhvuc","ID_Loaihinh","ID_Phanloai",
+        "ID_Nhom",
+        "ID_Chinhanh",
+        "ID_Linhvuc",
+        "ID_Loaihinh",
+        "ID_Phanloai",
         "Vido",
         "Kinhdo",
         "Logo",
@@ -295,16 +316,16 @@ exports.getKhuvucByDuan = async (req, res) => {
       include: [
         {
           model: Ent_toanha,
-          as: "ent_toanha", 
+          as: "ent_toanha",
           attributes: ["Toanha", "Sotang", "ID_Duan", "Vido", "Kinhdo"],
           where: { isDelete: 0 },
-          required: false, 
+          required: false,
         },
         {
           model: Ent_nhom,
           as: "ent_nhom",
-          attributes: ["Tennhom","ID_Nhom"],
-        }
+          attributes: ["Tennhom", "ID_Nhom"],
+        },
       ],
       where: {
         isDelete: 0,
@@ -348,7 +369,11 @@ exports.getThongtinduan = async (req, res) => {
         "Diachi",
         "Vido",
         "Kinhdo",
-        "ID_Nhom", "ID_Chinhanh","ID_Linhvuc","ID_Loaihinh","ID_Phanloai",
+        "ID_Nhom",
+        "ID_Chinhanh",
+        "ID_Linhvuc",
+        "ID_Loaihinh",
+        "ID_Phanloai",
         "Logo",
         "isDelete",
       ],
@@ -356,21 +381,43 @@ exports.getThongtinduan = async (req, res) => {
         {
           model: Ent_toanha,
           as: "ent_toanha",
-          attributes: ["ID_Toanha", "Toanha", "Sotang", "ID_Duan", "Vido", "Kinhdo", "isDelete"],
+          attributes: [
+            "ID_Toanha",
+            "Toanha",
+            "Sotang",
+            "ID_Duan",
+            "Vido",
+            "Kinhdo",
+            "isDelete",
+          ],
           where: { isDelete: 0 },
           required: false,
           include: [
             {
               model: Ent_khuvuc,
               as: "ent_khuvuc",
-              attributes: ["ID_Khuvuc", "Makhuvuc", "MaQrCode", "Tenkhuvuc", "isDelete"],
+              attributes: [
+                "ID_Khuvuc",
+                "Makhuvuc",
+                "MaQrCode",
+                "Tenkhuvuc",
+                "isDelete",
+              ],
               where: { isDelete: 0 },
               required: false,
               include: [
                 {
                   model: Ent_hangmuc,
                   as: "ent_hangmuc",
-                  attributes: ["ID_Hangmuc", "ID_Khuvuc", "Hangmuc", "MaQrCode", "isDelete", "Tieuchuankt", "FileTieuChuan"],
+                  attributes: [
+                    "ID_Hangmuc",
+                    "ID_Khuvuc",
+                    "Hangmuc",
+                    "MaQrCode",
+                    "isDelete",
+                    "Tieuchuankt",
+                    "FileTieuChuan",
+                  ],
                   where: { isDelete: 0 },
                   required: false,
                 },
@@ -390,12 +437,12 @@ exports.getThongtinduan = async (req, res) => {
         },
         {
           model: Ent_nhom,
-          attributes: ["Tennhom","ID_Nhom"]
-        }
+          attributes: ["Tennhom", "ID_Nhom"],
+        },
       ],
       where: {
         isDelete: 0,
-      }
+      },
     });
 
     const result = data.map((duan) => {
@@ -418,7 +465,7 @@ exports.getThongtinduan = async (req, res) => {
             return {
               ID_KhoiCV: cv.ID_KhoiCV,
               ID_Khuvuc: cv.ID_Khuvuc,
-              ID_KV_CV: cv.ID_KV_CV
+              ID_KV_CV: cv.ID_KV_CV,
             };
           });
 
@@ -477,7 +524,7 @@ exports.getThongtinduan = async (req, res) => {
   }
 };
 
-exports.getThongtinduantheonhom = async(req, res) => {
+exports.getThongtinduantheonhom = async (req, res) => {
   try {
     const data = await Ent_duan.findAll({
       attributes: [
@@ -486,7 +533,11 @@ exports.getThongtinduantheonhom = async(req, res) => {
         "Diachi",
         "Vido",
         "Kinhdo",
-        "ID_Nhom", "ID_Chinhanh","ID_Linhvuc","ID_Loaihinh","ID_Phanloai",
+        "ID_Nhom",
+        "ID_Chinhanh",
+        "ID_Linhvuc",
+        "ID_Loaihinh",
+        "ID_Phanloai",
         "Logo",
         "isDelete",
       ],
@@ -519,6 +570,11 @@ exports.getThongtinduantheonhom = async(req, res) => {
         {
           model: Ent_nhom,
           attributes: ["Tennhom","ID_Nhom"]
+        },
+        {
+          model: Ent_phanloaida,
+          as: "ent_phanloaida",
+          attributes: ["ID_Phanloai","Phanloai"]
         }
       ],
       where: {
@@ -527,19 +583,19 @@ exports.getThongtinduantheonhom = async(req, res) => {
     });
 
     const groupedData = data.reduce((acc, item) => {
-      const groupName = item.ent_nhom.Tennhom;
-      
+      const groupName = item.ent_phanloaida?.Phanloai;
+
       // Nếu chưa có key với tên nhóm, tạo mới
       if (!acc[groupName]) {
         acc[groupName] = [];
       }
-    
+
       // Thêm dự án vào nhóm tương ứng
       acc[groupName].push(item);
-    
+
       return acc;
     }, {});
-    
+
     res.status(200).json({
       message: "Danh sách dự án với nhóm!",
       data: groupedData,
@@ -549,5 +605,4 @@ exports.getThongtinduantheonhom = async(req, res) => {
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
-}
-
+};

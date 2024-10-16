@@ -1428,14 +1428,6 @@ exports.filterChecklists = async (req, res) => {
           model: Ent_tang,
           attributes: ["Tentang"],
         },
-        {
-          model: Ent_user,
-          include: {
-            model: Ent_chucvu,
-            attributes: ["Chucvu", "Role"],
-          },
-          attributes: ["UserName", "Email"],
-        },
       ],
       where: whereCondition,
       order: [
@@ -1444,8 +1436,6 @@ exports.filterChecklists = async (req, res) => {
         ["ID_Checklist", "ASC"],
       ],
     });
-
-   
 
     if (!checklistData || checklistData.length === 0) {
       return res.status(200).json({
@@ -1458,7 +1448,7 @@ exports.filterChecklists = async (req, res) => {
       (item) => item.ent_hangmuc !== null
     );
 
-    console.log('filteredData', filteredData.length)
+    console.log("filteredData", filteredData.length);
 
     return res.status(200).json({
       message:
@@ -1583,14 +1573,6 @@ exports.filterReturn = async (req, res) => {
           model: Ent_tang,
           attributes: ["Tentang"],
         },
-        {
-          model: Ent_user,
-          include: {
-            model: Ent_chucvu,
-            attributes: ["Chucvu", "Role"],
-          },
-          attributes: ["UserName", "Email"],
-        },
       ],
       where: whereCondition,
       order: [
@@ -1636,10 +1618,10 @@ exports.getListChecklistWeb = async (req, res) => {
     }
 
     const whereCondition = {
-      isDelete: 0
-    }
+      isDelete: 0,
+    };
 
-    if(userData){
+    if (userData) {
       whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
     }
 
@@ -1737,7 +1719,6 @@ exports.getListChecklistWeb = async (req, res) => {
       message: "Danh sách checklist!",
       data: data,
     });
-   
   } catch (err) {
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
@@ -1956,8 +1937,8 @@ exports.uploadFiles = async (req, res) => {
           const quanTrong = transformedItem["QUANTRỌNG"];
           const ghiChu = transformedItem["GHICHÚ"];
           const nhap = transformedItem["NHẬP"];
-          
-          if (!tenChecklist ) {
+
+          if (!tenChecklist) {
             console.log("Bỏ qua do thiếu tên checklist");
             continue;
           }
@@ -2032,8 +2013,11 @@ exports.uploadFiles = async (req, res) => {
             Tieuchuan: tieuChuanChecklist || "",
             Giatridinhdanh: giaTriDanhDinh || "",
             Giatrinhan: cacGiaTriNhan || "",
-            isImportant: (quanTrong !== undefined && quanTrong !== null && quanTrong !== "") ? 1 : 0,
-            isCheck: (nhap !== undefined && nhap !== null && nhap !== "") ? 1: 0,
+            isImportant:
+              quanTrong !== undefined && quanTrong !== null && quanTrong !== ""
+                ? 1
+                : 0,
+            isCheck: nhap !== undefined && nhap !== null && nhap !== "" ? 1 : 0,
             ID_User: userData.ID_User,
             isDelete: 0,
             Tinhtrang: 0,

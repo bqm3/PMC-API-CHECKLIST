@@ -2705,7 +2705,7 @@ exports.tiLeHoanThanh = async (req, res) => {
     }
 
     if (nhom !== "all") {
-      whereClause["$ent_duan.ID_Nhom$"] = nhom; // Add condition for nhom
+      whereClause["$ent_duan.ID_Phanloai$"] = nhom; // Add condition for nhom
     }
 
     const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
@@ -2747,7 +2747,7 @@ exports.tiLeHoanThanh = async (req, res) => {
       include: [
         {
           model: Ent_duan,
-          attributes: ["Duan", "ID_Nhom"],
+          attributes: ["Duan", "ID_Nhom", "ID_Phanloai"],
         },
         {
           model: Ent_khoicv,
@@ -2916,7 +2916,7 @@ exports.tiLeSuco = async (req, res) => {
     }
 
     if (nhom !== "all") {
-      whereClause["$ent_duan.ID_Nhom$"] = nhom;
+      whereClause["$ent_duan.ID_Phanloai$"] = nhom;
     }
 
     // if (year && month === "all") {
@@ -2957,7 +2957,7 @@ exports.tiLeSuco = async (req, res) => {
       include: [
         {
           model: Ent_duan,
-          attributes: ["Duan", "ID_Nhom"],
+          attributes: ["Duan", "ID_Nhom", "ID_Phanloai"],
         },
         {
           model: Ent_khoicv,
@@ -3464,12 +3464,17 @@ exports.reportPercentYesterday = async (req, res) => {
     const avgCompletionRatios = {};
     Object.keys(avgKhoiCompletion).forEach((khoiName) => {
       const { totalCompletion, projectCount } = avgKhoiCompletion[khoiName];
+    
+      const averageCompletion = projectCount > 0 ? totalCompletion / projectCount : null;
+    
+      // If the average completion is not null and is a whole number, don't use .toFixed(2)
       avgCompletionRatios[khoiName] =
-        projectCount > 0
-          ? (totalCompletion / projectCount).toFixed(2)
+        averageCompletion !== null
+          ? Number.isInteger(averageCompletion)
+            ? averageCompletion // If it's an integer, no decimals
+            : averageCompletion.toFixed(2) // Otherwise, keep 2 decimals
           : null;
     });
-
     // Bạn có thể trả về kết quả này trong response của API
     res.status(200).json({
       message:
@@ -3477,11 +3482,6 @@ exports.reportPercentYesterday = async (req, res) => {
       data: resultArray,
       avgCompletionRatios, // Thêm tỷ lệ trung bình vào kết quả trả về
     });
-
-    // res.status(200).json({
-    //   message: "Trạng thái checklist của các dự án theo từng khối và ca làm việc",
-    //   data: resultArray,
-    // });
   } catch (err) {
     console.error("Error fetching checklist data: ", err); // Log the error for debugging
     res
