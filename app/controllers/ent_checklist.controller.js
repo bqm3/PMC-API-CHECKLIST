@@ -1990,16 +1990,17 @@ exports.uploadFiles = async (req, res) => {
               Tentang: sequelize.where(
                 sequelize.fn(
                   "UPPER",
-                  sequelize.fn("TRIM", sequelize.col("Tentang"))
+                  sequelize.fn("TRIM", sequelize.fn("REPLACE", sequelize.col("Tentang"), '  ', ' '))
                 ),
                 "LIKE",
-                tenTang.trim().toUpperCase()
+                `%${tenTang.trim().replace(/\s+/g, ' ').toUpperCase()}%`
               ),
               ID_Duan: userData.ID_Duan,
               isDelete: 0,
             },
             transaction,
           });
+          
 
           const data = {
             ID_Khuvuc: hangmuc.ID_Khuvuc,
