@@ -263,11 +263,31 @@ exports.update = async (req, res) => {
     const ID_ThietLapCa = req.params.id;
     const userData = req.user.data;
     const { ID_KhoiCV, ID_Calv, Ngaythu, ID_Hangmucs } = req.body;
+
+    // Validate input
     if (!ID_Calv || !ID_Hangmucs) {
       return res.status(400).json({
         message: "Phải nhập đầy đủ dữ liệu!",
       });
     }
+
+    // Check if the combination of ID_Calv and Ngaythu already exists
+    const existingRecord = await Ent_thietlapca.findOne({
+      where: {
+        ID_Calv: ID_Calv,
+        Ngaythu: Ngaythu,
+        isDelete: 0,
+        ID_ThietLapCa: { [Op.ne]: ID_ThietLapCa }
+      }
+    });
+
+    if (existingRecord) {
+      return res.status(400).json({
+        message: "Ca làm việc và ngày thực hiện đã tồn tại!",
+      });
+    }
+
+    // Count the number of checklists
     const checklistCount = await Ent_checklist.count({
       where: {
         ID_Hangmuc: {
@@ -277,7 +297,8 @@ exports.update = async (req, res) => {
       },
     });
 
-    Ent_thietlapca.update(
+    // Proceed with the update if the check passes
+    await Ent_thietlapca.update(
       {
         ID_Duan: userData.ID_Duan,
         ID_Calv: ID_Calv,
@@ -290,17 +311,12 @@ exports.update = async (req, res) => {
           ID_ThietLapCa: ID_ThietLapCa,
         },
       }
-    ) .then((data) => {
-      res.status(200).json({
-        message: "Cập nhật tòa nhà thành công!!!",
-        data: data,
-      });
-    })
-    .catch((err) => {
-      res.status(500).json({
-        message: err.message || "Lỗi! Vui lòng thử lại sau.",
-      });
-    })
+    );
+
+    res.status(200).json({
+      message: "Cập nhật tòa nhà thành công!!!",
+    });
+    
   } catch (error) {
     res.status(500).json({
       message: error.message || "Lỗi! Vui lòng thử lại sau.",
