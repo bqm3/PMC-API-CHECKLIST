@@ -277,7 +277,6 @@ exports.update = async (req, res) => {
         ID_Calv: ID_Calv,
         Ngaythu: Ngaythu,
         isDelete: 0,
-        ID_ThietLapCa: { [Op.ne]: ID_ThietLapCa }
       }
     });
 
