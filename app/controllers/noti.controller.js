@@ -9,10 +9,10 @@ exports.notiAll = async (req, res) => {
     // 0 la k goi thong bao
     // 1 la goi thong bao
   const resData = {
-    key: '2.0.4',
+    key: '2.0.5',
     type: "WARNING",
     textTitle: "PMC Checklist",
-    textBody: "Phiên bản 2.0.4 đã xuất bản. Cập nhật phiên bản để có trải nghiệm tốt nhất.",
+    textBody: "Phiên bản 2.0.5 đã xuất bản. Cập nhật phiên bản để có trải nghiệm tốt nhất.",
     time: 5000
   };
   return res.status(200).json({
