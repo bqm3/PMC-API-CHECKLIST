@@ -39,9 +39,9 @@ exports.create = async (req, res) => {
       where: {
         ID_Calv: ID_Calv,
         Ngaythu: Ngaythu,
-        isDelete: 0
-      }
-    })
+        isDelete: 0,
+      },
+    });
 
     const checklistCount = await Ent_checklist.count({
       where: {
@@ -51,7 +51,7 @@ exports.create = async (req, res) => {
       },
     });
 
-    if(findKhuvuc){
+    if (findKhuvuc) {
       return res.status(400).json({
         message: "Ca làm việc và ngày thực hiện đã tồn tại",
       });
@@ -167,8 +167,8 @@ exports.getDetail = async (req, res) => {
             model: Ent_calv,
             attributes: ["Tenca", "ID_KhoiCV", "ID_Calv", "isDelete"],
             where: {
-              isDelete: 0
-            }
+              isDelete: 0,
+            },
           },
           {
             model: Ent_duan,
@@ -177,10 +177,16 @@ exports.getDetail = async (req, res) => {
               {
                 model: Ent_duan_khoicv,
                 as: "ent_duan_khoicv",
-                attributes: ["ID_KhoiCV", "ID_Duan", "Chuky", "Ngaybatdau", "isDelete"],
-                isDelete: 0
-              }
-            ]
+                attributes: [
+                  "ID_KhoiCV",
+                  "ID_Duan",
+                  "Chuky",
+                  "Ngaybatdau",
+                  "isDelete",
+                ],
+                isDelete: 0,
+              },
+            ],
           },
         ],
         where: whereCondition,
@@ -202,7 +208,7 @@ exports.getDetail = async (req, res) => {
           "ID_KhoiCVs",
           "Makhuvuc",
           "MaQrCode",
-          
+
           "Tenkhuvuc",
           "ID_User",
           "isDelete",
@@ -276,8 +282,11 @@ exports.update = async (req, res) => {
       where: {
         ID_Calv: ID_Calv,
         Ngaythu: Ngaythu,
+        ID_ThietLapCa: {
+          [Op.ne]: ID_ThietLapCa,
+        },
         isDelete: 0,
-      }
+      },
     });
 
     if (existingRecord) {
@@ -292,7 +301,7 @@ exports.update = async (req, res) => {
         ID_Hangmuc: {
           [Op.in]: ID_Hangmucs, // Assuming ID_Hangmucs is an array
         },
-        isDelete: 0
+        isDelete: 0,
       },
     });
 
@@ -315,8 +324,8 @@ exports.update = async (req, res) => {
     res.status(200).json({
       message: "Cập nhật tòa nhà thành công!!!",
     });
-    
   } catch (error) {
+    console.log("error", error);
     res.status(500).json({
       message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });

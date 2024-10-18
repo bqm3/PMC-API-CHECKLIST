@@ -53,8 +53,6 @@ Ent_user.hasMany(Tb_sucongoai, { as: "ent_user", foreignKey: "ID_User" });
 Tb_sucongoai.belongsTo(Ent_user, { foreignKey: "ID_User" })
 
 // Thiet lap ca ===========================================================================
-Ent_khoicv.hasMany(Ent_thietlapca, { as: 'ent_khoicv', foreignKey: 'ID_KhoiCV' });
-Ent_thietlapca.belongsTo(Ent_khoicv, { foreignKey: "ID_KhoiCV" })
 
 Ent_calv.hasMany(Ent_thietlapca, { as: 'ent_calv', foreignKey: 'ID_Calv' });
 Ent_thietlapca.belongsTo(Ent_calv, { foreignKey: "ID_Calv" })
