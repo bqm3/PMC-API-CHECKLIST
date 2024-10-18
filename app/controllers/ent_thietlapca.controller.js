@@ -262,7 +262,7 @@ exports.update = async (req, res) => {
   try {
     const ID_ThietLapCa = req.params.id;
     const userData = req.user.data;
-    const { ID_KhoiCV, ID_Calv, Ngaythu, ID_Hangmucs } = req.body;
+    const { ID_Calv, Ngaythu, ID_Hangmucs } = req.body;
 
     // Validate input
     if (!ID_Calv || !ID_Hangmucs) {
