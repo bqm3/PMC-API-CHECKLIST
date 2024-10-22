@@ -610,19 +610,11 @@ exports.dashboardAll = async (req, res) => {
 
 exports.getSucoNam = async (req, res) => {
   try {
-    // const year = req.query.year || new Date().getFullYear(); // Default to the current year
     const name = req.query.name;
 
     let whereClause = {
       isDelete: 0,
     };
-
-    // if (year) {
-    //   whereClause.Ngaysuco = {
-    //     [Op.gte]: `${year}-01-01`,
-    //     [Op.lte]: `${year}-12-31`,
-    //   };
-    // }
 
     const data = await Tb_sucongoai.findAll({
       attributes: [

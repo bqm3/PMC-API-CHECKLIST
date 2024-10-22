@@ -3,6 +3,9 @@ const {
   Ent_duan,
   Ent_khoicv,
   Ent_chucvu,
+  Ent_chinhanh,
+  Ent_toanha,
+  Ent_nhom,
 } = require("../models/setup.model");
 const { hashSync, genSaltSync, compareSync } = require("bcrypt");
 const bcrypt = require("bcrypt");
@@ -22,17 +25,17 @@ exports.login = async (req, res) => {
         message: "Sai tài khoản hoặc mật khẩu. Vui lòng thử lại!!",
       });
     }
-
     // Find user by username
     const user = await Ent_user.findOne({
       where: {
         UserName: req.body.UserName,
-        isDelete: 0
+        isDelete: 0,
       },
       attributes: [
         "ID_User",
         "UserName",
         "ID_Chucvu",
+        "ID_Chinhanh",
         "ID_Duan",
         "Password",
         "ID_KhoiCV",
@@ -46,7 +49,7 @@ exports.login = async (req, res) => {
         },
         {
           model: Ent_chucvu,
-          attributes: ["Chucvu", "Role"],
+          attributes: ["Chucvu", "Role", "isDelete"],
         },
       ],
     });
@@ -60,6 +63,20 @@ exports.login = async (req, res) => {
       );
 
       if (passwordValid) {
+        let projects = [];
+
+        // Check if Role is 0 or 4
+        if (user?.ent_chucvu?.Role === 0 || user?.ent_chucvu?.Role === 4) {
+          // Fetch all projects related to the branch (chi nhánh)
+          projects = await Ent_duan.findAll({
+            where: {
+              // Giả định rằng bạn có một trường ID_KhoiCV liên kết chi nhánh trong bảng dự án
+              ID_Chinhanh: user.ID_Chinhanh,
+            },
+            attributes: ["ID_Duan", "Duan", "Diachi", "Logo", "ID_Chinhanh"],
+          });
+        }
+
         // Generate JWT token
         const token = jsonwebtoken.sign(
           {
@@ -80,7 +97,12 @@ exports.login = async (req, res) => {
           expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
         });
 
-        return res.status(200).json({ token: token, user: user });
+        // Return the token, user info, and projects if applicable
+        return res.status(200).json({
+          token: token,
+          user: user,
+          projects: projects.length > 0 ? projects : "Không có dự án nào",
+        });
       } else {
         // Incorrect password
         return res
@@ -101,7 +123,6 @@ exports.login = async (req, res) => {
     });
   }
 };
-
 // Create User
 exports.register = async (req, res, next) => {
   try {
@@ -115,7 +136,7 @@ exports.register = async (req, res, next) => {
       Ngaysinh,
       ID_KhoiCV,
       Email,
-      ID_Duan
+      ID_Duan,
     } = req.body;
     if (!UserName || !Password || !ID_Chucvu) {
       return res.status(400).json({
@@ -128,8 +149,8 @@ exports.register = async (req, res, next) => {
         [Op.and]: [
           { UserName: UserName },
           { Email: Email },
-          {ID_Duan: ID_Duan},
-          {isDelete: 0}
+          { ID_Duan: ID_Duan },
+          { isDelete: 0 },
         ],
       },
       attributes: [
@@ -170,7 +191,7 @@ exports.register = async (req, res, next) => {
       Sodienthoai: Sodienthoai || null,
       Gioitinh: Gioitinh || null,
       Ngaysinh: Ngaysinh || null,
-      ID_KhoiCV: ID_Chucvu == 1 || ID_Chucvu == 2 ? null : ID_KhoiCV,
+      ID_KhoiCV: (ID_Chucvu == 1 || ID_Chucvu == 2) ? null : ID_KhoiCV,
       isDelete: 0,
     };
 
@@ -286,7 +307,7 @@ exports.updateUser = async (req, res) => {
     let updateData = {
       ID_Duan,
       ID_Chucvu,
-      ID_KhoiCV: ID_KhoiCV === null || ID_KhoiCV === "" ? null : ID_KhoiCV,
+      ID_KhoiCV: (ID_Chucvu == 1 || ID_Chucvu == 2) ? null : ID_KhoiCV,
       UserName,
       Hoten,
       Sodienthoai,
@@ -445,7 +466,34 @@ exports.getDetail = async (req, res) => {
         include: [
           {
             model: Ent_duan,
-            attributes: ["Duan", "Diachi", "Logo"],
+            attributes: [
+              "ID_Duan",
+              "Duan",
+              "Diachi",
+              "ID_Nhom",
+              "ID_Chinhanh",
+              "ID_Linhvuc",
+              "ID_Loaihinh",
+              "ID_Phanloai",
+              "Vido",
+              "Kinhdo",
+              "Logo",
+              "isDelete",
+            ],
+            include: [
+              {
+                model: Ent_toanha,
+                as: "ent_toanha",
+                attributes: ["Toanha", "Sotang", "ID_Duan", "Vido", "Kinhdo"],
+                where: { isDelete: 0 },
+                required: false,
+              },
+              {
+                model: Ent_nhom,
+                as: "ent_nhom",
+                attributes: ["Tennhom", "ID_Nhom"],
+              },
+            ],
           },
           {
             model: Ent_chucvu,
@@ -483,6 +531,7 @@ exports.getDetail = async (req, res) => {
 exports.checkAuth = async (req, res, next) => {
   try {
     const userData = req.user.data;
+    
     await Ent_user.findByPk(userData.ID_User, {
       attributes: [
         "ID_User",
@@ -500,7 +549,34 @@ exports.checkAuth = async (req, res, next) => {
       include: [
         {
           model: Ent_duan,
-          attributes: ["Duan", "Diachi", "Logo"],
+          attributes: [
+            "ID_Duan",
+            "Duan",
+            "Diachi",
+            "ID_Nhom",
+            "ID_Chinhanh",
+            "ID_Linhvuc",
+            "ID_Loaihinh",
+            "ID_Phanloai",
+            "Vido",
+            "Kinhdo",
+            "Logo",
+            "isDelete",
+          ],
+          include: [
+            {
+              model: Ent_toanha,
+              as: "ent_toanha",
+              attributes: ["Toanha", "Sotang", "ID_Duan", "Vido", "Kinhdo"],
+              where: { isDelete: 0 },
+              required: false,
+            },
+            {
+              model: Ent_nhom,
+              as: "ent_nhom",
+              attributes: ["Tennhom", "ID_Nhom"],
+            },
+          ],
         },
         {
           model: Ent_chucvu,
@@ -556,7 +632,34 @@ exports.getGiamSat = async (req, res, next) => {
         include: [
           {
             model: Ent_duan,
-            attributes: ["Duan", "Diachi", "Logo"],
+            attributes: [
+              "ID_Duan",
+              "Duan",
+              "Diachi",
+              "ID_Nhom",
+              "ID_Chinhanh",
+              "ID_Linhvuc",
+              "ID_Loaihinh",
+              "ID_Phanloai",
+              "Vido",
+              "Kinhdo",
+              "Logo",
+              "isDelete",
+            ],
+            include: [
+              {
+                model: Ent_toanha,
+                as: "ent_toanha",
+                attributes: ["Toanha", "Sotang", "ID_Duan", "Vido", "Kinhdo"],
+                where: { isDelete: 0 },
+                required: false,
+              },
+              {
+                model: Ent_nhom,
+                as: "ent_nhom",
+                attributes: ["Tennhom", "ID_Nhom"],
+              },
+            ],
           },
           {
             model: Ent_chucvu,
@@ -810,7 +913,6 @@ exports.uploadFileUsers = async (req, res) => {
           });
         }
 
-        
         const dataUser = await Ent_user.findOne({
           attributes: [
             "ID_User",
@@ -840,7 +942,7 @@ exports.uploadFileUsers = async (req, res) => {
             message: "Mật khẩu không được để trống",
           });
         }
-        
+
         const mk = hashSync(`${matKhau}`, salt);
         const dataInsert = {
           ID_Duan: userData.ID_Duan,

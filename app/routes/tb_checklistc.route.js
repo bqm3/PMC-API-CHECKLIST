@@ -3,7 +3,8 @@ const upload = multer();
 
 module.exports = (app) => {
   const tb_checklistc = require("../controllers/tb_checklistc.controller.js");
-  const { isAuthenticated } = require("../middleware/auth_middleware.js");
+  const tb_checklistc_chinhanh = require("../controllers/tb_checklistc_chinhanh.controller.js");
+  const { isAuthenticated, isAdmin } = require("../middleware/auth_middleware.js");
   const uploader = require("../config/cloudinary.config");
 
   var router = require("express").Router();
@@ -38,16 +39,29 @@ module.exports = (app) => {
   
   // Role: VIP
   //========================================== 
-  router.get("/top-10-max", tb_checklistc.top10max )
-  router.get("/top3", tb_checklistc.topCompletionRate);
   router.get("/list-checklist-error", tb_checklistc.getChecklistsErrorFromYesterday);
   router.get("/percent-checklist-project", tb_checklistc.getProjectsChecklistStatus);
   router.get("/quan-ly-vi-tri", tb_checklistc.getLocationsChecklist);
   router.get("/ti-le-hoan-thanh", tb_checklistc.tiLeHoanThanh);
   router.get("/ti-le-su-co", tb_checklistc.tiLeSuco);
+  router.get("/su-co", tb_checklistc.suCoChiTiet);
   router.get("/report-checklist-percent-week", tb_checklistc.reportPercentWeek);
   router.get("/report-checklist-percent-yesterday", tb_checklistc.reportPercentYesterday);
   router.get("/report-problem-percent-week", tb_checklistc.soSanhSuCo);
+  router.get("/report-checklist-project-excel", tb_checklistc.createExcelDuAn);
+
+    // Role: Chi nhánh
+  //========================================== 
+  router.get("/chi-nhanh-list-checklist-error",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.getChecklistsErrorFromYesterday);
+  router.get("/chi-nhanh-percent-checklist-project",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.getProjectsChecklistStatus);
+  router.get("/chi-nhanh-quan-ly-vi-tri",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.getLocationsChecklist);
+  router.get("/chi-nhanh-ti-le-hoan-thanh",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.tiLeHoanThanh);
+  // router.get("/chi-nhanh-ti-le-su-co",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.tiLeSuco);
+  // router.get("/chi-nhanh-su-co",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.suCoChiTiet);
+  // router.get("/chi-nhanh-report-checklist-percent-week",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.reportPercentWeek);
+  // router.get("/chi-nhanh-report-checklist-percent-yesterday",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.reportPercentYesterday);
+  // router.get("/chi-nhanh-report-problem-percent-week",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.soSanhSuCo);
+  // router.get("/chi-nhanh-report-checklist-project-excel",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.createExcelDuAn);
 
   // Role: PSH
   router.get("/report-location", tb_checklistc.reportLocation);
