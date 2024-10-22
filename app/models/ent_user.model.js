@@ -14,6 +14,10 @@ const Ent_user = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    ID_Chinhanh: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
     ID_KhoiCV: {
       type: DataTypes.INTEGER,
     },

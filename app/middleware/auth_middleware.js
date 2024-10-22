@@ -22,9 +22,9 @@ const isAuthenticated = asyncHandler((req, res, next) => {
 });
 
 const isAdmin = asyncHandler((req, res, next) => {
-  const { ID_Chucvu } = req.user.data;
+  const { ID_Chucvu, ent_chucvu } = req.user.data;
 
-  if (ID_Chucvu !== 1 && ID_Chucvu !== 2)
+  if (ent_chucvu?.Role !== 10 && ent_chucvu?.Role !== 0 && ent_chucvu?.Role !== 4)
     return res.status(401).json({
       success: false,
       message: "Không có quyền truy cập",
@@ -33,12 +33,12 @@ const isAdmin = asyncHandler((req, res, next) => {
 });
 
 const isRoleKST = asyncHandler((req, res, next) => {
-  const { ID_Chucvu } = req.user.data;
+  const { ID_Chucvu, ent_chucvu } = req.user.data;
 
-  if (ID_Chucvu !== 3)
+  if (ent_chucvu?.Role !== 3 && ent_chucvu?.Role !== 8)
     return res.status(401).json({
       success: false,
-      message: "Chỉ kỹ sư trưởng mới có quyền thực hiện",
+      message: "Chỉ kỹ sư, giám sát trưởng mới có quyền thực hiện",
     });
   next();
 });
