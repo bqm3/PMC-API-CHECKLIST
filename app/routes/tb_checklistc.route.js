@@ -56,12 +56,12 @@ module.exports = (app) => {
   router.get("/chi-nhanh-percent-checklist-project",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.getProjectsChecklistStatus);
   router.get("/chi-nhanh-quan-ly-vi-tri",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.getLocationsChecklist);
   router.get("/chi-nhanh-ti-le-hoan-thanh",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.tiLeHoanThanh);
-  // router.get("/chi-nhanh-ti-le-su-co",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.tiLeSuco);
-  // router.get("/chi-nhanh-su-co",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.suCoChiTiet);
-  // router.get("/chi-nhanh-report-checklist-percent-week",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.reportPercentWeek);
-  // router.get("/chi-nhanh-report-checklist-percent-yesterday",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.reportPercentYesterday);
-  // router.get("/chi-nhanh-report-problem-percent-week",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.soSanhSuCo);
-  // router.get("/chi-nhanh-report-checklist-project-excel",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.createExcelDuAn);
+  router.get("/chi-nhanh-ti-le-su-co",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.tiLeSuco);
+  router.get("/chi-nhanh-su-co",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.suCoChiTiet);
+  router.get("/chi-nhanh-report-checklist-percent-week",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.reportPercentWeek);
+  router.get("/chi-nhanh-report-checklist-percent-yesterday",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.reportPercentYesterday);
+  router.get("/chi-nhanh-report-problem-percent-week",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.soSanhSuCo);
+  router.get("/chi-nhanh-report-checklist-project-excel",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.createExcelDuAn);
 
   // Role: PSH
   router.get("/report-location", tb_checklistc.reportLocation);

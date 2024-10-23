@@ -3,7 +3,7 @@ const upload = multer();
 
 module.exports = (app) => {
   const tb_sucongoai = require("../controllers/tb_sucongoai.controller.js");
-  const { isAuthenticated } = require("../middleware/auth_middleware.js");
+  const { isAuthenticated, isAdmin } = require("../middleware/auth_middleware.js");
 
   var router = require("express").Router();
 
@@ -18,6 +18,11 @@ module.exports = (app) => {
   router.get("/su-co-ngoai", tb_sucongoai.getSucoNam);
   router.get("/report-incident-percent-week", tb_sucongoai.getSucoNam);
   router.get("/report-external-incident-percent-week", tb_sucongoai.getSuCoBenNgoai);
+
+  // ===================================
+  router.get("/chi-nhanh-report-external-incident-percent-week",[isAuthenticated, isAdmin], tb_sucongoai.getSuCoBenNgoaiChiNhanh);
+  router.get("/chi-nhanh-su-co-ngoai",[isAuthenticated, isAdmin], tb_sucongoai.getSuCoNamChiNhanh);
+  router.get("/chi-nhanh-dashboard",[isAuthenticated, isAdmin], tb_sucongoai.dashboardAllChiNhanh);
   
   app.use("/api/v2/tb_sucongoai", router);
 };

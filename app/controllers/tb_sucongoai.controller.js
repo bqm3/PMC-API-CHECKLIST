@@ -848,3 +848,360 @@ exports.getSuCoBenNgoai = async (req, res) => {
   }
 };
 
+exports.getSuCoBenNgoaiChiNhanh = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    const name = req.query.name;
+
+    // Xác định ngày bắt đầu và kết thúc của tuần này và tuần trước
+    const today = new Date();
+    const startOfCurrentWeek = new Date(today.setDate(today.getDate() - today.getDay()));
+    const endOfCurrentWeek = new Date(startOfCurrentWeek);
+    endOfCurrentWeek.setDate(endOfCurrentWeek.getDate() + 6); // Thêm 6 ngày để có ngày kết thúc tuần này
+
+    const startOfLastWeek = new Date(startOfCurrentWeek);
+    startOfLastWeek.setDate(startOfCurrentWeek.getDate() - 7); // Lùi 7 ngày để có ngày bắt đầu tuần trước
+    const endOfLastWeek = new Date(startOfLastWeek);
+    endOfLastWeek.setDate(endOfLastWeek.getDate() + 6); // Thêm 6 ngày để có ngày kết thúc tuần trước
+
+    // Truy vấn số lượng sự cố cho tuần này
+    const currentWeekIncidents = await Tb_sucongoai.findAll({
+      attributes: [
+        [fn("COUNT", col("ID_Suco")), "currentWeekCount"],
+      ],
+      where: {
+        isDelete: 0,
+        Ngaysuco: {
+          [Op.gte]: startOfCurrentWeek,
+          [Op.lte]: endOfCurrentWeek,
+        },
+      },
+      raw: true,
+    });
+
+    // Truy vấn số lượng sự cố cho tuần trước
+    const lastWeekIncidents = await Tb_sucongoai.findAll({
+      attributes: [
+        [fn("COUNT", col("ID_Suco")), "lastWeekCount"],
+      ],
+      where: {
+        isDelete: 0,
+        Ngaysuco: {
+          [Op.gte]: startOfLastWeek,
+          [Op.lte]: endOfLastWeek,
+        },
+      },
+      raw: true,
+    });
+
+    // Lấy tổng số lượng sự cố từ kết quả truy vấn
+    const currentWeekCount = parseInt(currentWeekIncidents[0]?.currentWeekCount, 10) || 0;
+    const lastWeekCount = parseInt(lastWeekIncidents[0]?.lastWeekCount, 10) || 0;
+
+    // Tính phần trăm thay đổi
+    let percentageChange = 0;
+    if (lastWeekCount > 0) { // Tránh chia cho 0
+      percentageChange = ((currentWeekCount - lastWeekCount) / lastWeekCount) * 100;
+    } else if (currentWeekCount > 0) {
+      percentageChange = 100; // Nếu tuần này có sự cố mà tuần trước không có
+    }
+
+    // Truy vấn chi tiết sự cố theo tên dự án
+    const data = await Tb_sucongoai.findAll({
+      attributes: [
+        "ID_Suco",
+        "ID_Hangmuc",
+        "Ngaysuco",
+        "Giosuco",
+        "Noidungsuco",
+        "Duongdancacanh",
+        "ID_User",
+        "Tinhtrangxuly",
+        "Anhkiemtra",
+        "Ghichu",
+        "Ngayxuly",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_hangmuc,
+          as: "ent_hangmuc",
+          attributes: [
+            "Hangmuc",
+            "Tieuchuankt",
+            "ID_Khuvuc",
+            "MaQrCode",
+            "FileTieuChuan",
+            "ID_Khuvuc",
+          ],
+        },
+        {
+          model: Ent_user,
+          attributes: ["UserName", "Email", "Hoten", "ID_Duan"],
+          include: [
+            {
+              model: Ent_duan,
+              attributes: [
+                "ID_Duan",
+                "Duan",
+                "Diachi",
+                "Vido",
+                "Kinhdo",
+                "Logo",
+                "ID_Chinhanh",
+              ],
+              where: {
+                ID_Chinhanh: userData.ID_Chinhanh,
+              },
+            },
+            {
+              model: Ent_chucvu,
+              attributes: ["Chucvu", "Role"],
+            },
+          ],
+        },
+      ],
+      where: {
+        isDelete: 0,
+        Ngaysuco: {
+          [Op.gte]: startOfCurrentWeek,
+          [Op.lte]: endOfCurrentWeek,
+        },
+      },
+      order: [
+        ["Tinhtrangxuly", "ASC"],
+        ["Ngaysuco", "DESC"],
+        ["Ngayxuly", "DESC"],
+      ],
+    });
+
+    const filteredData = data.filter((item) => {
+      return item.ent_user && item.ent_user.ent_duan && item.ent_user.ent_duan.Duan == name;
+    });
+
+    if (filteredData.length === 0) {
+      return res.status(200).json({
+        data: {
+          currentWeekCount,
+          lastWeekCount,
+          percentageChange: percentageChange.toFixed(2),
+        },
+      });
+    }
+
+    return res.status(200).json({
+      message: "Sự cố ngoài!",
+      data: filteredData,
+      totalCounts: {
+        currentWeekCount,
+        lastWeekCount,
+        percentageChange: percentageChange.toFixed(2),
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+exports.getSuCoNamChiNhanh = async (req, res) => {
+  try {
+
+    const userData = req.user.data;
+    const name = req.query.name;
+
+    let whereClause = {
+      isDelete: 0,
+    };
+
+    const data = await Tb_sucongoai.findAll({
+      attributes: [
+        "ID_Suco",
+        "ID_Hangmuc",
+        "Ngaysuco",
+        "Giosuco",
+        "Noidungsuco",
+        "Duongdancacanh",
+        "ID_User",
+        "Tinhtrangxuly",
+        "Anhkiemtra",
+        "Ghichu",
+        "Ngayxuly",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_hangmuc,
+          as: "ent_hangmuc",
+          attributes: [
+            "Hangmuc",
+            "Tieuchuankt",
+            "ID_Khuvuc",
+            "MaQrCode",
+            "FileTieuChuan",
+            "ID_Khuvuc",
+          ],
+        },
+        {
+          model: Ent_user,
+          attributes: ["UserName", "Email", "Hoten", "ID_Duan"],
+          include: [
+            {
+              model: Ent_duan,
+              attributes: [
+                "ID_Duan",
+                "Duan",
+                "Diachi",
+                "Vido",
+                "Kinhdo",
+                "Logo",
+                "ID_Chinhanh",
+              ],
+              where: {
+                ID_Chinhanh: userData.ID_Chinhanh,
+              },
+            },
+            {
+              model: Ent_chucvu,
+              attributes: ["Chucvu", "Role"],
+            },
+          ],
+        },
+      ],
+      where: whereClause,
+      order: [
+        ["Tinhtrangxuly", "ASC"],
+        ["Ngaysuco", "DESC"],
+        ["Ngayxuly", "DESC"],
+      ],
+    });
+
+    const filteredData = data.filter((item) => {
+      return item.ent_user && item.ent_user.ent_duan && item.ent_user.ent_duan.Duan == name;
+    });
+
+    if (filteredData.length === 0) {
+      return res.status(200).json({
+        message: `Không tìm thấy sự cố nào cho dự án ${name}!`,
+        data: [],
+      });
+    }
+
+    return res.status(200).json({
+      message: "Sự cố ngoài!",
+      data: filteredData,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+exports.dashboardAllChiNhanh = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    const year = req.query.year || new Date().getFullYear();
+    const tangGiam = "desc"; // Thứ tự sắp xếp
+
+    // Xây dựng điều kiện where cho truy vấn
+    let whereClause = {
+      isDelete: 0,
+    };
+
+    if (year) {
+      whereClause.Ngaysuco = {
+        [Op.gte]: `${year}-01-01`,
+        [Op.lte]: `${year}-12-31`,
+      };
+    }
+
+    // Truy vấn cơ sở dữ liệu
+    const relatedSucos = await Tb_sucongoai.findAll({
+      attributes: [
+        "ID_Hangmuc",
+        "ID_User",
+        "Ngaysuco",
+        "Giosuco",
+        "Noidungsuco",
+        "ID_User",
+        "Tinhtrangxuly",
+        "Ngayxuly",
+        "isDelete",
+      ],
+      where: whereClause,
+      include: [
+        {
+          model: Ent_hangmuc,
+          attributes: [
+            "Hangmuc",
+            "Tieuchuankt",
+            "ID_Khuvuc",
+            "MaQrCode",
+            "FileTieuChuan",
+          ],
+        },
+        {
+          model: Ent_user,
+          attributes: ["ID_Duan", "Hoten", "UserName"],
+          include: {
+            model: Ent_duan,
+            attributes: ["ID_Duan", "Duan", "Diachi", "Vido", "Kinhdo", "Logo", "ID_Chinhanh"],
+            where: {
+              ID_Chinhanh: userData.ID_Chinhanh,
+            },
+          },
+        },
+      ],
+    });
+
+    // Tạo đối tượng để lưu số lượng sự cố theo dự án theo năm
+    const projectIncidentCountByYear = {};
+
+    // Xử lý dữ liệu để đếm số lượng sự cố theo dự án và năm
+    relatedSucos.forEach((suco) => {
+      const projectName = suco?.ent_user?.ent_duan?.Duan;
+      const incidentYear = new Date(suco?.Ngaysuco)?.getFullYear();
+
+      if (!projectIncidentCountByYear[incidentYear]) {
+        projectIncidentCountByYear[incidentYear] = {};
+      }
+
+      if (!projectIncidentCountByYear[incidentYear][projectName]) {
+        projectIncidentCountByYear[incidentYear][projectName] = 0;
+      }
+
+      projectIncidentCountByYear[incidentYear][projectName] += 1;
+    });
+
+    // Lấy danh sách tất cả các dự án
+    const allProjects = Object?.values(relatedSucos)?.map(
+      (suco) => suco?.ent_user?.ent_duan?.Duan
+    );
+
+    const uniqueProjects = [...new Set(allProjects)];
+
+    // Chuyển đổi dữ liệu thành định dạng mong muốn
+    const seriesData = Object?.entries(projectIncidentCountByYear)?.map(
+      ([year, projectCount]) => ({
+        name: year,
+        data: uniqueProjects?.map((project) => projectCount[project] || 0),
+      })
+    );
+
+    // Trả về kết quả
+    res.status(200).json({
+      message: "Số lượng sự cố theo dự án",
+      // data: relatedSucos
+      data: {
+        categories: uniqueProjects,
+        series: seriesData,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
