@@ -8,7 +8,7 @@ module.exports = (app) => {
     var router = require("express").Router();
   
     router.post("/login", ent_user.login);
-    router.get("/get-online",[isAuthenticated,isAdmin], ent_user.getUserOnline);
+    router.get("/get-online",[isAuthenticated], ent_user.getUserOnline);
     router.get("/gs",[isAuthenticated], ent_user.getGiamSat);
     router.get("/:id",[isAuthenticated, isAdmin], ent_user.getDetail);
     router.post("/check-auth",[isAuthenticated], ent_user.checkAuth);
