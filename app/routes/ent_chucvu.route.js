@@ -1,7 +1,7 @@
 
 module.exports = (app) => {
   const ent_chucvu = require("../controllers/ent_chucvu.controller.js");
-  const { isAuthenticated,isAdmin } = require("../middleware/auth_middleware.js");
+  const { isAuthenticated } = require("../middleware/auth_middleware.js");
 
   var router = require("express").Router();
 
