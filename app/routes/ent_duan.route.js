@@ -7,12 +7,15 @@ module.exports = (app) => {
     router.post("/create",[isAuthenticated, isAdmin], ent_duan.create);
     router.get("/",[isAuthenticated], ent_duan.get);
     router.get("/web",[isAuthenticated], ent_duan.getKhuvucByDuan);
+    router.get("/du-an-theo-nhom", ent_duan.getThongtinduantheonhom)
 
     router.get("/thong-tin-du-an",[isAuthenticated], ent_duan.getThongtinduan);
-    router.get("/du-an-theo-nhom", ent_duan.getThongtinduantheonhom)
     router.get("/:id",[isAuthenticated], ent_duan.getDetail);
     router.put("/update/:id",[isAuthenticated], ent_duan.update);
     router.put("/delete/:id",[isAuthenticated], ent_duan.delete);
+
+
+    
   
     app.use("/api/v2/ent_duan", router);
   };

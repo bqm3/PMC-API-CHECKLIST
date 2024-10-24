@@ -624,8 +624,7 @@ exports.uploadFiles = async (req, res) => {
         const tenKhoiCongViec = transformedItem["TÊNKHỐICÔNGVIỆC"];
         const tenToanha = transformedItem["TÊNTÒANHÀ"];
         const tenKhuvuc = transformedItem["TÊNKHUVỰC"];
-        const maKhuvuc = transformedItem["MÃKHUVỰC"];
-        const maQrKhuvuc = transformedItem["MÃQRCODEKHUVỰC"];
+        const tenTang = transformedItem["TÊNTẦNG"];
 
         const sanitizedTenToanha = tenToanha?.replace(/\t/g, ""); // Loại bỏ tất cả các ký tự tab
 
@@ -666,6 +665,7 @@ exports.uploadFiles = async (req, res) => {
           attributes: [
             "ID_Khuvuc",
             "Tenkhuvuc",
+            "MaQrCode",
             "isDelete",
             "ID_Toanha",
             "ID_User",
@@ -675,10 +675,8 @@ exports.uploadFiles = async (req, res) => {
               where(fn("UPPER", col("Tenkhuvuc")), {
                 [Op.like]: `${tenKhuvuc.toUpperCase()}`,
               }),
-              where(fn("UPPER", col("MaQrCode")), {
-                [Op.like]: `${maQrKhuvuc}`,
-              }),
             ],
+            MaQrCode: generateQRCode( tenToanha,tenKhuvuc, tenTang),
             ID_Toanha: toaNha.ID_Toanha,
             isDelete: 0,
           },
@@ -691,8 +689,8 @@ exports.uploadFiles = async (req, res) => {
           const dataInsert = {
             ID_Toanha: toaNha.ID_Toanha,
             Sothutu: 1,
-            Makhuvuc: maKhuvuc,
-            MaQrCode: maQrKhuvuc,
+            Makhuvuc: "",
+            MaQrCode: generateQRCode(tenToanha,tenKhuvuc, tenTang),
             Tenkhuvuc: tenKhuvuc,
             ID_User: userData.ID_User,
             ID_KhoiCVs: validKhoiCVs,
@@ -820,3 +818,21 @@ exports.downloadQrCodes = async (req, res) => {
     res.status(500).json({ error: 'Failed to generate QR codes' });
   }
 };
+
+function generateQRCode(tenToa, khuVuc, tenTang) {
+  // Hàm lấy ký tự đầu tiên của mỗi từ trong chuỗi
+  function getInitials(string) {
+    return string
+      .split(" ") // Tách chuỗi thành mảng các từ
+      .map((word) => word.charAt(0).toUpperCase()) // Lấy ký tự đầu tiên của mỗi từ và viết hoa
+      .join(""); // Nối lại thành chuỗi
+  }
+
+  // Lấy ký tự đầu của khu vực và hạng mục
+  const khuVucInitials = getInitials(khuVuc);
+  const tenToaInitials = getInitials(tenToa);
+
+  // Tạo chuỗi QR
+  const qrCode = `QR-${tenToaInitials}-${khuVucInitials}-${tenTang}`;
+  return qrCode;
+}
