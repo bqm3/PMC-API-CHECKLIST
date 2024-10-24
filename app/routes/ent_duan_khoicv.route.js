@@ -7,7 +7,7 @@ module.exports = (app) => {
 
   var router = require("express").Router();
 
-  router.post("/create", [isAuthenticated, isAdmin], ent_duan_khoicv.create);
+  router.post("/create", [isAuthenticated], ent_duan_khoicv.create);
 
   router.get("/", [isAuthenticated], ent_duan_khoicv.get);
 
