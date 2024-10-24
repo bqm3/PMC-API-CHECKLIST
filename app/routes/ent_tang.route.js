@@ -7,7 +7,7 @@ module.exports = (app) => {
 
   var router = require("express").Router();
 
-  router.post("/create", [isAuthenticated, isAdmin], ent_tang.create);
+  router.post("/create", [isAuthenticated], ent_tang.create);
   router.get("/", [isAuthenticated], ent_tang.get);
   router.put("/delete-mul", [isAuthenticated], ent_tang.deleteMul)
 
