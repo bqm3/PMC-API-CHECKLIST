@@ -1921,15 +1921,17 @@ exports.uploadFiles = async (req, res) => {
         }, {});
       };
 
+      // Tạo object để lưu số thứ tự cho từng nhóm checklist
+      const checklistOrderMap = {};
+
       for (const [index, item] of data.entries()) {
         try {
           const transformedItem = removeSpacesFromKeys(item);
-          const maQrHangmuc = transformedItem["MÃQRCODEHẠNGMỤC"];
-          const tenHangmuc = transformedItem["TÊNHẠNGMỤC"];
+          const tenKhuvuc = transformedItem["TÊNKHUVỰC"];
+          const tenDuan = transformedItem["TÊNDỰÁN"];
+          const tenToanha = transformedItem["TÊNTÒANHÀ"];
           const tenTang = transformedItem["TÊNTẦNG"];
-          const tenKhoiCongViec = transformedItem["TÊNKHỐICÔNGVIỆC"];
-          const sttChecklist = transformedItem["STT"];
-          const maChecklist = transformedItem["MÃCHECKLIST"];
+          const tenHangmuc = transformedItem["TÊNHẠNGMỤC"];
           const tenChecklist = transformedItem["TÊNCHECKLIST"];
           const tieuChuanChecklist = transformedItem["TIÊUCHUẨNCHECKLIST"];
           const giaTriDanhDinh = transformedItem["GIÁTRỊĐỊNHDANH"];
@@ -1977,7 +1979,12 @@ exports.uploadFiles = async (req, res) => {
               },
             ],
             where: {
-              MaQrCode: maQrHangmuc,
+              MaQrCode: generateQRCode(
+                tenToanha,
+                tenKhuvuc,
+                tenHangmuc,
+                tenTang
+              ),
               Hangmuc: tenHangmuc,
               isDelete: 0,
             },
@@ -2000,15 +2007,26 @@ exports.uploadFiles = async (req, res) => {
             },
             transaction,
           });
-          
+
+          // Tạo khóa duy nhất cho mỗi nhóm checklist dựa vào ID_Khuvuc, ID_Tang, ID_Hangmuc
+          const checklistKey = `${hangmuc.ID_Khuvuc}-${tang.ID_Tang}-${hangmuc.ID_Hangmuc}`;
+
+          // Kiểm tra nếu nhóm này chưa có trong checklistOrderMap thì khởi tạo
+          if (!checklistOrderMap[checklistKey]) {
+            checklistOrderMap[checklistKey] = 1; // Bắt đầu từ số thứ tự 1
+          } else {
+            checklistOrderMap[checklistKey] += 1; // Tăng số thứ tự cho checklist cùng nhóm
+          }
+
+          const sttChecklist = checklistOrderMap[checklistKey]; // Lấy số thứ tự hiện tại cho checklist
 
           const data = {
             ID_Khuvuc: hangmuc.ID_Khuvuc,
             ID_Tang: tang.ID_Tang,
             ID_Hangmuc: hangmuc.ID_Hangmuc,
-            Sothutu: sttChecklist || 1,
-            Maso: maChecklist || "",
-            MaQrCode: maChecklist || "",
+            Sothutu: sttChecklist, // Sử dụng số thứ tự vừa tính toán
+            Maso: generateQRCodeChecklist(tenChecklist) || "",
+            MaQrCode: generateQRCodeChecklist(tenChecklist),
             Checklist: tenChecklist,
             Ghichu: ghiChu || "",
             Tieuchuan: tieuChuanChecklist || "",
@@ -2081,3 +2099,38 @@ exports.uploadFiles = async (req, res) => {
     });
   }
 };
+
+
+function generateQRCode(toaNha, khuVuc, hangMuc, tenTang) {
+  // Hàm lấy ký tự đầu tiên của mỗi từ trong chuỗi
+  function getInitials(string) {
+    return string
+      .split(" ") // Tách chuỗi thành mảng các từ
+      .map((word) => word.charAt(0).toUpperCase()) // Lấy ký tự đầu tiên của mỗi từ và viết hoa
+      .join(""); // Nối lại thành chuỗi
+  }
+
+  // Lấy ký tự đầu của khu vực và hạng mục
+  const khuVucInitials = getInitials(khuVuc);
+  const hangMucInitials = getInitials(hangMuc);
+  const toaNhaInitials = getInitials(toaNha);
+
+  // Tạo chuỗi QR
+  const qrCode = `QR-${toaNhaInitials}-${khuVucInitials}-${hangMucInitials}-${tenTang}`;
+  return qrCode;
+}
+
+function generateQRCodeChecklist(tenChecklist) {
+  // Hàm lấy ký tự đầu tiên của mỗi từ trong chuỗi
+  function getInitials(string) {
+    return string
+      .split(" ") // Tách chuỗi thành mảng các từ
+      .map((word) => word.charAt(0).toUpperCase()) // Lấy ký tự đầu tiên của mỗi từ và viết hoa
+      .join(""); // Nối lại thành chuỗi
+  }
+
+  // Lấy ký tự đầu của khu vực và hạng mục
+  const checkListInitials = getInitials(tenChecklist);
+
+  return checkListInitials;
+}

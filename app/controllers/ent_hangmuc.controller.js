@@ -8,10 +8,10 @@ const { Ent_khuvuc } = require("../models/setup.model");
 const { Op } = require("sequelize");
 const sequelize = require("../config/db.config");
 const xlsx = require("xlsx");
-const fs = require('fs');
-const path = require('path');
-const archiver = require('archiver');
-const axios = require('axios');
+const fs = require("fs");
+const path = require("path");
+const archiver = require("archiver");
+const axios = require("axios");
 
 // Create and Save a new Ent_tang
 exports.create = async (req, res, next) => {
@@ -287,7 +287,6 @@ exports.update = async (req, res) => {
         },
         attributes: ["MaQrCode", "ID_Hangmuc", "isDelete"],
       });
-
 
       const existingKhuVuc = await Ent_khuvuc.findOne({
         attributes: ["ID_Khuvuc", "MaQrCode", "isDelete"],
@@ -595,7 +594,7 @@ exports.getHangmucTotal = async (req, res) => {
         hangmucCounts[khoiCV]++;
       });
     });
-    
+
     // Convert counts to desired format
     const result = Object.keys(hangmucCounts).map((khoiCV) => ({
       label: khoiCV,
@@ -643,22 +642,33 @@ exports.uploadFiles = async (req, res) => {
       for (const item of data) {
         const transformedItem = removeSpacesFromKeys(item);
         const tenKhuvuc = transformedItem["TÊNKHUVỰC"];
-        const maQrKhuvuc = transformedItem["MÃQRCODEKHUVỰC"];
-        const maQrHangmuc = transformedItem["MÃQRCODEHẠNGMỤC"];
+        const tenDuan = transformedItem["TÊNDỰÁN"];
+        const tenToanha = transformedItem["TÊNTÒANHÀ"];
+        const tenTang = transformedItem["TÊNTẦNG"];
         const tenHangmuc = transformedItem["TÊNHẠNGMỤC"];
         const quanTrong = transformedItem["QUANTRỌNG"];
 
         const khuVuc = await Ent_khuvuc.findOne({
           attributes: ["ID_Khuvuc", "MaQrCode", "Tenkhuvuc", "isDelete"],
           where: {
-            MaQrCode: maQrKhuvuc,
             Tenkhuvuc: tenKhuvuc,
             isDelete: 0,
           },
+          include: [
+            {
+              model: Ent_toanha,
+              attributes: ["ID_Toanha", "Toanha", "ID_Duan"],
+              where: {
+                Toanha: tenToanha,
+                ID_Duan: userData.ID_Duan,
+                isDelete: 0,
+              },
+            },
+          ],
           transaction,
         });
         if (!khuVuc) {
-          console.log(`Khu vực với MaQrCode ${maQrKhuvuc} không tìm thấy`);
+          console.log(`Khu vực với MaQrCode ${khuVuc} không tìm thấy`);
           continue; // Skip the current iteration and move to the next item
         }
 
@@ -668,7 +678,14 @@ exports.uploadFiles = async (req, res) => {
           where: {
             [Op.and]: [
               { Hangmuc: tenHangmuc },
-              { MaQrCode: maQrHangmuc },
+              {
+                MaQrCode: generateQRCode(
+                  tenToanha,
+                  tenKhuvuc,
+                  tenHangmuc,
+                  tenTang
+                ),
+              },
               { ID_Khuvuc: khuVuc.ID_Khuvuc },
               { isDelete: 0 },
             ],
@@ -680,9 +697,17 @@ exports.uploadFiles = async (req, res) => {
           // If tenKhuvuc doesn't exist, create a new entry
           const dataInsert = {
             ID_Khuvuc: khuVuc.ID_Khuvuc,
-            MaQrCode: maQrHangmuc,
+            MaQrCode: generateQRCode(
+              tenToanha,
+              tenKhuvuc,
+              tenHangmuc,
+              tenTang
+            ),
             Hangmuc: tenHangmuc,
-            Important: (quanTrong !== undefined && quanTrong !== null && quanTrong !== "") ? 1: 0,
+            Important:
+              quanTrong !== undefined && quanTrong !== null && quanTrong !== ""
+                ? 1
+                : 0,
             isDelete: 0,
           };
           await Ent_hangmuc.create(dataInsert, { transaction });
@@ -706,8 +731,7 @@ exports.uploadFiles = async (req, res) => {
   }
 };
 
-
-const qrFolder = path.join(__dirname, 'generated_qr_codes');
+const qrFolder = path.join(__dirname, "generated_qr_codes");
 
 const generateAndSaveQrCodes = async (maQrCodes) => {
   // Create the directory if it doesn't exist
@@ -717,28 +741,30 @@ const generateAndSaveQrCodes = async (maQrCodes) => {
 
   return Promise.all(
     maQrCodes.map(async (maQrCode) => {
-      const sanitizedCode = maQrCode.replace(/[/\\?%*:|"<>]/g, '-'); // Replace characters not allowed in file names
-      const url = `https://quickchart.io/qr?text=${encodeURIComponent(maQrCode)}&caption=${encodeURIComponent(maQrCode)}&size=300x300`;
+      const sanitizedCode = maQrCode.replace(/[/\\?%*:|"<>]/g, "-"); // Replace characters not allowed in file names
+      const url = `https://quickchart.io/qr?text=${encodeURIComponent(
+        maQrCode
+      )}&caption=${encodeURIComponent(maQrCode)}&size=300x300`;
       const imagePath = path.join(qrFolder, `qr_code_${sanitizedCode}.png`);
 
       try {
         const response = await axios({
-          method: 'GET',
+          method: "GET",
           url,
-          responseType: 'stream',
+          responseType: "stream",
         });
 
         await new Promise((resolve, reject) => {
           const writeStream = fs.createWriteStream(imagePath);
           response.data.pipe(writeStream);
-          writeStream.on('finish', resolve);
-          writeStream.on('error', reject);
+          writeStream.on("finish", resolve);
+          writeStream.on("error", reject);
         });
 
         return imagePath;
       } catch (error) {
         console.error(`Failed to generate QR code for ${maQrCode}:`, error);
-        return { maQrCode, error: 'Failed to generate QR code' };
+        return { maQrCode, error: "Failed to generate QR code" };
       }
     })
   );
@@ -748,26 +774,26 @@ exports.downloadQrCodes = async (req, res) => {
   const { maQrCodes } = req.query;
 
   if (!maQrCodes) {
-    return res.status(400).json({ error: 'maQrCodes parameter is required' });
+    return res.status(400).json({ error: "maQrCodes parameter is required" });
   }
 
   // Convert maQrCodes from a string to an array
-  const maQrCodeArray = maQrCodes.split(',').map((code) => code.trim());
+  const maQrCodeArray = maQrCodes.split(",").map((code) => code.trim());
 
   try {
     await generateAndSaveQrCodes(maQrCodeArray);
 
     // Create a zip file
-    const zipPath = path.join(__dirname, 'qr_codes.zip');
+    const zipPath = path.join(__dirname, "qr_codes.zip");
     const output = fs.createWriteStream(zipPath);
-    const archive = archiver('zip', {
+    const archive = archiver("zip", {
       zlib: { level: 9 },
     });
 
-    output.on('close', () => {
-      res.download(zipPath, 'qr_codes.zip', (err) => {
+    output.on("close", () => {
+      res.download(zipPath, "qr_codes.zip", (err) => {
         if (err) {
-          console.error('Error downloading the zip file:', err);
+          console.error("Error downloading the zip file:", err);
         } else {
           // Optionally, clean up the generated files
           fs.rmSync(qrFolder, { recursive: true, force: true });
@@ -776,16 +802,35 @@ exports.downloadQrCodes = async (req, res) => {
       });
     });
 
-    archive.on('error', (err) => {
-      console.error('Error while archiving:', err);
-      res.status(500).json({ error: 'Failed to archive QR codes' });
+    archive.on("error", (err) => {
+      console.error("Error while archiving:", err);
+      res.status(500).json({ error: "Failed to archive QR codes" });
     });
 
     archive.pipe(output);
     archive.directory(qrFolder, false);
     await archive.finalize();
   } catch (error) {
-    console.error('Failed to generate QR codes:', error);
-    res.status(500).json({ error: 'Failed to generate QR codes' });
+    console.error("Failed to generate QR codes:", error);
+    res.status(500).json({ error: "Failed to generate QR codes" });
   }
 };
+
+function generateQRCode(toaNha, khuVuc, hangMuc, tenTang) {
+  // Hàm lấy ký tự đầu tiên của mỗi từ trong chuỗi
+  function getInitials(string) {
+    return string
+      .split(" ") // Tách chuỗi thành mảng các từ
+      .map((word) => word.charAt(0).toUpperCase()) // Lấy ký tự đầu tiên của mỗi từ và viết hoa
+      .join(""); // Nối lại thành chuỗi
+  }
+
+  // Lấy ký tự đầu của khu vực và hạng mục
+  const khuVucInitials = getInitials(khuVuc);
+  const hangMucInitials = getInitials(hangMuc);
+  const toaNhaInitials = getInitials(toaNha);
+
+  // Tạo chuỗi QR
+  const qrCode = `QR-${toaNhaInitials}-${khuVucInitials}-${hangMucInitials}-${tenTang}`;
+  return qrCode;
+}

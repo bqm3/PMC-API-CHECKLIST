@@ -7,6 +7,7 @@ const {
   Ent_khuvuc_khoicv,
   Ent_khoicv,
   Ent_phanloaida,
+  Ent_chinhanh,
 } = require("../models/setup.model");
 const { Op } = require("sequelize");
 
@@ -568,6 +569,10 @@ exports.getThongtinduantheonhom = async (req, res) => {
         //   ],
         // },
         {
+          model: Ent_chinhanh,
+          attributes: ["Tenchinhanh","ID_Chinhanh"]
+        },
+        {
           model: Ent_nhom,
           attributes: ["Tennhom","ID_Nhom"]
         },
@@ -579,11 +584,14 @@ exports.getThongtinduantheonhom = async (req, res) => {
       ],
       where: {
         isDelete: 0,
+        ID_Duan: {
+          [Op.ne]: 1
+        }
       },
     });
 
     const groupedData = data.reduce((acc, item) => {
-      const groupName = item.ent_phanloaida?.Phanloai;
+      const groupName = item.ent_chinhanh?.Tenchinhanh;
 
       // Nếu chưa có key với tên nhóm, tạo mới
       if (!acc[groupName]) {
