@@ -7,7 +7,7 @@ module.exports = (app) => {
 
   var router = require("express").Router();
 
-  router.post("/create", [isAuthenticated, isAdmin], ent_toanha.create);
+  router.post("/create", [isAuthenticated], ent_toanha.create);
   router.get("/", [isAuthenticated], ent_toanha.get);
   router.get("/khuvuc/:id", [isAuthenticated], ent_toanha.getKhuvucByToanha);
   router.get("/:id", [isAuthenticated], ent_toanha.getDetail);
