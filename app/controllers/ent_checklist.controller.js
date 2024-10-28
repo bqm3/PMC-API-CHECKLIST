@@ -1930,6 +1930,7 @@ exports.uploadFiles = async (req, res) => {
           const tenKhuvuc = transformedItem["TÊNKHUVỰC"];
           const tenDuan = transformedItem["TÊNDỰÁN"];
           const tenToanha = transformedItem["TÊNTÒANHÀ"];
+          const tenKhoiCongViec = transformedItem["TÊNKHỐICÔNGVIỆC"];
           const tenTang = transformedItem["TÊNTẦNG"];
           const tenHangmuc = transformedItem["TÊNHẠNGMỤC"];
           const tenChecklist = transformedItem["TÊNCHECKLIST"];
@@ -1949,6 +1950,28 @@ exports.uploadFiles = async (req, res) => {
             console.log("Bỏ qua do thiếu tên tầng");
             continue;
           }
+
+          const khoiCongViecList = tenKhoiCongViec
+          .split(",")
+          .map((khoi) => khoi.trim());
+
+        const khoiCVs = await Promise.all(
+          khoiCongViecList.map(async (khoiCongViec) => {
+            const khoiCV = await Ent_khoicv.findOne({
+              attributes: ["ID_KhoiCV", "KhoiCV"],
+              where: {
+                KhoiCV: sequelize.where(
+                  sequelize.fn("UPPER", sequelize.col("KhoiCV")),
+                  "LIKE",
+                  khoiCongViec.toUpperCase()
+                ),
+              },
+              transaction,
+            });
+            return khoiCV ? khoiCV.ID_KhoiCV : null;
+          })
+        );
+        const validKhoiCVs = khoiCVs.filter((id) => id !== null);
 
           const hangmuc = await Ent_hangmuc.findOne({
             attributes: [
@@ -1975,6 +1998,7 @@ exports.uploadFiles = async (req, res) => {
                 ],
                 where: {
                   isDelete: 0,
+                  ID_KhoiCVs: { [Op.like]: validKhoiCVs },
                 },
               },
             ],
