@@ -601,7 +601,6 @@ exports.uploadFiles = async (req, res) => {
     }
     const userData = req.user.data;
 
-    // Đọc file Excel từ buffer
     const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
@@ -623,11 +622,10 @@ exports.uploadFiles = async (req, res) => {
         const tenToanha = transformedItem["TÊNTÒANHÀ"];
         const tenKhuvuc = transformedItem["TÊNKHUVỰC"];
         const tenTang = transformedItem["TÊNTẦNG"];
-
-        const sanitizedTenToanha = tenToanha?.replace(/\t/g, ""); // Loại bỏ các ký tự tab
+        const sanitizedTenToanha = tenToanha?.replace(/\t/g, "");
 
         const toaNha = await Ent_toanha.findOne({
-          attributes: ["ID_Toanha", "Sotang", "Toanha", "ID_Duan"],
+          attributes: ["ID_Toanha", "Sotang", "Toanha", "ID_Duan", "isDelete"],
           where: {
             Toanha: sanitizedTenToanha,
             ID_Duan: userData.ID_Duan,
@@ -636,7 +634,6 @@ exports.uploadFiles = async (req, res) => {
           transaction,
         });
 
-        // Tách danh sách khối công việc và lấy ID của các khối
         const khoiCongViecList = tenKhoiCongViec
           .split(",")
           .map((khoi) => khoi.trim());
@@ -659,73 +656,111 @@ exports.uploadFiles = async (req, res) => {
         );
         const validKhoiCVs = khoiCVs.filter((id) => id !== null);
 
-        // Kiểm tra sự tồn tại của khu vực với mã QR và tên khu vực
-        const existingKhuVuc = await Ent_khuvuc.findOne({
-          attributes: [
-            "ID_Khuvuc",
-            "Tenkhuvuc",
-            "MaQrCode",
-            "isDelete",
-            "ID_Toanha",
-            "ID_User",
-            "ID_KhoiCVs"
-          ],
-          where: {
-            [Op.and]: [
-              sequelize.where(sequelize.fn("UPPER", sequelize.col("Tenkhuvuc")), {
-                [Op.like]: `${tenKhuvuc.toUpperCase()}`,
-              }),
+        if (validKhoiCVs.length > 1) {
+          // Xử lý nhiều khối công việc
+          const existingKhuVuc = await Ent_khuvuc.findOne({
+            attributes: [
+              "ID_Khuvuc",
+              "Tenkhuvuc",
+              "MaQrCode",
+              "isDelete",
+              "ID_Toanha",
+              "ID_User",
+              "ID_KhoiCVs"
             ],
-            MaQrCode: generateQRCode(tenToanha, tenKhuvuc, tenTang),
-            ID_Toanha: toaNha.ID_Toanha,
-            isDelete: 0,
-          },
-          transaction,
-        });
-
-        let khuVucId;
-
-        if (!existingKhuVuc) {
-          // Nếu có nhiều hơn 1 khối công việc, lưu toàn bộ khối vào khu vực
-          const dataInsert = {
-            ID_Toanha: toaNha.ID_Toanha,
-            Sothutu: 1,
-            Makhuvuc: "",
-            MaQrCode: generateQRCode(tenToanha, tenKhuvuc, tenTang),
-            Tenkhuvuc: tenKhuvuc,
-            ID_User: userData.ID_User,
-            ID_KhoiCVs: khoiCVs.length > 1 ? validKhoiCVs : validKhoiCVs[0], // Thêm tất cả hoặc một khối công việc
-            isDelete: 0,
-          };
-
-          const newKhuVuc = await Ent_khuvuc.create(dataInsert, {
-            transaction,
-          });
-          khuVucId = newKhuVuc.ID_Khuvuc;
-        } else {
-          // Nếu khu vực đã tồn tại, chỉ thêm khối công việc nếu có hơn 1 khối
-          khuVucId = existingKhuVuc.ID_Khuvuc;
-          if (validKhoiCVs.length > 1) {
-            await existingKhuVuc.update(
-              { ID_KhoiCVs: validKhoiCVs },
-              { transaction }
-            );
-          }
-          console.log(
-            `Khu vực "${tenKhuvuc}" đã tồn tại, bỏ qua việc tạo mới.`
-          );
-        }
-
-        // Thêm liên kết giữa khu vực và các khối công việc vào bảng trung gian
-        for (const idKhoiCV of validKhoiCVs) {
-          await Ent_khuvuc_khoicv.findOrCreate({
             where: {
-              ID_Khuvuc: khuVucId,
-              ID_KhoiCV: idKhoiCV,
+              Tenkhuvuc: tenKhuvuc,
+              MaQrCode: generateQRCode(tenToanha, tenKhuvuc, tenTang),
+              ID_Toanha: toaNha.ID_Toanha,
               isDelete: 0,
             },
             transaction,
           });
+
+          let khuVucId;
+          if (!existingKhuVuc) {
+            const newKhuVuc = await Ent_khuvuc.create(
+              {
+                ID_Toanha: toaNha.ID_Toanha,
+                Sothutu: 1,
+                Makhuvuc: "",
+                MaQrCode: generateQRCode(tenToanha, tenKhuvuc, tenTang),
+                Tenkhuvuc: tenKhuvuc,
+                ID_User: userData.ID_User,
+                ID_KhoiCVs: validKhoiCVs,
+                isDelete: 0,
+              },
+              { transaction }
+            );
+            khuVucId = newKhuVuc.ID_Khuvuc;
+          } else {
+            khuVucId = existingKhuVuc.ID_Khuvuc;
+            const currentKhoiCVs = existingKhuVuc.ID_KhoiCVs || [];
+            const updatedKhoiCVs = Array.from(
+              new Set([...currentKhoiCVs, ...validKhoiCVs])
+            );
+            await existingKhuVuc.update(
+              { ID_KhoiCVs: updatedKhoiCVs },
+              { transaction }
+            );
+            console.log(`Khu vực "${tenKhuvuc}" đã tồn tại, cập nhật ID_KhoiCVs.`);
+          }
+
+          for (const idKhoiCV of validKhoiCVs) {
+            await Ent_khuvuc_khoicv.findOrCreate({
+              where: {
+                ID_Khuvuc: khuVucId,
+                ID_KhoiCV: idKhoiCV,
+                isDelete: 0,
+              },
+              transaction,
+            });
+          }
+        } else if (validKhoiCVs.length === 1) {
+          // Xử lý chỉ một khối công việc
+          const khuVucExists = await Ent_khuvuc.findOne({
+            attributes: ["ID_Khuvuc", "ID_KhoiCVs", "Tenkhuvuc", "MaQrCode"],
+            where: {
+              Tenkhuvuc: tenKhuvuc,
+              MaQrCode: generateQRCode(tenToanha, tenKhuvuc, tenTang),
+              ID_Toanha: toaNha.ID_Toanha,
+              isDelete: 0,
+              ID_KhoiCVs: {
+                [sequelize.Op.contains]: validKhoiCVs, // Matches if validKhoiCVs are present in ID_KhoiCVs
+              },
+            },
+            transaction,
+          });
+
+          if (!khuVucExists) {
+            // Tạo mới khu vực với một ID_KhoiCV duy nhất
+            const newKhuVuc = await Ent_khuvuc.create(
+              {
+                ID_Toanha: toaNha.ID_Toanha,
+                Sothutu: 1,
+                Makhuvuc: "",
+                MaQrCode: generateQRCode(tenToanha, tenKhuvuc, tenTang),
+                Tenkhuvuc: tenKhuvuc,
+                ID_User: userData.ID_User,
+                ID_KhoiCVs: validKhoiCVs,
+                isDelete: 0,
+              },
+              { transaction }
+            );
+
+            await Ent_khuvuc_khoicv.create(
+              {
+                ID_Khuvuc: newKhuVuc.ID_Khuvuc,
+                ID_KhoiCV: validKhoiCVs[0],
+                isDelete: 0,
+              },
+              { transaction }
+            );
+          } else {
+            console.log(
+              `Khu vực "${tenKhuvuc}" với khối công việc duy nhất đã tồn tại, không cập nhật.`
+            );
+          }
         }
       }
     });
@@ -743,7 +778,6 @@ exports.uploadFiles = async (req, res) => {
     });
   }
 };
-
 
 const qrFolder = path.join(__dirname, 'generated_qr_codes');
 
