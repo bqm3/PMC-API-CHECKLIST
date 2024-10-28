@@ -12,10 +12,10 @@ const { Op, Sequelize, fn, col, literal, where } = require("sequelize");
 const sequelize = require("../config/db.config");
 const xlsx = require("xlsx");
 const e = require("express");
-const fs = require('fs');
-const path = require('path');
-const archiver = require('archiver');
-const axios = require('axios');
+const fs = require("fs");
+const path = require("path");
+const archiver = require("archiver");
+const axios = require("axios");
 
 exports.create = async (req, res) => {
   try {
@@ -246,7 +246,8 @@ exports.update = async (req, res) => {
   try {
     const userData = req.user.data;
     if (req.params.id && userData) {
-      const { ID_Toanha, Sothutu, Makhuvuc, MaQrCode, Tenkhuvuc, ID_KhoiCVs } = req.body;
+      const { ID_Toanha, Sothutu, Makhuvuc, MaQrCode, Tenkhuvuc, ID_KhoiCVs } =
+        req.body;
 
       const reqData = {
         ID_Toanha,
@@ -401,7 +402,9 @@ exports.getKhuVucFilter = async (req, res) => {
 
         // Add ID_KhoiCV condition if it exists
         if (userData.ID_KhoiCV !== null && userData.ID_KhoiCV !== undefined) {
-          andConditions.push({ "$ent_khuvuc_khoicvs.ID_KhoiCV$": userData.ID_KhoiCV });
+          andConditions.push({
+            "$ent_khuvuc_khoicvs.ID_KhoiCV$": userData.ID_KhoiCV,
+          });
         }
 
         // Add ID_Toanha condition if it exists in request body
@@ -415,7 +418,7 @@ exports.getKhuVucFilter = async (req, res) => {
         whereCondition[Op.and] = andConditions;
       }
 
-      console.log('whereCondition', whereCondition);
+      console.log("whereCondition", whereCondition);
 
       // Fetch data
       Ent_khuvuc.findAll({
@@ -629,7 +632,7 @@ exports.uploadFiles = async (req, res) => {
           where: {
             Toanha: sanitizedTenToanha,
             ID_Duan: userData.ID_Duan,
-            isDelete: 0
+            isDelete: 0,
           },
           transaction,
         });
@@ -666,7 +669,7 @@ exports.uploadFiles = async (req, res) => {
               "isDelete",
               "ID_Toanha",
               "ID_User",
-              "ID_KhoiCVs"
+              "ID_KhoiCVs",
             ],
             where: {
               Tenkhuvuc: tenKhuvuc,
@@ -703,7 +706,9 @@ exports.uploadFiles = async (req, res) => {
               { ID_KhoiCVs: updatedKhoiCVs },
               { transaction }
             );
-            console.log(`Khu vực "${tenKhuvuc}" đã tồn tại, cập nhật ID_KhoiCVs.`);
+            console.log(
+              `Khu vực "${tenKhuvuc}" đã tồn tại, cập nhật ID_KhoiCVs.`
+            );
           }
 
           for (const idKhoiCV of validKhoiCVs) {
@@ -716,7 +721,8 @@ exports.uploadFiles = async (req, res) => {
               transaction,
             });
           }
-        } else if (validKhoiCVs.length === 1) {
+        } else if (validKhoiCVs.length == 1) {
+          console.log("validKhoiCVs", validKhoiCVs);
           // Xử lý chỉ một khối công việc
           const khuVucExists = await Ent_khuvuc.findOne({
             attributes: ["ID_Khuvuc", "ID_KhoiCVs", "Tenkhuvuc", "MaQrCode"],
@@ -726,11 +732,12 @@ exports.uploadFiles = async (req, res) => {
               ID_Toanha: toaNha.ID_Toanha,
               isDelete: 0,
               ID_KhoiCVs: {
-                [Op.contains]: validKhoiCVs, // Matches if validKhoiCVs are present in ID_KhoiCVs
+                [Op.like]: validKhoiCVs, // This finds a match if the `ID_KhoiCVs` JSON array contains the `id`
               },
             },
             transaction,
           });
+          console.log("khuVucExists", khuVucExists);
 
           if (!khuVucExists) {
             // Tạo mới khu vực với một ID_KhoiCV duy nhất
@@ -779,7 +786,7 @@ exports.uploadFiles = async (req, res) => {
   }
 };
 
-const qrFolder = path.join(__dirname, 'generated_qr_codes');
+const qrFolder = path.join(__dirname, "generated_qr_codes");
 
 const generateAndSaveQrCodes = async (maQrCodes) => {
   // Create the directory if it doesn't exist
@@ -789,28 +796,30 @@ const generateAndSaveQrCodes = async (maQrCodes) => {
 
   return Promise.all(
     maQrCodes.map(async (maQrCode) => {
-      const sanitizedCode = maQrCode.replace(/[/\\?%*:|"<>]/g, '-'); // Replace characters not allowed in file names
-      const url = `https://quickchart.io/qr?text=${encodeURIComponent(maQrCode)}&caption=${encodeURIComponent(maQrCode)}&size=300x300`;
+      const sanitizedCode = maQrCode.replace(/[/\\?%*:|"<>]/g, "-"); // Replace characters not allowed in file names
+      const url = `https://quickchart.io/qr?text=${encodeURIComponent(
+        maQrCode
+      )}&caption=${encodeURIComponent(maQrCode)}&size=300x300`;
       const imagePath = path.join(qrFolder, `qr_code_${sanitizedCode}.png`);
 
       try {
         const response = await axios({
-          method: 'GET',
+          method: "GET",
           url,
-          responseType: 'stream',
+          responseType: "stream",
         });
 
         await new Promise((resolve, reject) => {
           const writeStream = fs.createWriteStream(imagePath);
           response.data.pipe(writeStream);
-          writeStream.on('finish', resolve);
-          writeStream.on('error', reject);
+          writeStream.on("finish", resolve);
+          writeStream.on("error", reject);
         });
 
         return imagePath;
       } catch (error) {
         console.error(`Failed to generate QR code for ${maQrCode}:`, error);
-        return { maQrCode, error: 'Failed to generate QR code' };
+        return { maQrCode, error: "Failed to generate QR code" };
       }
     })
   );
@@ -820,26 +829,26 @@ exports.downloadQrCodes = async (req, res) => {
   const { maQrCodes } = req.query;
 
   if (!maQrCodes) {
-    return res.status(400).json({ error: 'maQrCodes parameter is required' });
+    return res.status(400).json({ error: "maQrCodes parameter is required" });
   }
 
   // Convert maQrCodes from a string to an array
-  const maQrCodeArray = maQrCodes.split(',').map((code) => code.trim());
+  const maQrCodeArray = maQrCodes.split(",").map((code) => code.trim());
 
   try {
     await generateAndSaveQrCodes(maQrCodeArray);
 
     // Create a zip file
-    const zipPath = path.join(__dirname, 'qr_codes.zip');
+    const zipPath = path.join(__dirname, "qr_codes.zip");
     const output = fs.createWriteStream(zipPath);
-    const archive = archiver('zip', {
+    const archive = archiver("zip", {
       zlib: { level: 9 },
     });
 
-    output.on('close', () => {
-      res.download(zipPath, 'qr_codes.zip', (err) => {
+    output.on("close", () => {
+      res.download(zipPath, "qr_codes.zip", (err) => {
         if (err) {
-          console.error('Error downloading the zip file:', err);
+          console.error("Error downloading the zip file:", err);
         } else {
           // Optionally, clean up the generated files
           fs.rmSync(qrFolder, { recursive: true, force: true });
@@ -848,17 +857,17 @@ exports.downloadQrCodes = async (req, res) => {
       });
     });
 
-    archive.on('error', (err) => {
-      console.error('Error while archiving:', err);
-      res.status(500).json({ error: 'Failed to archive QR codes' });
+    archive.on("error", (err) => {
+      console.error("Error while archiving:", err);
+      res.status(500).json({ error: "Failed to archive QR codes" });
     });
 
     archive.pipe(output);
     archive.directory(qrFolder, false);
     await archive.finalize();
   } catch (error) {
-    console.error('Failed to generate QR codes:', error);
-    res.status(500).json({ error: 'Failed to generate QR codes' });
+    console.error("Failed to generate QR codes:", error);
+    res.status(500).json({ error: "Failed to generate QR codes" });
   }
 };
 
