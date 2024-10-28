@@ -726,7 +726,7 @@ exports.uploadFiles = async (req, res) => {
               ID_Toanha: toaNha.ID_Toanha,
               isDelete: 0,
               ID_KhoiCVs: {
-                [sequelize.Op.contains]: validKhoiCVs, // Matches if validKhoiCVs are present in ID_KhoiCVs
+                [Op.contains]: validKhoiCVs, // Matches if validKhoiCVs are present in ID_KhoiCVs
               },
             },
             transaction,
