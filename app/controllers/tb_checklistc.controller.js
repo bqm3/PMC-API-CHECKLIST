@@ -55,7 +55,7 @@ function convertTimeFormat(timeStr) {
 exports.createFirstChecklist = async (req, res, next) => {
   try {
     const userData = req.user.data;
-    const { ID_Calv, ID_KhoiCV, Ngay, Giobd } = req.body;
+    const { ID_Calv, ID_KhoiCV, Ngay, Giobd, Tenca} = req.body;
     // Validate request
     if (!ID_Calv) {
       res.status(400).json({
@@ -164,8 +164,9 @@ exports.createFirstChecklist = async (req, res, next) => {
 
     if (!thietlapcaData) {
       return res.status(400).json({
-        message: "Chưa thiết lập hạng mục cho ca này!",
-      });
+        message: `Chưa thiết lập hạng mục cho ngày thứ: ${ngayCheck} của ca làm việc: ${Tenca}
+Vui lòng lên web thiết lập hạng mục !`,
+      });            
     }
 
     const checklistData = await Ent_checklist.findAndCountAll({
