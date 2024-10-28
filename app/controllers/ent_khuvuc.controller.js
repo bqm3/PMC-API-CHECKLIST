@@ -657,6 +657,7 @@ exports.uploadFiles = async (req, res) => {
         );
         const validKhoiCVs = khoiCVs.filter((id) => id !== null);
 
+        // Check if the area with the same name and work task combination already exists
         const existingKhuVuc = await Ent_khuvuc.findOne({
           attributes: [
             "ID_Khuvuc",
@@ -668,23 +669,23 @@ exports.uploadFiles = async (req, res) => {
             "ID_KhoiCVs"
           ],
           where: {
-            Tenkhuvuc: tenKhuvuc,
-            MaQrCode: generateQRCode(tenToanha, tenKhuvuc, tenTang),
-            ID_Toanha: toaNha.ID_Toanha,
-            isDelete: 0,
+            [Op.and]: [
+              sequelize.where(sequelize.fn("UPPER", sequelize.col("Tenkhuvuc")), {
+                [Op.like]: `${tenKhuvuc.toUpperCase()}`,
+              }),
+              {
+                ID_Toanha: toaNha.ID_Toanha,
+                isDelete: 0,
+              },
+            ],
           },
           transaction,
         });
 
         let khuVucId;
-        if (existingKhuVuc && validKhoiCVs.length > 1) {
-          // Nếu khu vực tồn tại và có nhiều khối công việc trong cùng 1 file
-          khuVucId = existingKhuVuc.ID_Khuvuc;
-          const currentKhoiCVs = existingKhuVuc.ID_KhoiCVs || [];
-          const updatedKhoiCVs = Array.from(new Set([...currentKhoiCVs, ...validKhoiCVs]));
-          await existingKhuVuc.update({ ID_KhoiCVs: updatedKhoiCVs }, { transaction });
-        } else {
-          // Tạo khu vực mới cho file khác hoặc cho tên khu vực khác
+
+        if (!existingKhuVuc) {
+          // Create new area entry with all work task IDs
           const dataInsert = {
             ID_Toanha: toaNha.ID_Toanha,
             Sothutu: 1,
@@ -698,8 +699,20 @@ exports.uploadFiles = async (req, res) => {
 
           const newKhuVuc = await Ent_khuvuc.create(dataInsert, { transaction });
           khuVucId = newKhuVuc.ID_Khuvuc;
+        } else {
+          const currentKhoiCVs = existingKhuVuc.ID_KhoiCVs || [];
+          const updatedKhoiCVs = Array.from(new Set([...currentKhoiCVs, ...validKhoiCVs]));
+
+          // Update the existing entry with new work task IDs if needed
+          if (validKhoiCVs.length > 1) {
+            await existingKhuVuc.update({ ID_KhoiCVs: updatedKhoiCVs }, { transaction });
+          } else {
+            continue; // Skip update if only one work task is specified
+          }
+          khuVucId = existingKhuVuc.ID_Khuvuc;
         }
 
+        // Insert or update ent_khuvuc_khoicv based on valid work task IDs
         for (const idKhoiCV of validKhoiCVs) {
           await Ent_khuvuc_khoicv.findOrCreate({
             where: {
@@ -726,6 +739,7 @@ exports.uploadFiles = async (req, res) => {
     });
   }
 };
+
 
 const qrFolder = path.join(__dirname, 'generated_qr_codes');
 
