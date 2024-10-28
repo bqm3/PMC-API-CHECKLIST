@@ -648,10 +648,29 @@ exports.uploadFiles = async (req, res) => {
         const tenHangmuc = transformedItem["TÊNHẠNGMỤC"];
         const quanTrong = transformedItem["QUANTRỌNG"];
 
+        const khoiCVs = await Promise.all(
+          khoiCongViecList.map(async (khoiCongViec) => {
+            const khoiCV = await Ent_khoicv.findOne({
+              attributes: ["ID_KhoiCV", "KhoiCV"],
+              where: {
+                KhoiCV: sequelize.where(
+                  sequelize.fn("UPPER", sequelize.col("KhoiCV")),
+                  "LIKE",
+                  khoiCongViec.toUpperCase()
+                ),
+              },
+              transaction,
+            });
+            return khoiCV ? khoiCV.ID_KhoiCV : null;
+          })
+        );
+        const validKhoiCVs = khoiCVs.filter((id) => id !== null);
+
         const khuVuc = await Ent_khuvuc.findOne({
-          attributes: ["ID_Khuvuc", "MaQrCode", "Tenkhuvuc", "isDelete"],
+          attributes: ["ID_Khuvuc", "MaQrCode", "Tenkhuvuc", "ID_KhoiCVs", "isDelete"],
           where: {
             Tenkhuvuc: tenKhuvuc,
+            ID_KhoiCVs: { [Op.contains]: validKhoiCVs }, // Ensure the work divisions match
             isDelete: 0,
           },
           include: [
@@ -667,6 +686,7 @@ exports.uploadFiles = async (req, res) => {
           ],
           transaction,
         });
+        
         if (!khuVuc) {
           console.log(`Khu vực với MaQrCode ${khuVuc} không tìm thấy`);
           continue; // Skip the current iteration and move to the next item

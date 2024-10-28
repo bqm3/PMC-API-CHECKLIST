@@ -722,7 +722,6 @@ exports.uploadFiles = async (req, res) => {
             });
           }
         } else if (validKhoiCVs.length == 1) {
-          console.log("validKhoiCVs", validKhoiCVs);
           // Xử lý chỉ một khối công việc
           const khuVucExists = await Ent_khuvuc.findOne({
             attributes: ["ID_Khuvuc", "ID_KhoiCVs", "Tenkhuvuc", "MaQrCode"],
@@ -737,7 +736,6 @@ exports.uploadFiles = async (req, res) => {
             },
             transaction,
           });
-          console.log("khuVucExists", khuVucExists);
 
           if (!khuVucExists) {
             // Tạo mới khu vực với một ID_KhoiCV duy nhất
