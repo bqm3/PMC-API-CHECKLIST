@@ -642,11 +642,16 @@ exports.uploadFiles = async (req, res) => {
       for (const item of data) {
         const transformedItem = removeSpacesFromKeys(item);
         const tenKhuvuc = transformedItem["TÊNKHUVỰC"];
+        const tenKhoiCongViec = transformedItem["TÊNKHỐICÔNGVIỆC"];
         const tenDuan = transformedItem["TÊNDỰÁN"];
         const tenToanha = transformedItem["TÊNTÒANHÀ"];
         const tenTang = transformedItem["TÊNTẦNG"];
         const tenHangmuc = transformedItem["TÊNHẠNGMỤC"];
         const quanTrong = transformedItem["QUANTRỌNG"];
+
+        const khoiCongViecList = tenKhoiCongViec
+        .split(",")
+        .map((khoi) => khoi.trim());
 
         const khoiCVs = await Promise.all(
           khoiCongViecList.map(async (khoiCongViec) => {
