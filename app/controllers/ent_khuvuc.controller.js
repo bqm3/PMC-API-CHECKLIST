@@ -601,6 +601,7 @@ exports.uploadFiles = async (req, res) => {
     }
     const userData = req.user.data;
 
+    // Đọc file Excel từ buffer
     const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
@@ -623,10 +624,10 @@ exports.uploadFiles = async (req, res) => {
         const tenKhuvuc = transformedItem["TÊNKHUVỰC"];
         const tenTang = transformedItem["TÊNTẦNG"];
 
-        const sanitizedTenToanha = tenToanha?.replace(/\t/g, "");
+        const sanitizedTenToanha = tenToanha?.replace(/\t/g, ""); // Loại bỏ các ký tự tab
 
         const toaNha = await Ent_toanha.findOne({
-          attributes: ["ID_Toanha", "Sotang", "Toanha", "ID_Duan", "isDelete"],
+          attributes: ["ID_Toanha", "Sotang", "Toanha", "ID_Duan"],
           where: {
             Toanha: sanitizedTenToanha,
             ID_Duan: userData.ID_Duan,
@@ -635,6 +636,7 @@ exports.uploadFiles = async (req, res) => {
           transaction,
         });
 
+        // Tách danh sách khối công việc và lấy ID của các khối
         const khoiCongViecList = tenKhoiCongViec
           .split(",")
           .map((khoi) => khoi.trim());
@@ -657,7 +659,7 @@ exports.uploadFiles = async (req, res) => {
         );
         const validKhoiCVs = khoiCVs.filter((id) => id !== null);
 
-        // Check if the area with the same name and work task combination already exists
+        // Kiểm tra sự tồn tại của khu vực với mã QR và tên khu vực
         const existingKhuVuc = await Ent_khuvuc.findOne({
           attributes: [
             "ID_Khuvuc",
@@ -673,11 +675,10 @@ exports.uploadFiles = async (req, res) => {
               sequelize.where(sequelize.fn("UPPER", sequelize.col("Tenkhuvuc")), {
                 [Op.like]: `${tenKhuvuc.toUpperCase()}`,
               }),
-              {
-                ID_Toanha: toaNha.ID_Toanha,
-                isDelete: 0,
-              },
             ],
+            MaQrCode: generateQRCode(tenToanha, tenKhuvuc, tenTang),
+            ID_Toanha: toaNha.ID_Toanha,
+            isDelete: 0,
           },
           transaction,
         });
@@ -685,7 +686,7 @@ exports.uploadFiles = async (req, res) => {
         let khuVucId;
 
         if (!existingKhuVuc) {
-          // Create new area entry with all work task IDs
+          // Nếu có nhiều hơn 1 khối công việc, lưu toàn bộ khối vào khu vực
           const dataInsert = {
             ID_Toanha: toaNha.ID_Toanha,
             Sothutu: 1,
@@ -693,26 +694,29 @@ exports.uploadFiles = async (req, res) => {
             MaQrCode: generateQRCode(tenToanha, tenKhuvuc, tenTang),
             Tenkhuvuc: tenKhuvuc,
             ID_User: userData.ID_User,
-            ID_KhoiCVs: validKhoiCVs,
+            ID_KhoiCVs: khoiCVs.length > 1 ? validKhoiCVs : validKhoiCVs[0], // Thêm tất cả hoặc một khối công việc
             isDelete: 0,
           };
 
-          const newKhuVuc = await Ent_khuvuc.create(dataInsert, { transaction });
+          const newKhuVuc = await Ent_khuvuc.create(dataInsert, {
+            transaction,
+          });
           khuVucId = newKhuVuc.ID_Khuvuc;
         } else {
-          const currentKhoiCVs = existingKhuVuc.ID_KhoiCVs || [];
-          const updatedKhoiCVs = Array.from(new Set([...currentKhoiCVs, ...validKhoiCVs]));
-
-          // Update the existing entry with new work task IDs if needed
-          if (validKhoiCVs.length > 1) {
-            await existingKhuVuc.update({ ID_KhoiCVs: updatedKhoiCVs }, { transaction });
-          } else {
-            continue; // Skip update if only one work task is specified
-          }
+          // Nếu khu vực đã tồn tại, chỉ thêm khối công việc nếu có hơn 1 khối
           khuVucId = existingKhuVuc.ID_Khuvuc;
+          if (validKhoiCVs.length > 1) {
+            await existingKhuVuc.update(
+              { ID_KhoiCVs: validKhoiCVs },
+              { transaction }
+            );
+          }
+          console.log(
+            `Khu vực "${tenKhuvuc}" đã tồn tại, bỏ qua việc tạo mới.`
+          );
         }
 
-        // Insert or update ent_khuvuc_khoicv based on valid work task IDs
+        // Thêm liên kết giữa khu vực và các khối công việc vào bảng trung gian
         for (const idKhoiCV of validKhoiCVs) {
           await Ent_khuvuc_khoicv.findOrCreate({
             where: {
