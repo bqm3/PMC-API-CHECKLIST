@@ -601,10 +601,7 @@ exports.uploadFiles = async (req, res) => {
     }
     const userData = req.user.data;
 
-    // Read the uploaded Excel file from buffer
     const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
-
-    // Extract data from the first sheet
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     const data = xlsx.utils.sheet_to_json(worksheet);
@@ -626,10 +623,10 @@ exports.uploadFiles = async (req, res) => {
         const tenKhuvuc = transformedItem["TÊNKHUVỰC"];
         const tenTang = transformedItem["TÊNTẦNG"];
 
-        const sanitizedTenToanha = tenToanha?.replace(/\t/g, ""); // Loại bỏ tất cả các ký tự tab
+        const sanitizedTenToanha = tenToanha?.replace(/\t/g, "");
 
         const toaNha = await Ent_toanha.findOne({
-          attributes: ["ID_Toanha", "Sotang", "Toanha", "ID_Duan"],
+          attributes: ["ID_Toanha", "Sotang", "Toanha", "ID_Duan", "isDelete"],
           where: {
             Toanha: sanitizedTenToanha,
             ID_Duan: userData.ID_Duan,
@@ -655,7 +652,6 @@ exports.uploadFiles = async (req, res) => {
               },
               transaction,
             });
-
             return khoiCV ? khoiCV.ID_KhoiCV : null;
           })
         );
@@ -669,14 +665,11 @@ exports.uploadFiles = async (req, res) => {
             "isDelete",
             "ID_Toanha",
             "ID_User",
+            "ID_KhoiCVs"
           ],
           where: {
-            [Op.and]: [
-              where(fn("UPPER", col("Tenkhuvuc")), {
-                [Op.like]: `${tenKhuvuc.toUpperCase()}`,
-              }),
-            ],
-            MaQrCode: generateQRCode( tenToanha,tenKhuvuc, tenTang),
+            Tenkhuvuc: tenKhuvuc,
+            MaQrCode: generateQRCode(tenToanha, tenKhuvuc, tenTang),
             ID_Toanha: toaNha.ID_Toanha,
             isDelete: 0,
           },
@@ -684,31 +677,29 @@ exports.uploadFiles = async (req, res) => {
         });
 
         let khuVucId;
-
-        if (!existingKhuVuc) {
+        if (existingKhuVuc && validKhoiCVs.length > 1) {
+          // Nếu khu vực tồn tại và có nhiều khối công việc trong cùng 1 file
+          khuVucId = existingKhuVuc.ID_Khuvuc;
+          const currentKhoiCVs = existingKhuVuc.ID_KhoiCVs || [];
+          const updatedKhoiCVs = Array.from(new Set([...currentKhoiCVs, ...validKhoiCVs]));
+          await existingKhuVuc.update({ ID_KhoiCVs: updatedKhoiCVs }, { transaction });
+        } else {
+          // Tạo khu vực mới cho file khác hoặc cho tên khu vực khác
           const dataInsert = {
             ID_Toanha: toaNha.ID_Toanha,
             Sothutu: 1,
             Makhuvuc: "",
-            MaQrCode: generateQRCode(tenToanha,tenKhuvuc, tenTang),
+            MaQrCode: generateQRCode(tenToanha, tenKhuvuc, tenTang),
             Tenkhuvuc: tenKhuvuc,
             ID_User: userData.ID_User,
             ID_KhoiCVs: validKhoiCVs,
             isDelete: 0,
           };
 
-          const newKhuVuc = await Ent_khuvuc.create(dataInsert, {
-            transaction,
-          });
+          const newKhuVuc = await Ent_khuvuc.create(dataInsert, { transaction });
           khuVucId = newKhuVuc.ID_Khuvuc;
-        } else {
-          khuVucId = existingKhuVuc.ID_Khuvuc;
-          console.log(
-            `Khu vực "${tenKhuvuc}" đã tồn tại, bỏ qua việc tạo mới.`
-          );
         }
 
-        // Thêm các liên kết giữa khu vực và các khối công việc vào bảng trung gian
         for (const idKhoiCV of validKhoiCVs) {
           await Ent_khuvuc_khoicv.findOrCreate({
             where: {
@@ -731,7 +722,7 @@ exports.uploadFiles = async (req, res) => {
     console.error("Error at line", err.stack.split("\n")[1].trim());
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
-      error: err.stack, // This will include the stack trace with line numbers
+      error: err.stack,
     });
   }
 };
