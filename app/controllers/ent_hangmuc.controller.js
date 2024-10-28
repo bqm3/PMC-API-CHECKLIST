@@ -643,15 +643,14 @@ exports.uploadFiles = async (req, res) => {
         const transformedItem = removeSpacesFromKeys(item);
         const tenKhuvuc = transformedItem["TÊNKHUVỰC"];
         const tenKhoiCongViec = transformedItem["TÊNKHỐICÔNGVIỆC"];
-        const tenDuan = transformedItem["TÊNDỰÁN"];
         const tenToanha = transformedItem["TÊNTÒANHÀ"];
         const tenTang = transformedItem["TÊNTẦNG"];
         const tenHangmuc = transformedItem["TÊNHẠNGMỤC"];
         const quanTrong = transformedItem["QUANTRỌNG"];
 
         const khoiCongViecList = tenKhoiCongViec
-        .split(",")
-        .map((khoi) => khoi.trim());
+          .split(",")
+          .map((khoi) => khoi.trim());
 
         const khoiCVs = await Promise.all(
           khoiCongViecList.map(async (khoiCongViec) => {
@@ -671,77 +670,56 @@ exports.uploadFiles = async (req, res) => {
         );
         const validKhoiCVs = khoiCVs.filter((id) => id !== null);
 
-        const khuVuc = await Ent_khuvuc.findOne({
-          attributes: ["ID_Khuvuc", "MaQrCode", "Tenkhuvuc", "ID_KhoiCVs", "isDelete"],
-          where: {
-            Tenkhuvuc: tenKhuvuc,
-            ID_KhoiCVs: { [Op.contains]: validKhoiCVs }, // Ensure the work divisions match
-            isDelete: 0,
-          },
-          include: [
-            {
-              model: Ent_toanha,
-              attributes: ["ID_Toanha", "Toanha", "ID_Duan"],
-              where: {
-                Toanha: tenToanha,
-                ID_Duan: userData.ID_Duan,
+          let khuVuc = await Ent_khuvuc.findOne({
+            attributes: ["ID_Khuvuc", "MaQrCode", "Tenkhuvuc", "ID_KhoiCVs", "isDelete"],
+            where: {
+              Tenkhuvuc: tenKhuvuc,
+              ID_KhoiCVs: { [Op.like]: validKhoiCVs },
+              isDelete: 0,
+            },
+            transaction,
+          });
+
+          // Generate a QR code for hạng mục
+          const maQrCode = generateQRCode(
+            tenToanha,
+            tenKhuvuc,
+            tenHangmuc,
+            tenTang
+          );
+
+          // Check if hạng mục already exists for this khu vực
+          const existingHangMuc = await Ent_hangmuc.findOne({
+            attributes: ["ID_Hangmuc", "Hangmuc", "MaQrCode", "ID_Khuvuc"],
+            where: {
+              [Op.and]: [
+                { Hangmuc: tenHangmuc },
+                { MaQrCode: maQrCode },
+                { ID_Khuvuc: khuVuc.ID_Khuvuc },
+                { isDelete: 0 },
+              ],
+            },
+            transaction,
+          });
+
+          if (!existingHangMuc) {
+            // Create new hạng mục entry
+            await Ent_hangmuc.create(
+              {
+                ID_Khuvuc: khuVuc.ID_Khuvuc,
+                MaQrCode: maQrCode,
+                Hangmuc: tenHangmuc,
+                Important: quanTrong ? 1 : 0,
                 isDelete: 0,
               },
-            },
-          ],
-          transaction,
-        });
-        
-        if (!khuVuc) {
-          console.log(`Khu vực với MaQrCode ${khuVuc} không tìm thấy`);
-          continue; // Skip the current iteration and move to the next item
+              { transaction }
+            );
+          } else {
+            console.log(
+              `Hạng mục "${tenHangmuc}" đã tồn tại trong khu vực ${tenKhuvuc}, bỏ qua việc tạo mới.`
+            );
+          }
         }
-
-        // Check if tenKhuvuc already exists in the database
-        const existingHangMuc = await Ent_hangmuc.findOne({
-          attributes: ["ID_Hangmuc", "Hangmuc", "MaQrCode", "ID_Khuvuc"],
-          where: {
-            [Op.and]: [
-              { Hangmuc: tenHangmuc },
-              {
-                MaQrCode: generateQRCode(
-                  tenToanha,
-                  tenKhuvuc,
-                  tenHangmuc,
-                  tenTang
-                ),
-              },
-              { ID_Khuvuc: khuVuc.ID_Khuvuc },
-              { isDelete: 0 },
-            ],
-          },
-          transaction,
-        });
-
-        if (!existingHangMuc || !khuVuc) {
-          // If tenKhuvuc doesn't exist, create a new entry
-          const dataInsert = {
-            ID_Khuvuc: khuVuc.ID_Khuvuc,
-            MaQrCode: generateQRCode(
-              tenToanha,
-              tenKhuvuc,
-              tenHangmuc,
-              tenTang
-            ),
-            Hangmuc: tenHangmuc,
-            Important:
-              quanTrong !== undefined && quanTrong !== null && quanTrong !== ""
-                ? 1
-                : 0,
-            isDelete: 0,
-          };
-          await Ent_hangmuc.create(dataInsert, { transaction });
-        } else {
-          console.log(
-            `Hang muc "${tenHangmuc}" đã tồn tại, bỏ qua việc tạo mới.`
-          );
-        }
-      }
     });
 
     res.send({
@@ -755,6 +733,7 @@ exports.uploadFiles = async (req, res) => {
     });
   }
 };
+
 
 const qrFolder = path.join(__dirname, "generated_qr_codes");
 
