@@ -844,14 +844,12 @@ exports.uploadFileUsers = async (req, res) => {
     }
     const userData = req.user.data;
 
-    // Read the uploaded Excel file from buffer
     const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
-
-    // Extract data from the first sheet
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     const data = xlsx.utils.sheet_to_json(worksheet);
 
+    console.log('data', data)
     await sequelize.transaction(async (transaction) => {
       const removeSpacesFromKeys = (obj) => {
         return Object.keys(obj).reduce((acc, key) => {
@@ -869,26 +867,30 @@ exports.uploadFileUsers = async (req, res) => {
         const hoTen = transformedItem["HỌTÊN"];
         const gioiTinh = transformedItem["GIỚITÍNH"];
         const soDienThoai = transformedItem["SỐĐIỆNTHOẠI"];
-        const namSinh = transformedItem["NĂMSINH"];
+        const namSinh = transformedItem["NGÀYSINH"];
         const chucVu = transformedItem["CHỨCVỤ"];
         const gmail = transformedItem["GMAIL"];
         const taiKhoan = transformedItem["TÀIKHOẢN"];
         const matKhau = transformedItem["MẬTKHẨU"];
 
+        console.log('tenKhoiCongViec',tenKhoiCongViec)
+        console.log('gioiTinh',gioiTinh)
+        console.log('hoTen',hoTen)
+
         const sanitizedTenToanha = duAn?.replace(/\t/g, ""); // Loại bỏ tất cả các ký tự tab
 
         const dataChucvu = await Ent_chucvu.findOne({
           attributes: ["ID_Chucvu", "Chucvu", "isDelete"],
-
           where: {
-            Chucvu: sequelize.where(
-              sequelize.fn("UPPER", sequelize.col("Chucvu")),
-              "LIKE",
-              chucVu.toUpperCase()
-            ),
             isDelete: 0,
+            Chucvu: sequelize.where(
+              sequelize.fn("UPPER", sequelize.fn("TRIM", sequelize.col("Chucvu"))),
+              "LIKE",
+              chucVu.trim().toUpperCase()
+            )
           },
         });
+        
         if (!dataChucvu) {
           return res.status(500).json({
             message: "Không tìm chức vụ phù hợp",
@@ -900,9 +902,9 @@ exports.uploadFileUsers = async (req, res) => {
 
           where: {
             KhoiCV: sequelize.where(
-              sequelize.fn("UPPER", sequelize.col("KhoiCV")),
+              sequelize.fn("UPPER", sequelize.fn("TRIM",  sequelize.col("KhoiCV"))),
               "LIKE",
-              tenKhoiCongViec.toUpperCase()
+              tenKhoiCongViec.trim().toUpperCase()
             ),
             isDelete: 0,
           },
@@ -925,7 +927,11 @@ exports.uploadFileUsers = async (req, res) => {
             "Email",
           ],
           where: {
-            UserName: taiKhoan,
+            UserName: sequelize.where(
+              sequelize.fn("UPPER", sequelize.fn("TRIM",  sequelize.col("UserName"))),
+              "LIKE",
+              taiKhoan.trim().toUpperCase()
+            ),
             ID_Duan: userData.ID_Duan,
             isDelete: 0,
           },
@@ -946,15 +952,15 @@ exports.uploadFileUsers = async (req, res) => {
         const mk = hashSync(`${matKhau}`, salt);
         const dataInsert = {
           ID_Duan: userData.ID_Duan,
-          ID_Chucvu: dataChucvu.ID_Chucvu,
-          ID_KhoiCV: dataKhoiCV.ID_KhoiCV,
+          ID_Chucvu: dataChucvu.ID_Chucvu || null,
+          ID_KhoiCV: dataKhoiCV.ID_KhoiCV || null,
           Password: mk,
-          Email: gmail,
+          Email: gmail || null,
           UserName: taiKhoan,
           Hoten: hoTen,
           Gioitinh: gioiTinh,
           Sodienthoai: soDienThoai,
-          Ngaysinh: namSinh,
+          Ngaysinh: namSinh || null,
           isDelete: 0,
         };
 

@@ -2018,14 +2018,7 @@ exports.uploadFiles = async (req, res) => {
           const tang = await Ent_tang.findOne({
             attributes: ["Tentang", "ID_Tang", "ID_Duan", "isDelete"],
             where: {
-              Tentang: sequelize.where(
-                sequelize.fn(
-                  "UPPER",
-                  sequelize.fn("TRIM", sequelize.fn("REPLACE", sequelize.col("Tentang"), '  ', ' '))
-                ),
-                "LIKE",
-                `%${tenTang.trim().replace(/\s+/g, ' ').toUpperCase()}%`
-              ),
+              Tentang: tenTang.trim(),
               ID_Duan: userData.ID_Duan,
               isDelete: 0,
             },
