@@ -33,9 +33,6 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       return data;
     };
 
-    console.log('records', records)
-    console.log('images', images)
-
     const isEmpty = (obj) => Object.keys(obj).length === 0;
 
     records.ID_ChecklistC = ensureArray(records.ID_ChecklistC);
@@ -44,7 +41,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     records.Kinhdo = ensureArray(records.Kinhdo);
     records.Docao = ensureArray(records.Docao);
     records.Ketqua = ensureArray(records.Ketqua);
-    records.Ghichu = ensureArray(records.Ghichu);
+    records.Ghichu = ensureArray(records.Ghichu || records.GhichuChitiet);
     records.Gioht = ensureArray(records.Gioht);
     records.Checklist = ensureArray(records.Checklist);
 
@@ -68,7 +65,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       const Docao = records.Docao[index] || null;
       const Ketqua = records.Ketqua[index] || null;
       const Gioht = records.Gioht[index];
-      const Ghichu = records.Ghichu[index];
+      const Ghichu = records.Ghichu[index] || records.GhichuChitiet[index];
       const Checklist = records.Checklist[index];
       const d = new Date();
       const year = d.getFullYear();
