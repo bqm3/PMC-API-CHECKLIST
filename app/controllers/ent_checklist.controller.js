@@ -1999,6 +1999,7 @@ exports.uploadFiles = async (req, res) => {
                 where: {
                   isDelete: 0,
                   ID_KhoiCVs: { [Op.like]: validKhoiCVs },
+                  MaQrCode: generateQRCodeKV(tenToanha, tenKhuvuc, tenTang),
                 },
               },
             ],
@@ -2134,6 +2135,24 @@ function generateQRCode(toaNha, khuVuc, hangMuc, tenTang) {
 
   // Tạo chuỗi QR
   const qrCode = `QR-${toaNhaInitials}-${khuVucInitials}-${hangMucInitials}-${tenTang}`;
+  return qrCode;
+}
+
+function generateQRCodeKV(tenToa, khuVuc, tenTang) {
+  // Hàm lấy ký tự đầu tiên của mỗi từ trong chuỗi
+  function getInitials(string) {
+    return string
+      .split(" ") // Tách chuỗi thành mảng các từ
+      .map((word) => word.charAt(0).toUpperCase()) // Lấy ký tự đầu tiên của mỗi từ và viết hoa
+      .join(""); // Nối lại thành chuỗi
+  }
+
+  // Lấy ký tự đầu của khu vực và hạng mục
+  const khuVucInitials = getInitials(khuVuc);
+  const tenToaInitials = getInitials(tenToa);
+
+  // Tạo chuỗi QR
+  const qrCode = `QR-${tenToaInitials}-${khuVucInitials}-${tenTang}`;
   return qrCode;
 }
 
