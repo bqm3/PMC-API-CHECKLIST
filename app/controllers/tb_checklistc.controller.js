@@ -164,10 +164,16 @@ exports.createFirstChecklist = async (req, res, next) => {
 
     if (!thietlapcaData) {
       return res.status(400).json({
-        message: `Chưa thiết lập hạng mục cho ngày thứ: ${ngayCheck} của ca làm việc: ${Tenca}
-Vui lòng lên web thiết lập hạng mục !`,
-      });            
-    }
+        message: `
+          <span style="font-size: 18px;">Chưa thiết lập ca cho ngày thứ: <b>${ngayCheck}</b> của ca làm việc: <b>${Tenca}</b>.<br>
+          Vui lòng lên web:<br>
+          B1: Vào chia ca chọn mục tạo<br>
+          B2: Thiết lập ngày thực hiện, ca làm việc<br>
+          B3: Chọn hạng mục cần thiết lập<br>
+          B4: Lưu</span>
+        `
+      });      
+    }     
 
     const checklistData = await Ent_checklist.findAndCountAll({
       attributes: [
