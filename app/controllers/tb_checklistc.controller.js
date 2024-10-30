@@ -2702,6 +2702,9 @@ exports.tiLeHoanThanh = async (req, res) => {
 
     let whereClause = {
       isDelete: 0,
+      ID_Duan: {
+        [Op.ne]: 1
+      }
     };
 
     const getLastDayOfMonth = (year, month) => {
@@ -2913,6 +2916,9 @@ exports.tiLeSuco = async (req, res) => {
     // Xây dựng điều kiện where cho truy vấn
     let whereClause = {
       isDelete: 0,
+      ID_Duan: {
+        [Op.ne]: 1
+      }
     };
 
     // if (khoi !== "all") {
@@ -3071,6 +3077,9 @@ exports.suCoChiTiet = async (req, res) => {
 
   let whereClause = {
     isDelete: 0,
+    ID_Duan: {
+      [Op.ne]: 1
+    }
   };
 
   whereClause.Ngay = {
@@ -3214,6 +3223,9 @@ exports.soSanhSuCo = async (req, res) => {
           [Op.gte]: startOfLastWeek,
           [Op.lte]: endOfLastWeek,
         },
+        ID_Duan: {
+          [Op.ne]: 1
+        }
       },
       raw: true,
     });
@@ -3312,10 +3324,16 @@ exports.reportPercentWeek = async (req, res) => {
 
     let lastWhereClause = {
       isDelete: 0,
+      ID_Duan: {
+        [Op.ne]: 1
+      }
     };
 
     let prevWhereClause = {
       isDelete: 0,
+      ID_Duan: {
+        [Op.ne]: 1
+      }
     };
 
     // if (khoi !== "all") {
@@ -3440,6 +3458,9 @@ exports.reportPercentYesterday = async (req, res) => {
       where: {
         Ngay: yesterday,
         isDelete: 0,
+        ID_Duan: {
+          [Op.ne]: 1
+        }
       },
       include: [
         {
@@ -3683,6 +3704,9 @@ exports.getChecklistsErrorFromYesterday = async (req, res) => {
         Ngay: {
           [Op.between]: [yesterday, now],
         },
+        ID_Duan: {
+          [Op.ne]: 1
+        }
         // ID_Duan: userData.ID_Duan
       },
     });
@@ -4234,6 +4258,9 @@ exports.getProjectsChecklistStatus = async (req, res) => {
       where: {
         Ngay: yesterday,
         isDelete: 0,
+        ID_Duan: {
+          [Op.ne]: 1
+        }
       },
       include: [
         {
@@ -6231,6 +6258,9 @@ exports.createExcelDuAn = async (req, res) => {
       ],
       where: {
         isDelete: 0,
+        ID_Duan: {
+          [Op.ne]: 1
+        }
         // Ngay: yesterday
       },
       include: [
