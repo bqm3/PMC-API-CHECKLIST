@@ -76,6 +76,7 @@ exports.createFirstChecklist = async (req, res, next) => {
 
     const formattedDateNow = moment(khoiData.Ngaybatdau).startOf("day").format("DD-MM-YYYY");
     const nowFormattedDate = moment(Ngay).startOf("day").format("YYYY-MM-DD");
+    const yesterday = moment(Ngay).subtract(1, 'day').startOf("day").format("YYYY-MM-DD");
     const formattedDatePrev = moment(Ngay)
       .add(1, "days") // Thêm 1 ngày vào ngày hiện tại
       .startOf("day")
@@ -287,7 +288,7 @@ exports.createFirstChecklist = async (req, res, next) => {
       where: {
         isDelete: 0,
         [Op.and]: [
-          { Ngay: Ngay },
+          { Ngay: Giobatdau >= Gioketthuc && Giobd <= Giobatdau ? yesterday : Ngay }, 
           { ID_KhoiCV: userData.ID_KhoiCV },
           { ID_Duan: userData.ID_Duan },
           { ID_User: userData.ID_User },

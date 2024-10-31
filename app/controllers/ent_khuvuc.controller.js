@@ -623,7 +623,7 @@ exports.uploadFiles = async (req, res) => {
       for (const item of data) {
         i++;
         //check tầng data import excel
-        checkDataExcel(item,i)
+        checkDataExcel(item,i,1)
 
         const transformedItem = removeSpacesFromKeys(item);
 
