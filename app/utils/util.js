@@ -5,7 +5,6 @@ function checkDataExcel(data,index,key) {
       const tenHangMuc = data['Tên hạng mục'].toLowerCase(); // Chuyển đổi về chữ thường
       const tenTang = data['Tên tầng'].toLowerCase(); // Chuyển đổi về chữ thường
     
-      // Kiểm tra xem tên khu vực có chứa từ "tầng" không
       if (tenTang && key == 1) {
         if (tenKhuVuc.includes('tầng')){
             const check = tenKhuVuc.includes(tenTang)
@@ -26,32 +25,41 @@ function checkDataExcel(data,index,key) {
     }
   }
 
-  //format ngày
-  function convertDateFormat(inputDate) {
-    console.log("inputDate",inputDate)
-    console.log("inputDate",typeof inputDate)
-    // Kiểm tra xem inputDate có phải là chuỗi không
-    if (typeof inputDate !== 'string') {
-        throw new Error('Sai địng dạng ngày DD/MM/YYYY.');
-    }
+//format ngày
+function convertDateFormat(inputDate) {
+  console.log("inputDate", inputDate);
+  console.log("inputDate", typeof inputDate);
+  // Kiểm tra xem inputDate có phải là chuỗi không
+  if (typeof inputDate !== "string") {
+    throw new Error("Sai địng dạng ngày DD/MM/YYYY."); 
+    // tầng mái
 
-    // Tách ngày, tháng, năm
-    const parts = inputDate.split('/');
-    if (parts.length !== 3) {
-        throw new Error('Invalid date format. Please use DD/MM/YYYY.');
-    }
+    // TẦNG MÁI
+    // Tầng mái 
+    // tầng mái hiên
+    // tầng Hiên mái
+    // tầng 1
 
-    const day = String(parts[0]).padStart(2, '0'); // Đảm bảo có 2 chữ số
-    const month = String(parts[1]).padStart(2, '0'); // Đảm bảo có 2 chữ số
-    const year = parts[2];
+    // format UPPERCASE
+    // tầng 12 = tầng
+    // khu vực tầng 12  = kv có chữ tầng => FORMAT UPPERCASE => KHU VỰC TẦNG MÁI ~ TẦNG MÁI
+  }
 
-    // Trả về định dạng 'YYYY-MM-DD'
-    return `${year}-${month}-${day}`;
+  // Tách ngày, tháng, năm
+  const parts = inputDate.split("/");
+  if (parts.length !== 3) {
+    throw new Error("Invalid date format. Please use DD/MM/YYYY.");
+  }
+
+  const day = String(parts[0]).padStart(2, "0"); // Đảm bảo có 2 chữ số
+  const month = String(parts[1]).padStart(2, "0"); // Đảm bảo có 2 chữ số
+  const year = parts[2];
+
+  // Trả về định dạng 'YYYY-MM-DD'
+  return `${year}-${month}-${day}`;
 }
 
 module.exports = {
-    convertDateFormat,
-    checkDataExcel,
-}
-  
-  
+  convertDateFormat,
+  checkDataExcel,
+};
