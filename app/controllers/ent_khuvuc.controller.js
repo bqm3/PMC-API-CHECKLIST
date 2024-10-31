@@ -609,6 +609,7 @@ exports.uploadFiles = async (req, res) => {
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     const data = xlsx.utils.sheet_to_json(worksheet);
+    const errorMessages = []; // Collect error messages for response
 
     await sequelize.transaction(async (transaction) => {
       const removeSpacesFromKeys = (obj) => {
@@ -623,7 +624,7 @@ exports.uploadFiles = async (req, res) => {
       for (const item of data) {
         i++;
         //check tầng data import excel
-        checkDataExcel(item,i)
+        checkDataExcel(item, i);
 
         const transformedItem = removeSpacesFromKeys(item);
 
@@ -643,6 +644,13 @@ exports.uploadFiles = async (req, res) => {
           transaction,
         });
 
+        if (!toaNha) {
+          // Collect error and skip further processing for this item
+          errorMessages.push(
+            `Tên tòa nhà trong file excel khác với tòa nhà ở danh mục tòa nhà! Hãy kiểm tra lại dữ liệu tại dòng ${i}`
+          );
+          continue; // Skip to the next item
+        }
         const khoiCongViecList = tenKhoiCongViec
           .split(",")
           .map((khoi) => khoi.trim());
@@ -713,7 +721,7 @@ exports.uploadFiles = async (req, res) => {
               { transaction }
             );
             console.log(
-              `Khu vực "${tenKhuvuc}" đã tồn tại, cập nhật ID_KhoiCVs.`
+              `Khu vực "${tenKhuvuc}" đã tồn tại, Cập nhật khối công việc.`
             );
           }
 
@@ -775,6 +783,12 @@ exports.uploadFiles = async (req, res) => {
         }
       }
     });
+    if (errorMessages.length > 0) {
+      return res.status(400).json({
+        message: "Errors occurred during processing",
+        errors: errorMessages,
+      });
+    }
 
     res.send({
       message: "File uploaded and data processed successfully",

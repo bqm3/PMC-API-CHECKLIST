@@ -20,7 +20,8 @@ function checkDataExcel(data,index) {
                   throw new Error(`Lỗi dòng ${index}, dữ liệu không hợp lệ (VD: Tầng)`);
               }
           } else {
-              throw new Error('Lỗi: Không tìm thấy thông tin tầng trong tên khu vực.');
+            console.log('Lỗi: Không tìm thấy thông tin tầng trong tên khu vực')
+            //   throw new Error('Lỗi: Không tìm thấy thông tin tầng trong tên khu vực.');
           }
       }
     } catch (err){
