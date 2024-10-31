@@ -647,7 +647,7 @@ exports.uploadFiles = async (req, res) => {
         if (!toaNha) {
           throw new Error(`Tên tòa nhà trong file excel khác với tòa nhà ở danh mục tòa nhà! Hãy kiểm tra lại dữ liệu tại dòng ${i}`);
           // Collect error and skip further processing for this item
-         
+          
         }
         const khoiCongViecList = tenKhoiCongViec
           .split(",")
