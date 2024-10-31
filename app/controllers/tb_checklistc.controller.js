@@ -55,7 +55,7 @@ function convertTimeFormat(timeStr) {
 exports.createFirstChecklist = async (req, res, next) => {
   try {
     const userData = req.user.data;
-    const { ID_Calv, ID_KhoiCV, Ngay, Giobd, Tenca} = req.body;
+    const { ID_Calv, ID_KhoiCV, Ngay, Giobd, Tenca } = req.body;
     // Validate request
     if (!ID_Calv) {
       res.status(400).json({
@@ -65,84 +65,83 @@ exports.createFirstChecklist = async (req, res, next) => {
     }
 
     const calvData = await Ent_calv.findOne({
-      where: { ID_Calv: ID_Calv },
-      attributes: ["Giobatdau", "Gioketthuc"],
+      where: { ID_Calv: ID_Calv, isDelete: 0, ID_KhoiCV: ID_KhoiCV },
+      attributes: ["Giobatdau", "Gioketthuc", "isDelete", "ID_KhoiCV", "Tenca"],
     });
 
     const khoiData = await Ent_duan_khoicv.findOne({
       where: { ID_KhoiCV: ID_KhoiCV, ID_Duan: userData.ID_Duan, isDelete: 0 },
       attributes: ["Ngaybatdau", "Chuky", "isDelete"],
+      raw: true,
     });
 
-    const formattedDateNow = moment(Ngay).startOf("day").format("YYYY-MM-DD");
+    const formattedDateNow = moment(khoiData.Ngaybatdau).startOf("day").format("DD-MM-YYYY");
+    const formattedDatePrev = moment(Ngay)
+      .add(1, "days") // Thêm 1 ngày vào ngày hiện tại
+      .startOf("day")
+      .format("YYYY-MM-DD");
 
     const formattedDate = moment(khoiData.Ngaybatdau)
       .startOf("day")
       .format("YYYY-MM-DD");
 
-    const daysDifference = moment(formattedDateNow).diff(
+    const daysDifference = moment(formattedDatePrev).diff(
       moment(formattedDate),
       "days"
     );
 
-    // const remainder = (daysDifference + 1) % khoiData.Chuky;
-    // let ngayCheck = 0;
+    if (daysDifference <= 0) {
+      return res.status(400).json({
+        message: `Chưa đến ngày tạo ca, ngày thực hiện sẽ là ngày ${formattedDateNow}!`,
+      });
+    }
 
-    // if (khoiData.Chuky == 1) {
-    //   ngayCheck = 1;
-    // } else {
-    //   ngayCheck = remainder === 0 ? khoiData.Chuky : remainder;
-    // }
-    const remainder = daysDifference % khoiData.Chuky;
     let ngayCheck = 0;
+
+    console.log('daysDifference',daysDifference)
+    console.log('daysDifference % khoiData.Chuky',daysDifference % khoiData.Chuky)
+    ngayCheck = 
+      khoiData.Chuky == 1
+        ? 1 
+        : daysDifference == 0 ? 1
+        : daysDifference <= khoiData.Chuky
+        ? daysDifference
+        : daysDifference % khoiData.Chuky == 0
+        ? khoiData.Chuky
+        : daysDifference % khoiData.Chuky;
 
     if (!calvData) {
       return res.status(400).json({
         message: "Ca làm việc không tồn tại!",
       });
     }
-
     const { Giobatdau, Gioketthuc } = calvData;
 
-    const giobdMoment = moment(convertTimeFormat(Giobd), "HH:mm:ss");
-    const giobatdauMoment = moment(Giobatdau, "HH:mm:ss");
-    const gioketthucMoment = moment(Gioketthuc, "HH:mm:ss");
-
-    if (giobdMoment < giobatdauMoment) {
-      ngayCheck = remainder;
-    } else {
-      ngayCheck = remainder + 1;
+    console.log("khoiData", khoiData);
+    console.log("giobd", Giobd);
+    console.log("giobatdauMoment", Giobatdau);
+    console.log("gioketthucMoment", Gioketthuc);
+    console.log("ngayCheck", ngayCheck);
+   
+    if ((Giobd <= Giobatdau || Giobd >= Gioketthuc) && Giobatdau <= Gioketthuc) {
+      console.log("run 1");
+      return res.status(400).json({
+        message: "Giờ bắt đầu không thuộc khoảng thời gian của ca làm việc!",
+      });
     }
 
-    if (gioketthucMoment.isBefore(giobatdauMoment)) {
-      if (
-        !giobdMoment.isBetween(
-          giobatdauMoment,
-          moment("23:59:59", "HH:mm:ss"),
-          null,
-          "[]"
-        ) &&
-        !giobdMoment.isBetween(
-          moment("00:00:00", "HH:mm:ss"),
-          gioketthucMoment,
-          null,
-          "[]"
-        )
-      ) {
-        return res.status(400).json({
-          message: "Giờ bắt đầu không thuộc khoảng thời gian của ca làm việc!",
-        });
-      }
-    } else {
-      if (
-        !giobdMoment.isBetween(giobatdauMoment, gioketthucMoment, null, "[]")
-      ) {
-        return res.status(400).json({
-          message: "Giờ bắt đầu không thuộc khoảng thời gian của ca làm việc!",
-        });
-      }
+    if (Giobd <= Giobatdau && Giobd >= Gioketthuc && Giobatdau >= Gioketthuc) {
+      console.log("run 2");
+      return res.status(400).json({
+        message: "Giờ bắt đầu không thuộc khoảng thời gian của ca làm việc!",
+      });
     }
 
+    if (Giobatdau >= Gioketthuc && Giobd <= Giobatdau) {
+      ngayCheck = ngayCheck - 1;
+    }
+    
+    
     const thietlapcaData = await Ent_thietlapca.findOne({
       attributes: [
         "ID_ThietLapCa",
@@ -171,9 +170,9 @@ exports.createFirstChecklist = async (req, res, next) => {
           B2: Thiết lập ngày thực hiện, ca làm việc<br>
           B3: Chọn hạng mục cần thiết lập<br>
           B4: Lưu</span>
-        `
-      });      
-    }     
+        `,
+      });
+    }
 
     const checklistData = await Ent_checklist.findAndCountAll({
       attributes: [
@@ -2709,8 +2708,8 @@ exports.tiLeHoanThanh = async (req, res) => {
     let whereClause = {
       isDelete: 0,
       ID_Duan: {
-        [Op.ne]: 1
-      }
+        [Op.ne]: 1,
+      },
     };
 
     const getLastDayOfMonth = (year, month) => {
@@ -2923,8 +2922,8 @@ exports.tiLeSuco = async (req, res) => {
     let whereClause = {
       isDelete: 0,
       ID_Duan: {
-        [Op.ne]: 1
-      }
+        [Op.ne]: 1,
+      },
     };
 
     // if (khoi !== "all") {
@@ -3084,8 +3083,8 @@ exports.suCoChiTiet = async (req, res) => {
   let whereClause = {
     isDelete: 0,
     ID_Duan: {
-      [Op.ne]: 1
-    }
+      [Op.ne]: 1,
+    },
   };
 
   whereClause.Ngay = {
@@ -3172,7 +3171,6 @@ exports.suCoChiTiet = async (req, res) => {
     }
     return acc;
   }, []);
-  
 
   // Trả về dữ liệu chỉ bao gồm mảng tb_checklistchitiets
   return res.status(200).json({
@@ -3230,8 +3228,8 @@ exports.soSanhSuCo = async (req, res) => {
           [Op.lte]: endOfLastWeek,
         },
         ID_Duan: {
-          [Op.ne]: 1
-        }
+          [Op.ne]: 1,
+        },
       },
       raw: true,
     });
@@ -3331,15 +3329,15 @@ exports.reportPercentWeek = async (req, res) => {
     let lastWhereClause = {
       isDelete: 0,
       ID_Duan: {
-        [Op.ne]: 1
-      }
+        [Op.ne]: 1,
+      },
     };
 
     let prevWhereClause = {
       isDelete: 0,
       ID_Duan: {
-        [Op.ne]: 1
-      }
+        [Op.ne]: 1,
+      },
     };
 
     // if (khoi !== "all") {
@@ -3465,8 +3463,8 @@ exports.reportPercentYesterday = async (req, res) => {
         Ngay: yesterday,
         isDelete: 0,
         ID_Duan: {
-          [Op.ne]: 1
-        }
+          [Op.ne]: 1,
+        },
       },
       include: [
         {
@@ -3711,8 +3709,8 @@ exports.getChecklistsErrorFromYesterday = async (req, res) => {
           [Op.between]: [yesterday, now],
         },
         ID_Duan: {
-          [Op.ne]: 1
-        }
+          [Op.ne]: 1,
+        },
         // ID_Duan: userData.ID_Duan
       },
     });
@@ -4265,8 +4263,8 @@ exports.getProjectsChecklistStatus = async (req, res) => {
         Ngay: yesterday,
         isDelete: 0,
         ID_Duan: {
-          [Op.ne]: 1
-        }
+          [Op.ne]: 1,
+        },
       },
       include: [
         {
@@ -6265,8 +6263,8 @@ exports.createExcelDuAn = async (req, res) => {
       where: {
         isDelete: 0,
         ID_Duan: {
-          [Op.ne]: 1
-        }
+          [Op.ne]: 1,
+        },
         // Ngay: yesterday
       },
       include: [
@@ -6275,7 +6273,7 @@ exports.createExcelDuAn = async (req, res) => {
           attributes: ["Duan"],
           where: {
             ID_Duan: {
-              [Op.ne]: 1, 
+              [Op.ne]: 1,
             },
           },
           include: [
@@ -6286,12 +6284,12 @@ exports.createExcelDuAn = async (req, res) => {
           ],
         },
         {
-          model: Ent_khoicv, 
+          model: Ent_khoicv,
           attributes: ["KhoiCV"],
         },
         {
           model: Ent_calv,
-          attributes: ["Tenca", "isDelete"], 
+          attributes: ["Tenca", "isDelete"],
           where: {
             isDelete: 0,
           },
