@@ -71,16 +71,17 @@ exports.createFirstChecklist = async (req, res, next) => {
 
     const khoiData = await Ent_duan_khoicv.findOne({
       where: { ID_KhoiCV: ID_KhoiCV, ID_Duan: userData.ID_Duan, isDelete: 0 },
-      attributes: ["Ngaybatdau", "Chuky", "isDelete"],
-      raw: true,
+      attributes: ["Ngaybatdau", "Chuky", "isDelete", "ID_Duan"],
     });
 
     const formattedDateNow = moment(khoiData.Ngaybatdau).startOf("day").format("DD-MM-YYYY");
+    const nowFormattedDate = moment(Ngay).startOf("day").format("YYYY-MM-DD");
     const formattedDatePrev = moment(Ngay)
       .add(1, "days") // Thêm 1 ngày vào ngày hiện tại
       .startOf("day")
       .format("YYYY-MM-DD");
 
+      console.log('formattedDatePrev', formattedDatePrev)
     const formattedDate = moment(khoiData.Ngaybatdau)
       .startOf("day")
       .format("YYYY-MM-DD");
@@ -305,7 +306,7 @@ exports.createFirstChecklist = async (req, res, next) => {
             ID_KhoiCV: userData.ID_KhoiCV,
             ID_ThietLapCa: thietlapcaData.ID_ThietLapCa,
             Giobd: convertTimeFormat(Giobd),
-            Ngay: formattedDateNow,
+            Ngay: nowFormattedDate,
             TongC: 0,
             Tong: checklistData.count || 0,
             Tinhtrang: 0,
@@ -345,7 +346,7 @@ exports.createFirstChecklist = async (req, res, next) => {
                 ID_KhoiCV: userData.ID_KhoiCV,
                 Giobd: convertTimeFormat(Giobd),
                 ID_ThietLapCa: thietlapcaData.ID_ThietLapCa,
-                Ngay: formattedDateNow,
+                Ngay: nowFormattedDate,
                 TongC: 0,
                 Tong: checklistData.count || 0,
                 Tinhtrang: 0,
