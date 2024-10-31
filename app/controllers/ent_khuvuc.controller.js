@@ -16,6 +16,7 @@ const fs = require("fs");
 const path = require("path");
 const archiver = require("archiver");
 const axios = require("axios");
+const { checkDataExcel } = require("../utils/util");
 
 exports.create = async (req, res) => {
   try {
@@ -618,7 +619,12 @@ exports.uploadFiles = async (req, res) => {
         }, {});
       };
 
+      let i = 2;
       for (const item of data) {
+        i++;
+        //check tầng data import excel
+        checkDataExcel(item,i)
+
         const transformedItem = removeSpacesFromKeys(item);
 
         const tenKhoiCongViec = transformedItem["TÊNKHỐICÔNGVIỆC"];
