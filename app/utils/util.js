@@ -1,27 +1,25 @@
 //check tầng data import excel
-function checkDataExcel(data,index) {
+function checkDataExcel(data,index,key) {
     try{
       const tenKhuVuc = data['Tên khu vực'].toLowerCase(); // Chuyển đổi về chữ thường
       const tenHangMuc = data['Tên hạng mục'].toLowerCase(); // Chuyển đổi về chữ thường
       const tenTang = data['Tên tầng'].toLowerCase(); // Chuyển đổi về chữ thường
     
       // Kiểm tra xem tên khu vực có chứa từ "tầng" không
-      if (tenKhuVuc.includes('tầng')) {
-          // Lấy thông tin tầng từ tên tầng
-          const tangPattern = /tầng\s*\d+/i; // Biểu thức chính quy để tìm "tầng" theo sau là số
-          const matchTang = tenKhuVuc.match(tangPattern);
-  
-    
-          if (matchTang) {
-              const expectedTang = matchTang[0]; // Tầng mong đợi từ tên tầng
-    
-              // Kiểm tra xem tên hạng mục có chứa tầng mong đợi không
-              if (!tenHangMuc.includes(expectedTang) || !tenTang.includes(expectedTang)) {
-                  throw new Error(`Lỗi dòng ${index}, dữ liệu không hợp lệ (VD: Tầng)`);
-              }
-          } else {
-              throw new Error('Lỗi: Không tìm thấy thông tin tầng trong tên khu vực.');
-          }
+      if (tenTang && key == 1) {
+        if (tenKhuVuc.includes('tầng')){
+            const check = tenKhuVuc.includes(tenTang)
+            if(!check){
+                throw new Error(`Lỗi dòng ${index}, dữ liệu tầng của khu vực không hợp lệ`);
+            }
+        }
+      } else {
+        if (tenHangMuc.includes('tầng')){
+            const check = tenHangMuc.includes(tenTang)
+            if(!check){
+                throw new Error(`Lỗi dòng ${index}, dữ liệu tầng của khu vực không hợp lệ`);
+            }
+        }
       }
     } catch (err){
       throw err

@@ -643,7 +643,7 @@ exports.uploadFiles = async (req, res) => {
       let i = 2;
       for (const item of data) {
         //check tầng data import excel
-        checkDataExcel(item,i)
+        checkDataExcel(item,i,2)
         const transformedItem = removeSpacesFromKeys(item);
         const tenKhuvuc = transformedItem["TÊNKHUVỰC"];
         const tenKhoiCongViec = transformedItem["TÊNKHỐICÔNGVIỆC"];
