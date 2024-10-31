@@ -12,7 +12,7 @@ exports.notiAll = async (req, res) => {
     key: '2.0.6',
     type: "WARNING",
     textTitle: "PMC Checklist",
-    textBody: "Phiên bản 2.0.5 đã xuất bản. Cập nhật phiên bản để có trải nghiệm tốt nhất.",
+    textBody: "Phiên bản 2.0.6 đã xuất bản. Cập nhật phiên bản để có trải nghiệm tốt nhất.",
     time: 5000
   };
   return res.status(200).json({

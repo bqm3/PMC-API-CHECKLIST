@@ -742,18 +742,21 @@ exports.uploadFiles = async (req, res) => {
 
 const qrFolder = path.join(__dirname, "generated_qr_codes");
 
-const generateAndSaveQrCodes = async (maQrCodes) => {
+const generateAndSaveQrCodes = async (maQrCodeArray, hangMucArray) => {
   // Create the directory if it doesn't exist
   if (!fs.existsSync(qrFolder)) {
     fs.mkdirSync(qrFolder, { recursive: true });
   }
 
   return Promise.all(
-    maQrCodes.map(async (maQrCode) => {
+    maQrCodeArray.map(async (maQrCode, index) => {
       const sanitizedCode = maQrCode.replace(/[/\\?%*:|"<>]/g, "-"); // Replace characters not allowed in file names
+      const hangMuc = hangMucArray[index] || "No Item"; // Default to "No Item" if no hangMuc is provided
+      const caption = `${hangMuc} - ${maQrCode}`;
+
       const url = `https://quickchart.io/qr?text=${encodeURIComponent(
         maQrCode
-      )}&caption=${encodeURIComponent(maQrCode)}&size=300x300`;
+      )}&caption=${encodeURIComponent(caption)}&size=300x300`;
       const imagePath = path.join(qrFolder, `qr_code_${sanitizedCode}.png`);
 
       try {
@@ -780,7 +783,7 @@ const generateAndSaveQrCodes = async (maQrCodes) => {
 };
 
 exports.downloadQrCodes = async (req, res) => {
-  const { maQrCodes } = req.query;
+  const { maQrCodes, hangMucs } = req.query;
 
   if (!maQrCodes) {
     return res.status(400).json({ error: "maQrCodes parameter is required" });
@@ -788,9 +791,10 @@ exports.downloadQrCodes = async (req, res) => {
 
   // Convert maQrCodes from a string to an array
   const maQrCodeArray = maQrCodes.split(",").map((code) => code.trim());
+  const hangMucArray = hangMucs.split(",").map((code) => code.trim());
 
   try {
-    await generateAndSaveQrCodes(maQrCodeArray);
+    await generateAndSaveQrCodes(maQrCodeArray, hangMucArray);
 
     // Create a zip file
     const zipPath = path.join(__dirname, "qr_codes.zip");
