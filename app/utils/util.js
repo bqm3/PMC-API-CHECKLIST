@@ -16,7 +16,7 @@ function checkDataExcel(data,index,key) {
         if (tenHangMuc.includes('tầng')){
             const check = tenHangMuc.includes(tenTang)
             if(!check){
-                throw new Error(`Lỗi dòng ${index}, dữ liệu tầng của khu vực không hợp lệ`);
+                throw new Error(`Lỗi dòng ${index}, dữ liệu tầng của hạng mục không hợp lệ`);
             }
         }
       }
@@ -27,22 +27,9 @@ function checkDataExcel(data,index,key) {
 
 //format ngày
 function convertDateFormat(inputDate) {
-  console.log("inputDate", inputDate);
-  console.log("inputDate", typeof inputDate);
   // Kiểm tra xem inputDate có phải là chuỗi không
   if (typeof inputDate !== "string") {
     throw new Error("Sai địng dạng ngày DD/MM/YYYY."); 
-    // tầng mái
-
-    // TẦNG MÁI
-    // Tầng mái 
-    // tầng mái hiên
-    // tầng Hiên mái
-    // tầng 1
-
-    // format UPPERCASE
-    // tầng 12 = tầng
-    // khu vực tầng 12  = kv có chữ tầng => FORMAT UPPERCASE => KHU VỰC TẦNG MÁI ~ TẦNG MÁI
   }
 
   // Tách ngày, tháng, năm
