@@ -873,10 +873,6 @@ exports.uploadFileUsers = async (req, res) => {
         const taiKhoan = transformedItem["TÀIKHOẢN"];
         const matKhau = transformedItem["MẬTKHẨU"];
 
-        console.log('tenKhoiCongViec',tenKhoiCongViec)
-        console.log('gioiTinh',gioiTinh)
-        console.log('hoTen',hoTen)
-
         const sanitizedTenToanha = duAn?.replace(/\t/g, ""); // Loại bỏ tất cả các ký tự tab
 
         const dataChucvu = await Ent_chucvu.findOne({
