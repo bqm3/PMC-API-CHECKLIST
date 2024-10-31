@@ -637,7 +637,7 @@ exports.uploadFiles = async (req, res) => {
         const toaNha = await Ent_toanha.findOne({
           attributes: ["ID_Toanha", "Sotang", "Toanha", "ID_Duan", "isDelete"],
           where: {
-            Toanha: sanitizedTenToanha.trim(),
+            Toanha: sanitizedTenToanha,
             ID_Duan: userData.ID_Duan,
             isDelete: 0,
           },
