@@ -81,7 +81,6 @@ exports.createFirstChecklist = async (req, res, next) => {
       .startOf("day")
       .format("YYYY-MM-DD");
 
-      console.log('formattedDatePrev', formattedDatePrev)
     const formattedDate = moment(khoiData.Ngaybatdau)
       .startOf("day")
       .format("YYYY-MM-DD");
@@ -99,8 +98,6 @@ exports.createFirstChecklist = async (req, res, next) => {
 
     let ngayCheck = 0;
 
-    console.log('daysDifference',daysDifference)
-    console.log('daysDifference % khoiData.Chuky',daysDifference % khoiData.Chuky)
     ngayCheck = 
       khoiData.Chuky == 1
         ? 1 
@@ -117,22 +114,14 @@ exports.createFirstChecklist = async (req, res, next) => {
       });
     }
     const { Giobatdau, Gioketthuc } = calvData;
-
-    console.log("khoiData", khoiData);
-    console.log("giobd", Giobd);
-    console.log("giobatdauMoment", Giobatdau);
-    console.log("gioketthucMoment", Gioketthuc);
-    console.log("ngayCheck", ngayCheck);
    
     if ((Giobd <= Giobatdau || Giobd >= Gioketthuc) && Giobatdau <= Gioketthuc) {
-      console.log("run 1");
       return res.status(400).json({
         message: "Giờ bắt đầu không thuộc khoảng thời gian của ca làm việc!",
       });
     }
 
     if (Giobd <= Giobatdau && Giobd >= Gioketthuc && Giobatdau >= Gioketthuc) {
-      console.log("run 2");
       return res.status(400).json({
         message: "Giờ bắt đầu không thuộc khoảng thời gian của ca làm việc!",
       });
