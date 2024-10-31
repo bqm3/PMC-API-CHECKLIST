@@ -895,22 +895,25 @@ exports.uploadFileUsers = async (req, res) => {
           });
         }
 
-        const dataKhoiCV = await Ent_khoicv.findOne({
-          attributes: ["ID_KhoiCV", "KhoiCV", "isDelete"],
-
-          where: {
-            KhoiCV: sequelize.where(
-              sequelize.fn("UPPER", sequelize.fn("TRIM",  sequelize.col("KhoiCV"))),
-              "LIKE",
-              tenKhoiCongViec.trim().toUpperCase()
-            ),
-            isDelete: 0,
-          },
-        });
-        if (!dataKhoiCV) {
-          return res.status(500).json({
-            message: "Không tìm khối công việc phù hợp",
+        let dataKhoiCV;
+        if(tenKhoiCongViec !== undefined){
+           dataKhoiCV = await Ent_khoicv.findOne({
+            attributes: ["ID_KhoiCV", "KhoiCV", "isDelete"],
+  
+            where: {
+              KhoiCV: sequelize.where(
+                sequelize.fn("UPPER", sequelize.fn("TRIM",  sequelize.col("KhoiCV"))),
+                "LIKE",
+                tenKhoiCongViec.trim().toUpperCase()
+              ),
+              isDelete: 0,
+            },
           });
+          if (!dataKhoiCV) {
+            return res.status(500).json({
+              message: "Không tìm khối công việc phù hợp",
+            });
+          }
         }
 
         const dataUser = await Ent_user.findOne({
@@ -951,7 +954,7 @@ exports.uploadFileUsers = async (req, res) => {
         const dataInsert = {
           ID_Duan: userData.ID_Duan,
           ID_Chucvu: dataChucvu.ID_Chucvu || null,
-          ID_KhoiCV: dataKhoiCV.ID_KhoiCV || null,
+          ID_KhoiCV: dataKhoiCV?.ID_KhoiCV || null,
           Password: mk,
           Email: gmail || null,
           UserName: taiKhoan,

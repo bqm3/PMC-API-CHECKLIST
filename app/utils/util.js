@@ -16,7 +16,7 @@ function checkDataExcel(data,index,key) {
         if (tenHangMuc.includes('tầng')){
             const check = tenHangMuc.includes(tenTang)
             if(!check){
-                throw new Error(`Lỗi dòng ${index}, dữ liệu tầng của khu vực không hợp lệ`);
+                throw new Error(`Lỗi dòng ${index}, dữ liệu tầng của hạng mục không hợp lệ`);
             }
         }
       }
