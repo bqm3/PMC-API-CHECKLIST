@@ -781,11 +781,8 @@ exports.uploadFiles = async (req, res) => {
       data,
     });
   } catch (err) {
-    console.log("err", err.message);
-    console.error("Error at line", err.stack.split("\n")[1].trim());
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
-      error: err.stack,
     });
   }
 };
