@@ -150,7 +150,6 @@ exports.register = async (req, res, next) => {
       where: {
         [Op.and]: [
           { UserName: UserName },
-          { Email: Email },
           { ID_Duan: ID_Duan },
           { isDelete: 0 },
         ],
@@ -178,14 +177,14 @@ exports.register = async (req, res, next) => {
 
     if (user !== null) {
       return res.status(401).json({
-        message: "Tài khoản hoặc Email đã bị trùng.",
+        message: "Tài khoản đã bị trùng.",
       });
     }
 
     const salt = genSaltSync(10);
     var data = {
       UserName: UserName,
-      Email: Email,
+      Email: Email || null,
       Password: await hashSync(Password, salt),
       ID_Chucvu: ID_Chucvu,
       ID_Duan: ID_Duan || null,
