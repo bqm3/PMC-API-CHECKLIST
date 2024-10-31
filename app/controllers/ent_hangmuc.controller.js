@@ -12,6 +12,7 @@ const fs = require("fs");
 const path = require("path");
 const archiver = require("archiver");
 const axios = require("axios");
+const { checkDataExcel } = require("../utils/util");
 
 // Create and Save a new Ent_tang
 exports.create = async (req, res, next) => {
@@ -639,7 +640,10 @@ exports.uploadFiles = async (req, res) => {
         }, {});
       };
 
+      let i = 2;
       for (const item of data) {
+        //check tầng data import excel
+        checkDataExcel(item,i)
         const transformedItem = removeSpacesFromKeys(item);
         const tenKhuvuc = transformedItem["TÊNKHUVỰC"];
         const tenKhoiCongViec = transformedItem["TÊNKHỐICÔNGVIỆC"];

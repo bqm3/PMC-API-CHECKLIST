@@ -15,6 +15,8 @@ const fetch = require("node-fetch");
 const moment = require("moment-timezone");
 const sequelize = require("../config/db.config");
 const xlsx = require("xlsx");
+const { convertDateFormat } = require("../utils/util");
+
 
 // Login User
 exports.login = async (req, res) => {
@@ -867,15 +869,12 @@ exports.uploadFileUsers = async (req, res) => {
         const hoTen = transformedItem["HỌTÊN"];
         const gioiTinh = transformedItem["GIỚITÍNH"];
         const soDienThoai = transformedItem["SỐĐIỆNTHOẠI"];
-        const namSinh = transformedItem["NGÀYSINH"];
+        const namSinh = convertDateFormat(transformedItem["NGÀYSINH"]);
         const chucVu = transformedItem["CHỨCVỤ"];
         const gmail = transformedItem["GMAIL"];
         const taiKhoan = transformedItem["TÀIKHOẢN"];
         const matKhau = transformedItem["MẬTKHẨU"];
 
-        console.log('tenKhoiCongViec',tenKhoiCongViec)
-        console.log('gioiTinh',gioiTinh)
-        console.log('hoTen',hoTen)
 
         const sanitizedTenToanha = duAn?.replace(/\t/g, ""); // Loại bỏ tất cả các ký tự tab
 
