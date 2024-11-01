@@ -44,6 +44,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     records.Ghichu = ensureArray(records.Ghichu );
     records.Gioht = ensureArray(records.Gioht);
     records.Checklist = ensureArray(records.Checklist);
+    records.isScan = ensureArray(records.isScan);
 
     if (records.ID_ChecklistC.length !== records.ID_Checklist.length) {
       return res.status(400).json({
@@ -67,6 +68,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       const Gioht = records.Gioht[index];
       const Ghichu = records.Ghichu[index];
       const Checklist = records.Checklist[index];
+      const isScan = records.isScan[index];
       const d = new Date();
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, "0"); // Months are zero-based
@@ -98,6 +100,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
         Gioht,
         Ghichu,
         Checklist,
+        isScan,
         Anh,
         Ngay: formattedDate,
       };

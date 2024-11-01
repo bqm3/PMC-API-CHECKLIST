@@ -226,6 +226,7 @@ require("./app/routes/tb_sucongoai.route")(app);
 require("./app/routes/mail.route")(app);
 require("./app/routes/noti.route")(app);
 require("./app/routes/ent_all.route")(app);
+require("./app/routes/ai.route")(app);
 
 const PORT = process.env.PORT || 6868;
 app.listen(PORT, () => {

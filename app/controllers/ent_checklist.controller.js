@@ -2170,3 +2170,4 @@ function generateQRCodeChecklist(tenChecklist) {
 
   return checkListInitials;
 }
+

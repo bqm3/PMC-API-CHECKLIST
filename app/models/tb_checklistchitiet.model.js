@@ -18,6 +18,9 @@ const Tb_checklistchitiet = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    isScan: {
+      type: DataTypes.INTEGER,
+    },
     Ketqua: {
       type: DataTypes.CHAR,
     },

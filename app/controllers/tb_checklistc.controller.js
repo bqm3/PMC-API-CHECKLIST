@@ -393,7 +393,7 @@ exports.getCheckListc = async (req, res, next) => {
       };
 
       // Nếu quyền là 1 (ID_Chucvu === 1) thì không cần thêm điều kiện ID_KhoiCV
-      if (userData.ID_Chucvu !== 1 && userData.ID_Chucvu !== 2) {
+      if (userData.ID_Chucvu !== 1 && userData.ID_Chucvu !== 2 && userData.ID_Chucvu !== 3) {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
         whereClause.ID_User = userData?.ID_User;
       }
@@ -1671,7 +1671,6 @@ exports.checklistCalv = async (req, res) => {
         });
       }
 
-      // Extract all ID_Checklist from checklistDoneItems and fetch related data
       let checklistIds = [];
       let checklistGiohtMap = new Map();
 
@@ -1680,7 +1679,7 @@ exports.checklistCalv = async (req, res) => {
           const idChecklists = item.Description.split(",").map(Number);
           checklistIds.push(...idChecklists);
           idChecklists.forEach((id) => {
-            checklistGiohtMap.set(id, item.Gioht); // Map each ID to its corresponding Gioht
+            checklistGiohtMap.set(id, item.Gioht); 
           });
         });
       }

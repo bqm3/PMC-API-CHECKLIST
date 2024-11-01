@@ -11,6 +11,9 @@ const Tb_checklistchitietdone = sequelize.define("tb_checklistchitietdone", {
        ID_ChecklistC: {
         type: DataTypes.INTEGER,
       },
+      isScan: {
+        type: DataTypes.INTEGER,
+      },
        Description: {
          type: DataTypes.TEXT,
        },

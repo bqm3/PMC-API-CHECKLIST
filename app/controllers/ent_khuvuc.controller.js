@@ -598,6 +598,14 @@ exports.getKhuvucTotal = async (req, res) => {
   }
 };
 
+function removeVietnameseTones(str) {
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D');
+}
+
 exports.uploadFiles = async (req, res) => {
   try {
     if (!req.file) {
@@ -624,7 +632,7 @@ exports.uploadFiles = async (req, res) => {
       for (const item of data) {
         i++;
         //check tầng data import excel
-        checkDataExcel(item,i,1)
+        checkDataExcel(item, i, 1);
 
         const transformedItem = removeSpacesFromKeys(item);
 
@@ -645,24 +653,34 @@ exports.uploadFiles = async (req, res) => {
         });
 
         if (!toaNha) {
-          throw new Error(`Tên tòa nhà trong file excel khác với tòa nhà ở danh mục tòa nhà! Hãy kiểm tra lại dữ liệu tại dòng ${i}`);
+          throw new Error(
+            `Tên tòa nhà trong file excel khác với tòa nhà ở danh mục tòa nhà! Hãy kiểm tra lại dữ liệu tại dòng ${i}`
+          );
           // Collect error and skip further processing for this item
-          
         }
         const khoiCongViecList = tenKhoiCongViec
           .split(",")
           .map((khoi) => khoi.trim());
 
+//           SELECT `ID_KhoiCV`, `KhoiCV`, `isDelete` FROM `ent_khoicv` AS `ent_khoicv` WHERE `KhoiCV` LIKE '%Khối làm sạch%' AND `ent_khoicv`.`isDelete` = 0 LIMIT 1;
+
+// SELECT `ID_KhoiCV`, `KhoiCV`, `isDelete` FROM `ent_khoicv` AS `ent_khoicv` WHERE `KhoiCV` LIKE '%Khối làm sạch%' AND `ent_khoicv`.`isDelete` =0;
+
         const khoiCVs = await Promise.all(
           khoiCongViecList.map(async (khoiCongViec) => {
             const khoiCV = await Ent_khoicv.findOne({
-              attributes: ["ID_KhoiCV", "KhoiCV"],
+              attributes: ["ID_KhoiCV", "KhoiCV", "isDelete"],
               where: {
-                KhoiCV: sequelize.where(
-                  sequelize.fn("UPPER", sequelize.col("KhoiCV")),
-                  "LIKE",
-                  khoiCongViec.toUpperCase()
-                ),
+                [Op.and]: [
+                  sequelize.where(
+                     sequelize.col('KhoiCV'),
+                    {
+                      [Op.like]: `%${removeVietnameseTones(khoiCongViec)}%`
+                    }
+                  ),
+                  { isDelete: 0 }
+                ]
+               
               },
               transaction,
             });
@@ -781,7 +799,7 @@ exports.uploadFiles = async (req, res) => {
         }
       }
     });
-   
+
     res.send({
       message: "File uploaded and data processed successfully",
       data,
@@ -795,18 +813,20 @@ exports.uploadFiles = async (req, res) => {
 
 const qrFolder = path.join(__dirname, "generated_qr_codes");
 
-const generateAndSaveQrCodes = async (maQrCodes) => {
+const generateAndSaveQrCodes = async (maQrCodeArray, khuVucArray) => {
   // Create the directory if it doesn't exist
   if (!fs.existsSync(qrFolder)) {
     fs.mkdirSync(qrFolder, { recursive: true });
   }
-
   return Promise.all(
-    maQrCodes.map(async (maQrCode) => {
+    maQrCodeArray.map(async (maQrCode, index) => {
       const sanitizedCode = maQrCode.replace(/[/\\?%*:|"<>]/g, "-"); // Replace characters not allowed in file names
+      const khuVuc = khuVucArray[index] || "No Item"; // Default to "No Item" if no hangMuc is provided
+      const caption = `${khuVuc} - ${maQrCode}`;
+
       const url = `https://quickchart.io/qr?text=${encodeURIComponent(
         maQrCode
-      )}&caption=${encodeURIComponent(maQrCode)}&size=300x300`;
+      )}&caption=${caption}&size=350x350`;
       const imagePath = path.join(qrFolder, `qr_code_${sanitizedCode}.png`);
 
       try {
@@ -833,17 +853,18 @@ const generateAndSaveQrCodes = async (maQrCodes) => {
 };
 
 exports.downloadQrCodes = async (req, res) => {
-  const { maQrCodes } = req.query;
+  const { maQrCodes, khuVucs } = req.body;
 
   if (!maQrCodes) {
     return res.status(400).json({ error: "maQrCodes parameter is required" });
   }
 
   // Convert maQrCodes from a string to an array
-  const maQrCodeArray = maQrCodes.split(",").map((code) => code.trim());
+  const maQrCodeArray = maQrCodes.map((code) => code.trim());
+  const khuVucArray = khuVucs.map((code) => code.trim());
 
   try {
-    await generateAndSaveQrCodes(maQrCodeArray);
+    await generateAndSaveQrCodes(maQrCodeArray, khuVucArray);
 
     // Create a zip file
     const zipPath = path.join(__dirname, "qr_codes.zip");
