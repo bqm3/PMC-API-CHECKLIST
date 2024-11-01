@@ -644,12 +644,12 @@ exports.uploadFiles = async (req, res) => {
         });
 
         if (!toaNha) {
+          throw new Error(`Tên tòa nhà trong file excel khác với tòa nhà ở danh mục tòa nhà! Hãy kiểm tra lại dữ liệu tại dòng ${i}`);
           // Collect error and skip further processing for this item
-          // errorMessages.push(
-          //   `Tên tòa nhà trong file excel khác với tòa nhà ở danh mục tòa nhà! Hãy kiểm tra lại dữ liệu tại dòng ${i}`
-          // );
-          // continue; // Skip to the next item
-          throw new Error(`Tên tòa nhà trong file excel khác với tòa nhà ở danh mục tòa nhà! Hãy kiểm tra lại dữ liệu tại dòng ${i}`)
+          errorMessages.push(
+            `Tên tòa nhà trong file excel khác với tòa nhà ở danh mục tòa nhà! Hãy kiểm tra lại dữ liệu tại dòng ${i}`
+          );
+          continue; // Skip to the next item
         }
         const khoiCongViecList = tenKhoiCongViec
           .split(",")
@@ -788,13 +788,7 @@ exports.uploadFiles = async (req, res) => {
         i++;
       }
     });
-    if (errorMessages.length > 0) {
-      return res.status(400).json({
-        message: "Errors occurred during processing",
-        errors: errorMessages,
-      });
-    }
-
+   
     res.send({
       message: "File uploaded and data processed successfully",
       data,

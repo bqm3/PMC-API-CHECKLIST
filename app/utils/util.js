@@ -37,8 +37,6 @@ function checkDataExcel(data, index, key) {
 
 //format ngày
 function convertDateFormat(inputDate) {
-  console.log("inputDate", inputDate);
-  console.log("inputDate", typeof inputDate);
   // Kiểm tra xem inputDate có phải là chuỗi không
   if (typeof inputDate !== "string") {
     throw new Error("Sai địng dạng ngày DD/MM/YYYY."); 

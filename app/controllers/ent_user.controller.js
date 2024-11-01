@@ -30,7 +30,7 @@ exports.login = async (req, res) => {
     // Find user by username
     const user = await Ent_user.findOne({
       where: {
-        UserName: req.body.UserName,
+        UserName: req.body.UserName.trim(),
         isDelete: 0,
       },
       attributes: [
@@ -60,7 +60,7 @@ exports.login = async (req, res) => {
     if (user && user.isDelete === 0) {
       // Compare passwords
       const passwordValid = await bcrypt.compare(
-        req.body.Password,
+        req.body.Password.trim(),
         user.Password
       );
 
@@ -150,7 +150,6 @@ exports.register = async (req, res, next) => {
       where: {
         [Op.and]: [
           { UserName: UserName },
-          { Email: Email },
           { ID_Duan: ID_Duan },
           { isDelete: 0 },
         ],
@@ -178,14 +177,14 @@ exports.register = async (req, res, next) => {
 
     if (user !== null) {
       return res.status(401).json({
-        message: "Tài khoản hoặc Email đã bị trùng.",
+        message: "Tài khoản đã bị trùng.",
       });
     }
 
     const salt = genSaltSync(10);
     var data = {
       UserName: UserName,
-      Email: Email,
+      Email: Email || null,
       Password: await hashSync(Password, salt),
       ID_Chucvu: ID_Chucvu,
       ID_Duan: ID_Duan || null,
