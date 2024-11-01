@@ -30,7 +30,7 @@ exports.login = async (req, res) => {
     // Find user by username
     const user = await Ent_user.findOne({
       where: {
-        UserName: req.body.UserName,
+        UserName: req.body.UserName.trim(),
         isDelete: 0,
       },
       attributes: [
@@ -60,7 +60,7 @@ exports.login = async (req, res) => {
     if (user && user.isDelete === 0) {
       // Compare passwords
       const passwordValid = await bcrypt.compare(
-        req.body.Password,
+        req.body.Password.trim(),
         user.Password
       );
 
