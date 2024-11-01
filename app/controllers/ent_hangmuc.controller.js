@@ -636,7 +636,7 @@ exports.uploadFiles = async (req, res) => {
       for (const item of data) {
         //check tầng data import excel
         checkDataExcel(item,i,2);
-        i++;
+       
         const transformedItem = removeSpacesFromKeys(item);
         const tenKhuvuc = formatVietnameseText(transformedItem["TÊNKHUVỰC"]);
         const tenKhoiCongViec = formatVietnameseText(transformedItem["TÊNKHỐICÔNGVIỆC"]);
@@ -721,6 +721,7 @@ exports.uploadFiles = async (req, res) => {
               `Hạng mục "${tenHangmuc}" đã tồn tại trong khu vực ${tenKhuvuc}, bỏ qua việc tạo mới.`
             );
           }
+          i++;
         }
     });
 
@@ -861,12 +862,4 @@ function generateQRCodeKV(tenToa, khuVuc, tenTang) {
   // Tạo chuỗi QR
   const qrCode = `QR-${tenToaInitials}-${khuVucInitials}-${tenTang}`;
   return qrCode;
-}
-
-function removeVietnameseTones(str) {
-  return str
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D');
 }
