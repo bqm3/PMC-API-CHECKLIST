@@ -9,6 +9,7 @@ const {
   Ent_duan_khoicv,
 } = require("../models/setup.model");
 const { Op, Sequelize } = require("sequelize");
+const { formatVietnameseText } = require("../utils/util");
 
 exports.create = (req, res) => {
   // Validate request
@@ -22,7 +23,7 @@ exports.create = (req, res) => {
   // Create a Ent_toanha
   const data = {
     ID_Duan: req.body.ID_Duan,
-    Toanha: req.body.Toanha,
+    Toanha: formatVietnameseText(req.body.Toanha),
     Sotang: req.body.Sotang,
     isDelete: 0,
   };

@@ -12,7 +12,7 @@ const fs = require("fs");
 const path = require("path");
 const archiver = require("archiver");
 const axios = require("axios");
-const { checkDataExcel } = require("../utils/util");
+const { checkDataExcel, removeSpacesFromKeys, formatVietnameseText, removeVietnameseTones } = require("../utils/util");
 
 // Create and Save a new Ent_tang
 exports.create = async (req, res, next) => {
@@ -632,26 +632,18 @@ exports.uploadFiles = async (req, res) => {
     const data = xlsx.utils.sheet_to_json(worksheet);
 
     await sequelize.transaction(async (transaction) => {
-      const removeSpacesFromKeys = (obj) => {
-        return Object.keys(obj).reduce((acc, key) => {
-          const newKey = key?.replace(/\s+/g, "")?.toUpperCase();
-          acc[newKey] = obj[key];
-          return acc;
-        }, {});
-      };
-
       let i = 2;
       for (const item of data) {
-        i++;
         //check tầng data import excel
         checkDataExcel(item,i,2);
+        i++;
         const transformedItem = removeSpacesFromKeys(item);
-        const tenKhuvuc = transformedItem["TÊNKHUVỰC"];
-        const tenKhoiCongViec = transformedItem["TÊNKHỐICÔNGVIỆC"];
-        const tenToanha = transformedItem["TÊNTÒANHÀ"];
-        const tenTang = transformedItem["TÊNTẦNG"];
-        const tenHangmuc = transformedItem["TÊNHẠNGMỤC"];
-        const quanTrong = transformedItem["QUANTRỌNG"];
+        const tenKhuvuc = formatVietnameseText(transformedItem["TÊNKHUVỰC"]);
+        const tenKhoiCongViec = formatVietnameseText(transformedItem["TÊNKHỐICÔNGVIỆC"]);
+        const tenToanha = formatVietnameseText(transformedItem["TÊNTÒANHÀ"]);
+        const tenTang = formatVietnameseText(transformedItem["TÊNTẦNG"]);
+        const tenHangmuc = formatVietnameseText(transformedItem["TÊNHẠNGMỤC"]);
+        const quanTrong = formatVietnameseText(transformedItem["QUANTRỌNG"]);        
 
         const khoiCongViecList = tenKhoiCongViec
           .split(",")
@@ -662,11 +654,15 @@ exports.uploadFiles = async (req, res) => {
             const khoiCV = await Ent_khoicv.findOne({
               attributes: ["ID_KhoiCV", "KhoiCV"],
               where: {
-                KhoiCV: sequelize.where(
-                  sequelize.fn("UPPER", sequelize.col("KhoiCV")),
-                  "LIKE",
-                  khoiCongViec.toUpperCase()
-                ),
+                [Op.and]: [
+                  sequelize.where(
+                     sequelize.col('KhoiCV'),
+                    {
+                      [Op.like]: `%${removeVietnameseTones(khoiCongViec)}%`
+                    }
+                  ),
+                  { isDelete: 0 }
+                ]
               },
               transaction,
             });
