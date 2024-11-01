@@ -46,7 +46,18 @@ function convertDateFormat(inputDate) {
   return `${year}-${month}-${day}`;
 }
 
+// format text vietnames to english
+function removeVietnameseTones(str) {
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D');
+}
+
+
 module.exports = {
   convertDateFormat,
   checkDataExcel,
+  removeVietnameseTones
 };

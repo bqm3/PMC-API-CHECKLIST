@@ -24,6 +24,7 @@ exports.create = (req, res) => {
       Kinhdo,
       Docao,
       Gioht,
+      isScan,
     } = req.body;
 
     if (!Description || !Gioht) {
@@ -41,8 +42,11 @@ exports.create = (req, res) => {
       Kinhdo: Kinhdo || null,
       Docao: Docao || null,
       ID_ChecklistC: ID_ChecklistC || null,
+      isScan: isScan || null,
       isDelete: 0,
     };
+
+    console.log('data',data)
 
     // Save Tb_checklistchitietdone in the database
     Tb_checklistchitietdone.create(data)

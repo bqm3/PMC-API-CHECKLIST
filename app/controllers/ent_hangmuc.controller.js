@@ -662,11 +662,15 @@ exports.uploadFiles = async (req, res) => {
             const khoiCV = await Ent_khoicv.findOne({
               attributes: ["ID_KhoiCV", "KhoiCV"],
               where: {
-                KhoiCV: sequelize.where(
-                  sequelize.fn("UPPER", sequelize.col("KhoiCV")),
-                  "LIKE",
-                  khoiCongViec.toUpperCase()
-                ),
+                [Op.and]: [
+                  sequelize.where(
+                     sequelize.col('KhoiCV'),
+                    {
+                      [Op.like]: `%${removeVietnameseTones(khoiCongViec)}%`
+                    }
+                  ),
+                  { isDelete: 0 }
+                ]
               },
               transaction,
             });
@@ -696,7 +700,7 @@ exports.uploadFiles = async (req, res) => {
 
           // Check if hạng mục already exists for this khu vực
           const existingHangMuc = await Ent_hangmuc.findOne({
-            attributes: ["ID_Hangmuc", "Hangmuc", "MaQrCode", "ID_Khuvuc"],
+            attributes: ["ID_Hangmuc", "Hangmuc", "MaQrCode", "ID_Khuvuc", "isDelete"],
             where: {
               [Op.and]: [
                 { Hangmuc: tenHangmuc },
@@ -757,7 +761,7 @@ const generateAndSaveQrCodes = async (maQrCodeArray, hangMucArray) => {
 
       const url = `https://quickchart.io/qr?text=${encodeURIComponent(
         maQrCode
-      )}&caption=${encodeURIComponent(caption)}&size=300x300`;
+      )}&caption=${encodeURIComponent(caption)}&size=350x350`;
       const imagePath = path.join(qrFolder, `qr_code_${sanitizedCode}.png`);
 
       try {
@@ -784,15 +788,15 @@ const generateAndSaveQrCodes = async (maQrCodeArray, hangMucArray) => {
 };
 
 exports.downloadQrCodes = async (req, res) => {
-  const { maQrCodes, hangMucs } = req.query;
+  const { maQrCodes, hangMucs } = req.body;
 
   if (!maQrCodes) {
     return res.status(400).json({ error: "maQrCodes parameter is required" });
   }
 
   // Convert maQrCodes from a string to an array
-  const maQrCodeArray = maQrCodes.split(",").map((code) => code.trim());
-  const hangMucArray = hangMucs.split(",").map((code) => code.trim());
+  const maQrCodeArray = maQrCodes.map((code) => code.trim());
+  const hangMucArray = hangMucs.map((code) => code.trim());
 
   try {
     await generateAndSaveQrCodes(maQrCodeArray, hangMucArray);
@@ -865,4 +869,12 @@ function generateQRCodeKV(tenToa, khuVuc, tenTang) {
   // Tạo chuỗi QR
   const qrCode = `QR-${tenToaInitials}-${khuVucInitials}-${tenTang}`;
   return qrCode;
+}
+
+function removeVietnameseTones(str) {
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D');
 }
