@@ -598,13 +598,6 @@ exports.getKhuvucTotal = async (req, res) => {
   }
 };
 
-function removeVietnameseTones(str) {
-  return str
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D');
-}
 
 exports.uploadFiles = async (req, res) => {
   try {
@@ -617,7 +610,6 @@ exports.uploadFiles = async (req, res) => {
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     const data = xlsx.utils.sheet_to_json(worksheet);
-    const errorMessages = []; // Collect error messages for response
 
     await sequelize.transaction(async (transaction) => {
 
@@ -625,20 +617,18 @@ exports.uploadFiles = async (req, res) => {
       for (const item of data) {
         
         for (const [key, value] of Object.entries(item)) { 
-          if (typeof value === 'string' && value.trim() === '') { 
-            throw new Error(`Lỗi ở dòng ${i}, cột "${key}": có chứa khoảng trắng.`);
+          if (typeof value === 'string' && value.trim() === '' ) { 
+           
+            throw new Error(`Lỗi ở dòng ${i}, cột "${key}"`);
           }
         }
-        // console.log('i',i)
-        //check tầng data import excel
         checkDataExcel(item,i,1)
         
         const transformedItem = removeSpacesFromKeys(item);
-
-        const tenKhoiCongViec = formatVietnameseText(transformedItem["TÊNKHỐICÔNGVIỆC"]);
-        const tenToanha = formatVietnameseText(transformedItem["TÊNTÒANHÀ"]);
-        const tenKhuvuc = formatVietnameseText(transformedItem["TÊNKHUVỰC"]);
-        const tenTang = formatVietnameseText(transformedItem["TÊNTẦNG"]);
+        const tenKhoiCongViec = transformedItem["TÊNKHỐICÔNGVIỆC"] !== undefined ? formatVietnameseText(transformedItem["TÊNKHỐICÔNGVIỆC"], i) : null;
+        const tenToanha = formatVietnameseText(transformedItem["TÊNTÒANHÀ"], i);
+        const tenKhuvuc = formatVietnameseText(transformedItem["TÊNKHUVỰC"], i);
+        const tenTang =  formatVietnameseText(transformedItem["TÊNTẦNG"], i);
         const sanitizedTenToanha = tenToanha?.replace(/\t/g, "");
 
         const toaNha = await Ent_toanha.findOne({
@@ -655,20 +645,17 @@ exports.uploadFiles = async (req, res) => {
           throw new Error(
             `Tên tòa nhà trong file excel khác với tòa nhà ở danh mục tòa nhà! Hãy kiểm tra lại dữ liệu tại dòng ${i}`
           );
-          // Collect error and skip further processing for this item
-          errorMessages.push(
-            `Tên tòa nhà trong file excel khác với tòa nhà ở danh mục tòa nhà! Hãy kiểm tra lại dữ liệu tại dòng ${i}`
-          );
-          continue; // Skip to the next item
         }
+
+        if(tenKhoiCongViec == null){
+          throw new Error(
+            `Thiếu khối công việc ở dòng ${i}`
+          );
+        }
+
         const khoiCongViecList = tenKhoiCongViec
-          .split(",")
-          .map((khoi) => khoi.trim());
-
-//           SELECT `ID_KhoiCV`, `KhoiCV`, `isDelete` FROM `ent_khoicv` AS `ent_khoicv` WHERE `KhoiCV` LIKE '%Khối làm sạch%' AND `ent_khoicv`.`isDelete` = 0 LIMIT 1;
-
-// SELECT `ID_KhoiCV`, `KhoiCV`, `isDelete` FROM `ent_khoicv` AS `ent_khoicv` WHERE `KhoiCV` LIKE '%Khối làm sạch%' AND `ent_khoicv`.`isDelete` =0;
-
+          ?.split(",")
+          ?.map((khoi) => khoi.trim());
         const khoiCVs = await Promise.all(
           khoiCongViecList.map(async (khoiCongViec) => {
             const khoiCV = await Ent_khoicv.findOne({

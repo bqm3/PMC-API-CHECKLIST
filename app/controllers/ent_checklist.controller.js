@@ -17,7 +17,11 @@ const {
   Ent_khuvuc_khoicv,
 } = require("../models/setup.model");
 const { Op, Sequelize } = require("sequelize");
-const { removeSpacesFromKeys, formatVietnameseText, removeVietnameseTones } = require("../utils/util");
+const {
+  removeSpacesFromKeys,
+  formatVietnameseText,
+  removeVietnameseTones,
+} = require("../utils/util");
 
 exports.create = async (req, res) => {
   try {
@@ -1938,13 +1942,25 @@ exports.uploadFiles = async (req, res) => {
           const tenKhuvuc = formatVietnameseText(transformedItem["TÊNKHUVỰC"]);
           const tenDuan = formatVietnameseText(transformedItem["TÊNDỰÁN"]);
           const tenToanha = formatVietnameseText(transformedItem["TÊNTÒANHÀ"]);
-          const tenKhoiCongViec = formatVietnameseText(transformedItem["TÊNKHỐICÔNGVIỆC"]);
+          const tenKhoiCongViec = formatVietnameseText(
+            transformedItem["TÊNKHỐICÔNGVIỆC"]
+          );
           const tenTang = formatVietnameseText(transformedItem["TÊNTẦNG"]);
-          const tenHangmuc = formatVietnameseText(transformedItem["TÊNHẠNGMỤC"]);
-          const tenChecklist = formatVietnameseText(transformedItem["TÊNCHECKLIST"]);
-          const tieuChuanChecklist = formatVietnameseText(transformedItem["TIÊUCHUẨNCHECKLIST"]);
-          const giaTriDanhDinh = formatVietnameseText(transformedItem["GIÁTRỊĐỊNHDANH"]);
-          const cacGiaTriNhan = formatVietnameseText(transformedItem["CÁCGIÁTRỊNHẬN"]);
+          const tenHangmuc = formatVietnameseText(
+            transformedItem["TÊNHẠNGMỤC"]
+          );
+          const tenChecklist = formatVietnameseText(
+            transformedItem["TÊNCHECKLIST"]
+          );
+          const tieuChuanChecklist = formatVietnameseText(
+            transformedItem["TIÊUCHUẨNCHECKLIST"]
+          );
+          const giaTriDanhDinh = formatVietnameseText(
+            transformedItem["GIÁTRỊĐỊNHDANH"]
+          );
+          const cacGiaTriNhan = formatVietnameseText(
+            transformedItem["CÁCGIÁTRỊNHẬN"]
+          );
           const quanTrong = formatVietnameseText(transformedItem["QUANTRỌNG"]);
           const ghiChu = formatVietnameseText(transformedItem["GHICHÚ"]);
           const nhap = formatVietnameseText(transformedItem["NHẬP"]);
@@ -1960,30 +1976,27 @@ exports.uploadFiles = async (req, res) => {
           }
 
           const khoiCongViecList = tenKhoiCongViec
-          .split(",")
-          .map((khoi) => khoi.trim());
+            .split(",")
+            .map((khoi) => khoi.trim());
 
-        const khoiCVs = await Promise.all(
-          khoiCongViecList.map(async (khoiCongViec) => {
-            const khoiCV = await Ent_khoicv.findOne({
-              attributes: ["ID_KhoiCV", "KhoiCV"],
-              where: {
-               [Op.and]: [
-                  sequelize.where(
-                     sequelize.col('KhoiCV'),
-                    {
-                      [Op.like]: `%${removeVietnameseTones(khoiCongViec)}%`
-                    }
-                  ),
-                  { isDelete: 0 }
-                ]
-              },
-              transaction,
-            });
-            return khoiCV ? khoiCV.ID_KhoiCV : null;
-          })
-        );
-        const validKhoiCVs = khoiCVs.filter((id) => id !== null);
+          const khoiCVs = await Promise.all(
+            khoiCongViecList.map(async (khoiCongViec) => {
+              const khoiCV = await Ent_khoicv.findOne({
+                attributes: ["ID_KhoiCV", "KhoiCV"],
+                where: {
+                  [Op.and]: [
+                    sequelize.where(sequelize.col("KhoiCV"), {
+                      [Op.like]: `%${removeVietnameseTones(khoiCongViec)}%`,
+                    }),
+                    { isDelete: 0 },
+                  ],
+                },
+                transaction,
+              });
+              return khoiCV ? khoiCV.ID_KhoiCV : null;
+            })
+          );
+          const validKhoiCVs = khoiCVs.filter((id) => id !== null);
 
           const hangmuc = await Ent_hangmuc.findOne({
             attributes: [
@@ -2130,7 +2143,6 @@ exports.uploadFiles = async (req, res) => {
   }
 };
 
-
 function generateQRCode(toaNha, khuVuc, hangMuc, tenTang) {
   // Hàm lấy ký tự đầu tiên của mỗi từ trong chuỗi
   function getInitials(string) {
@@ -2182,4 +2194,3 @@ function generateQRCodeChecklist(tenChecklist) {
 
   return checkListInitials;
 }
-
