@@ -10,6 +10,7 @@ const {
   Ent_chinhanh,
 } = require("../models/setup.model");
 const { Op } = require("sequelize");
+const { formatVietnameseText } = require("../utils/util");
 
 exports.create = (req, res) => {
   try {
@@ -30,7 +31,7 @@ exports.create = (req, res) => {
 
     // Create a Ent_duan
     const data = {
-      Duan: req.body.Duan,
+      Duan: formatVietnameseText(req.body.Duan),
       Ngaybatdau: req.body.Ngaybatdau,
       ID_Nhom: req.body.ID_Nhom || null,
       ID_Chinhanh: req.body.ID_Chinhanh || null,

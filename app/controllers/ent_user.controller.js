@@ -15,7 +15,7 @@ const fetch = require("node-fetch");
 const moment = require("moment-timezone");
 const sequelize = require("../config/db.config");
 const xlsx = require("xlsx");
-const { convertDateFormat } = require("../utils/util");
+const { convertDateFormat, formatVietnameseText, } = require("../utils/util");
 
 
 // Login User
@@ -851,7 +851,7 @@ exports.uploadFileUsers = async (req, res) => {
     const worksheet = workbook.Sheets[sheetName];
     const data = xlsx.utils.sheet_to_json(worksheet);
 
-    console.log('data', data)
+    //console.log('data', data)
     await sequelize.transaction(async (transaction) => {
       const removeSpacesFromKeys = (obj) => {
         return Object.keys(obj).reduce((acc, key) => {
@@ -866,7 +866,7 @@ exports.uploadFileUsers = async (req, res) => {
 
         const tenKhoiCongViec = transformedItem["KHỐICÔNGVIỆC"];
         const duAn = transformedItem["DỰÁN"];
-        const hoTen = transformedItem["HỌTÊN"];
+        const hoTen = formatVietnameseText(transformedItem["HỌTÊN"]);
         const gioiTinh = transformedItem["GIỚITÍNH"];
         const soDienThoai = transformedItem["SỐĐIỆNTHOẠI"];
         const namSinh = convertDateFormat(transformedItem["NGÀYSINH"]);
