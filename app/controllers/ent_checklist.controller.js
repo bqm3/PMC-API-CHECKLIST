@@ -17,6 +17,7 @@ const {
   Ent_khuvuc_khoicv,
 } = require("../models/setup.model");
 const { Op, Sequelize } = require("sequelize");
+const { removeSpacesFromKeys, formatVietnameseText, removeVietnameseTones } = require("../utils/util");
 
 exports.create = async (req, res) => {
   try {
@@ -1913,33 +1914,40 @@ exports.uploadFiles = async (req, res) => {
     const data = xlsx.utils.sheet_to_json(worksheet);
 
     await sequelize.transaction(async (transaction) => {
-      const removeSpacesFromKeys = (obj) => {
-        return Object.keys(obj).reduce((acc, key) => {
-          const newKey = key?.replace(/\s+/g, "")?.toUpperCase();
-          acc[newKey] = obj[key];
-          return acc;
-        }, {});
-      };
-
       // Tạo object để lưu số thứ tự cho từng nhóm checklist
       const checklistOrderMap = {};
 
       for (const [index, item] of data.entries()) {
         try {
           const transformedItem = removeSpacesFromKeys(item);
-          const tenKhuvuc = transformedItem["TÊNKHUVỰC"];
-          const tenDuan = transformedItem["TÊNDỰÁN"];
-          const tenToanha = transformedItem["TÊNTÒANHÀ"];
-          const tenKhoiCongViec = transformedItem["TÊNKHỐICÔNGVIỆC"];
-          const tenTang = transformedItem["TÊNTẦNG"];
-          const tenHangmuc = transformedItem["TÊNHẠNGMỤC"];
-          const tenChecklist = transformedItem["TÊNCHECKLIST"];
-          const tieuChuanChecklist = transformedItem["TIÊUCHUẨNCHECKLIST"];
-          const giaTriDanhDinh = transformedItem["GIÁTRỊĐỊNHDANH"];
-          const cacGiaTriNhan = transformedItem["CÁCGIÁTRỊNHẬN"];
-          const quanTrong = transformedItem["QUANTRỌNG"];
-          const ghiChu = transformedItem["GHICHÚ"];
-          const nhap = transformedItem["NHẬP"];
+          // const tenKhuvuc = transformedItem["TÊNKHUVỰC"];
+          // const tenDuan = transformedItem["TÊNDỰÁN"];
+          // const tenToanha = transformedItem["TÊNTÒANHÀ"];
+          // const tenKhoiCongViec = transformedItem["TÊNKHỐICÔNGVIỆC"];
+          // const tenTang = transformedItem["TÊNTẦNG"];
+          // const tenHangmuc = transformedItem["TÊNHẠNGMỤC"];
+          // const tenChecklist = transformedItem["TÊNCHECKLIST"];
+          // const tieuChuanChecklist = transformedItem["TIÊUCHUẨNCHECKLIST"];
+          // const giaTriDanhDinh = transformedItem["GIÁTRỊĐỊNHDANH"];
+          // const cacGiaTriNhan = transformedItem["CÁCGIÁTRỊNHẬN"];
+
+          // const quanTrong = transformedItem["QUANTRỌNG"];
+          // const ghiChu = transformedItem["GHICHÚ"];
+          // const nhap = transformedItem["NHẬP"];
+
+          const tenKhuvuc = formatVietnameseText(transformedItem["TÊNKHUVỰC"]);
+          const tenDuan = formatVietnameseText(transformedItem["TÊNDỰÁN"]);
+          const tenToanha = formatVietnameseText(transformedItem["TÊNTÒANHÀ"]);
+          const tenKhoiCongViec = formatVietnameseText(transformedItem["TÊNKHỐICÔNGVIỆC"]);
+          const tenTang = formatVietnameseText(transformedItem["TÊNTẦNG"]);
+          const tenHangmuc = formatVietnameseText(transformedItem["TÊNHẠNGMỤC"]);
+          const tenChecklist = formatVietnameseText(transformedItem["TÊNCHECKLIST"]);
+          const tieuChuanChecklist = formatVietnameseText(transformedItem["TIÊUCHUẨNCHECKLIST"]);
+          const giaTriDanhDinh = formatVietnameseText(transformedItem["GIÁTRỊĐỊNHDANH"]);
+          const cacGiaTriNhan = formatVietnameseText(transformedItem["CÁCGIÁTRỊNHẬN"]);
+          const quanTrong = formatVietnameseText(transformedItem["QUANTRỌNG"]);
+          const ghiChu = formatVietnameseText(transformedItem["GHICHÚ"]);
+          const nhap = formatVietnameseText(transformedItem["NHẬP"]);
 
           if (!tenChecklist) {
             console.log("Bỏ qua do thiếu tên checklist");
@@ -1960,11 +1968,15 @@ exports.uploadFiles = async (req, res) => {
             const khoiCV = await Ent_khoicv.findOne({
               attributes: ["ID_KhoiCV", "KhoiCV"],
               where: {
-                KhoiCV: sequelize.where(
-                  sequelize.fn("UPPER", sequelize.col("KhoiCV")),
-                  "LIKE",
-                  khoiCongViec.toUpperCase()
-                ),
+               [Op.and]: [
+                  sequelize.where(
+                     sequelize.col('KhoiCV'),
+                    {
+                      [Op.like]: `%${removeVietnameseTones(khoiCongViec)}%`
+                    }
+                  ),
+                  { isDelete: 0 }
+                ]
               },
               transaction,
             });
@@ -2099,10 +2111,10 @@ exports.uploadFiles = async (req, res) => {
           if (!existingChecklist) {
             await Ent_checklist.create(data, { transaction });
           } else {
-            console.log(`Checklist đã có ở dòng ${index + 1}`);
+            console.log(`Checklist đã có ở dòng ${index + 2}`);
           }
         } catch (error) {
-          throw new Error(`Lỗi ở dòng ${index + 1}: ${error.message}`);
+          throw new Error(`Lỗi ở dòng ${index + 2}: ${error.message}`);
         }
       }
     });

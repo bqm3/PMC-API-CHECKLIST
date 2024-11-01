@@ -1,5 +1,6 @@
 const { Ent_tang, Ent_duan, Ent_user } = require("../models/setup.model");
 const { Op, Sequelize } = require("sequelize");
+const { formatVietnameseText } = require("../utils/util");
 
 // Create and Save a new Ent_tang
 exports.create = async (req, res, next) => {
@@ -16,24 +17,22 @@ exports.create = async (req, res, next) => {
     const tentangList = req.body.Tentang.split(",").map((t) => t.trim());
 
     // Create and save each floor record
-    const records = [];
-    for (let i = 0; i < tentangList.length; i++) {
+    const records = await Promise.all(tentangList.map(async (tentang) => {
       const data = {
-        Tentang: tentangList[i],
+        Tentang: formatVietnameseText(tentang),
         ID_Duan: req.body.ID_Duan,
         isDelete: 0,
       };
-
+      
       try {
-        const createdRecord = await Ent_tang.create(data);
-        records.push(createdRecord);
+        return await Ent_tang.create(data);
       } catch (err) {
         res.status(500).json({
           message: err.message || "Lỗi! Vui lòng thử lại sau.",
         });
-        return;
+        return
       }
-    }
+    }));
 
     res.status(200).json({
       message: "Tạo tầng thành công!",

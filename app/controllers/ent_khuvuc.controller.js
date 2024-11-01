@@ -16,7 +16,7 @@ const fs = require("fs");
 const path = require("path");
 const archiver = require("archiver");
 const axios = require("axios");
-const { checkDataExcel } = require("../utils/util");
+const { checkDataExcel, removeSpacesFromKeys, formatVietnameseText, removeVietnameseTones } = require("../utils/util");
 
 exports.create = async (req, res) => {
   try {
@@ -620,26 +620,25 @@ exports.uploadFiles = async (req, res) => {
     const errorMessages = []; // Collect error messages for response
 
     await sequelize.transaction(async (transaction) => {
-      const removeSpacesFromKeys = (obj) => {
-        return Object.keys(obj).reduce((acc, key) => {
-          const newKey = key?.replace(/\s+/g, "")?.toUpperCase();
-          acc[newKey] = obj[key];
-          return acc;
-        }, {});
-      };
 
       let i = 2;
       for (const item of data) {
-        i++;
+        
+        for (const [key, value] of Object.entries(item)) { 
+          if (typeof value === 'string' && value.trim() === '') { 
+            throw new Error(`Lỗi ở dòng ${i}, cột "${key}": có chứa khoảng trắng.`);
+          }
+        }
+        // console.log('i',i)
         //check tầng data import excel
-        checkDataExcel(item, i, 1);
-
+        checkDataExcel(item,i,1)
+        
         const transformedItem = removeSpacesFromKeys(item);
 
-        const tenKhoiCongViec = transformedItem["TÊNKHỐICÔNGVIỆC"];
-        const tenToanha = transformedItem["TÊNTÒANHÀ"];
-        const tenKhuvuc = transformedItem["TÊNKHUVỰC"];
-        const tenTang = transformedItem["TÊNTẦNG"];
+        const tenKhoiCongViec = formatVietnameseText(transformedItem["TÊNKHỐICÔNGVIỆC"]);
+        const tenToanha = formatVietnameseText(transformedItem["TÊNTÒANHÀ"]);
+        const tenKhuvuc = formatVietnameseText(transformedItem["TÊNKHUVỰC"]);
+        const tenTang = formatVietnameseText(transformedItem["TÊNTẦNG"]);
         const sanitizedTenToanha = tenToanha?.replace(/\t/g, "");
 
         const toaNha = await Ent_toanha.findOne({
@@ -657,6 +656,10 @@ exports.uploadFiles = async (req, res) => {
             `Tên tòa nhà trong file excel khác với tòa nhà ở danh mục tòa nhà! Hãy kiểm tra lại dữ liệu tại dòng ${i}`
           );
           // Collect error and skip further processing for this item
+          errorMessages.push(
+            `Tên tòa nhà trong file excel khác với tòa nhà ở danh mục tòa nhà! Hãy kiểm tra lại dữ liệu tại dòng ${i}`
+          );
+          continue; // Skip to the next item
         }
         const khoiCongViecList = tenKhoiCongViec
           .split(",")
@@ -680,7 +683,6 @@ exports.uploadFiles = async (req, res) => {
                   ),
                   { isDelete: 0 }
                 ]
-               
               },
               transaction,
             });
@@ -797,6 +799,7 @@ exports.uploadFiles = async (req, res) => {
             );
           }
         }
+        i++;
       }
     });
 
