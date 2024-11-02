@@ -16,7 +16,12 @@ const fs = require("fs");
 const path = require("path");
 const archiver = require("archiver");
 const axios = require("axios");
-const { checkDataExcel, removeSpacesFromKeys, formatVietnameseText, removeVietnameseTones } = require("../utils/util");
+const {
+  checkDataExcel,
+  removeSpacesFromKeys,
+  formatVietnameseText,
+  removeVietnameseTones,
+} = require("../utils/util");
 
 exports.create = async (req, res) => {
   try {
@@ -598,7 +603,6 @@ exports.getKhuvucTotal = async (req, res) => {
   }
 };
 
-
 exports.uploadFiles = async (req, res) => {
   try {
     if (!req.file) {
@@ -612,23 +616,23 @@ exports.uploadFiles = async (req, res) => {
     const data = xlsx.utils.sheet_to_json(worksheet);
 
     await sequelize.transaction(async (transaction) => {
-
       let i = 2;
       for (const item of data) {
-        
-        for (const [key, value] of Object.entries(item)) { 
-          if (typeof value === 'string' && value.trim() === '' ) { 
-           
+        for (const [key, value] of Object.entries(item)) {
+          if (typeof value === "string" && value.trim() === "") {
             throw new Error(`Lỗi ở dòng ${i}, cột "${key}"`);
           }
         }
-        checkDataExcel(item,i,1)
-        
+        checkDataExcel(item, i, 1);
+
         const transformedItem = removeSpacesFromKeys(item);
-        const tenKhoiCongViec = transformedItem["TÊNKHỐICÔNGVIỆC"] !== undefined ? formatVietnameseText(transformedItem["TÊNKHỐICÔNGVIỆC"], i) : null;
+        const tenKhoiCongViec =
+          transformedItem["TÊNKHỐICÔNGVIỆC"] !== undefined
+            ? formatVietnameseText(transformedItem["TÊNKHỐICÔNGVIỆC"], i)
+            : null;
         const tenToanha = formatVietnameseText(transformedItem["TÊNTÒANHÀ"], i);
         const tenKhuvuc = formatVietnameseText(transformedItem["TÊNKHUVỰC"], i);
-        const tenTang =  formatVietnameseText(transformedItem["TÊNTẦNG"], i);
+        const tenTang = formatVietnameseText(transformedItem["TÊNTẦNG"], i);
         const sanitizedTenToanha = tenToanha?.replace(/\t/g, "");
 
         const toaNha = await Ent_toanha.findOne({
@@ -647,10 +651,8 @@ exports.uploadFiles = async (req, res) => {
           );
         }
 
-        if(tenKhoiCongViec == null){
-          throw new Error(
-            `Thiếu khối công việc ở dòng ${i}`
-          );
+        if (tenKhoiCongViec == null) {
+          throw new Error(`Thiếu khối công việc ở dòng ${i}`);
         }
 
         const khoiCongViecList = tenKhoiCongViec
@@ -662,14 +664,11 @@ exports.uploadFiles = async (req, res) => {
               attributes: ["ID_KhoiCV", "KhoiCV", "isDelete"],
               where: {
                 [Op.and]: [
-                  sequelize.where(
-                     sequelize.col('KhoiCV'),
-                    {
-                      [Op.like]: `%${removeVietnameseTones(khoiCongViec)}%`
-                    }
-                  ),
-                  { isDelete: 0 }
-                ]
+                  sequelize.where(sequelize.col("KhoiCV"), {
+                    [Op.like]: `%${removeVietnameseTones(khoiCongViec)}%`,
+                  }),
+                  { isDelete: 0 },
+                ],
               },
               transaction,
             });
@@ -692,7 +691,12 @@ exports.uploadFiles = async (req, res) => {
             ],
             where: {
               Tenkhuvuc: tenKhuvuc,
-              MaQrCode: generateQRCode(tenToanha, tenKhuvuc, tenTang, userData.ID_Duan),
+              MaQrCode: generateQRCode(
+                tenToanha,
+                tenKhuvuc,
+                tenTang,
+                userData.ID_Duan
+              ),
               ID_Toanha: toaNha.ID_Toanha,
               isDelete: 0,
             },
@@ -706,7 +710,12 @@ exports.uploadFiles = async (req, res) => {
                 ID_Toanha: toaNha.ID_Toanha,
                 Sothutu: 1,
                 Makhuvuc: "",
-                MaQrCode: generateQRCode(tenToanha, tenKhuvuc, tenTang, userData.ID_Duan),
+                MaQrCode: generateQRCode(
+                  tenToanha,
+                  tenKhuvuc,
+                  tenTang,
+                  userData.ID_Duan
+                ),
                 Tenkhuvuc: tenKhuvuc,
                 ID_User: userData.ID_User,
                 ID_KhoiCVs: validKhoiCVs,
@@ -746,7 +755,12 @@ exports.uploadFiles = async (req, res) => {
             attributes: ["ID_Khuvuc", "ID_KhoiCVs", "Tenkhuvuc", "MaQrCode"],
             where: {
               Tenkhuvuc: tenKhuvuc,
-              MaQrCode: generateQRCode(tenToanha, tenKhuvuc, tenTang, userData.ID_Duan),
+              MaQrCode: generateQRCode(
+                tenToanha,
+                tenKhuvuc,
+                tenTang,
+                userData.ID_Duan
+              ),
               ID_Toanha: toaNha.ID_Toanha,
               isDelete: 0,
               ID_KhoiCVs: {
@@ -763,7 +777,12 @@ exports.uploadFiles = async (req, res) => {
                 ID_Toanha: toaNha.ID_Toanha,
                 Sothutu: 1,
                 Makhuvuc: "",
-                MaQrCode: generateQRCode(tenToanha, tenKhuvuc, tenTang, userData.ID_Duan),
+                MaQrCode: generateQRCode(
+                  tenToanha,
+                  tenKhuvuc,
+                  tenTang,
+                  userData.ID_Duan
+                ),
                 Tenkhuvuc: tenKhuvuc,
                 ID_User: userData.ID_User,
                 ID_KhoiCVs: validKhoiCVs,
