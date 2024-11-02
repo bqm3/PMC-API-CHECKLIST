@@ -692,7 +692,7 @@ exports.uploadFiles = async (req, res) => {
             ],
             where: {
               Tenkhuvuc: tenKhuvuc,
-              MaQrCode: generateQRCode(tenToanha, tenKhuvuc, tenTang),
+              MaQrCode: generateQRCode(tenToanha, tenKhuvuc, tenTang, userData.ID_Duan),
               ID_Toanha: toaNha.ID_Toanha,
               isDelete: 0,
             },
@@ -706,7 +706,7 @@ exports.uploadFiles = async (req, res) => {
                 ID_Toanha: toaNha.ID_Toanha,
                 Sothutu: 1,
                 Makhuvuc: "",
-                MaQrCode: generateQRCode(tenToanha, tenKhuvuc, tenTang),
+                MaQrCode: generateQRCode(tenToanha, tenKhuvuc, tenTang, userData.ID_Duan),
                 Tenkhuvuc: tenKhuvuc,
                 ID_User: userData.ID_User,
                 ID_KhoiCVs: validKhoiCVs,
@@ -746,7 +746,7 @@ exports.uploadFiles = async (req, res) => {
             attributes: ["ID_Khuvuc", "ID_KhoiCVs", "Tenkhuvuc", "MaQrCode"],
             where: {
               Tenkhuvuc: tenKhuvuc,
-              MaQrCode: generateQRCode(tenToanha, tenKhuvuc, tenTang),
+              MaQrCode: generateQRCode(tenToanha, tenKhuvuc, tenTang, userData.ID_Duan),
               ID_Toanha: toaNha.ID_Toanha,
               isDelete: 0,
               ID_KhoiCVs: {
@@ -763,7 +763,7 @@ exports.uploadFiles = async (req, res) => {
                 ID_Toanha: toaNha.ID_Toanha,
                 Sothutu: 1,
                 Makhuvuc: "",
-                MaQrCode: generateQRCode(tenToanha, tenKhuvuc, tenTang),
+                MaQrCode: generateQRCode(tenToanha, tenKhuvuc, tenTang, userData.ID_Duan),
                 Tenkhuvuc: tenKhuvuc,
                 ID_User: userData.ID_User,
                 ID_KhoiCVs: validKhoiCVs,
@@ -889,7 +889,7 @@ exports.downloadQrCodes = async (req, res) => {
   }
 };
 
-function generateQRCode(tenToa, khuVuc, tenTang) {
+function generateQRCode(tenToa, khuVuc, tenTang, ID) {
   // Hàm lấy ký tự đầu tiên của mỗi từ trong chuỗi
   function getInitials(string) {
     return string
@@ -903,6 +903,6 @@ function generateQRCode(tenToa, khuVuc, tenTang) {
   const tenToaInitials = getInitials(tenToa);
 
   // Tạo chuỗi QR
-  const qrCode = `QR-${tenToaInitials}-${khuVucInitials}-${tenTang}`;
+  const qrCode = `QR-${ID}-${tenToaInitials}-${khuVucInitials}-${tenTang}`;
   return qrCode;
 }

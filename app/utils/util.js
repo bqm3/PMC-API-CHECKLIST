@@ -4,11 +4,6 @@ function checkDataExcel(data, index, key) {
     const tenKhuVuc = data['Tên khu vực']?.toLowerCase();
     const tenHangMuc = data['Tên hạng mục']?.toLowerCase();
     const tenTang = data['Tên tầng']?.toLowerCase();
-    
-
-    console.log("tenKhuVuc",tenKhuVuc)
-    console.log("tenHangMuc",tenHangMuc)
-    console.log("tenTang",tenTang)
 
     const normalizeTang = (tang) => {
       const match = tang.match(/tầng\s*(\d+)/);
@@ -69,11 +64,8 @@ function convertDateFormat(inputDate) {
   const formatVietnameseText = (text, i) => {
     // Kiểm tra nếu đầu vào không phải là chuỗi
     if (typeof text !== "string") {
-      console.log('rimn')
       return text;
     }
-    console.log("===================================");
-    console.log('formatVietnameseText', text, i)
 
     if(text == undefined || text == "" || text == null ){
       throw new Error("Cột không chứa dữ liệu ở dòng " + i); 

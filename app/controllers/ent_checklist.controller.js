@@ -2024,7 +2024,7 @@ exports.uploadFiles = async (req, res) => {
                 where: {
                   isDelete: 0,
                   ID_KhoiCVs: { [Op.like]: validKhoiCVs },
-                  MaQrCode: generateQRCodeKV(tenToanha, tenKhuvuc, tenTang),
+                  MaQrCode: generateQRCodeKV(tenToanha, tenKhuvuc, tenTang, userData.ID_Duan),
                 },
               },
             ],
@@ -2176,7 +2176,7 @@ function generateQRCodeKV(tenToa, khuVuc, tenTang) {
   const tenToaInitials = getInitials(tenToa);
 
   // Tạo chuỗi QR
-  const qrCode = `QR-${tenToaInitials}-${khuVucInitials}-${tenTang}`;
+  const qrCode = `QR-${ID}-${tenToaInitials}-${khuVucInitials}-${tenTang}`;
   return qrCode;
 }
 
