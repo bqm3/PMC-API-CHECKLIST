@@ -643,7 +643,14 @@ exports.uploadFiles = async (req, res) => {
         const tenToanha = formatVietnameseText(transformedItem["TÊNTÒANHÀ"]);
         const tenTang = formatVietnameseText(transformedItem["TÊNTẦNG"]);
         const tenHangmuc = formatVietnameseText(transformedItem["TÊNHẠNGMỤC"]);
-        const quanTrong = formatVietnameseText(transformedItem["QUANTRỌNG"]);        
+        const quanTrong = formatVietnameseText(transformedItem["QUANTRỌNG"]);    
+        console.log("=============================") 
+        console.log('tenKhuvuc',tenKhuvuc)   
+        console.log('tenKhoiCongViec',tenKhoiCongViec)   
+        console.log('tenToanha',tenToanha)   
+        console.log('tenTang',tenTang)   
+        console.log('tenHangmuc',tenHangmuc)   
+        console.log("************************************") 
 
         const khoiCongViecList = tenKhoiCongViec
           .split(",")
@@ -675,7 +682,7 @@ exports.uploadFiles = async (req, res) => {
             attributes: ["ID_Khuvuc", "MaQrCode", "Tenkhuvuc", "ID_KhoiCVs", "isDelete"],
             where: {
               Tenkhuvuc: tenKhuvuc,
-              MaQrCode: generateQRCodeKV(tenToanha, tenKhuvuc, tenTang),
+              MaQrCode: generateQRCodeKV(tenToanha, tenKhuvuc, tenTang, userData.ID_Duan),
               ID_KhoiCVs: { [Op.like]: validKhoiCVs },
               isDelete: 0,
             },
@@ -704,6 +711,7 @@ exports.uploadFiles = async (req, res) => {
             transaction,
           });
 
+          console.log('existingHangMuc', existingHangMuc)
           if (!existingHangMuc) {
             // Create new hạng mục entry
             await Ent_hangmuc.create(
@@ -860,6 +868,6 @@ function generateQRCodeKV(tenToa, khuVuc, tenTang) {
   const tenToaInitials = getInitials(tenToa);
 
   // Tạo chuỗi QR
-  const qrCode = `QR-${tenToaInitials}-${khuVucInitials}-${tenTang}`;
+  const qrCode = `QR-${ID}-${tenToaInitials}-${khuVucInitials}-${tenTang}`;
   return qrCode;
 }
