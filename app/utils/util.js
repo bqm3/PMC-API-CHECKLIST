@@ -1,9 +1,9 @@
 //check tầng data import excel
 function checkDataExcel(data, index, key) {
   try {
-    const tenKhuVuc = data['Tên khu vực']?.toLowerCase();
-    const tenHangMuc = data['Tên hạng mục']?.toLowerCase();
-    const tenTang = data['Tên tầng']?.toLowerCase();
+    const tenKhuVuc = data['Tên khu vực']?.toLowerCase().normalize('NFC');
+    const tenHangMuc = data['Tên hạng mục']?.toLowerCase().normalize('NFC');
+    const tenTang = data['Tên tầng']?.toLowerCase().normalize('NFC');
 
     const normalizeTang = (tang) => {
       const match = tang.match(/tầng\s*(\d+)/);
@@ -15,18 +15,26 @@ function checkDataExcel(data, index, key) {
       }
       return tang;
     };
-    console.log('tenHangMuc, tenTang', tenHangMuc, tenTang)
 
     const normalizedTenTang = normalizeTang(tenTang);
-    const isValidFloor = (khuVuc, tang) => khuVuc.includes(tang) || khuVuc.includes(normalizedTenTang);
+
+    // So sánh chặt chẽ hơn bằng cách sử dụng biểu thức chính quy
+    const isValidFloor = (khuVuc, tang) => {
+      const pattern = new RegExp(`\\b${tang}\\b`);
+      const normalizedPattern = new RegExp(`\\b${normalizedTenTang}\\b`);
+      return pattern.test(khuVuc) || normalizedPattern.test(khuVuc);
+    };
 
     if (tenTang && key === 1) {
       if (tenKhuVuc.includes('tầng') && !isValidFloor(tenKhuVuc, tenTang)) {
         throw new Error(`Lỗi dòng ${index}, dữ liệu tầng của khu vực không hợp lệ`);
       }
-    } else if (tenHangMuc.includes('tầng') && !isValidFloor(tenHangMuc, tenTang)) {
-      throw new Error(`Lỗi dòng ${index}, dữ liệu tầng của hạng mục không hợp lệ`);
+    } else if (tenTang && key === 2) {
+      if (tenHangMuc.includes('tầng') && !isValidFloor(tenHangMuc, tenTang)) {
+        throw new Error(`Lỗi dòng ${index}, dữ liệu tầng của hạng mục không hợp lệ`);
+      }
     }
+    
   } catch (err) {
     throw err;
   }
