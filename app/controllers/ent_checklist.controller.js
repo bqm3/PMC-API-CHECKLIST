@@ -2162,7 +2162,7 @@ function generateQRCode(toaNha, khuVuc, hangMuc, tenTang) {
   return qrCode;
 }
 
-function generateQRCodeKV(tenToa, khuVuc, tenTang) {
+function generateQRCodeKV(tenToa, khuVuc, tenTang, ID) {
   // Hàm lấy ký tự đầu tiên của mỗi từ trong chuỗi
   function getInitials(string) {
     return string
