@@ -15,6 +15,7 @@ function checkDataExcel(data, index, key) {
       }
       return tang;
     };
+    console.log('tenHangMuc, tenTang', tenHangMuc, tenTang)
 
     const normalizedTenTang = normalizeTang(tenTang);
     const isValidFloor = (khuVuc, tang) => khuVuc.includes(tang) || khuVuc.includes(normalizedTenTang);
