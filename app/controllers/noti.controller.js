@@ -7,8 +7,8 @@ const moment = require("moment-timezone");
 
 exports.notiAll = async (req, res) => {
   if(Object.keys(req.query).length === 0){
-    let loadingIOS = true 
-    let loadingAndroid = true 
+    let loadingIOS = false 
+    let loadingAndroid = false 
     let resData ;
     if(loadingIOS == false){
       resData = {

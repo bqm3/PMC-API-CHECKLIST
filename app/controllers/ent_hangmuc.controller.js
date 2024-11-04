@@ -842,7 +842,7 @@ function generateQRCode(toaNha, khuVuc, hangMuc, tenTang) {
   const toaNhaInitials = getInitials(toaNha);
 
   // Tạo chuỗi QR
-  const qrCode = `QR-${tenToa}-${khuVucInitials}-${hangMucInitials}-${tenTang}`;
+  const qrCode = `QR-${toaNha}-${khuVucInitials}-${hangMucInitials}-${tenTang}`;
   return qrCode;
 }
 
