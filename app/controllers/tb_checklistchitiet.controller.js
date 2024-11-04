@@ -61,14 +61,14 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     }
     
     const newRecords = records.ID_Checklist.map((ID_Checklist, index) => {
-      const Vido = records.Vido[index] || "";
+      const Vido = records.Vido[index] || null;
       const Kinhdo = records.Kinhdo[index] || null;
       const Docao = records.Docao[index] || null;
       const Ketqua = records.Ketqua[index] || null;
       const Gioht = records.Gioht[index];
       const Ghichu = records.Ghichu[index];
       const Checklist = records.Checklist[index];
-      const isScan = records.isScan[index];
+      const isScan = records.isScan[index] == 'null' && null || null;
       const d = new Date();
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, "0"); // Months are zero-based
