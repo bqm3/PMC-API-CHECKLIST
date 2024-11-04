@@ -42,6 +42,7 @@ exports.login = async (req, res) => {
         "Password",
         "ID_KhoiCV",
         "Email",
+        "isError",
         "isDelete",
       ],
       include: [
