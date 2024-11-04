@@ -9,19 +9,17 @@ function checkDataExcel(data, index, key) {
       const match = tang.match(/tầng\s*(\d+)/);
       if (match) {
         const number = parseInt(match[1], 10);
-        if (number >= 1 && number <= 9) {
-          return `tầng 0${number}`;
-        }
+        return `tầng ${number < 10 ? '0' + number : number}`; // Đảm bảo chuẩn hóa về "tầng 07" hoặc "tầng 7"
       }
       return tang;
     };
 
     const normalizedTenTang = normalizeTang(tenTang);
 
-    // So sánh chặt chẽ hơn bằng cách sử dụng biểu thức chính quy
+    // So sánh chặt chẽ bằng cách sử dụng biểu thức chính quy
     const isValidFloor = (khuVuc, tang) => {
-      const pattern = new RegExp(`\\b${tang}\\b`);
-      const normalizedPattern = new RegExp(`\\b${normalizedTenTang}\\b`);
+      const pattern = new RegExp(`\\b${tang.replace(/^tầng\s*0?/, 'tầng ')}\\b`); // Chấp nhận cả "tầng 07" và "tầng 7"
+      const normalizedPattern = new RegExp(`\\b${normalizedTenTang.replace(/^tầng\s*0?/, 'tầng ')}\\b`);
       return pattern.test(khuVuc) || normalizedPattern.test(khuVuc);
     };
 
@@ -39,6 +37,7 @@ function checkDataExcel(data, index, key) {
     throw err;
   }
 }
+
 
 //format ngày
 function convertDateFormat(inputDate) {

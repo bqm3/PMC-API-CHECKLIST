@@ -7,6 +7,9 @@ const {
   Ent_calv,
   Tb_checklistchitietdone,
   Ent_user,
+  Ent_nhom,
+  Ent_chinhanh,
+  Ent_phanloaida,
 } = require("../models/setup.model");
 const { Op, Sequelize, fn, col, literal, where } = require("sequelize");
 const sequelize = require("../config/db.config");
@@ -65,31 +68,27 @@ exports.tiLeHoanThanh = async (req, res) => {
       include: [
         {
           model: Ent_duan,
-          attributes: ["Duan", "ID_Nhom", "ID_Phanloai", "isDelete"],
-          where: {
-            isDelete: 0,
-          },
+          attributes: ["Duan", "ID_Nhom", "ID_Phanloai", "ID_Chinhanh", "isDelete"],
+          where: { isDelete: 0 },
+          include: [
+            { model: Ent_chinhanh, attributes: ["Tenchinhanh"] },
+            { model: Ent_phanloaida, attributes: ["Phanloai"] },
+          ],
         },
         {
           model: Ent_khoicv,
           attributes: ["KhoiCV", "isDelete"],
-          where: {
-            isDelete: 0,
-          },
+          where: { isDelete: 0 },
         },
         {
           model: Ent_calv,
           attributes: ["Tenca", "isDelete"],
-          where: {
-            isDelete: 0,
-          },
+          where: { isDelete: 0 },
         },
         {
           model: Ent_user,
           attributes: ["UserName", "isDelete", "Hoten"],
-          where: {
-            isDelete: 0,
-          },
+          where: { isDelete: 0 },
         },
         {
           model: Tb_checklistchitiet,
@@ -107,17 +106,13 @@ exports.tiLeHoanThanh = async (req, res) => {
             "Ghichu",
             "isDelete",
           ],
-          where: {
-            isDelete: 0,
-          },
+          where: { isDelete: 0 },
           include: [
             {
               model: Ent_checklist,
               as: "ent_checklist",
               attributes: ["ID_Checklist", "Checklist", "isDelete"],
-              where: {
-                isDelete: 0,
-              },
+              where: { isDelete: 0 },
             },
           ],
         },
@@ -132,12 +127,49 @@ exports.tiLeHoanThanh = async (req, res) => {
             "Vido",
             "Docao",
           ],
-          where: {
-            isDelete: 0,
-          },
+          where: { isDelete: 0 },
         },
       ],
     });
+
+
+    // Bước 3: Truy vấn các checklist từ Ent_checklist với các ID_Checklist từ Description
+    let checklistIds = [];
+    relatedChecklists.forEach((checklist) => {
+      checklist.tb_checklistchitietdones.forEach((doneItem) => {
+        const idChecklists = doneItem.Description.split(",").map(Number);
+        checklistIds.push(...idChecklists);
+      });
+    });
+
+    // Bước 3: Truy vấn các checklist từ bảng Ent_checklist
+    const checklistData = await Ent_checklist.findAll({
+      where: {
+        ID_Checklist: {
+          [Op.in]: checklistIds,
+        },
+        isDelete: 0
+      },
+      attributes: ["ID_Checklist", "Checklist", "isDelete"],
+    });
+
+    // Tạo bản đồ ID_Checklist với thông tin Checklist
+    const checklistMap = new Map();
+    checklistData.forEach((checklist) => {
+      checklistMap.set(checklist.ID_Checklist, checklist);
+    });
+
+    // Bước 4: Thêm dữ liệu Checklist vào từng tb_checklistchitietdones
+    relatedChecklists.forEach((checklist) => {
+      checklist.tb_checklistchitietdones.forEach((doneItem) => {
+        const checklistIdsFromDescription = doneItem.Description.split(",").map(Number);
+        // Gán dữ liệu checklist từ checklistMap vào từng ID_Checklist
+        doneItem.ent_checklists = checklistIdsFromDescription.map(
+          (id) => checklistMap.get(id)
+        );
+      });
+    });
+
 
     // Create a dictionary to group data by project, khối, and ca
     // const result = {};
@@ -262,7 +294,6 @@ exports.tiLeHoanThanh = async (req, res) => {
     // };
 
     res.status(200).json({
-      message: "Tỉ lệ hoàn thành của các dự án theo khối",
       data: relatedChecklists,
     });
   } catch (err) {
