@@ -52,10 +52,28 @@ function convertTimeFormat(timeStr) {
   return `${hours}:${minutes}:${seconds}`;
 }
 
+function getCurrentDayInCycle(ngayBatDau, ngayHienTai, chuKy) {
+  // Chuyển đổi ngày bắt đầu và ngày hiện tại thành số mốc thời gian (timestamp)
+  const ngayBatDauTime = new Date(ngayBatDau).getTime();
+  const ngayHienTaiTime = new Date(ngayHienTai).getTime();
+
+  // Tính số ngày đã trôi qua kể từ ngày bắt đầu
+  const soNgayDaTroiQua = Math.floor(
+    (ngayHienTaiTime - ngayBatDauTime) / (1000 * 60 * 60 * 24)
+  );
+
+  // Tìm ngày hiện tại trong chu kỳ
+  const ngayTrongChuKy = (soNgayDaTroiQua % chuKy) + 1;
+
+  return ngayTrongChuKy;
+}
+
 exports.createFirstChecklist = async (req, res, next) => {
   try {
     const userData = req.user.data;
-    const { ID_Calv, ID_KhoiCV, Ngay, Giobd, Tenca } = req.body;
+    const { ID_Calv, ID_KhoiCV, Giobd, Tenca } = req.body;
+
+    const Ngay = '2024-11-05';
     // Validate request
     if (!ID_Calv) {
       res.status(400).json({
@@ -74,9 +92,14 @@ exports.createFirstChecklist = async (req, res, next) => {
       attributes: ["Ngaybatdau", "Chuky", "isDelete", "ID_Duan"],
     });
 
-    const formattedDateNow = moment(khoiData.Ngaybatdau).startOf("day").format("DD-MM-YYYY");
+    const formattedDateNow = moment(khoiData.Ngaybatdau)
+      .startOf("day")
+      .format("DD-MM-YYYY");
     const nowFormattedDate = moment(Ngay).startOf("day").format("YYYY-MM-DD");
-    const yesterday = moment(Ngay).subtract(1, 'day').startOf("day").format("YYYY-MM-DD");
+    const yesterday = moment(Ngay)
+      .subtract(1, "day")
+      .startOf("day")
+      .format("YYYY-MM-DD");
     const formattedDatePrev = moment(Ngay)
       .add(1, "days") // Thêm 1 ngày vào ngày hiện tại
       .startOf("day")
@@ -91,32 +114,33 @@ exports.createFirstChecklist = async (req, res, next) => {
       "days"
     );
 
+    console.log("formattedDatePrev", formattedDatePrev);
+    console.log("formattedDate", formattedDate);
+
     if (daysDifference <= 0) {
       return res.status(400).json({
         message: `Chưa đến ngày tạo ca, ngày thực hiện sẽ là ngày ${formattedDateNow}!`,
       });
     }
 
-    let ngayCheck = 0;
+    let ngayCheck= 0;
 
-    ngayCheck = 
-      khoiData.Chuky == 1
-        ? 1 
-        : daysDifference == 0 ? 1
-        : daysDifference <= khoiData.Chuky
-        ? daysDifference
-        : daysDifference % khoiData.Chuky == 0
-        ? khoiData.Chuky
-        : daysDifference % khoiData.Chuky;
-
+    ngayCheck = getCurrentDayInCycle(
+      khoiData.Ngaybatdau,
+      Ngay,
+      khoiData.Chuky
+    );
     if (!calvData) {
       return res.status(400).json({
         message: "Ca làm việc không tồn tại!",
       });
     }
     const { Giobatdau, Gioketthuc } = calvData;
-   
-    if ((Giobd <= Giobatdau || Giobd >= Gioketthuc) && Giobatdau <= Gioketthuc) {
+
+    if (
+      (Giobd <= Giobatdau || Giobd >= Gioketthuc) &&
+      Giobatdau <= Gioketthuc
+    ) {
       return res.status(400).json({
         message: "Giờ bắt đầu không thuộc khoảng thời gian của ca làm việc!",
       });
@@ -129,10 +153,11 @@ exports.createFirstChecklist = async (req, res, next) => {
     }
 
     if (Giobatdau >= Gioketthuc && Giobd <= Giobatdau) {
-      ngayCheck = ngayCheck - 1;
+      ngayCheck = (ngayCheck - 1) == 0 ? khoiData.Chuky : (ngayCheck - 1);
     }
-    
-    
+
+    // console.log('ngayCheck', ngayCheck)
+
     const thietlapcaData = await Ent_thietlapca.findOne({
       attributes: [
         "ID_ThietLapCa",
@@ -277,7 +302,9 @@ exports.createFirstChecklist = async (req, res, next) => {
       where: {
         isDelete: 0,
         [Op.and]: [
-          { Ngay: Giobatdau >= Gioketthuc && Giobd <= Giobatdau ? yesterday : Ngay }, 
+          {
+            Ngay: nowFormattedDate,
+          },
           { ID_KhoiCV: userData.ID_KhoiCV },
           { ID_Duan: userData.ID_Duan },
           { ID_User: userData.ID_User },
@@ -393,7 +420,11 @@ exports.getCheckListc = async (req, res, next) => {
       };
 
       // Nếu quyền là 1 (ID_Chucvu === 1) thì không cần thêm điều kiện ID_KhoiCV
-      if (userData.ID_Chucvu !== 1 && userData.ID_Chucvu !== 2 && userData.ID_Chucvu !== 3) {
+      if (
+        userData.ID_Chucvu !== 1 &&
+        userData.ID_Chucvu !== 2 &&
+        userData.ID_Chucvu !== 3
+      ) {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
         whereClause.ID_User = userData?.ID_User;
       }
@@ -1679,7 +1710,7 @@ exports.checklistCalv = async (req, res) => {
           const idChecklists = item.Description.split(",").map(Number);
           checklistIds.push(...idChecklists);
           idChecklists.forEach((id) => {
-            checklistGiohtMap.set(id, item.Gioht); 
+            checklistGiohtMap.set(id, item.Gioht);
           });
         });
       }
