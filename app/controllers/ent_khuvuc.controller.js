@@ -922,6 +922,6 @@ function generateQRCode(tenToa, khuVuc, tenTang, ID) {
   const tenToaInitials = getInitials(tenToa);
 
   // Tạo chuỗi QR
-  const qrCode = `QR-${ID}-${tenToaInitials}-${khuVucInitials}-${tenTang}`;
+  const qrCode = `QR-${ID}-${tenToa}-${khuVucInitials}-${tenTang}`;
   return qrCode;
 }
