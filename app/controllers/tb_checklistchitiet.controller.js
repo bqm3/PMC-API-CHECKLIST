@@ -41,7 +41,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     records.Kinhdo = ensureArray(records.Kinhdo);
     records.Docao = ensureArray(records.Docao);
     records.Ketqua = ensureArray(records.Ketqua);
-    records.Ghichu = ensureArray(records.Ghichu );
+    records.Ghichu = ensureArray(records.Ghichu);
     records.Gioht = ensureArray(records.Gioht);
     records.Checklist = ensureArray(records.Checklist);
     records.isScan = ensureArray(records.isScan);
@@ -59,22 +59,25 @@ exports.createCheckListChiTiet = async (req, res, next) => {
         uploadedFileIds.push({ fileId, fieldname: image.fieldname });
       }
     }
-    
+
     const newRecords = records.ID_Checklist.map((ID_Checklist, index) => {
-      const Vido = records.Vido[index] || null;
-      const Kinhdo = records.Kinhdo[index] || null;
-      const Docao = records.Docao[index] || null;
+      const Vido =
+        records.Vido[index] == "null" ? null : records.Vido[index] || null;
+      const Kinhdo =
+        records.Kinhdo[index] == "null" ? null : records.Kinhdo[index] || null;
+      const Docao =
+        records.Docao[index] == "null" ? null : records.Docao[index] || null;
       const Ketqua = records.Ketqua[index] || null;
       const Gioht = records.Gioht[index];
       const Ghichu = records.Ghichu[index];
       const Checklist = records.Checklist[index];
-      const isScan = records.isScan[index] == 'null' && null || null;
+      const isScan = (records.isScan[index] == "null" ? null : records.isScan[index]) || null;
       const d = new Date();
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, "0"); // Months are zero-based
       const day = String(d.getDate()).padStart(2, "0");
       const formattedDate = `${year}-${month}-${day}`;
-    
+
       let Anh = "";
       if (!isEmpty(images)) {
         // Find the corresponding image based on the fieldname format
@@ -82,14 +85,14 @@ exports.createCheckListChiTiet = async (req, res, next) => {
         const matchingImage = uploadedFileIds.find(
           (file) => file.fieldname === imageIndex
         );
-    
+
         if (matchingImage) {
           Anh = matchingImage.fileId.id;
         } else {
           console.log(`No matching image found for Anh: ${imageIndex}`);
         }
       }
-    
+
       return {
         ID_ChecklistC: records.ID_ChecklistC[0],
         ID_Checklist,
