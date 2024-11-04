@@ -754,7 +754,7 @@ const generateAndSaveQrCodes = async (maQrCodeArray, hangMucArray) => {
 
       const url = `https://quickchart.io/qr?text=${encodeURIComponent(
         maQrCode
-      )}&caption=${encodeURIComponent(caption)}&size=350x350`;
+      )}&caption=${encodeURIComponent(caption)}&size=350x350&captionFontSize=8`;
       const imagePath = path.join(qrFolder, `qr_code_${sanitizedCode}.png`);
 
       try {
