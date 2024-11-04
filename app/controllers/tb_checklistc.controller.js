@@ -71,9 +71,7 @@ function getCurrentDayInCycle(ngayBatDau, ngayHienTai, chuKy) {
 exports.createFirstChecklist = async (req, res, next) => {
   try {
     const userData = req.user.data;
-    const { ID_Calv, ID_KhoiCV, Giobd, Tenca } = req.body;
-
-    const Ngay = '2024-11-05';
+    const { ID_Calv, ID_KhoiCV, Giobd,Ngay, Tenca } = req.body;
     // Validate request
     if (!ID_Calv) {
       res.status(400).json({
@@ -113,9 +111,6 @@ exports.createFirstChecklist = async (req, res, next) => {
       moment(formattedDate),
       "days"
     );
-
-    console.log("formattedDatePrev", formattedDatePrev);
-    console.log("formattedDate", formattedDate);
 
     if (daysDifference <= 0) {
       return res.status(400).json({
@@ -3173,6 +3168,13 @@ exports.suCoChiTiet = async (req, res) => {
               Tinhtrang: 1,
               isDelete: 0,
             },
+            include: [
+              {
+                model: Ent_hangmuc,
+                attributes: ["Hangmuc", "isDelete"],
+                isDelete: 0
+              }
+            ]
           },
         ],
       },
