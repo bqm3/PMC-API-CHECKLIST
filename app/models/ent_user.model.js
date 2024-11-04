@@ -20,6 +20,9 @@ const Ent_user = sequelize.define(
     ID_KhoiCV: {
       type: DataTypes.INTEGER,
     },
+    isError: {
+      type: DataTypes.INTEGER,
+    },
     UserName: {
       type: DataTypes.CHAR,
       allowNull: false,
