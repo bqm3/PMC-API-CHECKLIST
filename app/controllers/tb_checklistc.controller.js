@@ -3901,7 +3901,7 @@ exports.getChecklistsErrorFromWeekbyDuan = async (req, res) => {
       },
       isDelete: 0,
     };
-    if (userData.ID_Chucvu === 2) {
+    if (userData?.ent_chucvu?.Role !== 10 || userData?.ent_chucvu?.Role !== 0) {
       whereClause.ID_Duan = userData.ID_Duan;
     } else {
     }
