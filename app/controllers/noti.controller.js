@@ -24,7 +24,7 @@ exports.notiAll = async (req, res) => {
         key: '2.0.7',
         type: "WARNING",
         textTitle: "PMC Checklist",
-        textBody: "Phiên bản 2.0.7 đã xuất bản. Cập nhật phiên bản để có trải nghiệm tốt nhất.",
+        textBody: "Phiên bản 2.0.8 đã xuất bản. Cập nhật phiên bản để có trải nghiệm tốt nhất.",
         time: 5000
       };
     }
@@ -36,24 +36,41 @@ exports.notiAll = async (req, res) => {
   } else {
     const { version, platform } = req.query;
     const keyVersionIOS = "2.0.7";
-    const keyVersionAPK = "2.0.7";
+    const keyVersionAPK = "2.0.8";
 
-    let ischeck = false; 
+    let isCheckIOS = false; 
+    let isCheckAPK = false; 
     let resData = "";
     let status = 0;
+
+    if (
+      (platform === "ios" && version === keyVersionIOS) 
+    ) {
+      isCheckIOS = true;
+    }
+  
+    if(isCheckIOS == false){
+      resData = {
+        type: "WARNING",
+        textTitle: "PMC Checklist",
+        textBody: "Phiên bản 2.0.7 đã xuất bản. Cập nhật phiên bản để có trải nghiệm tốt nhất.",
+        time: 5000,
+      };
+      status = "1"
+    }
   
     if (
       (platform === "ios" && version === keyVersionIOS) ||
       (platform !== "ios" && version === keyVersionAPK)
     ) {
-      ischeck = true;
+      isCheckAPK = true;
     }
   
-    if(ischeck == false){
+    if(isCheckAPK == false){
       resData = {
         type: "WARNING",
         textTitle: "PMC Checklist",
-        textBody: "Phiên bản 2.0.7 đã xuất bản. Cập nhật phiên bản để có trải nghiệm tốt nhất.",
+        textBody: "Phiên bản 2.0.8 đã xuất bản. Cập nhật phiên bản để có trải nghiệm tốt nhất.",
         time: 5000,
       };
       status = "1"
