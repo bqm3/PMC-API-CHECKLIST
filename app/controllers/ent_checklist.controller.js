@@ -128,7 +128,11 @@ exports.get = async (req, res) => {
             "ID_Khuvuc",
             "MaQrCode",
             "FileTieuChuan",
+            "isDelete"
           ],
+          where: {
+            isDelete: 0
+          }
         },
         {
           model: Ent_khuvuc,
@@ -139,6 +143,7 @@ exports.get = async (req, res) => {
             "Sothutu",
             "ID_Toanha",
             "ID_Khuvuc",
+            "isDelete"
           ],
           include: [
             {
@@ -168,6 +173,9 @@ exports.get = async (req, res) => {
               ],
             },
           ],
+          where: {
+            isDelete: 0
+          }
         },
         {
           model: Ent_tang,
