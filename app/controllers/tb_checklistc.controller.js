@@ -71,7 +71,7 @@ function getCurrentDayInCycle(ngayBatDau, ngayHienTai, chuKy) {
 exports.createFirstChecklist = async (req, res, next) => {
   try {
     const userData = req.user.data;
-    const { ID_Calv, ID_KhoiCV, Giobd,Ngay, Tenca } = req.body;
+    const { ID_Calv, ID_KhoiCV, Giobd, Ngay, Tenca } = req.body;
     // Validate request
     if (!ID_Calv) {
       res.status(400).json({
@@ -118,13 +118,9 @@ exports.createFirstChecklist = async (req, res, next) => {
       });
     }
 
-    let ngayCheck= 0;
+    let ngayCheck = 0;
 
-    ngayCheck = getCurrentDayInCycle(
-      khoiData.Ngaybatdau,
-      Ngay,
-      khoiData.Chuky
-    );
+    ngayCheck = getCurrentDayInCycle(khoiData.Ngaybatdau, Ngay, khoiData.Chuky);
     if (!calvData) {
       return res.status(400).json({
         message: "Ca làm việc không tồn tại!",
@@ -148,7 +144,7 @@ exports.createFirstChecklist = async (req, res, next) => {
     }
 
     if (Giobatdau >= Gioketthuc && Giobd <= Giobatdau) {
-      ngayCheck = (ngayCheck - 1) == 0 ? khoiData.Chuky : (ngayCheck - 1);
+      ngayCheck = ngayCheck - 1 == 0 ? khoiData.Chuky : ngayCheck - 1;
     }
 
     // console.log('ngayCheck', ngayCheck)
@@ -1205,6 +1201,205 @@ exports.getPreviewThongKeHangMucQuanTrong = async (req, res, next) => {
     return res.status(500).json({
       message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
+  }
+};
+
+exports.getBaoCaoChecklistMonths = async (req, res, next) => {
+  try {
+    const { month, year } = req.query;
+
+    if (!month || !year) {
+      return res.status(400).json({ message: "Month and year are required" });
+    }
+
+    const startDate = moment(`${year}-${month}-01`)
+      .startOf("month")
+      .format("YYYY-MM-DD");
+    const endDate = moment(`${year}-${month}-01`)
+      .endOf("month")
+      .format("YYYY-MM-DD");
+    const daysInMonth = moment(startDate).daysInMonth();
+
+    // Lấy dữ liệu từ cơ sở dữ liệu
+    const dataChecklistCs = await Tb_checklistc.findAll({
+      attributes: [
+        "ID_ChecklistC",
+        "ID_Duan",
+        "ID_Calv",
+        "Ngay",
+        "TongC",
+        "Tong",
+        "ID_KhoiCV",
+        "isDelete",
+      ],
+      where: {
+        Ngay: { [Op.between]: [startDate, endDate] },
+        ID_Duan: {
+          [Op.ne]: 1,
+        },
+        isDelete: 0,
+      },
+      include: [
+        { model: Ent_khoicv, attributes: ["KhoiCV"] },
+        { model: Ent_calv, attributes: ["Tenca"] },
+        { model: Ent_duan, attributes: ["Duan"] },
+      ],
+    });
+
+    // Khởi tạo cấu trúc dữ liệu
+    const projectData = {};
+
+    dataChecklistCs.forEach((checklistC) => {
+      const projectName = checklistC.ent_duan.Duan;
+      const date = checklistC.Ngay;
+      const khoiName = checklistC.ent_khoicv.KhoiCV;
+      const shiftName = checklistC.ent_calv.Tenca;
+
+      if (!projectData[projectName]) projectData[projectName] = {};
+      if (!projectData[projectName][date]) projectData[projectName][date] = {};
+      if (!projectData[projectName][date][khoiName])
+        projectData[projectName][date][khoiName] = {};
+      if (!projectData[projectName][date][khoiName][shiftName]) {
+        projectData[projectName][date][khoiName][shiftName] = {
+          totalTongC: 0,
+          totalTong: checklistC.Tong,
+        };
+      }
+
+      projectData[projectName][date][khoiName][shiftName].totalTongC +=
+        checklistC.TongC;
+    });
+
+    // Khởi tạo file Excel
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Báo cáo Checklist");
+
+    // Tạo tiêu đề chính và cột "Tên dự án"
+    worksheet.mergeCells("A1", "A2");
+    worksheet.getCell("A1").value = "STT";
+    worksheet.mergeCells("B1", "B2");
+    worksheet.getCell("B1").value = "Tên dự án";
+
+    // Tạo các cột cho từng ngày trong tháng với các khối KT, AN, LS, DV
+    for (let day = 1; day <= daysInMonth; day++) {
+      const colIndex = (day - 1) * 4 + 3; // Tính toán vị trí cột
+      const colRange =
+        worksheet.getCell(1, colIndex).address +
+        ":" +
+        worksheet.getCell(1, colIndex + 3).address;
+
+      worksheet.mergeCells(colRange);
+      worksheet.getCell(1, colIndex).value = `Ngày ${day}`;
+
+      // Căn giữa và để chữ đậm cho ngày
+      worksheet.getCell(1, colIndex).alignment = {
+        vertical: "middle",
+        horizontal: "center",
+      };
+      worksheet.getCell(1, colIndex).font = { bold: true };
+
+      // Tạo tiêu đề cho các khối
+      worksheet.getCell(2, colIndex).value = "KT";
+      worksheet.getCell(2, colIndex + 1).value = "AN";
+      worksheet.getCell(2, colIndex + 2).value = "LS";
+      worksheet.getCell(2, colIndex + 3).value = "DV";
+
+      // Căn giữa và để chữ đậm cho các tiêu đề
+      worksheet.getCell(2, colIndex).alignment = {
+        vertical: "middle",
+        horizontal: "center",
+      };
+      worksheet.getCell(2, colIndex).font = { bold: true };
+      worksheet.getCell(2, colIndex + 1).alignment = {
+        vertical: "middle",
+        horizontal: "center",
+      };
+      worksheet.getCell(2, colIndex + 1).font = { bold: true };
+      worksheet.getCell(2, colIndex + 2).alignment = {
+        vertical: "middle",
+        horizontal: "center",
+      };
+      worksheet.getCell(2, colIndex + 2).font = { bold: true };
+      worksheet.getCell(2, colIndex + 3).alignment = {
+        vertical: "middle",
+        horizontal: "center",
+      };
+      worksheet.getCell(2, colIndex + 3).font = { bold: true };
+    }
+
+    let rowIndex = 3; // Bắt đầu từ dòng thứ 3 (sau tiêu đề)
+
+    // Duyệt qua từng dự án và tạo hàng dữ liệu
+    Object.keys(projectData).forEach((projectName, projectIndex) => {
+      const row = worksheet.getRow(rowIndex);
+      row.getCell(1).value = projectIndex + 1; // STT
+      row.getCell(2).value = projectName; // Tên dự án
+
+      // Lấy dữ liệu từng ngày cho dự án
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = moment(`${year}-${month}-${day}`, "YYYY-MM-DD").format(
+          "YYYY-MM-DD"
+        );
+        const dayData = projectData[projectName][dateStr] || {};
+
+        // Duyệt qua từng khối và ca trong ngày
+        [
+          "Khối kỹ thuật",
+          "Khối bảo vệ",
+          "Khối làm sạch",
+          "Khối dịch vụ",
+        ].forEach((khoiName, index) => {
+          const colIndex = (day - 1) * 4 + 3 + index;
+          let totalCompletion = 0;
+          let countShifts = 0;
+
+          if (dayData[khoiName]) {
+            Object.values(dayData[khoiName]).forEach((shiftData) => {
+              if (shiftData.totalTong > 0) {
+                const completionRate =
+                  (shiftData.totalTongC / shiftData.totalTong) * 100;
+                totalCompletion += Math.min(completionRate, 100); // Giới hạn tối đa 100%
+                countShifts++;
+              }
+            });
+          }
+
+          // Tính trung bình tỷ lệ hoàn thành cho các ca trong khối
+          let avgCompletion =
+            countShifts > 0 ? totalCompletion / countShifts : ""; // Trả về rỗng nếu không có ca
+
+          // Kiểm tra nếu avgCompletion là số nguyên hoặc bằng 100 hoặc 90
+          if (
+            typeof avgCompletion === "number" &&
+            Number.isInteger(avgCompletion)
+          ) {
+            row.getCell(colIndex).value = avgCompletion; // Để nguyên giá trị
+          } else if (avgCompletion !== "") {
+            row.getCell(colIndex).value = avgCompletion.toFixed(2); // Dùng toFixed(2) cho số không chẵn
+          } else {
+            row.getCell(colIndex).value = ""; // Đảm bảo ô là rỗng nếu không có dữ liệu
+          }
+        });
+      }
+
+      rowIndex++;
+    });
+
+    // Create a buffer and write the workbook to it
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    // Set headers for file download
+    res.set({
+      'Content-Disposition': `attachment; filename=Bao_cao_checklist_du_an_${month}_${year}.xlsx`,
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    // Send the buffer as the response
+    res.send(buffer);
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -3172,9 +3367,9 @@ exports.suCoChiTiet = async (req, res) => {
               {
                 model: Ent_hangmuc,
                 attributes: ["Hangmuc", "isDelete"],
-                isDelete: 0
-              }
-            ]
+                isDelete: 0,
+              },
+            ],
           },
         ],
       },

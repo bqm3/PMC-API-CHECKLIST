@@ -36,6 +36,7 @@ module.exports = (app) => {
   router.post("/thong-ke", [isAuthenticated], tb_checklistc.getThongKe);
   router.post("/report-article-important", [isAuthenticated], tb_checklistc.getThongKeHangMucQuanTrong);
   router.post("/preview-report-article-important", [isAuthenticated], tb_checklistc.getPreviewThongKeHangMucQuanTrong);
+  router.post("/report-checklist-years", tb_checklistc.getBaoCaoChecklistMonths)
   
   // Role: VIP
   //========================================== 
