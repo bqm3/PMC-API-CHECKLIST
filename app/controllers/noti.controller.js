@@ -6,7 +6,7 @@ const fetch = require("node-fetch");
 const moment = require("moment-timezone");
 
 exports.notiAll = async (req, res) => {
-  if(Object.keys(req.query).length == 0){
+  if(Object.keys(req.query).length === 0){
     let loadingIOS = false 
     let loadingAndroid = false 
     let resData ;
@@ -21,7 +21,7 @@ exports.notiAll = async (req, res) => {
     }
     if(loadingAndroid == false){
       resData = {
-        key: '2.0.7',
+        key: '2.0.8',
         type: "WARNING",
         textTitle: "PMC Checklist",
         textBody: "Phiên bản 2.0.8 đã xuất bản. Cập nhật phiên bản để có trải nghiệm tốt nhất.",
@@ -38,34 +38,18 @@ exports.notiAll = async (req, res) => {
     const keyVersionIOS = "2.0.7";
     const keyVersionAPK = "2.0.8";
 
-    let isCheckIOS = false; 
-    let isCheckAPK = false; 
+    let ischeck = false; 
     let resData = "";
     let status = 0;
-
-    if (
-      (platform === "ios" && version === keyVersionIOS) 
-    ) {
-      isCheckIOS = true;
-    }
-  
-    if(isCheckIOS == false){
-      resData = {
-        type: "WARNING",
-        textTitle: "PMC Checklist",
-        textBody: "Phiên bản 2.0.7 đã xuất bản. Cập nhật phiên bản để có trải nghiệm tốt nhất.",
-        time: 5000,
-      };
-      status = "1"
-    }
   
     if (
+      (platform === "ios" && version === keyVersionIOS) ||
       (platform !== "ios" && version === keyVersionAPK)
     ) {
-      isCheckAPK = true;
+      ischeck = true;
     }
   
-    if(isCheckAPK == false){
+    if(ischeck == false){
       resData = {
         type: "WARNING",
         textTitle: "PMC Checklist",
