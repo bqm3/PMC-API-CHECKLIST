@@ -1806,6 +1806,7 @@ exports.checklistCalv = async (req, res) => {
               "Giatridinhdanh",
               "isCheck",
               "Giatrinhan",
+              "Tinhtrang"
             ],
             include: [
               {
@@ -1813,10 +1814,8 @@ exports.checklistCalv = async (req, res) => {
                 as: "ent_hangmuc",
                 attributes: [
                   "Hangmuc",
-                  "Tieuchuankt",
                   "ID_Khuvuc",
                   "MaQrCode",
-                  "FileTieuChuan",
                 ],
               },
               {
@@ -1824,37 +1823,15 @@ exports.checklistCalv = async (req, res) => {
                 attributes: [
                   "Tenkhuvuc",
                   "MaQrCode",
-                  "Makhuvuc",
-                  "Sothutu",
-
                   "ID_Khuvuc",
                 ],
                 include: [
                   {
                     model: Ent_toanha,
                     attributes: ["Toanha", "ID_Toanha"],
-                    include: {
-                      model: Ent_duan,
-                      attributes: [
-                        "ID_Duan",
-                        "Duan",
-                        "Diachi",
-                        "Vido",
-                        "Kinhdo",
-                        "Logo",
-                      ],
-                    },
+                   
                   },
-                  {
-                    model: Ent_khuvuc_khoicv,
-                    attributes: ["ID_KhoiCV", "ID_Khuvuc", "ID_KV_CV"],
-                    include: [
-                      {
-                        model: Ent_khoicv,
-                        attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
-                      },
-                    ],
-                  },
+                 
                 ],
               },
               {
