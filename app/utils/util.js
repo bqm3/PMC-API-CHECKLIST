@@ -1,9 +1,9 @@
 //check tầng data import excel
 function checkDataExcel(data, index, key) {
   try {
-    const tenKhuVuc = data['Tên khu vực']?.toLowerCase().normalize('NFC');
-    const tenHangMuc = data['Tên hạng mục']?.toLowerCase().normalize('NFC');
-    const tenTang = data['Tên tầng']?.toLowerCase().normalize('NFC');
+    const tenKhuVuc = data['Tên khu vực']?.toLowerCase().normalize('NFC').trim();
+    const tenHangMuc = data['Tên hạng mục']?.toLowerCase().normalize('NFC').trim();
+    const tenTang = data['Tên tầng']?.toLowerCase().normalize('NFC').trim();
 
     const normalizeTang = (tang) => {
       const match = tang.match(/tầng\s*(\d+)/);
