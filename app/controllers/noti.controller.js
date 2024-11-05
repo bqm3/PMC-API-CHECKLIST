@@ -6,7 +6,7 @@ const fetch = require("node-fetch");
 const moment = require("moment-timezone");
 
 exports.notiAll = async (req, res) => {
-  if(Object.keys(req.query).length === 0){
+  if(Object.keys(req.query).length == 0){
     let loadingIOS = false 
     let loadingAndroid = false 
     let resData ;
@@ -60,7 +60,6 @@ exports.notiAll = async (req, res) => {
     }
   
     if (
-      (platform === "ios" && version === keyVersionIOS) ||
       (platform !== "ios" && version === keyVersionAPK)
     ) {
       isCheckAPK = true;
