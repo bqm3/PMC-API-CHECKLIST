@@ -1680,7 +1680,11 @@ exports.getListChecklistWeb = async (req, res) => {
             "ID_Khuvuc",
             "MaQrCode",
             "FileTieuChuan",
+            "isDelete"
           ],
+          where: {
+            isDelete: 0,
+          }
         },
         {
           model: Ent_khuvuc,
@@ -1692,7 +1696,11 @@ exports.getListChecklistWeb = async (req, res) => {
             "ID_KhoiCVs",
             "ID_Toanha",
             "ID_Khuvuc",
+            "isDelete"
           ],
+          where: {
+            isDelete: 0,
+          },
           include: [
             {
               model: Ent_toanha,
