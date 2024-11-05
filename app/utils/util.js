@@ -26,11 +26,11 @@ function checkDataExcel(data, index, key) {
     };
 
     if (tenTang && key === 1) {
-      if (tenKhuVuc.includes('tầng') && !isValidFloor(tenKhuVuc, tenTang)) {
+      if (tenKhuVuc?.includes('tầng') && !isValidFloor(tenKhuVuc, tenTang)) {
         throw new Error(`Lỗi dòng ${index}, dữ liệu tầng của khu vực không hợp lệ`);
       }
     } else if (tenTang && key === 2) {
-      if (tenHangMuc.includes('tầng') && !isValidFloor(tenHangMuc, tenTang)) {
+      if (tenHangMuc?.includes('tầng') && !isValidFloor(tenHangMuc, tenTang)) {
         throw new Error(`Lỗi dòng ${index}, dữ liệu tầng của hạng mục không hợp lệ`);
       }
     }
