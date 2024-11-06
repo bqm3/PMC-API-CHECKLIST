@@ -1806,7 +1806,6 @@ exports.checklistCalv = async (req, res) => {
               "Giatridinhdanh",
               "isCheck",
               "Giatrinhan",
-              "Tinhtrang"
             ],
             include: [
               {
@@ -2221,6 +2220,309 @@ exports.reportLocation = async (req, res) => {
       message: "Thống kê checklist với tọa độ trùng",
       data: resultWithDetails, // Send simplified result with Hangmuc, Khuvuc, Tentang
     });
+  } catch (err) {
+    // Handle errors and send appropriate response
+    res
+      .status(500)
+      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+  }
+};
+
+exports.getBaoCaoLocationsTimes = async (req, res) => {
+  try {
+    const { month, year } = req.query;
+
+    if (!month || !year) {
+      return res.status(400).json({ message: "Month and year are required" });
+    }
+
+    const startDate = moment(`${year}-${month}-01`)
+      .startOf("month")
+      .format("YYYY-MM-DD");
+    const endDate = moment(`${year}-${month}-01`)
+      .endOf("month")
+      .format("YYYY-MM-DD");
+    const daysInMonth = moment(startDate).daysInMonth();
+
+    // Fetch checklist data with related information
+    const dataChecklistC = await Tb_checklistc.findAll({
+      attributes: [
+        "Ngay",
+        "ID_KhoiCV",
+        "ID_Duan",
+        "ID_ChecklistC",
+        "ID_ThietLapCa",
+        "ID_Duan",
+        "Tinhtrang",
+        "Giobd",
+        "Giokt",
+        "Tong",
+        "TongC",
+        "ID_User",
+        "ID_Calv",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_duan,
+          attributes: ["Duan"],
+        },
+        {
+          model: Ent_thietlapca,
+          attributes: ["Ngaythu"],
+        },
+        {
+          model: Ent_khoicv,
+          attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
+        },
+        {
+          model: Ent_calv,
+          attributes: ["Tenca"],
+        },
+        {
+          model: Ent_user,
+          attributes: ["UserName", "Email", "Hoten"],
+        },
+        {
+          model: Tb_checklistchitietdone,
+          as: "tb_checklistchitietdones",
+          attributes: [
+            "Description",
+            "isDelete",
+            "ID_ChecklistC",
+            "Gioht",
+            "Vido",
+            "Kinhdo",
+            "isScan",
+          ],
+        },
+      ],
+      where: {
+         Ngay: { [Op.between]: [startDate, endDate] },
+        ID_Duan: {
+          [Op.ne]: 1,
+        },
+        isDelete: 0,
+      },
+    });
+
+    const results = dataChecklistC.map((checklist) => {
+      const tbChecklistChiTiet = checklist.tb_checklistchitietdones;
+
+      // Create a Map to group checklist items by Vido and Kinhdo
+      const coordinatesMap = new Map();
+
+      // Loop through checklistChiTiet to group by Vido and Kinhdo
+      tbChecklistChiTiet.forEach((item) => {
+        const { Vido, Kinhdo, Description, Gioht, isScan } = item;
+
+        // If Vido and Kinhdo exist, proceed
+        if (Gioht) {
+          const coordKey = `${Vido} - ${Kinhdo}`; // Create a unique key based on Vido and Kinhdo
+
+          // If the coordinates exist in the map, push the current item
+          if (coordinatesMap.has(coordKey)) {
+            coordinatesMap.get(coordKey).push(item);
+          } else {
+            // Otherwise, create a new entry for the coordinates
+            coordinatesMap.set(coordKey, [item]);
+          }
+        }
+      });
+
+      // Now, coordinatesMap contains groups of checklist items with the same coordinates
+      // To get the result, filter out entries with more than one item (duplicates)
+      const duplicateCoordinates = [];
+      coordinatesMap.forEach((items, key) => {
+        if (items.length > 1) {
+          duplicateCoordinates.push({
+            coordinates: key, // Vido, Kinhdo key
+            checklistItems: items.map((item) => {
+              // Extract checklist IDs from Description
+              const checklistIds = item.Description.split(",").map(Number);
+              return {
+                Gioht: item.Gioht,
+                isScan: item.isScan,
+                checklistIds, // IDs from Description
+              };
+            }),
+          });
+        }
+      });
+
+      return {
+        project: checklist.ent_duan.Duan,
+        id: checklist.ID_ChecklistC,
+        ca: checklist.ent_calv.Tenca,
+        giobd: checklist.Giobd,
+        giokt: checklist.Giokt,
+        ngay: checklist.Ngay,
+        tongC: checklist.TongC,
+        tong: checklist.Tong,
+        nguoi: checklist.ent_user.Hoten,
+        tk: checklist.ent_user.UserName,
+        cv: checklist.ent_khoicv.KhoiCV,
+        duplicateCoordinates, // Group of duplicate coordinates
+      };
+    });
+
+    // Fetch related checklist details, including Hangmuc, Khuvuc, and Tang (Floor)
+    const relatedChecklists = await Ent_checklist.findAll({
+      attributes: ["ID_Checklist", "ID_Tang", "isDelete"],
+      include: [
+        {
+          model: Ent_hangmuc,
+          as: "ent_hangmuc",
+          attributes: ["Hangmuc"], // Fetch only the Hangmuc (category name)
+        },
+        {
+          model: Ent_khuvuc,
+          as: "ent_khuvuc",
+          attributes: ["Tenkhuvuc"], // Fetch Khuvuc (Area)
+          include: [
+            {
+              model: Ent_toanha,
+              as: "ent_toanha",
+              attributes: ["Toanha"],
+            },
+          ],
+        },
+        {
+          model: Ent_tang,
+          attributes: ["Tentang"], // Fetch Tang (Floor)
+        },
+      ],
+      where: {
+        ID_Checklist: {
+          [Op.in]: results.flatMap((result) =>
+            result.duplicateCoordinates.flatMap((entry) =>
+              entry.checklistItems.flatMap((item) => item.checklistIds)
+            )
+          ),
+        },
+        isDelete: 0
+      },
+    });
+
+    const MIN_TRAVERSAL_TIME_BETWEEN_FLOORS = 1 * 20; 
+    // Merge related checklist details with duplicate coordinates
+    const resultWithDetails = results.map((result) => {
+      const detailedCoordinates = result.duplicateCoordinates.map((entry) => {
+        // Sort items by Gioht
+        const sortedItems = entry.checklistItems.sort((a, b) => moment(a.Gioht, "HH:mm:ss") - moment(b.Gioht, "HH:mm:ss"));
+    
+        const detailedItems = sortedItems.map((item, index) => {
+          const relatedItem = relatedChecklists.find((checklist) => item.checklistIds.includes(checklist.ID_Checklist));
+          const floor = relatedItem?.ent_tang?.Tentang || null;
+    
+          let isValid = true;
+    
+          if (index > 0) {
+            const previousItem = sortedItems[index - 1];
+            const previousFloor = relatedChecklists.find((checklist) => previousItem.checklistIds.includes(checklist.ID_Checklist))?.ent_tang?.Tentang || null;
+    
+            // Calculate time difference in seconds
+            const timeDifference = moment(item.Gioht, "HH:mm:ss").diff(moment(previousItem.Gioht, "HH:mm:ss"), "seconds");
+    
+            // If floors differ and time is too short, flag as invalid
+            if (previousFloor !== floor && timeDifference < MIN_TRAVERSAL_TIME_BETWEEN_FLOORS) {
+              isValid = false;
+            }
+          }
+    
+          return {
+            Gioht: item.Gioht,
+            isScan: item.isScan,
+            relatedHangmuc: relatedItem
+              ? `${relatedItem.ent_hangmuc.Hangmuc} - ${relatedItem.ent_khuvuc.Tenkhuvuc} - ${floor} - ${relatedItem.ent_khuvuc.ent_toanha.Toanha}`
+              : null,
+            isValid, // Add validity flag
+          };
+        });
+    
+        // Check if there's any "isValid: false" in this coordinate set
+        const hasInvalid = detailedItems.some((item) => item.isValid === false);
+    
+        // Include this coordinate if it contains any invalid entries
+        return hasInvalid ? { coordinates: entry.coordinates, detailedItems } : null;
+      }).filter((entry) => entry !== null); // Remove null entries for coordinates without any invalid items
+    
+      // Only return results with coordinates that have invalid items
+      return detailedCoordinates.length > 0
+        ? {
+            id: result.id,
+            project: result.project,
+            ca: result.ca,
+            nguoi: result.nguoi,
+            tk: result.tk,
+            cv: result.cv,
+            giobd: result.giobd,
+            giokt: result.giokt,
+            ngay: result.ngay,
+            tongC: result.tongC,
+            tong: result.tong,
+            detailedCoordinates,
+          }
+        : null;
+    }).filter((result) => result !== null); // Remove results without any invalid entries
+
+    const workbook = new ExcelJS.Workbook();
+    
+    // Loop through each project with errors and create a sheet
+    resultWithDetails.forEach((result) => {
+      // Create a new sheet for each project with errors
+      let sheet = workbook.getWorksheet(result.project);
+  if (!sheet) {
+    // Only create a new sheet if it doesn't already exist
+    sheet = workbook.addWorksheet(result.project || "Dự án khác");
+
+      // Define columns for the sheet
+      sheet.columns = [
+        { header: "Ca", key: "ca", width: 15 },
+        { header: "Họ tên", key: "nguoi", width: 20 },
+        { header: "Tài khoản", key: "kt", width: 20 },
+        { header: "Giờ Bắt Đầu", key: "giobd", width: 15 },
+        { header: "Giờ Kết Thúc", key: "giokt", width: 15 },
+        { header: "Ngày", key: "ngay", width: 15 },
+        { header: "Khối", key: "cv", width: 15 },
+        { header: "Tọa Độ", key: "coordinates", width: 30 },
+        { header: "Giờ HT", key: "gioht", width: 15 },
+        { header: "Hạng Mục", key: "relatedHangmuc", width: 40 },
+        { header: "Hợp Lệ", key: "isValid", width: 10 },
+        { header: "Quét Qr", key: "isScan", width: 10 },
+      ];
+    }
+
+      // Populate the sheet with the details
+      result.detailedCoordinates.forEach((coordinateEntry) => {
+        coordinateEntry.detailedItems.forEach((item) => {
+          sheet.addRow({
+            ca: result.ca,
+            nguoi: result.nguoi,
+            kt: result.kt,
+            giobd: result.giobd,
+            giokt: result.giokt,
+            ngay: result.ngay,
+            cv: result.cv,
+            coordinates: coordinateEntry.coordinates,
+            gioht: item.Gioht,
+            relatedHangmuc: item.relatedHangmuc,
+            isValid: item.isValid ? "" : "Cảnh báo",
+            isScan: item.isScan == 1 ? "Không quét" : ""
+          });
+        });
+      });
+    });
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    // Set headers for file download
+    res.set({
+      'Content-Disposition': `attachment; filename=Bao_cao_checklist_vi_pham_${month}_${year}.xlsx`,
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    // Send the buffer as the response
+    res.send(buffer);
   } catch (err) {
     // Handle errors and send appropriate response
     res
