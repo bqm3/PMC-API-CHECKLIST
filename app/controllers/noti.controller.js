@@ -35,7 +35,7 @@ exports.notiAll = async (req, res) => {
 
   } else {
     const { version, platform } = req.query;
-    const keyVersionIOS = "2.0.7";
+    const keyVersionIOS = "2.0.8";
     const keyVersionAPK = "2.0.8";
 
     let ischeck = false; 
