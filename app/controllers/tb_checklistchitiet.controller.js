@@ -163,6 +163,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
               ID_Checklist: {
                 [Op.in]: checklistsWithNotesAndImages,
               },
+              Giatriloi: Ketqua,
               isDelete: 0,
             },
             transaction,
