@@ -6358,9 +6358,7 @@ exports.createPreviewReports = async (req, res) => {
                           attributes: ["Duan"],
                         },
                       ],
-                      where: {
-                        ID_Duan: userData.ID_Duan,
-                      },
+                     
                     },
                   ],
                 },
@@ -6372,7 +6370,10 @@ exports.createPreviewReports = async (req, res) => {
                 model: Ent_chucvu,
                 attributes: ["Chucvu", "Role"],
               },
-              attributes: ["UserName", "Email", "Hoten"],
+              attributes: ["UserName", "Email", "Hoten", "ID_Duan"],
+              where: {
+                ID_Duan: userData.ID_Duan,
+              },
             },
           ],
           where: whereFiler,
