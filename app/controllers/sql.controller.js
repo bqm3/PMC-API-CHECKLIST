@@ -3,10 +3,10 @@ const Ent_checklist = require("../models/ent_checklist.model");
 exports.query = async (req, res) => {
   try {
     await Ent_checklist.update(
-      { Giatridinhdanh: "Auto", Giatriloi: "Off", Giatrinhan: "Auto / Man / Off"},
+      {  Giatriloi: "Không Bình Thường"},
       {
         where: {
-          Giatridinhdanh: "MAN",
+          Giatriloi: "Bình Thường",
           isDelete: 0
         },
       }
