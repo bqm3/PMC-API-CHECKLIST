@@ -127,6 +127,9 @@ exports.get = async (req, res) => {
               attributes: ["Chucvu", "Role"],
             },
           ],
+          where: {
+            ID_Duan: userData.ID_Duan,
+          }
         },
       ],
       limit: 30,
@@ -143,12 +146,8 @@ exports.get = async (req, res) => {
       ],
     });
 
-    const filteredData = data.filter((item) => {
-      return item.ent_user && item.ent_user.ID_Duan == userData.ID_Duan;
-    });
 
-
-    if (!filteredData || filteredData.length === 0) {
+    if (!data || data.length === 0) {
       return res.status(200).json({
         message: "Không có sự cố ngoài!",
         data: [],
@@ -157,7 +156,7 @@ exports.get = async (req, res) => {
 
     return res.status(200).json({
       message: "Sự cố ngoài!",
-      data: filteredData,
+      data: data,
     });
   } catch (error) {
     res.status(500).json({
@@ -554,6 +553,11 @@ exports.dashboardAll = async (req, res) => {
             model: Ent_duan,
             attributes: ["ID_Duan", "Duan", "Diachi", "Vido", "Kinhdo", "Logo"],
           },
+          where: {
+            ID_Duan : {
+              [Op.ne] : 1
+            }
+          }
         },
       ],
     });
@@ -718,11 +722,37 @@ exports.getSuCoBenNgoai = async (req, res) => {
       ],
       where: {
         isDelete: 0,
+
         Ngaysuco: {
           [Op.gte]: startOfCurrentWeek,
           [Op.lte]: endOfCurrentWeek,
         },
       },
+      include: [
+        {
+          model: Ent_hangmuc,
+          attributes: [
+            "Hangmuc",
+            "Tieuchuankt",
+            "ID_Khuvuc",
+            "MaQrCode",
+            "FileTieuChuan",
+          ],
+        },
+        {
+          model: Ent_user,
+          attributes: ["ID_Duan", "Hoten", "UserName"],
+          include: {
+            model: Ent_duan,
+            attributes: ["ID_Duan", "Duan", "Diachi", "Vido", "Kinhdo", "Logo"],
+          },
+          where: {
+            ID_Duan : {
+              [Op.ne] : 1
+            }
+          }
+        },
+      ],
       raw: true,
     });
 
@@ -738,6 +768,31 @@ exports.getSuCoBenNgoai = async (req, res) => {
           [Op.lte]: endOfLastWeek,
         },
       },
+      include: [
+        {
+          model: Ent_hangmuc,
+          attributes: [
+            "Hangmuc",
+            "Tieuchuankt",
+            "ID_Khuvuc",
+            "MaQrCode",
+            "FileTieuChuan",
+          ],
+        },
+        {
+          model: Ent_user,
+          attributes: ["ID_Duan", "Hoten", "UserName"],
+          include: {
+            model: Ent_duan,
+            attributes: ["ID_Duan", "Duan", "Diachi", "Vido", "Kinhdo", "Logo"],
+          },
+          where: {
+            ID_Duan : {
+              [Op.ne] : 1
+            }
+          }
+        },
+      ],
       raw: true,
     });
 
@@ -747,12 +802,11 @@ exports.getSuCoBenNgoai = async (req, res) => {
 
     // Tính phần trăm thay đổi
     let percentageChange = 0;
-    if (lastWeekCount > 0) { // Tránh chia cho 0
-      percentageChange = ((currentWeekCount - lastWeekCount) / lastWeekCount) * 100;
-    } else if (currentWeekCount > 0) {
-      percentageChange = 100; // Nếu tuần này có sự cố mà tuần trước không có
+    if (lastWeekCount === 0 && currentWeekCount > 0) {
+        percentageChange = 100; // If last week was 0 and there's an increase this week
+    } else if (lastWeekCount > 0) {
+        percentageChange = ((currentWeekCount - lastWeekCount) / lastWeekCount) * 100;
     }
-
     // Truy vấn chi tiết sự cố theo tên dự án
     const data = await Tb_sucongoai.findAll({
       attributes: [
@@ -802,6 +856,11 @@ exports.getSuCoBenNgoai = async (req, res) => {
               attributes: ["Chucvu", "Role"],
             },
           ],
+          where: {
+            ID_Duan : {
+              [Op.ne] : 1
+            }
+          }
         },
       ],
       where: {

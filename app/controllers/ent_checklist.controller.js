@@ -1982,6 +1982,9 @@ exports.uploadFiles = async (req, res) => {
           const giaTriDanhDinh = formatVietnameseText(
             transformedItem["GIÁTRỊĐỊNHDANH"]
           );
+          const giaTriLoi = formatVietnameseText(
+            transformedItem["GIÁTRỊLỖI"]
+          );
           const cacGiaTriNhan = formatVietnameseText(
             transformedItem["CÁCGIÁTRỊNHẬN"]
           );
@@ -2086,19 +2089,20 @@ exports.uploadFiles = async (req, res) => {
           }
 
           const sttChecklist = checklistOrderMap[checklistKey]; // Lấy số thứ tự hiện tại cho checklist
-
+          document.designMode = 'on';
           const data = {
             ID_Khuvuc: hangmuc.ID_Khuvuc,
             ID_Tang: tang.ID_Tang,
             ID_Hangmuc: hangmuc.ID_Hangmuc,
             Sothutu: sttChecklist, // Sử dụng số thứ tự vừa tính toán
-            Maso: generateQRCodeChecklist(tenChecklist) || "",
+            Maso: "",
             MaQrCode: generateQRCodeChecklist(tenChecklist),
             Checklist: tenChecklist,
             Ghichu: ghiChu || "",
             Tieuchuan: tieuChuanChecklist || "",
             Giatridinhdanh: giaTriDanhDinh || "",
             Giatrinhan: cacGiaTriNhan || "",
+            Giatriloi: giaTriLoi || "",
             isImportant:
               quanTrong !== undefined && quanTrong !== null && quanTrong !== ""
                 ? 1
