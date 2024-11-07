@@ -1805,6 +1805,7 @@ exports.checklistCalv = async (req, res) => {
               "Checklist",
               "Giatridinhdanh",
               "isCheck",
+              "Tinhtrang",
               "Giatrinhan",
             ],
             include: [
@@ -1894,6 +1895,7 @@ exports.checklistCalv = async (req, res) => {
           "Checklist",
           "Giatridinhdanh",
           "isCheck",
+          "Tinhtrang",
           "Giatrinhan",
         ],
         include: [

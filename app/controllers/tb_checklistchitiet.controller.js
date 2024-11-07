@@ -145,51 +145,28 @@ exports.createCheckListChiTiet = async (req, res, next) => {
           console.error("Error in updating TongC: ", error);
         });
 
-      const checklistsWithNotesAndImages = newRecords
-        .filter(
-          (record) =>
-            record.Ghichu !== null &&
-            record.Ghichu !== "" &&
-            record.Anh !== null &&
-            record.Anh !== ""
-        )
-        .map((record) => record.ID_Checklist);
+       
+        if (newRecords.length > 0) {
+          for (let i = 0; i < newRecords.length; i++) {
+            const checklistId = newRecords[i].ID_Checklist;
+            const ketquaValue = newRecords[i].Ketqua?.trim();  // Getting the corresponding Ketqua value
+            console.log('checklistId',checklistId)
+            console.log('ketquaValue',ketquaValue)
+            console.log('newRecords[i]',newRecords[i])
 
-      if (checklistsWithNotesAndImages.length > 0) {
-        await Ent_checklist.update(
-          { Tinhtrang: 1 },
-          {
-            where: {
-              ID_Checklist: {
-                [Op.in]: checklistsWithNotesAndImages,
-              },
-              Giatriloi: Ketqua,
-              isDelete: 0,
-            },
-            transaction,
+            await Ent_checklist.update(
+              { Tinhtrang: 1 },
+              {
+                where: {
+                  ID_Checklist: checklistId,
+                  Giatriloi: ketquaValue,  // Compare Giatriloi with Ketqua value
+                  isDelete: 0,
+                },
+                transaction,
+              }
+            );
           }
-        );
-      }
-
-      const checklistsWithoutNotesAndImages = uniqueIDChecklists.filter(
-        (id) => !checklistsWithNotesAndImages.includes(id)
-      );
-
-      // Kiểm tra và cập nhật isCheck = 0 cho các record không thuộc checklistsWithNotesAndImages
-      if (checklistsWithoutNotesAndImages.length > 0) {
-        await Ent_checklist.update(
-          { Tinhtrang: 0 },
-          {
-            where: {
-              ID_Checklist: {
-                [Op.in]: checklistsWithoutNotesAndImages,
-              },
-              isDelete: 0,
-            },
-            transaction,
-          }
-        );
-      }
+        }
 
       await transaction.commit();
 

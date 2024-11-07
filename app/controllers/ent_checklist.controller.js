@@ -1993,7 +1993,7 @@ exports.uploadFiles = async (req, res) => {
           const giaTriDanhDinh = formatVietnameseText(
             transformedItem["GIÁTRỊĐỊNHDANH"]
           );
-          const giaTriLoi = formatVietnameseText(
+          const giaTriLoi = (
             transformedItem["GIÁTRỊLỖI"]
           );
           const cacGiaTriNhan = formatVietnameseText(
