@@ -6880,8 +6880,18 @@ exports.createExcelDuAn = async (req, res) => {
     // Chuyển result object thành mảng
     const resultArray = Object.values(result);
 
+    const sortedResultArray = resultArray.sort((a, b) => {
+      if (a.projectChinhanh < b.projectChinhanh) {
+        return -1; // a trước b
+      }
+      if (a.projectChinhanh > b.projectChinhanh) {
+        return 1; // a sau b
+      }
+      return 0; // nếu bằng nhau, giữ nguyên thứ tự
+    });
+
     // Duyệt qua từng dự án và thêm vào bảng
-    resultArray.forEach((project, index) => {
+    sortedResultArray.forEach((project, index) => {
       const { projectName, createdKhois, projectChinhanh } = project;
       let rowValues = {
         nhom: projectChinhanh, // Thuộc CN
@@ -6962,15 +6972,6 @@ exports.createExcelDuAn = async (req, res) => {
 
     // Tạo file buffer để xuất file Excel
     const buffer = await workbook.xlsx.writeBuffer();
-
-    // res.setHeader(
-    //   "Content-Disposition",
-    //   "attachment; filename=CheckListProjects.xlsx"
-    // );
-    // res.setHeader(
-    //   "Content-Type",
-    //   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    // );
 
     await workbook.xlsx.load(buffer);
     const rows = [];
