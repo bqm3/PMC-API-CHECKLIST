@@ -1993,7 +1993,7 @@ exports.uploadFiles = async (req, res) => {
           const giaTriDanhDinh = formatVietnameseText(
             transformedItem["GIÁTRỊĐỊNHDANH"]
           );
-          const giaTriLoi = (
+          const giaTriLoi = formatVietnameseText(
             transformedItem["GIÁTRỊLỖI"]
           );
           const cacGiaTriNhan = formatVietnameseText(
@@ -2100,7 +2100,7 @@ exports.uploadFiles = async (req, res) => {
           }
 
           const sttChecklist = checklistOrderMap[checklistKey]; // Lấy số thứ tự hiện tại cho checklist
-          document.designMode = 'on';
+          
           const data = {
             ID_Khuvuc: hangmuc.ID_Khuvuc,
             ID_Tang: tang.ID_Tang,
