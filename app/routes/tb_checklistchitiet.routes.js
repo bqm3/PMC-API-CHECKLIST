@@ -4,7 +4,7 @@ const upload = multer();
 module.exports = (app) => {
   const tb_checklistchitiet = require("../controllers/tb_checklistchitiet.controller.js");
   const { isAuthenticated } = require("../middleware/auth_middleware.js");
-  const uploader = require("../config/cloudinary.config");
+  const uploader = require("../config/cloudinary.config.js");
 
   var router = require("express").Router();
 
