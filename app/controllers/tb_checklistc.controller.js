@@ -1736,7 +1736,22 @@ exports.checklistImages = async (req, res) => {
   }
 };
 
-// Chi tiết checklist trong 1 ca
+// Helper function to remove circular references
+function removeCircularReferences(obj) {
+  const cache = new Set();
+  const stringify = JSON.stringify(obj, (key, value) => {
+    if (typeof value === "object" && value !== null) {
+      if (cache.has(value)) {
+        return; // Discard circular reference
+      }
+      cache.add(value);
+    }
+    return value;
+  });
+  cache.clear();
+  return JSON.parse(stringify);
+}
+
 exports.checklistCalv = async (req, res) => {
   try {
     const userData = req.user.data;
@@ -1758,6 +1773,7 @@ exports.checklistCalv = async (req, res) => {
           "Anh",
           "Gioht",
           "Ghichu",
+          "isScan",
           "isDelete",
         ],
         include: [
@@ -1780,16 +1796,8 @@ exports.checklistCalv = async (req, res) => {
                 attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
               },
               {
-                model: Ent_user,
-                attributes: ["ID_User", "Hoten", "ID_Chucvu"],
-              },
-              {
                 model: Ent_calv,
                 attributes: ["Tenca", "Giobatdau", "Gioketthuc"],
-              },
-              {
-                model: Ent_duan,
-                attributes: ["Duan"],
               },
             ],
           },
@@ -1812,26 +1820,16 @@ exports.checklistCalv = async (req, res) => {
               {
                 model: Ent_hangmuc,
                 as: "ent_hangmuc",
-                attributes: [
-                  "Hangmuc",
-                  "ID_Khuvuc",
-                  "MaQrCode",
-                ],
+                attributes: ["Hangmuc", "ID_Khuvuc", "MaQrCode"],
               },
               {
                 model: Ent_khuvuc,
-                attributes: [
-                  "Tenkhuvuc",
-                  "MaQrCode",
-                  "ID_Khuvuc",
-                ],
+                attributes: ["Tenkhuvuc", "MaQrCode", "ID_Khuvuc"],
                 include: [
                   {
                     model: Ent_toanha,
                     attributes: ["Toanha", "ID_Toanha"],
-                   
                   },
-                 
                 ],
               },
               {
@@ -1840,47 +1838,49 @@ exports.checklistCalv = async (req, res) => {
               },
               {
                 model: Ent_user,
-                attributes: [
-                  "UserName",
-                  "Email",
-                  "Hoten",
-                  "Ngaysinh",
-                  "Gioitinh",
-                  "Sodienthoai",
-                ],
+                attributes: ["UserName", "Hoten", "Sodienthoai"],
               },
             ],
           },
         ],
       });
 
+      // Convert fetched data to plain JavaScript objects
+      const plainChecklistChiTiet = dataChecklistChiTiet.map(item =>
+        item.get({ plain: true })
+      );
+
       // Fetch checklist done items
       const checklistDoneItems = await Tb_checklistchitietdone.findAll({
-        attributes: ["Description", "isDelete", "ID_ChecklistC", "Gioht"],
+        attributes: ["Description", "isDelete", "ID_ChecklistC", "Gioht", "isScan"],
         where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC },
       });
 
+      // Convert done items to plain objects
+      const plainChecklistDoneItems = checklistDoneItems.map(item => item.get({ plain: true }));
+
       const arrPush = [];
-
-      // Add status to dataChecklistChiTiet items if length > 0
-      if (dataChecklistChiTiet.length > 0) {
-        dataChecklistChiTiet.forEach((item) => {
-          arrPush.push({ ...item.dataValues, status: 0 });
-        });
-      }
-
       let checklistIds = [];
       let checklistGiohtMap = new Map();
 
-      if (checklistDoneItems.length > 0) {
-        checklistDoneItems.forEach((item) => {
-          const idChecklists = item.Description.split(",").map(Number);
-          checklistIds.push(...idChecklists);
-          idChecklists.forEach((id) => {
-            checklistGiohtMap.set(id, item.Gioht);
-          });
+      // Populate arrPush and collect checklist IDs
+      plainChecklistChiTiet.forEach((item) => {
+        item.status = 0;
+        if (item.isScan === 1) {
+          item.ent_hangmuc = { ...item.ent_hangmuc, isScan: 1 };
+        }
+        arrPush.push(item);
+        checklistIds.push(item.ID_Checklist);
+      });
+
+      // Process done items for checklist ID mapping
+      plainChecklistDoneItems.forEach((item) => {
+        const idChecklists = item.Description.split(",").map(Number);
+        idChecklists.forEach((id) => {
+          checklistGiohtMap.set(id, item.Gioht);
+          checklistIds.push(id);
         });
-      }
+      });
 
       // Fetch related checklist data
       const relatedChecklists = await Ent_checklist.findAll({
@@ -1902,51 +1902,18 @@ exports.checklistCalv = async (req, res) => {
           {
             model: Ent_hangmuc,
             as: "ent_hangmuc",
-            attributes: [
-              "Hangmuc",
-              "Tieuchuankt",
-              "ID_Khuvuc",
-              "MaQrCode",
-              "FileTieuChuan",
-            ],
+            attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "FileTieuChuan"],
           },
           {
             model: Ent_khuvuc,
             as: "ent_khuvuc",
-            attributes: [
-              "Tenkhuvuc",
-              "MaQrCode",
-              "Makhuvuc",
-              "Sothutu",
-              "ID_Khuvuc",
-            ],
+            attributes: ["Tenkhuvuc", "MaQrCode", "Makhuvuc", "Sothutu", "ID_Khuvuc"],
             include: [
               {
                 model: Ent_toanha,
                 attributes: ["Toanha", "ID_Toanha"],
-                include: {
-                  model: Ent_duan,
-                  attributes: [
-                    "ID_Duan",
-                    "Duan",
-                    "Diachi",
-                    "Vido",
-                    "Kinhdo",
-                    "Logo",
-                  ],
-                  where: { ID_Duan: userData.ID_Duan },
-                },
               },
-              {
-                model: Ent_khuvuc_khoicv,
-                attributes: ["ID_KhoiCV", "ID_Khuvuc", "ID_KV_CV"],
-                include: [
-                  {
-                    model: Ent_khoicv,
-                    attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
-                  },
-                ],
-              },
+             
             ],
           },
           {
@@ -1961,22 +1928,42 @@ exports.checklistCalv = async (req, res) => {
         },
       });
 
-      checklistIds.map((it) => {
-        const relatedChecklist = relatedChecklists.find(
-          (rl) => rl.ID_Checklist == it
+      // Convert related checklists to plain objects
+      const plainRelatedChecklists = relatedChecklists.map(item => item.get({ plain: true }));
+
+      // Add matched related checklist data to arrPush
+      checklistIds.forEach((id) => {
+        const relatedChecklist = plainRelatedChecklists.find(
+          (rl) => rl.ID_Checklist === id
         );
-        const matchedGioht = checklistGiohtMap.get(it);
-
-        arrPush.push({
-          ID_ChecklistC: parseInt(req.params.id),
-          ID_Checklist: it,
-          Gioht: matchedGioht || checklistDoneItems[0].Gioht,
-          Ketqua: relatedChecklist?.Giatridinhdanh || "",
-          status: 1,
-          ent_checklist: relatedChecklist,
-        });
+        const matchedGioht = checklistGiohtMap.get(id);
+        
+        // Determine if `isScan` should be set to 1 for this checklist
+        const matchedDoneItem = plainChecklistDoneItems.find(
+          (item) => item.Description.split(",").map(Number).includes(id) && item.isScan === 1
+        );
+        const isScan = matchedDoneItem ? 1 : null;
+      
+        if (relatedChecklist) {
+          arrPush.push({
+            ID_ChecklistC: parseInt(req.params.id),
+            ID_Checklist: id,
+            Gioht: matchedGioht || plainChecklistDoneItems[0]?.Gioht,
+            Ketqua: relatedChecklist.Giatridinhdanh || "",
+            status: 1,
+            ent_checklist: {
+              ...relatedChecklist,
+              ent_hangmuc: {
+                ...relatedChecklist.ent_hangmuc,
+                isScan: isScan,
+              },
+            },
+          });
+        }
       });
+      
 
+      // Fetch data for Tb_checklistc with plain transformation
       const dataChecklistC = await Tb_checklistc.findByPk(ID_ChecklistC, {
         attributes: [
           "Ngay",
@@ -1991,46 +1978,27 @@ exports.checklistCalv = async (req, res) => {
           "isDelete",
         ],
         include: [
-          {
-            model: Ent_duan,
-            attributes: ["Duan"],
-          },
-          {
-            model: Ent_thietlapca,
-            attributes: ["Ngaythu"],
-          },
-          {
-            model: Ent_khoicv,
-            attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
-          },
-          {
-            model: Ent_calv,
-            attributes: ["Tenca"],
-          },
+          { model: Ent_duan, attributes: ["Duan"] },
+          { model: Ent_thietlapca, attributes: ["Ngaythu"] },
+          { model: Ent_khoicv, attributes: ["KhoiCV", "Ngaybatdau", "Chuky"] },
+          { model: Ent_calv, attributes: ["Tenca"] },
           {
             model: Ent_user,
-            include: {
-              model: Ent_chucvu,
-              attributes: ["Chucvu", "Role"],
-            },
+            include: { model: Ent_chucvu, attributes: ["Chucvu", "Role"] },
             attributes: ["UserName", "Email", "Hoten"],
           },
         ],
-        where: {
-          isDelete: 0,
-        },
-      });
+        where: { isDelete: 0 },
+      }).then(item => item?.get({ plain: true }));
 
-      res.status(200).json({
+      res.status(200).json(removeCircularReferences({
         message: "Danh sách checklist",
         data: arrPush,
         dataChecklistC: dataChecklistC,
-      });
+      }));
     }
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
