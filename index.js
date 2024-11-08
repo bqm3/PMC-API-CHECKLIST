@@ -228,6 +228,7 @@ require("./app/routes/noti.route")(app);
 require("./app/routes/ent_all.route")(app);
 require("./app/routes/ai.route")(app);
 require("./app/routes/sql.route")(app);
+require("./app/routes/get_image.route")(app);
 
 const PORT = process.env.PORT || 6868;
 app.listen(PORT, () => {
