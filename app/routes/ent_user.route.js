@@ -17,6 +17,7 @@ module.exports = (app) => {
     router.post("/change-password",[isAuthenticated], ent_user.changePassword);
     router.put("/delete/:id",[isAuthenticated], ent_user.deleteUser);
     router.put("/update/:id",[isAuthenticated], ent_user.updateUser);
+    router.put("/error",[isAuthenticated], ent_user.fixUserError);
     router.post("/noti",[isAuthenticated], ent_user.notiPush);
 
     router.post("/uploads", [isAuthenticated, upload.single('files')], ent_user.uploadFileUsers)
