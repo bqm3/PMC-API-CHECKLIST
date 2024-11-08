@@ -5,7 +5,7 @@ module.exports = (app) => {
   const tb_checklistc = require("../controllers/tb_checklistc.controller.js");
   const tb_checklistc_chinhanh = require("../controllers/tb_checklistc_chinhanh.controller.js");
   const { isAuthenticated, isAdmin } = require("../middleware/auth_middleware.js");
-  const uploader = require("../config/cloudinary.config");
+  const uploader = require("../config/cloudinary.config.js");
 
   var router = require("express").Router();
 
