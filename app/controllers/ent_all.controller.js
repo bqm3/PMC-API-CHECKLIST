@@ -342,7 +342,7 @@ exports.uploadFiles = async (req, res) => {
             : null;
         const newHSSE = await hsse.create({
           Ten_du_an: tenDuAn,
-          Ngay_ghi_nhan: ngayGhiNhan,
+          Ngay_ghi_nhan: ngayGhiNhan ? `${ngayGhiNhan} 00:00:00` : null,
           Nguoi_tao: nguoiTao,
           Created: created,
           Dien_cu_dan: dienCuDan,
