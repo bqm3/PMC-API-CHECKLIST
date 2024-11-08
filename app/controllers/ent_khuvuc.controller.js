@@ -628,7 +628,7 @@ exports.uploadFiles = async (req, res) => {
         const transformedItem = removeSpacesFromKeys(item);
         const tenKhoiCongViec =
           transformedItem["TÊNKHỐICÔNGVIỆC"] !== undefined
-            ? formatVietnameseText(transformedItem["TÊNKHỐICÔNGVIỆC"], i)
+            ? transformedItem["TÊNKHỐICÔNGVIỆC"]
             : null;
         const tenToanha = formatVietnameseText(transformedItem["TÊNTÒANHÀ"], i);
         const tenKhuvuc = formatVietnameseText(transformedItem["TÊNKHUVỰC"], i);
