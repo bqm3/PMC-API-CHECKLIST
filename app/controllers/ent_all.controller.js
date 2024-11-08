@@ -168,10 +168,12 @@ function formatDate(inputDateTime) {
 }
 
 function convertExcelDate(excelDate) {
+  // Excel's date system starts at 1900-01-01
   const excelEpoch = new Date(Date.UTC(1900, 0, 1)); // Excel epoch is 1900-01-01
   excelEpoch.setDate(excelEpoch.getDate() + excelDate - 2); // Adjust for Excel's leap year bug
-  
-  return excelEpoch;
+
+  // Ensure the date is correctly formatted as YYYY-MM-DD without time
+  return excelEpoch.toISOString().split('T')[0];
 }
 
 exports.uploadFiles = async (req, res) => {
@@ -184,9 +186,9 @@ exports.uploadFiles = async (req, res) => {
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     const data = xlsx.utils.sheet_to_json(worksheet);
-
+    await sequelize.transaction(async (transaction) => {
     for (const item of data) {
-      await sequelize.transaction(async (transaction) => {
+     
         const tranforItem = removeSpacesFromKeys(item);
         const tenDuAn = tranforItem["TÊN DỰ ÁN"];
         console.log('tranforItem["NGÀY GHI NHẬN"]',convertExcelDate(tranforItem["NGÀY GHI NHẬN"]))
@@ -324,8 +326,9 @@ exports.uploadFiles = async (req, res) => {
           },
           { transaction }
         );
-      });
-    }
+      }
+    })
+  
 
     res.send({
       message: "File uploaded and data processed successfully",
