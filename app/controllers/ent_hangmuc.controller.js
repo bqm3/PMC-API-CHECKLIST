@@ -639,7 +639,7 @@ exports.uploadFiles = async (req, res) => {
        
         const transformedItem = removeSpacesFromKeys(item);
         const tenKhuvuc = formatVietnameseText(transformedItem["TÊNKHUVỰC"]);
-        const tenKhoiCongViec = formatVietnameseText(transformedItem["TÊNKHỐICÔNGVIỆC"]);
+        const tenKhoiCongViec = (transformedItem["TÊNKHỐICÔNGVIỆC"]);
         const tenToanha = formatVietnameseText(transformedItem["TÊNTÒANHÀ"]);
         const tenTang = formatVietnameseText(transformedItem["TÊNTẦNG"]);
         const tenHangmuc = formatVietnameseText(transformedItem["TÊNHẠNGMỤC"]);

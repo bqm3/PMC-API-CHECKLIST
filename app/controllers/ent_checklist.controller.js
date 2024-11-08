@@ -1977,7 +1977,7 @@ exports.uploadFiles = async (req, res) => {
           const tenKhuvuc = formatVietnameseText(transformedItem["TÊNKHUVỰC"]);
           const tenDuan = formatVietnameseText(transformedItem["TÊNDỰÁN"]);
           const tenToanha = formatVietnameseText(transformedItem["TÊNTÒANHÀ"]);
-          const tenKhoiCongViec = formatVietnameseText(
+          const tenKhoiCongViec = (
             transformedItem["TÊNKHỐICÔNGVIỆC"]
           );
           const tenTang = formatVietnameseText(transformedItem["TÊNTẦNG"]);
