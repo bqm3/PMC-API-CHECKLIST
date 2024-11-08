@@ -983,3 +983,33 @@ exports.uploadFileUsers = async (req, res) => {
     });
   }
 };
+
+//
+exports.fixUserError = async (req, res) => {
+  try {
+    const userName = req.body.UserName.split(",").map((t) => t.trim());
+
+    const users = await Ent_user.findAll({
+      where: { UserName: { [Op.in]: userName }, isDelete: 0 },
+      attributes: ['UserName'],
+    });
+
+    const existingUserNames = users.map(user => user.UserName);
+    const nonExistentUserNames = userName.filter(name => !existingUserNames.includes(name));
+
+    if (nonExistentUserNames.length > 0) {
+      return res.status(400).send({ message: `Tên tài khoản không tồn tại: ${nonExistentUserNames.join(", ")}` });
+    }
+
+    await Ent_user.update(
+      { isError: 1 },
+      { where: { UserName: { [Op.in]: userName }, isDelete: 0 } }
+    );
+
+    res.status(200).send({ message: "Thành công" });
+  } catch (error) {
+    res.status(500).send({ message: "Có lỗi xảy ra" });
+  }
+};
+
+
