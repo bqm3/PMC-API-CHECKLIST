@@ -207,28 +207,29 @@ cron.schedule("0 4 * * *", async () => {
 });
 
 
-require("./app/routes/ent_calv.route")(app);
-require("./app/routes/ent_user.route")(app);
-require("./app/routes/ent_tang.route")(app);
-require("./app/routes/ent_toanha.route")(app);
-require("./app/routes/ent_khuvuc.route")(app);
-require("./app/routes/ent_thietlapca.route")(app);
-require("./app/routes/ent_duan.route")(app);
-require("./app/routes/ent_hangmuc.route")(app);
-require("./app/routes/ent_khoicv.route")(app);
-require("./app/routes/ent_checklist.route")(app);
-require("./app/routes/ent_chucvu.route")(app);
-require("./app/routes/tb_checklistc.route")(app);
-require("./app/routes/tb_checklistchitiet.route")(app);
-require("./app/routes/tb_checklistchitietdone.route")(app);
-require("./app/routes/ent_duan_khoicv.route")(app);
-require("./app/routes/tb_sucongoai.route")(app);
-require("./app/routes/mail.route")(app);
-require("./app/routes/noti.route")(app);
-require("./app/routes/ent_all.route")(app);
-require("./app/routes/ai.route")(app);
-require("./app/routes/sql.route")(app);
-require("./app/routes/get_image.route")(app);
+require("./app/routes/ent_calv.routes")(app);
+require("./app/routes/ent_user.routes")(app);
+require("./app/routes/ent_tang.routes")(app);
+require("./app/routes/ent_toanha.routes")(app);
+require("./app/routes/ent_khuvuc.routes")(app);
+require("./app/routes/ent_thietlapca.routes")(app);
+require("./app/routes/ent_duan.routes")(app);
+require("./app/routes/ent_hangmuc.routes")(app);
+require("./app/routes/ent_khoicv.routes")(app);
+require("./app/routes/ent_checklist.routes")(app);
+require("./app/routes/ent_chucvu.routes")(app);
+require("./app/routes/tb_checklistc.routes")(app);
+require("./app/routes/tb_checklistchitiet.routes")(app);
+require("./app/routes/tb_checklistchitietdone.routes")(app);
+require("./app/routes/ent_duan_khoicv.routes")(app);
+require("./app/routes/tb_sucongoai.routes")(app);
+require("./app/routes/mail.routes")(app);
+require("./app/routes/noti.routes")(app);
+require("./app/routes/ent_all.routes")(app);
+require("./app/routes/ai.routes")(app);
+require("./app/routes/sql.routes")(app);
+require("./app/routes/get_image.routes")(app);
+require("./app/routes/ent_baocaochiso.routes")(app);
 
 const PORT = process.env.PORT || 6868;
 app.listen(PORT, () => {

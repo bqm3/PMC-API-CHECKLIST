@@ -32,6 +32,17 @@ const isAdmin = asyncHandler((req, res, next) => {
   next();
 });
 
+const isRoleGD = asyncHandler((req, res, next) => {
+  const { ID_Chucvu, ent_chucvu } = req.user.data;
+
+  if (ent_chucvu?.Role !== 1)
+    return res.status(401).json({
+      success: false,
+      message: "Không có quyền truy cập",
+    });
+  next();
+});
+
 const isRoleKST = asyncHandler((req, res, next) => {
   const { ID_Chucvu, ent_chucvu } = req.user.data;
 
@@ -43,4 +54,4 @@ const isRoleKST = asyncHandler((req, res, next) => {
   next();
 });
 
-module.exports = { isAuthenticated, isAdmin, isRoleKST };
+module.exports = { isAuthenticated, isAdmin, isRoleKST, isRoleGD };

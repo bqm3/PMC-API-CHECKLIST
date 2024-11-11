@@ -1348,6 +1348,7 @@ exports.getBaoCaoChecklistMonths = async (req, res, next) => {
           "Khối bảo vệ",
           "Khối làm sạch",
           "Khối dịch vụ",
+          "Khối F&B",
         ].forEach((khoiName, index) => {
           const colIndex = (day - 1) * 4 + 3 + index;
           let totalCompletion = 0;
@@ -4033,6 +4034,7 @@ exports.reportPercentYesterday = async (req, res) => {
       "Khối làm sạch": { totalCompletion: 0, projectCount: 0 },
       "Khối dịch vụ": { totalCompletion: 0, projectCount: 0 },
       "Khối bảo vệ": { totalCompletion: 0, projectCount: 0 },
+      "Khối F&B": { totalCompletion: 0, projectCount: 0 },
     };
 
     // Tính toán tổng completionRatio cho từng khối từ tất cả các dự án
@@ -5422,9 +5424,6 @@ exports.createExcelTongHopCa = async (req, res) => {
     const workbook = new ExcelJS.Workbook();
     if (keyCreate == 1) {
       const worksheet = workbook.addWorksheet("Tổng hợp ca Checklist");
-
-      console.log("keyCreate", keyCreate);
-      console.log("userData", userData);
       let whereClause = {
         isDelete: 0,
         ID_Duan: userData.ID_Duan,
@@ -6922,6 +6921,9 @@ exports.createExcelDuAn = async (req, res) => {
           rowValues.anninh = "X";
         }
         if (khoiName === "Khối dịch vụ") {
+          rowValues.dichvu = "X";
+        }
+        if (khoiName === "Khối F&B") {
           rowValues.dichvu = "X";
         }
       });

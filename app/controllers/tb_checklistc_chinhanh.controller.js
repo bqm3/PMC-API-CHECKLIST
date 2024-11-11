@@ -834,6 +834,9 @@ exports.createExcelDuAn = async (req, res) => {
         if (khoiName === "Khối dịch vụ") {
           rowValues.dichvu = "X";
         }
+        if (khoiName === "Khối F&B") {
+          rowValues.dichvu = "X";
+        }
       });
 
       // Tính tỷ lệ checklist trung bình
@@ -1171,6 +1174,7 @@ exports.reportPercentYesterday = async (req, res) => {
       "Khối làm sạch": { totalCompletion: 0, projectCount: 0 },
       "Khối dịch vụ": { totalCompletion: 0, projectCount: 0 },
       "Khối bảo vệ": { totalCompletion: 0, projectCount: 0 },
+      "Khối F&B": { totalCompletion: 0, projectCount: 0 },
     };
 
     // Tính toán tổng completionRatio cho từng khối từ tất cả các dự án
