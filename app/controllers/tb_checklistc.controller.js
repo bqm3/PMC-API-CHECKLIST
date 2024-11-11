@@ -1820,7 +1820,7 @@ exports.checklistCalv = async (req, res) => {
               {
                 model: Ent_hangmuc,
                 as: "ent_hangmuc",
-                attributes: ["Hangmuc", "ID_Khuvuc", "MaQrCode"],
+                attributes: ["Hangmuc", "ID_Khuvuc", "MaQrCode","Tieuchuankt"],
               },
               {
                 model: Ent_khuvuc,
@@ -1981,7 +1981,7 @@ exports.checklistCalv = async (req, res) => {
           { model: Ent_duan, attributes: ["Duan"] },
           { model: Ent_thietlapca, attributes: ["Ngaythu"] },
           { model: Ent_khoicv, attributes: ["KhoiCV", "Ngaybatdau", "Chuky"] },
-          { model: Ent_calv, attributes: ["Tenca"] },
+          { model: Ent_calv, attributes: ["Tenca","Giobatdau","Gioketthuc"] },
           {
             model: Ent_user,
             include: { model: Ent_chucvu, attributes: ["Chucvu", "Role"] },
