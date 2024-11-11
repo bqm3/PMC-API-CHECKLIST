@@ -23,94 +23,94 @@ const hsse = sequelize.define(
       type: DataTypes.DATE,
     },
     Dien_cu_dan: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.FLOAT,
     },
     Dien_cdt: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     Nuoc_cu_dan: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     Nuoc_cdt: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     Xa_thai: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     Rac_sh: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     Muoi_dp: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     PAC: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     NaHSO3: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     NaOH: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     Mat_rd: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     Polymer_Anion: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     clorin: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     Methanol: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.FLOAT,
     },
     Dau_may: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     Tui_rac240: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     Tui_rac120: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     Tui_rac20: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     Tui_rac10: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     Tui_rac5: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     giayvs_235: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     giaivs_120: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     giay_lau_tay: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     hoa_chat: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     nuoc_rua_tay: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     nhiet_do: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     nuoc_bu: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     clo: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.FLOAT,
     },
     PH: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     trat_thai: {
-      type: DataTypes.DECIMAL(10, 0),
+      type: DataTypes.FLOAT,
     },
     Email: {
       type: DataTypes.CHAR,

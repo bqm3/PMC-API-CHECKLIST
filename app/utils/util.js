@@ -61,6 +61,17 @@ function convertDateFormat(inputDate) {
   return `${year}-${month}-${day}`;
 }
 
+function getPreviousMonth(month, year) {
+  // Tạo một đối tượng Date từ tháng hiện tại và giảm đi 1 tháng
+  const date = new Date(year, month - 1, 1); // month - 1 vì tháng trong Date bắt đầu từ 0
+  date.setMonth(date.getMonth() - 1);
+
+  // Trích xuất tháng và năm mới
+  const previousMonth = date.getMonth() + 1; // Thêm 1 vì getMonth() trả về giá trị từ 0-11
+  const previousYear = date.getFullYear();
+
+  return { month: previousMonth, year: previousYear };
+}
 
   const removeSpacesFromKeys = (obj) => {
     return Object.keys(obj).reduce((acc, key) => {
@@ -109,4 +120,5 @@ module.exports = {
   formatVietnameseText,
   removeSpacesFromKeys,
   removeVietnameseTones,
+  getPreviousMonth
 };

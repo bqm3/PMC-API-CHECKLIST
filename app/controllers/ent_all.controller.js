@@ -328,8 +328,6 @@ exports.uploadFiles = async (req, res) => {
         );
       }
     })
-  
-
     res.send({
       message: "File uploaded and data processed successfully",
       data,
