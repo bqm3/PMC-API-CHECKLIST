@@ -221,12 +221,11 @@ Tb_checklistchitietdone.belongsTo(Tb_checklistc, {
   foreignKey: "ID_ChecklistC",
 });
 
-Ent_baocaochiso.hasMany(Ent_user, {
-  as: "ent_user",  // The actual alias used in the model
+Ent_baocaochiso.belongsTo(Ent_user, {
   foreignKey: "ID_User",
-})
+});
 
-Ent_user.belongsTo(Ent_baocaochiso, {
+Ent_user.hasOne(Ent_baocaochiso, {
   foreignKey: "ID_User",
 });
 

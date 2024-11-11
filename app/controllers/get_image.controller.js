@@ -24,7 +24,45 @@ const postImage = async (imageBuffer, endpointUrl) => {
 
     if (match && match[1]) {
       const extractedData = match[1];
-      return JSON.parse(extractedData);
+      const textData = JSON.parse(extractedData);
+
+      // Định nghĩa các đơn vị cần ưu tiên
+      const specialUnits = ['kWh', 'm³', 'bar']; // Các đơn vị cần ưu tiên
+
+      // Lọc ra các chuỗi có chứa đơn vị đặc biệt và lấy số
+      const specialUnitData = textData.filter(item => {
+        return specialUnits.some(unit => item.includes(unit)); // Kiểm tra xem item có chứa đơn vị đặc biệt không
+      }).map(item => {
+        const numbersOnly = item.match(/\d+(\.\d+)?/); // Lọc số trong item
+        return numbersOnly ? numbersOnly[0] : item;
+      });
+
+      // Nếu có các giá trị từ đơn vị đặc biệt, trả về chúng
+      if (specialUnitData.length > 0) {
+        return specialUnitData;
+      }
+
+      // Nếu không có thông tin từ các đơn vị đặc biệt, lọc và trả về số lớn nhất
+      const filteredData = textData
+        .filter(item => {
+          const numbers = item.match(/\d+(\.\d+)?/g); // Tìm tất cả số trong text
+          return numbers && numbers.some(number => number.length >= 5); // Kiểm tra nếu số có ít nhất 5 chữ số
+        })
+        .map(item => {
+          // Lọc bỏ phần đơn vị, chỉ giữ lại số
+          const numbersOnly = item.match(/\d+(\.\d+)?/); // Lọc các số hợp lệ
+          return numbersOnly ? numbersOnly[0] : item;
+        });
+
+      // Nếu có số hợp lệ từ filteredData, trả về số lớn nhất
+      if (filteredData.length > 0) {
+        const largestNumber = filteredData.reduce((max, current) => {
+          return parseFloat(current) > parseFloat(max) ? current : max;
+        });
+        return [largestNumber]; // Trả về mảng chỉ chứa số lớn nhất
+      } else {
+        return "Không tìm thấy thông tin phù hợp.";
+      }
     } else {
       return "Không lấy được thông tin ảnh.";
     }
@@ -33,6 +71,7 @@ const postImage = async (imageBuffer, endpointUrl) => {
     throw error;  
   }
 };
+
 
 const uploadFile = async (req, res) => {
   try {
