@@ -22,6 +22,7 @@ const Ent_chinhanh = require('./ent_chinhanh.model')
 const Ent_linhvuc = require('./ent_linhvuc.model')
 const Ent_loaihinhbds = require('./ent_loaihinhbds.model')
 const Ent_phanloaida = require('./ent_phanloaida.model')
+const Ent_baocaochiso = require('./ent_baocaochiso.model')
 
 //Duan an + khoi cv  ====================================================================
 Ent_duan.hasMany(Ent_duan_khoicv, {as: "ent_duan_khoicv",foreignKey: 'ID_Duan'})
@@ -220,6 +221,23 @@ Tb_checklistchitietdone.belongsTo(Tb_checklistc, {
   foreignKey: "ID_ChecklistC",
 });
 
+Ent_baocaochiso.belongsTo(Ent_user, {
+  foreignKey: "ID_User",
+});
+
+Ent_user.hasOne(Ent_baocaochiso, {
+  foreignKey: "ID_User",
+});
+
+Ent_baocaochiso.hasMany(Ent_duan, {
+  as: "ent_duan",  // The actual alias used in the model
+  foreignKey: "ID_Duan",
+})
+
+Ent_duan.belongsTo(Ent_baocaochiso, {
+  foreignKey: "ID_Duan",
+});
+
 module.exports = {
   Ent_toanha,
   Ent_duan,
@@ -243,5 +261,6 @@ module.exports = {
   Ent_chinhanh,
   Ent_linhvuc,
   Ent_loaihinhbds,
-  Ent_phanloaida
+  Ent_phanloaida,
+  Ent_baocaochiso
 };

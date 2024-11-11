@@ -1888,6 +1888,7 @@ exports.getChecklistTotal = async (req, res) => {
       { ID_KhoiCV: 2, KhoiCV: "Khối kỹ thuật" },
       { ID_KhoiCV: 3, KhoiCV: "Khối bảo vệ" },
       { ID_KhoiCV: 4, KhoiCV: "Khối dịch vụ" },
+      { ID_KhoiCV: 5, KhoiCV: "Khối F&B" },
     ];
 
     // Create a map for quick lookup of KhoiCV by ID_Khoi

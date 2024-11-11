@@ -3,7 +3,7 @@ const upload = multer();
 
 module.exports = (app) => {
   const ent_khuvuc = require("../controllers/ent_khuvuc.controller.js");
-  const { isAuthenticated, isAdmin } = require("../middleware/auth_middleware");
+  const { isAuthenticated, isAdmin } = require("../middleware/auth_middleware.js");
 
   var router = require("express").Router();
 
