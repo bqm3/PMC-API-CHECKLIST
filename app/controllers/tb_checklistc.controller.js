@@ -1303,6 +1303,7 @@ exports.getBaoCaoChecklistMonths = async (req, res, next) => {
       worksheet.getCell(2, colIndex + 1).value = "AN";
       worksheet.getCell(2, colIndex + 2).value = "LS";
       worksheet.getCell(2, colIndex + 3).value = "DV";
+      worksheet.getCell(2, colIndex + 4).value = "FB";
 
       // Căn giữa và để chữ đậm cho các tiêu đề
       worksheet.getCell(2, colIndex).alignment = {
@@ -1350,7 +1351,7 @@ exports.getBaoCaoChecklistMonths = async (req, res, next) => {
           "Khối dịch vụ",
           "Khối F&B",
         ].forEach((khoiName, index) => {
-          const colIndex = (day - 1) * 4 + 3 + index;
+          const colIndex = (day - 1) * 5 + 3 + index;
           let totalCompletion = 0;
           let countShifts = 0;
 
