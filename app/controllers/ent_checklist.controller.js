@@ -1287,6 +1287,7 @@ exports.filterChecklists = async (req, res) => {
     const ID_ChecklistC = req.params.idc;
     const ID_Calv = req.params.id_calv;
     const ID_Hangmucs = req.body.dataHangmuc;
+    const ID_KhoiCV = req.body.ID_KhoiCV;
 
     const tbChecklist = await Tb_checklistc.findByPk(ID_ChecklistC, {
       attributes: ["ID_Hangmucs", "isDelete"],
@@ -1448,7 +1449,7 @@ exports.filterChecklists = async (req, res) => {
                 },
               ],
               where: {
-                ID_KhoiCV: userData?.ID_KhoiCV,
+                ID_KhoiCV: userData?.ID_KhoiCV ? userData?.ID_KhoiCV : ID_KhoiCV,
               },
             },
           ],
