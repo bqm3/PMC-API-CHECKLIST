@@ -2063,7 +2063,7 @@ exports.uploadFiles = async (req, res) => {
                 ],
                 where: {
                   isDelete: 0,
-                  ID_KhoiCVs: { [Op.like]: validKhoiCVs },
+                  //ID_KhoiCVs: { [Op.like]: validKhoiCVs },
                   MaQrCode: generateQRCodeKV(tenToanha, tenKhuvuc, tenTang, userData.ID_Duan),
                 },
               },

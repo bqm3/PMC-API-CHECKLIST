@@ -677,7 +677,7 @@ exports.uploadFiles = async (req, res) => {
             where: {
               Tenkhuvuc: tenKhuvuc,
               MaQrCode: generateQRCodeKV(tenToanha, tenKhuvuc, tenTang, userData.ID_Duan),
-              ID_KhoiCVs: { [Op.like]: validKhoiCVs },
+             // ID_KhoiCVs: { [Op.like]: validKhoiCVS },
               isDelete: 0,
             },
             transaction,
@@ -698,7 +698,7 @@ exports.uploadFiles = async (req, res) => {
               [Op.and]: [
                 { Hangmuc: tenHangmuc },
                 { MaQrCode: maQrCode },
-                { ID_Khuvuc: khuVuc.ID_Khuvuc },
+                { ID_Khuvuc: khuVuc?.ID_Khuvuc },
                 { isDelete: 0 },
               ],
             },

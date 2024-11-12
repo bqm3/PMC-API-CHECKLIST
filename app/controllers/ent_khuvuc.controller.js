@@ -272,7 +272,7 @@ exports.update = async (req, res) => {
         const existingKhuvuc = await Ent_khuvuc.findOne({
           where: {
             [Op.and]: [
-              { MaQrCode: { [Op.not]: null, [Op.ne]: "" } },
+              //{ MaQrCode: { [Op.not]: null, [Op.ne]: "" } },
               { ID_Khuvuc: { [Op.ne]: req.params.id } }, // Exclude current record
               { MaQrCode: MaQrCode }, // Check if new QR code matches any existing one
               { isDelete: 0 }, // Ensure the record is not marked as deleted
