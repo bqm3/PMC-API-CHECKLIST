@@ -25,6 +25,7 @@ exports.create = (req, res) => {
       Docao,
       Gioht,
       isScan,
+      isCheckListLai,
     } = req.body;
 
     if (!Description || !Gioht) {
@@ -43,10 +44,11 @@ exports.create = (req, res) => {
       Docao: Docao || null,
       ID_ChecklistC: ID_ChecklistC || null,
       isScan: isScan || null,
+      isCheckListLai: isCheckListLai || 0,
       isDelete: 0,
     };
 
-    console.log('data',data)
+    console.log("data", data);
 
     // Save Tb_checklistchitietdone in the database
     Tb_checklistchitietdone.create(data)
@@ -63,13 +65,15 @@ exports.create = (req, res) => {
             const totalTong = checklistC.Tong;
 
             if (currentTongC < totalTong) {
-              // Update TongC only if it is less than Tong
-              await Tb_checklistc.update(
-                { TongC: Sequelize.literal(`TongC + ${checklistLength}`) },
-                {
-                  where: { ID_ChecklistC: ID_ChecklistC },
-                }
-              );
+              if (data.isCheckListLai == 0) {
+                // Update TongC only if it is less than Tong
+                await Tb_checklistc.update(
+                  { TongC: Sequelize.literal(`TongC + ${checklistLength}`) },
+                  {
+                    where: { ID_ChecklistC: ID_ChecklistC },
+                  }
+                );
+              }
             }
           }
 
@@ -117,7 +121,7 @@ exports.getDataFormat = async (req, res) => {
     const arrPush = [];
 
     checklistDoneItems.forEach((item) => {
-      const idChecklists = item.Description.split(",").map(Number); 
+      const idChecklists = item.Description.split(",").map(Number);
       if (idChecklists.length > 0) {
         idChecklists.map((it) => {
           if (Number(item.ID_ChecklistC) === Number(req.params.idc)) {
