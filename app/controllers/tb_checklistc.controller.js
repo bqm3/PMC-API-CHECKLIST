@@ -1392,8 +1392,9 @@ exports.getBaoCaoChecklistMonths = async (req, res, next) => {
 
     // Set headers for file download
     res.set({
-      'Content-Disposition': `attachment; filename=Bao_cao_checklist_du_an_${month}_${year}.xlsx`,
-      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      "Content-Disposition": `attachment; filename=Bao_cao_checklist_du_an_${month}_${year}.xlsx`,
+      "Content-Type":
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
 
     // Send the buffer as the response
@@ -1776,6 +1777,7 @@ exports.checklistCalv = async (req, res) => {
           "Gioht",
           "Ghichu",
           "isScan",
+          "isCheckListLai",
           "isDelete",
         ],
         include: [
@@ -1822,7 +1824,7 @@ exports.checklistCalv = async (req, res) => {
               {
                 model: Ent_hangmuc,
                 as: "ent_hangmuc",
-                attributes: ["Hangmuc", "ID_Khuvuc", "MaQrCode","Tieuchuankt"],
+                attributes: ["Hangmuc", "ID_Khuvuc", "MaQrCode", "Tieuchuankt"],
               },
               {
                 model: Ent_khuvuc,
@@ -1848,22 +1850,32 @@ exports.checklistCalv = async (req, res) => {
       });
 
       // Convert fetched data to plain JavaScript objects
-      const plainChecklistChiTiet = dataChecklistChiTiet.map(item =>
+      const plainChecklistChiTiet = dataChecklistChiTiet.map((item) =>
         item.get({ plain: true })
       );
 
       // Fetch checklist done items
       const checklistDoneItems = await Tb_checklistchitietdone.findAll({
-        attributes: ["Description", "isDelete", "ID_ChecklistC", "Gioht", "isScan"],
+        attributes: [
+          "ID_Checklistchitietdone",
+          "Description",
+          "isDelete",
+          "ID_ChecklistC",
+          "Gioht",
+          "isScan",
+          "isCheckListLai",
+        ],
         where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC },
       });
 
       // Convert done items to plain objects
-      const plainChecklistDoneItems = checklistDoneItems.map(item => item.get({ plain: true }));
+      const plainChecklistDoneItems = checklistDoneItems.map((item) =>
+        item.get({ plain: true })
+      );
 
       const arrPush = [];
       let checklistIds = [];
-      let checklistGiohtMap = new Map();
+      const itemDoneList = [];
 
       // Populate arrPush and collect checklist IDs
       plainChecklistChiTiet.forEach((item) => {
@@ -1872,14 +1884,21 @@ exports.checklistCalv = async (req, res) => {
           item.ent_hangmuc = { ...item.ent_hangmuc, isScan: 1 };
         }
         arrPush.push(item);
-        checklistIds.push(item.ID_Checklist);
+        // checklistIds.push(item.ID_Checklist);
       });
 
       // Process done items for checklist ID mapping
       plainChecklistDoneItems.forEach((item) => {
         const idChecklists = item.Description.split(",").map(Number);
         idChecklists.forEach((id) => {
-          checklistGiohtMap.set(id, item.Gioht);
+          itemDoneList.push({
+            ...item,
+            ID_Checklist: id,
+            Description: id.toString(),
+          });
+        });
+        idChecklists.forEach((id) => {
+          //checklistGiohtMap.set(id, item.Gioht);
           checklistIds.push(id);
         });
       });
@@ -1904,18 +1923,29 @@ exports.checklistCalv = async (req, res) => {
           {
             model: Ent_hangmuc,
             as: "ent_hangmuc",
-            attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "FileTieuChuan"],
+            attributes: [
+              "Hangmuc",
+              "Tieuchuankt",
+              "ID_Khuvuc",
+              "MaQrCode",
+              "FileTieuChuan",
+            ],
           },
           {
             model: Ent_khuvuc,
             as: "ent_khuvuc",
-            attributes: ["Tenkhuvuc", "MaQrCode", "Makhuvuc", "Sothutu", "ID_Khuvuc"],
+            attributes: [
+              "Tenkhuvuc",
+              "MaQrCode",
+              "Makhuvuc",
+              "Sothutu",
+              "ID_Khuvuc",
+            ],
             include: [
               {
                 model: Ent_toanha,
                 attributes: ["Toanha", "ID_Toanha"],
               },
-             
             ],
           },
           {
@@ -1927,43 +1957,29 @@ exports.checklistCalv = async (req, res) => {
           ID_Checklist: {
             [Op.in]: checklistIds,
           },
+          isDelete: 0,
         },
       });
 
-      // Convert related checklists to plain objects
-      const plainRelatedChecklists = relatedChecklists.map(item => item.get({ plain: true }));
+      const plainRelatedChecklists = relatedChecklists.map((item) =>
+        item.get({ plain: true })
+      );
 
-      // Add matched related checklist data to arrPush
-      checklistIds.forEach((id) => {
+      itemDoneList.forEach((item) => {
         const relatedChecklist = plainRelatedChecklists.find(
-          (rl) => rl.ID_Checklist === id
+          (rl) => rl.ID_Checklist === item.ID_Checklist
         );
-        const matchedGioht = checklistGiohtMap.get(id);
-        
-        // Determine if `isScan` should be set to 1 for this checklist
-        const matchedDoneItem = plainChecklistDoneItems.find(
-          (item) => item.Description.split(",").map(Number).includes(id) && item.isScan === 1
-        );
-        const isScan = matchedDoneItem ? 1 : null;
-      
+
         if (relatedChecklist) {
-          arrPush.push({
-            ID_ChecklistC: parseInt(req.params.id),
-            ID_Checklist: id,
-            Gioht: matchedGioht || plainChecklistDoneItems[0]?.Gioht,
-            Ketqua: relatedChecklist.Giatridinhdanh || "",
-            status: 1,
-            ent_checklist: {
-              ...relatedChecklist,
-              ent_hangmuc: {
-                ...relatedChecklist.ent_hangmuc,
-                isScan: isScan,
-              },
-            },
-          });
+          item.ent_checklist = {
+            ...relatedChecklist,
+            //ent_hangmuc: relatedChecklist.ent_hangmuc
+          };
+          (item.Ketqua = relatedChecklist.Giatridinhdanh || ""),
+            (item.status = 1);
+          arrPush.push(item);
         }
       });
-      
 
       // Fetch data for Tb_checklistc with plain transformation
       const dataChecklistC = await Tb_checklistc.findByPk(ID_ChecklistC, {
@@ -1983,7 +1999,7 @@ exports.checklistCalv = async (req, res) => {
           { model: Ent_duan, attributes: ["Duan"] },
           { model: Ent_thietlapca, attributes: ["Ngaythu"] },
           { model: Ent_khoicv, attributes: ["KhoiCV", "Ngaybatdau", "Chuky"] },
-          { model: Ent_calv, attributes: ["Tenca","Giobatdau","Gioketthuc"] },
+          { model: Ent_calv, attributes: ["Tenca", "Giobatdau", "Gioketthuc"] },
           {
             model: Ent_user,
             include: { model: Ent_chucvu, attributes: ["Chucvu", "Role"] },
@@ -1991,16 +2007,18 @@ exports.checklistCalv = async (req, res) => {
           },
         ],
         where: { isDelete: 0 },
-      }).then(item => item?.get({ plain: true }));
+      });
 
-      res.status(200).json(removeCircularReferences({
+      res.status(200).json({
         message: "Danh sách checklist",
         data: arrPush,
         dataChecklistC: dataChecklistC,
-      }));
+      });
     }
   } catch (err) {
-    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res
+      .status(500)
+      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -2270,7 +2288,7 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
         },
       ],
       where: {
-         Ngay: { [Op.between]: [startDate, endDate] },
+        Ngay: { [Op.between]: [startDate, endDate] },
         ID_Duan: {
           [Op.ne]: 1,
         },
@@ -2372,98 +2390,120 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
             )
           ),
         },
-        isDelete: 0
+        isDelete: 0,
       },
     });
 
-    const MIN_TRAVERSAL_TIME_BETWEEN_FLOORS = 1 * 20; 
+    const MIN_TRAVERSAL_TIME_BETWEEN_FLOORS = 1 * 20;
     // Merge related checklist details with duplicate coordinates
-    const resultWithDetails = results.map((result) => {
-      const detailedCoordinates = result.duplicateCoordinates.map((entry) => {
-        // Sort items by Gioht
-        const sortedItems = entry.checklistItems.sort((a, b) => moment(a.Gioht, "HH:mm:ss") - moment(b.Gioht, "HH:mm:ss"));
-    
-        const detailedItems = sortedItems.map((item, index) => {
-          const relatedItem = relatedChecklists.find((checklist) => item.checklistIds.includes(checklist.ID_Checklist));
-          const floor = relatedItem?.ent_tang?.Tentang || null;
-    
-          let isValid = true;
-    
-          if (index > 0) {
-            const previousItem = sortedItems[index - 1];
-            const previousFloor = relatedChecklists.find((checklist) => previousItem.checklistIds.includes(checklist.ID_Checklist))?.ent_tang?.Tentang || null;
-    
-            // Calculate time difference in seconds
-            const timeDifference = moment(item.Gioht, "HH:mm:ss").diff(moment(previousItem.Gioht, "HH:mm:ss"), "seconds");
-    
-            // If floors differ and time is too short, flag as invalid
-            if (previousFloor !== floor && timeDifference < MIN_TRAVERSAL_TIME_BETWEEN_FLOORS) {
-              isValid = false;
+    const resultWithDetails = results
+      .map((result) => {
+        const detailedCoordinates = result.duplicateCoordinates
+          .map((entry) => {
+            // Sort items by Gioht
+            const sortedItems = entry.checklistItems.sort(
+              (a, b) =>
+                moment(a.Gioht, "HH:mm:ss") - moment(b.Gioht, "HH:mm:ss")
+            );
+
+            const detailedItems = sortedItems.map((item, index) => {
+              const relatedItem = relatedChecklists.find((checklist) =>
+                item.checklistIds.includes(checklist.ID_Checklist)
+              );
+              const floor = relatedItem?.ent_tang?.Tentang || null;
+
+              let isValid = true;
+
+              if (index > 0) {
+                const previousItem = sortedItems[index - 1];
+                const previousFloor =
+                  relatedChecklists.find((checklist) =>
+                    previousItem.checklistIds.includes(checklist.ID_Checklist)
+                  )?.ent_tang?.Tentang || null;
+
+                // Calculate time difference in seconds
+                const timeDifference = moment(item.Gioht, "HH:mm:ss").diff(
+                  moment(previousItem.Gioht, "HH:mm:ss"),
+                  "seconds"
+                );
+
+                // If floors differ and time is too short, flag as invalid
+                if (
+                  previousFloor !== floor &&
+                  timeDifference < MIN_TRAVERSAL_TIME_BETWEEN_FLOORS
+                ) {
+                  isValid = false;
+                }
+              }
+
+              return {
+                Gioht: item.Gioht,
+                isScan: item.isScan,
+                relatedHangmuc: relatedItem
+                  ? `${relatedItem.ent_hangmuc.Hangmuc} - ${relatedItem.ent_khuvuc.Tenkhuvuc} - ${floor} - ${relatedItem.ent_khuvuc.ent_toanha.Toanha}`
+                  : null,
+                isValid, // Add validity flag
+              };
+            });
+
+            // Check if there's any "isValid: false" in this coordinate set
+            const hasInvalid = detailedItems.some(
+              (item) => item.isValid === false
+            );
+
+            // Include this coordinate if it contains any invalid entries
+            return hasInvalid
+              ? { coordinates: entry.coordinates, detailedItems }
+              : null;
+          })
+          .filter((entry) => entry !== null); // Remove null entries for coordinates without any invalid items
+
+        // Only return results with coordinates that have invalid items
+        return detailedCoordinates.length > 0
+          ? {
+              id: result.id,
+              project: result.project,
+              ca: result.ca,
+              nguoi: result.nguoi,
+              tk: result.tk,
+              cv: result.cv,
+              giobd: result.giobd,
+              giokt: result.giokt,
+              ngay: result.ngay,
+              tongC: result.tongC,
+              tong: result.tong,
+              detailedCoordinates,
             }
-          }
-    
-          return {
-            Gioht: item.Gioht,
-            isScan: item.isScan,
-            relatedHangmuc: relatedItem
-              ? `${relatedItem.ent_hangmuc.Hangmuc} - ${relatedItem.ent_khuvuc.Tenkhuvuc} - ${floor} - ${relatedItem.ent_khuvuc.ent_toanha.Toanha}`
-              : null,
-            isValid, // Add validity flag
-          };
-        });
-    
-        // Check if there's any "isValid: false" in this coordinate set
-        const hasInvalid = detailedItems.some((item) => item.isValid === false);
-    
-        // Include this coordinate if it contains any invalid entries
-        return hasInvalid ? { coordinates: entry.coordinates, detailedItems } : null;
-      }).filter((entry) => entry !== null); // Remove null entries for coordinates without any invalid items
-    
-      // Only return results with coordinates that have invalid items
-      return detailedCoordinates.length > 0
-        ? {
-            id: result.id,
-            project: result.project,
-            ca: result.ca,
-            nguoi: result.nguoi,
-            tk: result.tk,
-            cv: result.cv,
-            giobd: result.giobd,
-            giokt: result.giokt,
-            ngay: result.ngay,
-            tongC: result.tongC,
-            tong: result.tong,
-            detailedCoordinates,
-          }
-        : null;
-    }).filter((result) => result !== null); // Remove results without any invalid entries
+          : null;
+      })
+      .filter((result) => result !== null); // Remove results without any invalid entries
 
     const workbook = new ExcelJS.Workbook();
-    
+
     // Loop through each project with errors and create a sheet
     resultWithDetails.forEach((result) => {
       // Create a new sheet for each project with errors
       let sheet = workbook.getWorksheet(result.project);
-  if (!sheet) {
-    // Only create a new sheet if it doesn't already exist
-    sheet = workbook.addWorksheet(result.project || "Dự án khác");
+      if (!sheet) {
+        // Only create a new sheet if it doesn't already exist
+        sheet = workbook.addWorksheet(result.project || "Dự án khác");
 
-      // Define columns for the sheet
-      sheet.columns = [
-        { header: "Ca", key: "ca", width: 15 },
-        { header: "Họ tên", key: "nguoi", width: 20 },
-        { header: "Tài khoản", key: "kt", width: 20 },
-        { header: "Giờ Bắt Đầu", key: "giobd", width: 15 },
-        { header: "Giờ Kết Thúc", key: "giokt", width: 15 },
-        { header: "Ngày", key: "ngay", width: 15 },
-        { header: "Khối", key: "cv", width: 15 },
-        { header: "Tọa Độ", key: "coordinates", width: 30 },
-        { header: "Giờ HT", key: "gioht", width: 15 },
-        { header: "Hạng Mục", key: "relatedHangmuc", width: 40 },
-        { header: "Hợp Lệ", key: "isValid", width: 10 },
-        { header: "Quét Qr", key: "isScan", width: 10 },
-      ];
-    }
+        // Define columns for the sheet
+        sheet.columns = [
+          { header: "Ca", key: "ca", width: 15 },
+          { header: "Họ tên", key: "nguoi", width: 20 },
+          { header: "Tài khoản", key: "kt", width: 20 },
+          { header: "Giờ Bắt Đầu", key: "giobd", width: 15 },
+          { header: "Giờ Kết Thúc", key: "giokt", width: 15 },
+          { header: "Ngày", key: "ngay", width: 15 },
+          { header: "Khối", key: "cv", width: 15 },
+          { header: "Tọa Độ", key: "coordinates", width: 30 },
+          { header: "Giờ HT", key: "gioht", width: 15 },
+          { header: "Hạng Mục", key: "relatedHangmuc", width: 40 },
+          { header: "Hợp Lệ", key: "isValid", width: 10 },
+          { header: "Quét Qr", key: "isScan", width: 10 },
+        ];
+      }
 
       // Populate the sheet with the details
       result.detailedCoordinates.forEach((coordinateEntry) => {
@@ -2480,7 +2520,7 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
             gioht: item.Gioht,
             relatedHangmuc: item.relatedHangmuc,
             isValid: item.isValid ? "" : "Cảnh báo",
-            isScan: item.isScan == 1 ? "Không quét" : ""
+            isScan: item.isScan == 1 ? "Không quét" : "",
           });
         });
       });
@@ -2489,8 +2529,9 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
 
     // Set headers for file download
     res.set({
-      'Content-Disposition': `attachment; filename=Bao_cao_checklist_vi_pham_${month}_${year}.xlsx`,
-      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      "Content-Disposition": `attachment; filename=Bao_cao_checklist_vi_pham_${month}_${year}.xlsx`,
+      "Content-Type":
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
 
     // Send the buffer as the response
@@ -6326,7 +6367,6 @@ exports.createPreviewReports = async (req, res) => {
                           attributes: ["Duan"],
                         },
                       ],
-                     
                     },
                   ],
                 },

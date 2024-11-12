@@ -45,6 +45,10 @@ const Tb_checklistchitiet = sequelize.define(
     Docao: {
       type: DataTypes.CHAR,
     },
+    isCheckListLai: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+     },
     isDelete: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
@@ -54,6 +58,14 @@ const Tb_checklistchitiet = sequelize.define(
     freezeTableName: true,
     timestamps: true,
     tableName: "tb_checklistchitiet",
+  },
+  {
+    indexes: [
+      {
+        unique: false,  
+        fields: ['isDelete',"ID_Checklistchitiet","ID_ChecklistC","ID_Checklist"], 
+      },
+    ],
   }
 );
 
