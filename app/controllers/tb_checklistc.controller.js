@@ -1854,6 +1854,8 @@ exports.checklistCalv = async (req, res) => {
         item.get({ plain: true })
       );
 
+      console.log('plainChecklistChiTiet',plainChecklistChiTiet)
+
       // Fetch checklist done items
       const checklistDoneItems = await Tb_checklistchitietdone.findAll({
         attributes: [
@@ -1881,7 +1883,7 @@ exports.checklistCalv = async (req, res) => {
       plainChecklistChiTiet.forEach((item) => {
         item.status = 0;
         if (item.isScan === 1) {
-          item.ent_hangmuc = { ...item.ent_hangmuc, isScan: 1 };
+          item.ent_checklist.ent_hangmuc = { ...item.ent_checklist.ent_hangmuc, isScan: 1 };
         }
         arrPush.push(item);
         // checklistIds.push(item.ID_Checklist);
@@ -1903,6 +1905,11 @@ exports.checklistCalv = async (req, res) => {
         });
       });
 
+
+
+      console.log("=================")
+      console.log('checklistIds',checklistIds)
+      console.log('plainChecklistDoneItems', plainChecklistDoneItems)
       // Fetch related checklist data
       const relatedChecklists = await Ent_checklist.findAll({
         attributes: [
@@ -1957,7 +1964,6 @@ exports.checklistCalv = async (req, res) => {
           ID_Checklist: {
             [Op.in]: checklistIds,
           },
-          isDelete: 0,
         },
       });
 
