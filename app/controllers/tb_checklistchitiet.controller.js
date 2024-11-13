@@ -19,6 +19,7 @@ const ExcelJS = require("exceljs");
 const cron = require("node-cron");
 var path = require("path");
 const { notiPush } = require("./ent_user.controller");
+const { removeVietnameseTones } = require("../utils/util");
 
 exports.createCheckListChiTiet = async (req, res, next) => {
   try {
@@ -45,6 +46,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     records.Gioht = ensureArray(records.Gioht);
     records.Checklist = ensureArray(records.Checklist);
     records.isScan = ensureArray(records.isScan);
+    records.isCheckListLai = ensureArray(records?.isCheckListLai);
 
     if (records.ID_ChecklistC.length !== records.ID_Checklist.length) {
       return res.status(400).json({
@@ -72,6 +74,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       const Ghichu = records.Ghichu[index];
       const Checklist = records.Checklist[index];
       const isScan = (records.isScan[index] == "null" ? null : records.isScan[index]) || null;
+      const isCheckListLai = records.isCheckListLai[index] ? records.isCheckListLai[index] : 0;
       const d = new Date();
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, "0"); // Months are zero-based
@@ -106,6 +109,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
         isScan,
         Anh,
         Ngay: formattedDate,
+        isCheckListLai,
       };
     });
 
@@ -127,10 +131,11 @@ exports.createCheckListChiTiet = async (req, res, next) => {
             const totalTong = checklistC.Tong;
 
             if (currentTongC < totalTong) {
+              const hasIsCheckListLaiZero = newRecords.filter(item => item.isCheckListLai === 0)
               await Tb_checklistc.update(
                 {
                   TongC: Sequelize.literal(
-                    `TongC + ${records.ID_ChecklistC.length}`
+                    `TongC + ${hasIsCheckListLaiZero?.length}`
                   ),
                 },
                 {
