@@ -186,10 +186,10 @@ exports.updateStatus = async (req, res) => {
         Tinhtrangxuly: Tinhtrangxuly,
         Ngayxuly: ngayXuLy,
         Anhkiemtra: idsString,
-        Ghichu: Ghichu !== "null" && Ghichu !== "undefined" ? Ghichu : null,
+        Ghichu: `${Ghichu}` !== "null" && `${Ghichu}` !== "undefined" ? Ghichu : null,
       };
 
-      if (ID_Hangmuc !== "null" && ID_Hangmuc !== "undefined") {
+      if (`${ID_Hangmuc}` !== "null" && `${ID_Hangmuc}` !== "undefined") {
         updateFields.ID_Hangmuc = ID_Hangmuc;
       }
 
