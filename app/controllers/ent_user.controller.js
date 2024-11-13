@@ -193,7 +193,7 @@ exports.register = async (req, res, next) => {
       Sodienthoai: Sodienthoai || null,
       Gioitinh: Gioitinh || null,
       Ngaysinh: Ngaysinh || null,
-      ID_KhoiCV: (ID_Chucvu == 1 || ID_Chucvu == 2) ? null : ID_KhoiCV,
+      ID_KhoiCV: ID_Chucvu == 1 || ID_Chucvu == 2 ? null : ID_KhoiCV,
       isDelete: 0,
     };
 
@@ -309,7 +309,7 @@ exports.updateUser = async (req, res) => {
     let updateData = {
       ID_Duan,
       ID_Chucvu,
-      ID_KhoiCV: (ID_Chucvu == 1 || ID_Chucvu == 2) ? null : ID_KhoiCV,
+      ID_KhoiCV: ID_Chucvu == 1 || ID_Chucvu == 2 ? null : ID_KhoiCV,
       UserName,
       Hoten,
       Sodienthoai,
@@ -533,7 +533,7 @@ exports.getDetail = async (req, res) => {
 exports.checkAuth = async (req, res, next) => {
   try {
     const userData = req.user.data;
-    
+
     await Ent_user.findByPk(userData.ID_User, {
       attributes: [
         "ID_User",
@@ -882,13 +882,16 @@ exports.uploadFileUsers = async (req, res) => {
           where: {
             isDelete: 0,
             Chucvu: sequelize.where(
-              sequelize.fn("UPPER", sequelize.fn("TRIM", sequelize.col("Chucvu"))),
+              sequelize.fn(
+                "UPPER",
+                sequelize.fn("TRIM", sequelize.col("Chucvu"))
+              ),
               "LIKE",
               chucVu.trim().toUpperCase()
-            )
+            ),
           },
         });
-        
+
         if (!dataChucvu) {
           return res.status(500).json({
             message: "Không tìm chức vụ phù hợp",
@@ -896,13 +899,16 @@ exports.uploadFileUsers = async (req, res) => {
         }
 
         let dataKhoiCV;
-        if(tenKhoiCongViec !== undefined){
-           dataKhoiCV = await Ent_khoicv.findOne({
+        if (tenKhoiCongViec !== undefined) {
+          dataKhoiCV = await Ent_khoicv.findOne({
             attributes: ["ID_KhoiCV", "KhoiCV", "isDelete"],
-  
+
             where: {
               KhoiCV: sequelize.where(
-                sequelize.fn("UPPER", sequelize.fn("TRIM",  sequelize.col("KhoiCV"))),
+                sequelize.fn(
+                  "UPPER",
+                  sequelize.fn("TRIM", sequelize.col("KhoiCV"))
+                ),
                 "LIKE",
                 tenKhoiCongViec.trim().toUpperCase()
               ),
@@ -929,7 +935,10 @@ exports.uploadFileUsers = async (req, res) => {
           ],
           where: {
             UserName: sequelize.where(
-              sequelize.fn("UPPER", sequelize.fn("TRIM",  sequelize.col("UserName"))),
+              sequelize.fn(
+                "UPPER",
+                sequelize.fn("TRIM", sequelize.col("UserName"))
+              ),
               "LIKE",
               taiKhoan.trim().toUpperCase()
             ),
@@ -991,14 +1000,20 @@ exports.fixUserError = async (req, res) => {
 
     const users = await Ent_user.findAll({
       where: { UserName: { [Op.in]: userName }, isDelete: 0 },
-      attributes: ['UserName'],
+      attributes: ["UserName"],
     });
 
-    const existingUserNames = users.map(user => user.UserName);
-    const nonExistentUserNames = userName.filter(name => !existingUserNames.includes(name));
+    const existingUserNames = users.map((user) => user.UserName);
+    const nonExistentUserNames = userName.filter(
+      (name) => !existingUserNames.includes(name)
+    );
 
     if (nonExistentUserNames.length > 0) {
-      return res.status(400).send({ message: `Tên tài khoản không tồn tại: ${nonExistentUserNames.join(", ")}` });
+      return res.status(400).send({
+        message: `Tên tài khoản không tồn tại: ${nonExistentUserNames.join(
+          ", "
+        )}`,
+      });
     }
 
     await Ent_user.update(
@@ -1011,5 +1026,84 @@ exports.fixUserError = async (req, res) => {
     res.status(500).send({ message: "Có lỗi xảy ra" });
   }
 };
+
+exports.resetPassword = async (req, res) => {
+  // Validate input
+  const { UserName, Password } = req.body;
+  if (!UserName?.trim() || !Password?.trim()) {
+    return res.status(400).json({ 
+      message: "Phải nhập đầy đủ dữ liệu!" 
+    });
+  }
+
+  const transaction = await sequelize.transaction();
+  
+  try {
+    // Prepare data
+    const userNames = UserName.split(",")
+      .map(name => name.trim())
+      .filter(name => name); // Remove empty strings
+    
+    const hashedPassword = hashSync(Password, 10);
+    const vietnamTime = new Date(Date.now() + 7 * 60 * 60000)
+      .toISOString()
+      .slice(0, 19)
+      .replace("T", " ");
+
+    // Find all users in one query
+    const users = await Ent_user.findAll({
+      where: {
+        UserName: {
+          [Op.in]: userNames
+        }
+      },
+      attributes: ['ID_User', 'UserName'],
+      transaction
+    });
+
+    // Check for missing users
+    const foundUserNames = users.map(user => user.UserName);
+    const missingUsers = userNames.filter(name => 
+      !foundUserNames.includes(name)
+    );
+
+    if (missingUsers.length > 0) {
+      throw new Error(
+        `Người dùng ${missingUsers.join(", ")} không tồn tại`
+      );
+    }
+
+    // Update all passwords in one query
+    await Ent_user.update(
+      {
+        Password: hashedPassword,
+        updateTime: vietnamTime
+      },
+      {
+        where: {
+          ID_User: {
+            [Op.in]: users.map(user => user.ID_User)
+          }
+        },
+        transaction
+      }
+    );
+
+    await transaction.commit();
+    
+    return res.status(200).json({ 
+      message: "Cập nhật mật khẩu thành công !" 
+    });
+
+  } catch (error) {
+    await transaction.rollback();
+    const isValidationError = error.message.includes("không tồn tại");
+    return res.status(isValidationError ? 400 : 500).json({
+      message: error.message || "Lỗi! Vui lòng thử lại sau."
+    });
+  }
+};
+
+//
 
 
