@@ -2015,27 +2015,26 @@ exports.uploadFiles = async (req, res) => {
           }
 
           const khoiCongViecList = tenKhoiCongViec
-            .split(",")
-            .map((khoi) => khoi.trim());
-
-          const khoiCVs = await Promise.all(
-            khoiCongViecList.map(async (khoiCongViec) => {
-              const khoiCV = await Ent_khoicv.findOne({
-                attributes: ["ID_KhoiCV", "KhoiCV"],
-                where: {
-                  [Op.and]: [
-                    sequelize.where(sequelize.col("KhoiCV"), {
-                      [Op.like]: `%${khoiCongViec}%`,
-                    }),
-                    { isDelete: 0 },
-                  ],
-                },
-                transaction,
-              });
-              return khoiCV ? khoiCV.ID_KhoiCV : null;
-            })
-          );
-          const validKhoiCVs = khoiCVs.filter((id) => id !== null);
+          ?.split(",")
+          ?.map((khoi) => khoi.trim());
+        const khoiCVs = await Promise.all(
+          khoiCongViecList.map(async (khoiCongViec) => {
+            const khoiCV = await Ent_khoicv.findOne({
+              attributes: ["ID_KhoiCV", "KhoiCV", "isDelete"],
+              where: {
+                [Op.and]: [
+                  sequelize.where(sequelize.col("KhoiCV"), {
+                    [Op.like]: `%${removeVietnameseTones(khoiCongViec)}%`,
+                  }),
+                  { isDelete: 0 },
+                ],
+              },
+              transaction,
+            });
+            return khoiCV ? khoiCV.ID_KhoiCV : null;
+          })
+        );
+        const validKhoiCVs = khoiCVs.filter((id) => id !== null);
 
           const hangmuc = await Ent_hangmuc.findOne({
             attributes: [
