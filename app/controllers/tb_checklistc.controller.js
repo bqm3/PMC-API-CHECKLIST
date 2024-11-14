@@ -2892,6 +2892,7 @@ exports.checklistYearByKhoiCV = async (req, res) => {
     let whereClause = {
       isDelete: 0,
       ID_Duan: userData.ID_Duan, // Filter by project
+      Tinhtrang: 1
     };
 
     if (khoi !== "all") {
@@ -2915,6 +2916,7 @@ exports.checklistYearByKhoiCV = async (req, res) => {
         "ID_Calv",
         "isDelete",
         "ID_Duan",
+        "Tinhtrang"
       ],
       where: whereClause,
       include: [
@@ -2972,14 +2974,14 @@ exports.checklistYearByKhoiCV = async (req, res) => {
 
       if (!result[months[checklistMonth]][khoiName][shiftName][day]) {
         result[months[checklistMonth]][khoiName][shiftName][day] = {
-          totalTongC: 0,
+          totalTongC: checklist.TongC,
           Tong: checklist.Tong,
         };
       }
 
       // Sum up TongC for each day
-      result[months[checklistMonth]][khoiName][shiftName][day].totalTongC +=
-        checklist.TongC;
+      // result[months[checklistMonth]][khoiName][shiftName][day].totalTongC +=
+      //   checklist.TongC;
     });
 
     // Convert the result into the required format
@@ -3219,6 +3221,7 @@ exports.tiLeHoanThanh = async (req, res) => {
       ID_Duan: {
         [Op.ne]: 1,
       },
+      Tinhtrang: 1
     };
 
     const getLastDayOfMonth = (year, month) => {
@@ -3267,6 +3270,7 @@ exports.tiLeHoanThanh = async (req, res) => {
         "TongC",
         "Tong",
         "isDelete",
+        "Tinhtrang"
       ],
       where: whereClause,
       include: [
@@ -3433,6 +3437,7 @@ exports.tiLeSuco = async (req, res) => {
       ID_Duan: {
         [Op.ne]: 1,
       },
+      Tinhtrang: 1
     };
 
     // if (khoi !== "all") {
@@ -3594,6 +3599,7 @@ exports.suCoChiTiet = async (req, res) => {
     ID_Duan: {
       [Op.ne]: 1,
     },
+    Tinhtrang: 1
   };
 
   whereClause.Ngay = {
@@ -3746,6 +3752,7 @@ exports.soSanhSuCo = async (req, res) => {
         ID_Duan: {
           [Op.ne]: 1,
         },
+        Tinhtrang: 1
       },
       raw: true,
     });
@@ -3764,6 +3771,7 @@ exports.soSanhSuCo = async (req, res) => {
           [Op.gte]: startOfTwoWeeksAgo,
           [Op.lte]: endOfTwoWeeksAgo,
         },
+        Tinhtrang: 1
       },
       raw: true,
     });
@@ -3847,6 +3855,7 @@ exports.reportPercentWeek = async (req, res) => {
       ID_Duan: {
         [Op.ne]: 1,
       },
+      Tinhtrang: 1
     };
 
     let prevWhereClause = {
@@ -3854,6 +3863,7 @@ exports.reportPercentWeek = async (req, res) => {
       ID_Duan: {
         [Op.ne]: 1,
       },
+      Tinhtrang: 1
     };
 
     // if (khoi !== "all") {
@@ -3905,6 +3915,7 @@ exports.reportPercentWeek = async (req, res) => {
         "Tong",
         "ID_KhoiCV",
         "isDelete",
+        "Tinhtrang"
       ],
       where: lastWhereClause,
       include: [
@@ -3925,6 +3936,7 @@ exports.reportPercentWeek = async (req, res) => {
         "Tong",
         "ID_KhoiCV",
         "isDelete",
+        "Tinhtrang"
       ],
       where: prevWhereClause,
       include: [
@@ -3974,6 +3986,7 @@ exports.reportPercentYesterday = async (req, res) => {
         "Tong",
         "ID_KhoiCV",
         "isDelete",
+        "Tinhtrang"
       ],
       where: {
         Ngay: yesterday,
@@ -3981,6 +3994,7 @@ exports.reportPercentYesterday = async (req, res) => {
         ID_Duan: {
           [Op.ne]: 1,
         },
+        Tinhtrang: 1
       },
       include: [
         {
@@ -4140,6 +4154,7 @@ exports.checklistPercent = async (req, res) => {
     let whereClause = {
       isDelete: 0,
       ID_Duan: userData.ID_Duan,
+      Tinhtrang: 1
     };
 
     const results = await Tb_checklistc.findAll({
