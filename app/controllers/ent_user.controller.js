@@ -1102,3 +1102,80 @@ exports.clearDuanByRole = async (req, res) => {
     res.status(500).send({ message: "Có lỗi xảy ra" });
   }
 };
+
+exports.resetPassword = async (req, res) => {
+  // Validate input
+  const { UserName, Password } = req.body;
+  if (!UserName?.trim() || !Password?.trim()) {
+    return res.status(400).json({ 
+      message: "Phải nhập đầy đủ dữ liệu!" 
+    });
+  }
+
+  const transaction = await sequelize.transaction();
+  
+  try {
+    // Prepare data
+    const userNames = UserName.split(",")
+      .map(name => name.trim())
+      .filter(name => name); // Remove empty strings
+    
+    const hashedPassword = hashSync(Password, 10);
+    const vietnamTime = new Date(Date.now() + 7 * 60 * 60000)
+      .toISOString()
+      .slice(0, 19)
+      .replace("T", " ");
+
+    // Find all users in one query
+    const users = await Ent_user.findAll({
+      where: {
+        UserName: {
+          [Op.in]: userNames
+        }
+      },
+      attributes: ['ID_User', 'UserName'],
+      transaction
+    });
+
+    // Check for missing users
+    const foundUserNames = users.map(user => user.UserName);
+    const missingUsers = userNames.filter(name => 
+      !foundUserNames.includes(name)
+    );
+
+    if (missingUsers.length > 0) {
+      throw new Error(
+        `Người dùng ${missingUsers.join(", ")} không tồn tại`
+      );
+    }
+
+    // Update all passwords in one query
+    await Ent_user.update(
+      {
+        Password: hashedPassword,
+        updateTime: vietnamTime
+      },
+      {
+        where: {
+          ID_User: {
+            [Op.in]: users.map(user => user.ID_User)
+          }
+        },
+        transaction
+      }
+    );
+
+    await transaction.commit();
+    
+    return res.status(200).json({ 
+      message: "Cập nhật mật khẩu thành công !" 
+    });
+
+  } catch (error) {
+    await transaction.rollback();
+    const isValidationError = error.message.includes("không tồn tại");
+    return res.status(isValidationError ? 400 : 500).json({
+      message: error.message || "Lỗi! Vui lòng thử lại sau."
+    });
+  }
+};

@@ -12,7 +12,12 @@ const fs = require("fs");
 const path = require("path");
 const archiver = require("archiver");
 const axios = require("axios");
-const { checkDataExcel, removeSpacesFromKeys, formatVietnameseText, removeVietnameseTones } = require("../utils/util");
+const {
+  checkDataExcel,
+  removeSpacesFromKeys,
+  formatVietnameseText,
+  removeVietnameseTones,
+} = require("../utils/util");
 
 // Create and Save a new Ent_tang
 exports.create = async (req, res, next) => {
@@ -636,34 +641,30 @@ exports.uploadFiles = async (req, res) => {
       let i = 2;
       for (const item of data) {
         //check tầng data import excel
-        checkDataExcel(item,i,2);
-       
+        checkDataExcel(item, i, 2);
+
         const transformedItem = removeSpacesFromKeys(item);
         const tenKhuvuc = formatVietnameseText(transformedItem["TÊNKHUVỰC"]);
-        const tenKhoiCongViec = (transformedItem["TÊNKHỐICÔNGVIỆC"]);
+        const tenKhoiCongViec = transformedItem["TÊNKHỐICÔNGVIỆC"];
         const tenToanha = formatVietnameseText(transformedItem["TÊNTÒANHÀ"]);
         const tenTang = formatVietnameseText(transformedItem["TÊNTẦNG"]);
         const tenHangmuc = formatVietnameseText(transformedItem["TÊNHẠNGMỤC"]);
-        const quanTrong = formatVietnameseText(transformedItem["QUANTRỌNG"]);    
+        const quanTrong = formatVietnameseText(transformedItem["QUANTRỌNG"]);
 
         const khoiCongViecList = tenKhoiCongViec
-          .split(",")
-          .map((khoi) => khoi.trim());
-
+          ?.split(",")
+          ?.map((khoi) => khoi.trim());
         const khoiCVs = await Promise.all(
           khoiCongViecList.map(async (khoiCongViec) => {
             const khoiCV = await Ent_khoicv.findOne({
-              attributes: ["ID_KhoiCV", "KhoiCV"],
+              attributes: ["ID_KhoiCV", "KhoiCV", "isDelete"],
               where: {
                 [Op.and]: [
-                  sequelize.where(
-                     sequelize.col('KhoiCV'),
-                    {
-                      [Op.like]: `%${removeVietnameseTones(khoiCongViec)}%`
-                    }
-                  ),
-                  { isDelete: 0 }
-                ]
+                  sequelize.where(sequelize.col("KhoiCV"), {
+                    [Op.like]: `%${removeVietnameseTones(khoiCongViec)}%`,
+                  }),
+                  { isDelete: 0 },
+                ],
               },
               transaction,
             });
@@ -672,58 +673,75 @@ exports.uploadFiles = async (req, res) => {
         );
         const validKhoiCVs = khoiCVs.filter((id) => id !== null);
 
-          let khuVuc = await Ent_khuvuc.findOne({
-            attributes: ["ID_Khuvuc", "MaQrCode", "Tenkhuvuc", "ID_KhoiCVs", "isDelete"],
-            where: {
-              Tenkhuvuc: tenKhuvuc,
-              MaQrCode: generateQRCodeKV(tenToanha, tenKhuvuc, tenTang, userData.ID_Duan),
-             // ID_KhoiCVs: { [Op.like]: validKhoiCVS },
+        let khuVuc = await Ent_khuvuc.findOne({
+          attributes: [
+            "ID_Khuvuc",
+            "MaQrCode",
+            "Tenkhuvuc",
+            "ID_KhoiCVs",
+            "isDelete",
+          ],
+          where: {
+            Tenkhuvuc: tenKhuvuc,
+            MaQrCode: generateQRCodeKV(
+              tenToanha,
+              tenKhuvuc,
+              tenTang,
+              userData.ID_Duan
+            ),
+            ID_KhoiCVs: { [Op.like]: validKhoiCVs },
+            isDelete: 0,
+          },
+          transaction,
+        });
+
+        // Generate a QR code for hạng mục
+        const maQrCode = generateQRCode(
+          tenToanha,
+          tenKhuvuc,
+          tenHangmuc,
+          tenTang
+        );
+
+        // Check if hạng mục already exists for this khu vực
+        const existingHangMuc = await Ent_hangmuc.findOne({
+          attributes: [
+            "ID_Hangmuc",
+            "Hangmuc",
+            "MaQrCode",
+            "ID_Khuvuc",
+            "isDelete",
+          ],
+          where: {
+            [Op.and]: [
+              { Hangmuc: tenHangmuc },
+              { MaQrCode: maQrCode },
+              { ID_Khuvuc: khuVuc?.ID_Khuvuc },
+              { isDelete: 0 },
+            ],
+          },
+          transaction,
+        });
+
+        if (!existingHangMuc) {
+          // Create new hạng mục entry
+          await Ent_hangmuc.create(
+            {
+              ID_Khuvuc: khuVuc.ID_Khuvuc,
+              MaQrCode: maQrCode,
+              Hangmuc: tenHangmuc,
+              Important: quanTrong ? 1 : 0,
               isDelete: 0,
             },
-            transaction,
-          });
-
-          // Generate a QR code for hạng mục
-          const maQrCode = generateQRCode(
-            tenToanha,
-            tenKhuvuc,
-            tenHangmuc,
-            tenTang
+            { transaction }
           );
-
-          // Check if hạng mục already exists for this khu vực
-          const existingHangMuc = await Ent_hangmuc.findOne({
-            attributes: ["ID_Hangmuc", "Hangmuc", "MaQrCode", "ID_Khuvuc", "isDelete"],
-            where: {
-              [Op.and]: [
-                { Hangmuc: tenHangmuc },
-                { MaQrCode: maQrCode },
-                { ID_Khuvuc: khuVuc?.ID_Khuvuc },
-                { isDelete: 0 },
-              ],
-            },
-            transaction,
-          });
-
-          if (!existingHangMuc) {
-            // Create new hạng mục entry
-            await Ent_hangmuc.create(
-              {
-                ID_Khuvuc: khuVuc.ID_Khuvuc,
-                MaQrCode: maQrCode,
-                Hangmuc: tenHangmuc,
-                Important: quanTrong ? 1 : 0,
-                isDelete: 0,
-              },
-              { transaction }
-            );
-          } else {
-            console.log(
-              `Hạng mục "${tenHangmuc}" đã tồn tại trong khu vực ${tenKhuvuc}, bỏ qua việc tạo mới.`
-            );
-          }
-          i++;
+        } else {
+          console.log(
+            `Hạng mục "${tenHangmuc}" đã tồn tại trong khu vực ${tenKhuvuc}, bỏ qua việc tạo mới.`
+          );
         }
+        i++;
+      }
     });
 
     res.send({
@@ -737,7 +755,6 @@ exports.uploadFiles = async (req, res) => {
     });
   }
 };
-
 
 const qrFolder = path.join(__dirname, "generated_qr_codes");
 
