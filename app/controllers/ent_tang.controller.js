@@ -17,22 +17,24 @@ exports.create = async (req, res, next) => {
     const tentangList = req.body.Tentang.split(",").map((t) => t.trim());
 
     // Create and save each floor record
-    const records = await Promise.all(tentangList.map(async (tentang) => {
-      const data = {
-        Tentang: formatVietnameseText(tentang),
-        ID_Duan: req.body.ID_Duan,
-        isDelete: 0,
-      };
-      
-      try {
-        return await Ent_tang.create(data);
-      } catch (err) {
-        res.status(500).json({
-          message: err.message || "Lỗi! Vui lòng thử lại sau.",
-        });
-        return
-      }
-    }));
+    const records = await Promise.all(
+      tentangList.map(async (tentang) => {
+        const data = {
+          Tentang: formatVietnameseText(tentang),
+          ID_Duan: req.body.ID_Duan,
+          isDelete: 0,
+        };
+
+        try {
+          return await Ent_tang.create(data);
+        } catch (err) {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+          return;
+        }
+      })
+    );
 
     res.status(200).json({
       message: "Tạo tầng thành công!",
@@ -48,63 +50,34 @@ exports.create = async (req, res, next) => {
 exports.get = async (req, res) => {
   try {
     const userData = req.user.data;
-    if (userData && userData.ent_chucvu.Chucvu === "PSH") {
-      await Ent_tang.findAll({
-        attributes: ["ID_Tang", "Tentang", "ID_Duan", "isDelete"],
-        include: [
-          {
-            model: Ent_duan,
-            attributes: ["Duan", "Diachi", "Logo"],
-          },
-        ],
-        where: {
+    console.log('userData',userData)
+
+    await Ent_tang.findAll({
+      attributes: ["ID_Tang", "Tentang", "ID_Duan", "isDelete"],
+      include: [
+        {
+          model: Ent_duan,
+          attributes: ["Duan", "Diachi", "Logo"],
+        },
+      ],
+      where: {
+        [Op.and]: {
           isDelete: 0,
-          ID_Duan: user.ID_Duan,
+          ID_Duan: userData.ID_Duan,
         },
-      })
-        .then((data) => {
-          res.status(200).json({
-            message: "Danh sách dự án!",
-            data: data,
-          });
-        })
-        .catch((err) => {
-          res.status(500).json({
-            message: err.message || "Lỗi! Vui lòng thử lại sau.",
-          });
+      },
+    })
+      .then((data) => {
+        res.status(200).json({
+          message: "Danh sách tầng!",
+          data: data,
         });
-    } else if (userData && userData.ent_chucvu.Chucvu !== "PSH") {
-      await Ent_tang.findAll({
-        attributes: ["ID_Tang", "Tentang", "ID_Duan", "isDelete"],
-        include: [
-          {
-            model: Ent_duan,
-            attributes: ["Duan", "Diachi", "Logo"],
-          },
-        ],
-        where: {
-          [Op.and]: {
-            isDelete: 0,
-            ID_Duan: userData.ID_Duan,
-          },
-        },
       })
-        .then((data) => {
-          res.status(200).json({
-            message: "Danh sách dự án!",
-            data: data,
-          });
-        })
-        .catch((err) => {
-          res.status(500).json({
-            message: err.message || "Lỗi! Vui lòng thử lại sau.",
-          });
+      .catch((err) => {
+        res.status(500).json({
+          message: err.message || "Lỗi! Vui lòng thử lại sau.",
         });
-    } else {
-      return res.status(401).json({
-        message: "Bạn không có quyền truy cập",
       });
-    }
   } catch (err) {
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",

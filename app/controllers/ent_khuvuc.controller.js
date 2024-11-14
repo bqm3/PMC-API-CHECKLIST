@@ -400,7 +400,6 @@ exports.getKhuVucFilter = async (req, res) => {
       // Tạo danh sách điều kiện
       const andConditions = [];
 
-      if (userData.ID_Chucvu !== 1 && userData.UserName !== "PSH") {
         // Add ID_Duan condition if it exists
         if (userData.ID_Duan !== null) {
           andConditions.push({ "$ent_toanha.ID_Duan$": userData.ID_Duan });
@@ -417,7 +416,6 @@ exports.getKhuVucFilter = async (req, res) => {
         if (req.body?.ID_Toanha !== null && req.body?.ID_Toanha !== undefined) {
           andConditions.push({ ID_Toanha: req.body.ID_Toanha });
         }
-      }
 
       // Nếu có điều kiện AND thì thêm vào whereCondition
       if (andConditions.length > 0) {

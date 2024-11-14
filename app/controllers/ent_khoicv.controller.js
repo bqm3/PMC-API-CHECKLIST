@@ -56,3 +56,13 @@ exports.getDetail = async (req, res) => {
     });
   }
 };
+
+exports.getDetailDuAn = async (req, res) =>{
+  try{
+    
+  }catch(error){
+    return res.status(500).json({
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+}

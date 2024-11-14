@@ -10,13 +10,12 @@ const {
 const { hashSync, genSaltSync, compareSync } = require("bcrypt");
 const bcrypt = require("bcrypt");
 const jsonwebtoken = require("jsonwebtoken");
-const { Op } = require("sequelize");
+const { Op, where } = require("sequelize");
 const fetch = require("node-fetch");
 const moment = require("moment-timezone");
 const sequelize = require("../config/db.config");
 const xlsx = require("xlsx");
-const { convertDateFormat, formatVietnameseText, } = require("../utils/util");
-
+const { convertDateFormat, formatVietnameseText } = require("../utils/util");
 
 // Login User
 exports.login = async (req, res) => {
@@ -40,6 +39,8 @@ exports.login = async (req, res) => {
         "ID_Chinhanh",
         "ID_Duan",
         "Password",
+        "PasswordPrivate",
+        "arr_Duan",
         "ID_KhoiCV",
         "Email",
         "isError",
@@ -140,12 +141,14 @@ exports.register = async (req, res, next) => {
       ID_KhoiCV,
       Email,
       ID_Duan,
+      arr_Duan
     } = req.body;
     if (!UserName || !Password || !ID_Chucvu) {
       return res.status(400).json({
         message: "Phải nhập đầy đủ dữ liệu.",
       });
     }
+    console.log('arr_Duan', arr_Duan)
     const userData = req.user.data;
     const user = await Ent_user.findOne({
       where: {
@@ -187,13 +190,15 @@ exports.register = async (req, res, next) => {
       UserName: UserName,
       Email: Email || null,
       Password: await hashSync(Password, salt),
+      PasswordPrivate: Password,
       ID_Chucvu: ID_Chucvu,
       ID_Duan: ID_Duan || null,
       Hoten: Hoten || null,
       Sodienthoai: Sodienthoai || null,
       Gioitinh: Gioitinh || null,
       Ngaysinh: Ngaysinh || null,
-      ID_KhoiCV: (ID_Chucvu == 1 || ID_Chucvu == 2) ? null : ID_KhoiCV,
+      ID_KhoiCV: ID_Chucvu == 1 || ID_Chucvu == 5 || ID_Chucvu == 6|| ID_Chucvu ==7 || ID_Chucvu == 2 ? null : ID_KhoiCV,
+      arr_Duan: `${arr_Duan}`,
       isDelete: 0,
     };
 
@@ -207,7 +212,6 @@ exports.register = async (req, res, next) => {
         });
       });
   } catch (err) {
-    console.log("err", err);
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau",
     });
@@ -250,6 +254,7 @@ exports.changePassword = async (req, res, next) => {
       await Ent_user.update(
         {
           Password: hashedNewPassword,
+          PasswordPrivate: newPassword, // Store the plain text password for auditing purposes
           updateTime: formattedVietnamTime, // Add the current time to the update
         },
         {
@@ -300,22 +305,27 @@ exports.updateUser = async (req, res) => {
       Email,
       Password,
       Hoten,
+      arrData,
       Sodienthoai,
       Ngaysinh,
       Gioitinh,
+      arr_Duan
     } = req.body;
 
     // Kiểm tra xem có dữ liệu mật khẩu được gửi không
     let updateData = {
       ID_Duan,
       ID_Chucvu,
-      ID_KhoiCV: (ID_Chucvu == 1 || ID_Chucvu == 2) ? null : ID_KhoiCV,
+      ID_KhoiCV: ID_Chucvu == 1 || ID_Chucvu == 2 ? null : ID_KhoiCV,
       UserName,
       Hoten,
       Sodienthoai,
       Gioitinh,
+      PasswordPrivate: Password,
       Email,
       Ngaysinh,
+      arrData,
+      arr_Duan: `${arr_Duan}`,
       isDelete: 0,
     };
 
@@ -384,6 +394,10 @@ exports.getUserOnline = async (req, res, next) => {
       whereClause.ID_Duan = userData.ID_Duan;
     }
 
+    if (userData.ent_chucvu.Role == 10) {
+      whereClause.ID_Chucvu = 2;
+    }
+
     await Ent_user.findAll({
       attributes: [
         "ID_User",
@@ -391,6 +405,8 @@ exports.getUserOnline = async (req, res, next) => {
         "Email",
         "Hoten",
         "Sodienthoai",
+        "PasswordPrivate",
+        "arr_Duan",
         "ID_Duan",
         "ID_KhoiCV",
         "ID_Chucvu",
@@ -455,6 +471,8 @@ exports.getDetail = async (req, res) => {
           "Sodienthoai",
           "Ngaysinh",
           "Gioitinh",
+          "PasswordPrivate",
+          "arr_Duan",
           "ID_Duan",
           "ID_KhoiCV",
           "ID_Chucvu",
@@ -533,7 +551,7 @@ exports.getDetail = async (req, res) => {
 exports.checkAuth = async (req, res, next) => {
   try {
     const userData = req.user.data;
-    
+
     await Ent_user.findByPk(userData.ID_User, {
       attributes: [
         "ID_User",
@@ -543,6 +561,8 @@ exports.checkAuth = async (req, res, next) => {
         "Gioitinh",
         "Sodienthoai",
         "Ngaysinh",
+        "PasswordPrivate",
+        "arr_Duan",
         "ID_Duan",
         "ID_KhoiCV",
         "deviceToken",
@@ -705,6 +725,8 @@ exports.deviceToken = async (req, res, next) => {
           "ID_User",
           "UserName",
           "Email",
+          "PasswordPrivate",
+          "arr_Duan",
           "ID_Duan",
           "ID_KhoiCV",
           "deviceToken",
@@ -882,13 +904,16 @@ exports.uploadFileUsers = async (req, res) => {
           where: {
             isDelete: 0,
             Chucvu: sequelize.where(
-              sequelize.fn("UPPER", sequelize.fn("TRIM", sequelize.col("Chucvu"))),
+              sequelize.fn(
+                "UPPER",
+                sequelize.fn("TRIM", sequelize.col("Chucvu"))
+              ),
               "LIKE",
               chucVu.trim().toUpperCase()
-            )
+            ),
           },
         });
-        
+
         if (!dataChucvu) {
           return res.status(500).json({
             message: "Không tìm chức vụ phù hợp",
@@ -896,13 +921,16 @@ exports.uploadFileUsers = async (req, res) => {
         }
 
         let dataKhoiCV;
-        if(tenKhoiCongViec !== undefined){
-           dataKhoiCV = await Ent_khoicv.findOne({
+        if (tenKhoiCongViec !== undefined) {
+          dataKhoiCV = await Ent_khoicv.findOne({
             attributes: ["ID_KhoiCV", "KhoiCV", "isDelete"],
-  
+
             where: {
               KhoiCV: sequelize.where(
-                sequelize.fn("UPPER", sequelize.fn("TRIM",  sequelize.col("KhoiCV"))),
+                sequelize.fn(
+                  "UPPER",
+                  sequelize.fn("TRIM", sequelize.col("KhoiCV"))
+                ),
                 "LIKE",
                 tenKhoiCongViec.trim().toUpperCase()
               ),
@@ -929,7 +957,10 @@ exports.uploadFileUsers = async (req, res) => {
           ],
           where: {
             UserName: sequelize.where(
-              sequelize.fn("UPPER", sequelize.fn("TRIM",  sequelize.col("UserName"))),
+              sequelize.fn(
+                "UPPER",
+                sequelize.fn("TRIM", sequelize.col("UserName"))
+              ),
               "LIKE",
               taiKhoan.trim().toUpperCase()
             ),
@@ -991,14 +1022,22 @@ exports.fixUserError = async (req, res) => {
 
     const users = await Ent_user.findAll({
       where: { UserName: { [Op.in]: userName }, isDelete: 0 },
-      attributes: ['UserName'],
+      attributes: ["UserName"],
     });
 
-    const existingUserNames = users.map(user => user.UserName);
-    const nonExistentUserNames = userName.filter(name => !existingUserNames.includes(name));
+    const existingUserNames = users.map((user) => user.UserName);
+    const nonExistentUserNames = userName.filter(
+      (name) => !existingUserNames.includes(name)
+    );
 
     if (nonExistentUserNames.length > 0) {
-      return res.status(400).send({ message: `Tên tài khoản không tồn tại: ${nonExistentUserNames.join(", ")}` });
+      return res
+        .status(400)
+        .send({
+          message: `Tên tài khoản không tồn tại: ${nonExistentUserNames.join(
+            ", "
+          )}`,
+        });
     }
 
     await Ent_user.update(
@@ -1012,4 +1051,54 @@ exports.fixUserError = async (req, res) => {
   }
 };
 
+exports.updateDuanByRole = async (req, res) => {
+  const ID_Duan = req.params.id;
+  try {
+    const userData = req.user.data;
 
+    const whereCondition = {
+      isDelete: 0,
+      ID_User: userData.ID_User
+    };
+    if (userData) {
+      await Ent_user.update({ ID_Duan: ID_Duan }, { where: whereCondition }) .then((data) => {
+        res.status(200).json({
+          message: "Cập nhật thành công!!!",
+          data: data,
+        });
+      })
+      .catch((err) => {
+        res.status(500).json({
+          message: err.message || "Lỗi! Vui lòng thử lại sau.",
+        });
+      });;
+    }
+  } catch (error) {
+    res.status(500).send({ message: "Có lỗi xảy ra" });
+  }
+};
+
+exports.clearDuanByRole = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    const whereCondition = {
+      isDelete: 0,
+      ID_User: userData.ID_User
+    };
+    if (userData) {
+      await Ent_user.update({ ID_Duan: null }, { where: whereCondition }) .then((data) => {
+        res.status(200).json({
+          message: "Cập nhật thành công!!!",
+          data: data,
+        });
+      })
+      .catch((err) => {
+        res.status(500).json({
+          message: err.message || "Lỗi! Vui lòng thử lại sau.",
+        });
+      });;
+    }
+  } catch (error) {
+    res.status(500).send({ message: "Có lỗi xảy ra" });
+  }
+};

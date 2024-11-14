@@ -231,7 +231,7 @@ require("./app/routes/sql.routes")(app);
 require("./app/routes/get_image.routes")(app);
 require("./app/routes/ent_baocaochiso.routes")(app);
 
-const PORT = process.env.PORT || 6868;
+const PORT = process.env.PORT || 6969;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}.`);
 });

@@ -9,7 +9,7 @@ const {
   Ent_phanloaida,
   Ent_chinhanh,
 } = require("../models/setup.model");
-const { Op } = require("sequelize");
+const { Op, Sequelize, fn, col, literal, where } = require("sequelize");
 const { formatVietnameseText } = require("../utils/util");
 
 exports.create = (req, res) => {
@@ -364,6 +364,22 @@ exports.getKhuvucByDuan = async (req, res) => {
 
 exports.getThongtinduan = async (req, res) => {
   try {
+    const userData = req.user.data;
+
+    const duanIds = userData?.arr_Duan
+      ? userData?.arr_Duan.split(",").map((id) => parseInt(id, 10))
+      : [];
+
+    const whereCondition = {
+      isDelete: 0,
+    };
+
+    if (userData && userData?.ent_chucvu?.Role == 4 && duanIds.length > 0) {
+      whereCondition.ID_Duan = {
+        [Op.in]: duanIds,
+      };
+    }
+
     const data = await Ent_duan.findAll({
       attributes: [
         "ID_Duan",
@@ -442,9 +458,7 @@ exports.getThongtinduan = async (req, res) => {
           attributes: ["Tennhom", "ID_Nhom"],
         },
       ],
-      where: {
-        isDelete: 0,
-      },
+      where: whereCondition, // Apply the dynamic where condition
     });
 
     const result = data.map((duan) => {
@@ -544,50 +558,25 @@ exports.getThongtinduantheonhom = async (req, res) => {
         "isDelete",
       ],
       include: [
-        // {
-        //   model: Ent_toanha,
-        //   as: "ent_toanha",
-        //   attributes: ["ID_Toanha", "Toanha", "Sotang", "ID_Duan", "Vido", "Kinhdo", "isDelete"],
-        //   where: { isDelete: 0 },
-        //   required: false,
-        //   include: [
-        //     {
-        //       model: Ent_khuvuc,
-        //       as: "ent_khuvuc",
-        //       attributes: ["ID_Khuvuc", "Makhuvuc", "MaQrCode", "Tenkhuvuc", "isDelete"],
-        //       where: { isDelete: 0 },
-        //       required: false,
-        //       include: [
-        //         {
-        //           model: Ent_hangmuc,
-        //           as: "ent_hangmuc",
-        //           attributes: ["ID_Hangmuc", "ID_Khuvuc", "Hangmuc", "MaQrCode", "isDelete", "Tieuchuankt", "FileTieuChuan"],
-        //           where: { isDelete: 0 },
-        //           required: false,
-        //         },
-        //       ],
-        //     },
-        //   ],
-        // },
         {
           model: Ent_chinhanh,
-          attributes: ["Tenchinhanh","ID_Chinhanh"]
+          attributes: ["Tenchinhanh", "ID_Chinhanh"],
         },
         {
           model: Ent_nhom,
-          attributes: ["Tennhom","ID_Nhom"]
+          attributes: ["Tennhom", "ID_Nhom"],
         },
         {
           model: Ent_phanloaida,
           as: "ent_phanloaida",
-          attributes: ["ID_Phanloai","Phanloai"]
-        }
+          attributes: ["ID_Phanloai", "Phanloai"],
+        },
       ],
       where: {
         isDelete: 0,
         ID_Duan: {
-          [Op.ne]: 1
-        }
+          [Op.ne]: 1,
+        },
       },
     });
 
@@ -615,3 +604,72 @@ exports.getThongtinduantheonhom = async (req, res) => {
     });
   }
 };
+
+
+exports.getProjectbyName = async (req, res ) => {
+  try {
+    const data = await Ent_duan.findAll({
+      attributes: [
+        "ID_Duan",
+        "Duan",
+        "Diachi",
+        "Vido",
+        "Kinhdo",
+        "ID_Nhom",
+        "ID_Chinhanh",
+        "ID_Linhvuc",
+        "ID_Loaihinh",
+        "ID_Phanloai",
+        "Logo",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_chinhanh,
+          attributes: ["Tenchinhanh", "ID_Chinhanh"],
+        },
+        {
+          model: Ent_nhom,
+          attributes: ["Tennhom", "ID_Nhom"],
+        },
+        {
+          model: Ent_phanloaida,
+          as: "ent_phanloaida",
+          attributes: ["ID_Phanloai", "Phanloai"],
+        },
+      ],
+      where: {
+        isDelete: 0,
+        ID_Duan: {
+          [Op.ne]: 1,
+        },
+      },
+    });
+
+    const groupedDataObject = data.reduce((acc, project) => {
+      const { ID_Chinhanh, ent_chinhanh } = project;
+    
+      if (!acc[ID_Chinhanh]) {
+        acc[ID_Chinhanh] = {
+          Tenchinhanh: ent_chinhanh.Tenchinhanh,
+          projects: [],
+        };
+      }
+    
+      acc[ID_Chinhanh].projects.push(project);
+      return acc;
+    }, {});
+    
+    // Convert the object into an array
+    const groupedData = Object.values(groupedDataObject);
+    
+    res.status(200).json({
+      message: "Danh sách dự án với nhóm!",
+      data: groupedData,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+}
