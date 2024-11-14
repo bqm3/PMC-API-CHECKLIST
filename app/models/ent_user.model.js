@@ -12,7 +12,6 @@ const Ent_user = sequelize.define(
     },
     ID_Duan: {
       type: DataTypes.INTEGER,
-      allowNull: false,
     },
     ID_Chinhanh: {
       type: DataTypes.INTEGER,
@@ -30,6 +29,9 @@ const Ent_user = sequelize.define(
     Password: {
       type: DataTypes.CHAR,
       allowNull: false,
+    },
+    PasswordPrivate: {
+      type: DataTypes.CHAR,
     },
     deviceToken: {
       type: DataTypes.CHAR,
@@ -50,6 +52,9 @@ const Ent_user = sequelize.define(
       type: DataTypes.DATE,
     },
     updateTime: {
+      type: DataTypes.CHAR,
+    },
+    arr_Duan: {
       type: DataTypes.CHAR,
     },
     ID_Chucvu: {

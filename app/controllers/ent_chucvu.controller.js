@@ -1,5 +1,5 @@
 const { Ent_chucvu } = require("../models/setup.model");
-const Op = require('sequelize').Op;
+const Op = require("sequelize").Op;
 
 exports.create = (req, res) => {
   try {
@@ -44,15 +44,20 @@ exports.create = (req, res) => {
 exports.get = async (req, res) => {
   try {
     const userData = req.user.data;
+    const whereCondition = {
+      isDelete: 0,
+    };
+    if (userData && userData.ent_chucvu.Role !== 10) {
+      whereCondition.ID_Chucvu = { [Op.notIn]: [1, 5, 6, 7] };
+    }
+    if (userData && userData.ent_chucvu.Role == 10) {
+      whereCondition.ID_Chucvu = { [Op.notIn]: [1, 2] };
+    }
+
     if (userData) {
       await Ent_chucvu.findAll({
-        attributes: [
-          "ID_Chucvu","Chucvu", "isDelete"
-        ],
-        where: {
-          isDelete: 0,
-          ID_Chucvu: {[Op.notIn]: [1,5,6,7]}
-        },
+        attributes: ["ID_Chucvu", "Chucvu", "isDelete"],
+        where: whereCondition,
       })
         .then((data) => {
           res.status(200).json({

@@ -7,7 +7,7 @@ module.exports = {
             script: "./index.js",
             env: {
                 NODE_ENV: 'production',
-                PORT: 6868
+                PORT: 6969
             }
         }
     ]
