@@ -35,8 +35,8 @@ exports.notiAll = async (req, res) => {
 
   } else {
     const { version, platform } = req.query;
-    const keyVersionIOS = "2.0.8";
-    const keyVersionAPK = "2.0.8";
+    const keyVersionIOS = "2.0.9";
+    const keyVersionAPK = "2.0.9";
 
     let ischeck = false; 
     let resData = "";
@@ -53,7 +53,7 @@ exports.notiAll = async (req, res) => {
       resData = {
         type: "WARNING",
         textTitle: "PMC Checklist",
-        textBody: "Phiên bản 2.0.8 đã xuất bản. Cập nhật phiên bản để có trải nghiệm tốt nhất.",
+        textBody: "Phiên bản 2.0.9 đã xuất bản. Cập nhật phiên bản để có trải nghiệm tốt nhất.",
         time: 5000,
       };
       status = "1"
