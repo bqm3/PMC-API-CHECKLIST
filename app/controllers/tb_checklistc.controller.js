@@ -6772,6 +6772,7 @@ exports.createExcelDuAn = async (req, res) => {
       { header: "Làm sạch", key: "lamsach", width: 10 },
       { header: "An ninh", key: "anninh", width: 10 },
       { header: "Dịch vụ", key: "dichvu", width: 10 },
+      { header: "F&B", key: "fb", width: 10 },
       { header: "Tỉ lệ checklist", key: "tile", width: 10 },
       { header: "Đã triển khai", key: "dachay", width: 10 },
       { header: "Ghi chú", key: "ghichu", width: 20 },
@@ -6932,6 +6933,7 @@ exports.createExcelDuAn = async (req, res) => {
         lamsach: "",
         anninh: "",
         dichvu: "",
+        fb: "",
         dachay: "",
         ghichu: "",
       };
@@ -6986,7 +6988,7 @@ exports.createExcelDuAn = async (req, res) => {
           rowValues.dichvu = "X";
         }
         if (khoiName === "Khối F&B") {
-          rowValues.dichvu = "X";
+          rowValues.fb = "X";
         }
       });
 
