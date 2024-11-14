@@ -652,9 +652,8 @@ exports.uploadFiles = async (req, res) => {
         const quanTrong = formatVietnameseText(transformedItem["QUANTRỌNG"]);
 
         const khoiCongViecList = tenKhoiCongViec
-          .split(",")
-          .map((khoi) => khoi.trim());
-
+          ?.split(",")
+          ?.map((khoi) => khoi.trim());
         const khoiCVs = await Promise.all(
           khoiCongViecList.map(async (khoiCongViec) => {
             const khoiCV = await Ent_khoicv.findOne({
@@ -662,7 +661,7 @@ exports.uploadFiles = async (req, res) => {
               where: {
                 [Op.and]: [
                   sequelize.where(sequelize.col("KhoiCV"), {
-                    [Op.like]: `%${khoiCongViec}%`,
+                    [Op.like]: `%${removeVietnameseTones(khoiCongViec)}%`,
                   }),
                   { isDelete: 0 },
                 ],
