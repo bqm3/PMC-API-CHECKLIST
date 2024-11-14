@@ -93,7 +93,7 @@ const Ent_checklistc = sequelize.define(
     indexes: [
       {
         unique: false,
-        fields: ["ID_ChecklistC", "ID_Search"],
+        fields: ["ID_ChecklistC"],
       },
     ],
   }

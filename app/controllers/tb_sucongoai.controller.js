@@ -129,7 +129,7 @@ exports.get = async (req, res) => {
           ],
           where: {
             ID_Duan: userData.ID_Duan,
-          }
+          },
         },
       ],
       limit: 30,
@@ -145,7 +145,6 @@ exports.get = async (req, res) => {
         ["Ngayxuly", "DESC"],
       ],
     });
-
 
     if (!data || data.length === 0) {
       return res.status(200).json({
@@ -183,20 +182,19 @@ exports.updateStatus = async (req, res) => {
     const idsString = ids.join(",");
     const { Tinhtrangxuly, ngayXuLy, Ghichu, ID_Hangmuc } = req.body;
     if (ID_Suco && userData) {
+      const updateFields = {
+        Tinhtrangxuly: Tinhtrangxuly,
+        Ngayxuly: ngayXuLy,
+        Anhkiemtra: idsString,
+        Ghichu: `${Ghichu}` !== "null" && `${Ghichu}` !== "undefined" ? Ghichu : null,
+      };
+
+      if (`${ID_Hangmuc}` !== "null" && `${ID_Hangmuc}` !== "undefined") {
+        updateFields.ID_Hangmuc = ID_Hangmuc;
+      }
+
       Tb_sucongoai.update(
-        {
-          Tinhtrangxuly: Tinhtrangxuly,
-          Ngayxuly: ngayXuLy,
-          Anhkiemtra: idsString,
-          Ghichu:
-            `${Ghichu}` !== "null" && `${Ghichu}` !== "undefined"
-              ? Ghichu
-              : null,
-          ID_Hangmuc:
-            `${ID_Hangmuc}` !== "null" && `${ID_Hangmuc}` !== "undefined"
-              ? ID_Hangmuc
-              : null,
-        },
+       updateFields,
         {
           where: {
             ID_Suco: ID_Suco,
@@ -416,10 +414,14 @@ exports.dashboardByDuAn = async (req, res) => {
           model: Ent_user,
           as: "ent_user",
           attributes: [
-            "ID_Duan", "Hoten", "UserName", "Email", "ID_Chucvu", "isDelete"
+            "ID_Duan",
+            "Hoten",
+            "UserName",
+            "Email",
+            "ID_Chucvu",
+            "isDelete",
           ],
-          
-        }
+        },
       ],
       where: whereClause,
     });
@@ -554,10 +556,10 @@ exports.dashboardAll = async (req, res) => {
             attributes: ["ID_Duan", "Duan", "Diachi", "Vido", "Kinhdo", "Logo"],
           },
           where: {
-            ID_Duan : {
-              [Op.ne] : 1
-            }
-          }
+            ID_Duan: {
+              [Op.ne]: 1,
+            },
+          },
         },
       ],
     });
@@ -661,7 +663,7 @@ exports.getSucoNam = async (req, res) => {
                 "Vido",
                 "Kinhdo",
                 "Logo",
-              ]
+              ],
             },
             {
               model: Ent_chucvu,
@@ -679,7 +681,11 @@ exports.getSucoNam = async (req, res) => {
     });
 
     const filteredData = data.filter((item) => {
-      return item.ent_user && item.ent_user.ent_duan && item.ent_user.ent_duan.Duan == name;
+      return (
+        item.ent_user &&
+        item.ent_user.ent_duan &&
+        item.ent_user.ent_duan.Duan == name
+      );
     });
 
     if (filteredData.length === 0) {
@@ -706,7 +712,9 @@ exports.getSuCoBenNgoai = async (req, res) => {
 
     // Xác định ngày bắt đầu và kết thúc của tuần này và tuần trước
     const today = new Date();
-    const startOfCurrentWeek = new Date(today.setDate(today.getDate() - today.getDay()));
+    const startOfCurrentWeek = new Date(
+      today.setDate(today.getDate() - today.getDay())
+    );
     const endOfCurrentWeek = new Date(startOfCurrentWeek);
     endOfCurrentWeek.setDate(endOfCurrentWeek.getDate() + 6); // Thêm 6 ngày để có ngày kết thúc tuần này
 
@@ -717,9 +725,7 @@ exports.getSuCoBenNgoai = async (req, res) => {
 
     // Truy vấn số lượng sự cố cho tuần này
     const currentWeekIncidents = await Tb_sucongoai.findAll({
-      attributes: [
-        [fn("COUNT", col("ID_Suco")), "currentWeekCount"],
-      ],
+      attributes: [[fn("COUNT", col("ID_Suco")), "currentWeekCount"]],
       where: {
         isDelete: 0,
 
@@ -747,10 +753,10 @@ exports.getSuCoBenNgoai = async (req, res) => {
             attributes: ["ID_Duan", "Duan", "Diachi", "Vido", "Kinhdo", "Logo"],
           },
           where: {
-            ID_Duan : {
-              [Op.ne] : 1
-            }
-          }
+            ID_Duan: {
+              [Op.ne]: 1,
+            },
+          },
         },
       ],
       raw: true,
@@ -758,9 +764,7 @@ exports.getSuCoBenNgoai = async (req, res) => {
 
     // Truy vấn số lượng sự cố cho tuần trước
     const lastWeekIncidents = await Tb_sucongoai.findAll({
-      attributes: [
-        [fn("COUNT", col("ID_Suco")), "lastWeekCount"],
-      ],
+      attributes: [[fn("COUNT", col("ID_Suco")), "lastWeekCount"]],
       where: {
         isDelete: 0,
         Ngaysuco: {
@@ -787,25 +791,28 @@ exports.getSuCoBenNgoai = async (req, res) => {
             attributes: ["ID_Duan", "Duan", "Diachi", "Vido", "Kinhdo", "Logo"],
           },
           where: {
-            ID_Duan : {
-              [Op.ne] : 1
-            }
-          }
+            ID_Duan: {
+              [Op.ne]: 1,
+            },
+          },
         },
       ],
       raw: true,
     });
 
     // Lấy tổng số lượng sự cố từ kết quả truy vấn
-    const currentWeekCount = parseInt(currentWeekIncidents[0]?.currentWeekCount, 10) || 0;
-    const lastWeekCount = parseInt(lastWeekIncidents[0]?.lastWeekCount, 10) || 0;
+    const currentWeekCount =
+      parseInt(currentWeekIncidents[0]?.currentWeekCount, 10) || 0;
+    const lastWeekCount =
+      parseInt(lastWeekIncidents[0]?.lastWeekCount, 10) || 0;
 
     // Tính phần trăm thay đổi
     let percentageChange = 0;
     if (lastWeekCount === 0 && currentWeekCount > 0) {
-        percentageChange = 100; // If last week was 0 and there's an increase this week
+      percentageChange = 100; // If last week was 0 and there's an increase this week
     } else if (lastWeekCount > 0) {
-        percentageChange = ((currentWeekCount - lastWeekCount) / lastWeekCount) * 100;
+      percentageChange =
+        ((currentWeekCount - lastWeekCount) / lastWeekCount) * 100;
     }
     // Truy vấn chi tiết sự cố theo tên dự án
     const data = await Tb_sucongoai.findAll({
@@ -849,7 +856,7 @@ exports.getSuCoBenNgoai = async (req, res) => {
                 "Vido",
                 "Kinhdo",
                 "Logo",
-              ]
+              ],
             },
             {
               model: Ent_chucvu,
@@ -857,10 +864,10 @@ exports.getSuCoBenNgoai = async (req, res) => {
             },
           ],
           where: {
-            ID_Duan : {
-              [Op.ne] : 1
-            }
-          }
+            ID_Duan: {
+              [Op.ne]: 1,
+            },
+          },
         },
       ],
       where: {
@@ -878,7 +885,11 @@ exports.getSuCoBenNgoai = async (req, res) => {
     });
 
     const filteredData = data.filter((item) => {
-      return item.ent_user && item.ent_user.ent_duan && item.ent_user.ent_duan.Duan == name;
+      return (
+        item.ent_user &&
+        item.ent_user.ent_duan &&
+        item.ent_user.ent_duan.Duan == name
+      );
     });
 
     if (filteredData.length === 0) {
@@ -914,7 +925,9 @@ exports.getSuCoBenNgoaiChiNhanh = async (req, res) => {
 
     // Xác định ngày bắt đầu và kết thúc của tuần này và tuần trước
     const today = new Date();
-    const startOfCurrentWeek = new Date(today.setDate(today.getDate() - today.getDay()));
+    const startOfCurrentWeek = new Date(
+      today.setDate(today.getDate() - today.getDay())
+    );
     const endOfCurrentWeek = new Date(startOfCurrentWeek);
     endOfCurrentWeek.setDate(endOfCurrentWeek.getDate() + 6); // Thêm 6 ngày để có ngày kết thúc tuần này
 
@@ -925,9 +938,7 @@ exports.getSuCoBenNgoaiChiNhanh = async (req, res) => {
 
     // Truy vấn số lượng sự cố cho tuần này
     const currentWeekIncidents = await Tb_sucongoai.findAll({
-      attributes: [
-        [fn("COUNT", col("ID_Suco")), "currentWeekCount"],
-      ],
+      attributes: [[fn("COUNT", col("ID_Suco")), "currentWeekCount"]],
       where: {
         isDelete: 0,
         Ngaysuco: {
@@ -940,9 +951,7 @@ exports.getSuCoBenNgoaiChiNhanh = async (req, res) => {
 
     // Truy vấn số lượng sự cố cho tuần trước
     const lastWeekIncidents = await Tb_sucongoai.findAll({
-      attributes: [
-        [fn("COUNT", col("ID_Suco")), "lastWeekCount"],
-      ],
+      attributes: [[fn("COUNT", col("ID_Suco")), "lastWeekCount"]],
       where: {
         isDelete: 0,
         Ngaysuco: {
@@ -954,13 +963,17 @@ exports.getSuCoBenNgoaiChiNhanh = async (req, res) => {
     });
 
     // Lấy tổng số lượng sự cố từ kết quả truy vấn
-    const currentWeekCount = parseInt(currentWeekIncidents[0]?.currentWeekCount, 10) || 0;
-    const lastWeekCount = parseInt(lastWeekIncidents[0]?.lastWeekCount, 10) || 0;
+    const currentWeekCount =
+      parseInt(currentWeekIncidents[0]?.currentWeekCount, 10) || 0;
+    const lastWeekCount =
+      parseInt(lastWeekIncidents[0]?.lastWeekCount, 10) || 0;
 
     // Tính phần trăm thay đổi
     let percentageChange = 0;
-    if (lastWeekCount > 0) { // Tránh chia cho 0
-      percentageChange = ((currentWeekCount - lastWeekCount) / lastWeekCount) * 100;
+    if (lastWeekCount > 0) {
+      // Tránh chia cho 0
+      percentageChange =
+        ((currentWeekCount - lastWeekCount) / lastWeekCount) * 100;
     } else if (currentWeekCount > 0) {
       percentageChange = 100; // Nếu tuần này có sự cố mà tuần trước không có
     }
@@ -1035,7 +1048,11 @@ exports.getSuCoBenNgoaiChiNhanh = async (req, res) => {
     });
 
     const filteredData = data.filter((item) => {
-      return item.ent_user && item.ent_user.ent_duan && item.ent_user.ent_duan.Duan == name;
+      return (
+        item.ent_user &&
+        item.ent_user.ent_duan &&
+        item.ent_user.ent_duan.Duan == name
+      );
     });
 
     if (filteredData.length === 0) {
@@ -1066,7 +1083,6 @@ exports.getSuCoBenNgoaiChiNhanh = async (req, res) => {
 
 exports.getSuCoNamChiNhanh = async (req, res) => {
   try {
-
     const userData = req.user.data;
     const name = req.query.name;
 
@@ -1137,7 +1153,11 @@ exports.getSuCoNamChiNhanh = async (req, res) => {
     });
 
     const filteredData = data.filter((item) => {
-      return item.ent_user && item.ent_user.ent_duan && item.ent_user.ent_duan.Duan == name;
+      return (
+        item.ent_user &&
+        item.ent_user.ent_duan &&
+        item.ent_user.ent_duan.Duan == name
+      );
     });
 
     if (filteredData.length === 0) {
@@ -1206,7 +1226,15 @@ exports.dashboardAllChiNhanh = async (req, res) => {
           attributes: ["ID_Duan", "Hoten", "UserName"],
           include: {
             model: Ent_duan,
-            attributes: ["ID_Duan", "Duan", "Diachi", "Vido", "Kinhdo", "Logo", "ID_Chinhanh"],
+            attributes: [
+              "ID_Duan",
+              "Duan",
+              "Diachi",
+              "Vido",
+              "Kinhdo",
+              "Logo",
+              "ID_Chinhanh",
+            ],
             where: {
               ID_Chinhanh: userData.ID_Chinhanh,
             },

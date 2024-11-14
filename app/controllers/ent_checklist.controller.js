@@ -130,11 +130,11 @@ exports.get = async (req, res) => {
             "ID_Khuvuc",
             "MaQrCode",
             "FileTieuChuan",
-            "isDelete"
+            "isDelete",
           ],
           where: {
-            isDelete: 0
-          }
+            isDelete: 0,
+          },
         },
         {
           model: Ent_khuvuc,
@@ -145,7 +145,7 @@ exports.get = async (req, res) => {
             "Sothutu",
             "ID_Toanha",
             "ID_Khuvuc",
-            "isDelete"
+            "isDelete",
           ],
           include: [
             {
@@ -176,8 +176,8 @@ exports.get = async (req, res) => {
             },
           ],
           where: {
-            isDelete: 0
-          }
+            isDelete: 0,
+          },
         },
         {
           model: Ent_tang,
@@ -235,11 +235,11 @@ exports.get = async (req, res) => {
             "ID_Khuvuc",
             "MaQrCode",
             "FileTieuChuan",
-            "isDelete"
+            "isDelete",
           ],
           where: {
-            isDelete: 0
-          }
+            isDelete: 0,
+          },
         },
         {
           model: Ent_khuvuc,
@@ -250,7 +250,7 @@ exports.get = async (req, res) => {
             "Sothutu",
             "ID_Toanha",
             "ID_Khuvuc",
-            "isDelete"
+            "isDelete",
           ],
           include: [
             {
@@ -281,8 +281,8 @@ exports.get = async (req, res) => {
             },
           ],
           where: {
-            isDelete: 0
-          }
+            isDelete: 0,
+          },
         },
         {
           model: Ent_tang,
@@ -1449,7 +1449,9 @@ exports.filterChecklists = async (req, res) => {
                 },
               ],
               where: {
-                ID_KhoiCV: userData?.ID_KhoiCV ? userData?.ID_KhoiCV : ID_KhoiCV,
+                ID_KhoiCV: userData?.ID_KhoiCV
+                  ? userData?.ID_KhoiCV
+                  : ID_KhoiCV,
               },
             },
           ],
@@ -1691,11 +1693,11 @@ exports.getListChecklistWeb = async (req, res) => {
             "ID_Khuvuc",
             "MaQrCode",
             "FileTieuChuan",
-            "isDelete"
+            "isDelete",
           ],
           where: {
             isDelete: 0,
-          }
+          },
         },
         {
           model: Ent_khuvuc,
@@ -1707,7 +1709,7 @@ exports.getListChecklistWeb = async (req, res) => {
             "ID_KhoiCVs",
             "ID_Toanha",
             "ID_Khuvuc",
-            "isDelete"
+            "isDelete",
           ],
           where: {
             isDelete: 0,
@@ -1979,9 +1981,8 @@ exports.uploadFiles = async (req, res) => {
           const tenKhuvuc = formatVietnameseText(transformedItem["TÊNKHUVỰC"]);
           const tenDuan = formatVietnameseText(transformedItem["TÊNDỰÁN"]);
           const tenToanha = formatVietnameseText(transformedItem["TÊNTÒANHÀ"]);
-          const tenKhoiCongViec = (
-            transformedItem["TÊNKHỐICÔNGVIỆC"]
-          );
+          const tenKhoiCongViec = transformedItem["TÊNKHỐICÔNGVIỆC"];
+
           const tenTang = formatVietnameseText(transformedItem["TÊNTẦNG"]);
           const tenHangmuc = formatVietnameseText(
             transformedItem["TÊNHẠNGMỤC"]
@@ -1995,9 +1996,7 @@ exports.uploadFiles = async (req, res) => {
           const giaTriDanhDinh = formatVietnameseText(
             transformedItem["GIÁTRỊĐỊNHDANH"]
           );
-          const giaTriLoi = formatVietnameseText(
-            transformedItem["GIÁTRỊLỖI"]
-          );
+          const giaTriLoi = formatVietnameseText(transformedItem["GIÁTRỊLỖI"]);
           const cacGiaTriNhan = formatVietnameseText(
             transformedItem["CÁCGIÁTRỊNHẬN"]
           );
@@ -2016,27 +2015,26 @@ exports.uploadFiles = async (req, res) => {
           }
 
           const khoiCongViecList = tenKhoiCongViec
-            .split(",")
-            .map((khoi) => khoi.trim());
-
-          const khoiCVs = await Promise.all(
-            khoiCongViecList.map(async (khoiCongViec) => {
-              const khoiCV = await Ent_khoicv.findOne({
-                attributes: ["ID_KhoiCV", "KhoiCV"],
-                where: {
-                  [Op.and]: [
-                    sequelize.where(sequelize.col("KhoiCV"), {
-                      [Op.like]: `%${removeVietnameseTones(khoiCongViec)}%`,
-                    }),
-                    { isDelete: 0 },
-                  ],
-                },
-                transaction,
-              });
-              return khoiCV ? khoiCV.ID_KhoiCV : null;
-            })
-          );
-          const validKhoiCVs = khoiCVs.filter((id) => id !== null);
+          ?.split(",")
+          ?.map((khoi) => khoi.trim());
+        const khoiCVs = await Promise.all(
+          khoiCongViecList.map(async (khoiCongViec) => {
+            const khoiCV = await Ent_khoicv.findOne({
+              attributes: ["ID_KhoiCV", "KhoiCV", "isDelete"],
+              where: {
+                [Op.and]: [
+                  sequelize.where(sequelize.col("KhoiCV"), {
+                    [Op.like]: `%${removeVietnameseTones(khoiCongViec)}%`,
+                  }),
+                  { isDelete: 0 },
+                ],
+              },
+              transaction,
+            });
+            return khoiCV ? khoiCV.ID_KhoiCV : null;
+          })
+        );
+        const validKhoiCVs = khoiCVs.filter((id) => id !== null);
 
           const hangmuc = await Ent_hangmuc.findOne({
             attributes: [
@@ -2063,8 +2061,13 @@ exports.uploadFiles = async (req, res) => {
                 ],
                 where: {
                   isDelete: 0,
-                  //ID_KhoiCVs: { [Op.like]: validKhoiCVs },
-                  MaQrCode: generateQRCodeKV(tenToanha, tenKhuvuc, tenTang, userData.ID_Duan),
+                  ID_KhoiCVs: { [Op.like]: validKhoiCVs },
+                  MaQrCode: generateQRCodeKV(
+                    tenToanha,
+                    tenKhuvuc,
+                    tenTang,
+                    userData.ID_Duan
+                  ),
                 },
               },
             ],
@@ -2102,14 +2105,14 @@ exports.uploadFiles = async (req, res) => {
           }
 
           const sttChecklist = checklistOrderMap[checklistKey]; // Lấy số thứ tự hiện tại cho checklist
-          
+
           const data = {
             ID_Khuvuc: hangmuc.ID_Khuvuc,
             ID_Tang: tang.ID_Tang,
             ID_Hangmuc: hangmuc.ID_Hangmuc,
             Sothutu: sttChecklist, // Sử dụng số thứ tự vừa tính toán
             Maso: "",
-            MaQrCode: generateQRCodeChecklist(tenChecklist),
+            MaQrCode: "",
             Checklist: tenChecklist,
             Ghichu: ghiChu || "",
             Tieuchuan: tieuChuanChecklist || "",
