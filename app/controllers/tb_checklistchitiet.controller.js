@@ -121,8 +121,8 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       const uniqueIDChecklists = [...new Set(records.ID_Checklist)];
 
       await Tb_checklistc.findOne({
-        attributes: ["ID_ChecklistC", "Tong", "TongC"],
-        where: { ID_ChecklistC: records.ID_ChecklistC[0] },
+        attributes: ["ID_ChecklistC", "Tong", "TongC", "isDelete"],
+        where: { ID_ChecklistC: records.ID_ChecklistC[0], isDelete: 0 },
         transaction,
       })
         .then(async (checklistC) => {
@@ -156,33 +156,26 @@ exports.createCheckListChiTiet = async (req, res, next) => {
           for (let i = 0; i < newRecords.length; i++) {
             const checklistId = newRecords[i].ID_Checklist;
             const ketquaValue = newRecords[i].Ketqua?.trim();
-
-            // await Ent_checklist.update(
-            //   { Tinhtrang: 1 },
-            //   {
-            //     where: {
-            //       ID_Checklist: checklistId,
-            //       Giatriloi: ketquaValue,  // Compare Giatriloi with Ketqua value
-            //       isDelete: 0,
-            //     },
-            //     transaction,
-            //   }
-            // );
             const checklistRecord = await Ent_checklist.findOne({
               where: {
                 ID_Checklist: checklistId,
                 isDelete: 0,
               },
+              attributes: ["Checklist", "ID_Checklist", "isDelete"],
               transaction,
             });
+            console.log('checklistRecord',checklistRecord)
 
             if(checklistRecord){
+              console.log('removeVietnameseTones(ketquaValue)', removeVietnameseTones(ketquaValue))
+              console.log('removeVietnameseTones(checklistRecord?.Giatriloi)', removeVietnameseTones(checklistRecord?.Giatriloi))
               const shouldUpdateTinhtrang = 
               // TH1 : có giá trị lỗi thì check giá trị lỗi = ketquaValue thì update Tinhtrang = 1
               (removeVietnameseTones(ketquaValue) === removeVietnameseTones(checklistRecord?.Giatriloi)) || 
               // ketquaValue khác giá trị định danh + phải có ảnh hoặc ghi chú thì update Tinhtrang = 1
-              ((newRecords.Anh || newRecords.GhiChu) && removeVietnameseTones(ketquaValue !== checklistRecord?.Giatridinhdanh));
+              ((newRecords.Anh || newRecords.GhiChu) && (removeVietnameseTones(ketquaValue) !== removeVietnameseTones(checklistRecord?.Giatridinhdanh)));
 
+              
               if (shouldUpdateTinhtrang) {
                 await Ent_checklist.update(
                   { Tinhtrang: 1 },
