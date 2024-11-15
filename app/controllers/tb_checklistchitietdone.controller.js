@@ -48,8 +48,6 @@ exports.create = (req, res) => {
       isDelete: 0,
     };
 
-    console.log("data", data);
-
     // Save Tb_checklistchitietdone in the database
     Tb_checklistchitietdone.create(data)
       .then(async (createdData) => {

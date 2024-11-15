@@ -1279,14 +1279,18 @@ exports.getBaoCaoChecklistMonths = async (req, res, next) => {
     worksheet.getCell("A1").value = "STT";
     worksheet.mergeCells("B1", "B2");
     worksheet.getCell("B1").value = "Tên dự án";
+    worksheet.getCell("B1").font = { bold: true };
+    // Set the width of the "Tên dự án" column (Column B) dynamically
+    worksheet.getColumn(2).width = 30; // Set the width to 30 (you can adjust this value)
 
-    // Tạo các cột cho từng ngày trong tháng với các khối KT, AN, LS, DV
+
+    // Tạo các cột cho từng ngày trong tháng với các khối KT, AN, LS, DV, F&B
     for (let day = 1; day <= daysInMonth; day++) {
-      const colIndex = (day - 1) * 4 + 3; // Tính toán vị trí cột
+      const colIndex = (day - 1) * 5 + 3; // Tính toán vị trí cột
       const colRange =
         worksheet.getCell(1, colIndex).address +
         ":" +
-        worksheet.getCell(1, colIndex + 3).address;
+        worksheet.getCell(1, colIndex + 4).address;
 
       worksheet.mergeCells(colRange);
       worksheet.getCell(1, colIndex).value = `Ngày ${day}`;
@@ -1325,7 +1329,13 @@ exports.getBaoCaoChecklistMonths = async (req, res, next) => {
         vertical: "middle",
         horizontal: "center",
       };
+      worksheet.getCell(2, colIndex + 4).alignment = {
+        vertical: "middle",
+        horizontal: "center",
+      };
       worksheet.getCell(2, colIndex + 3).font = { bold: true };
+      worksheet.getCell(2, colIndex + 4).font = { bold: true };
+      
     }
 
     let rowIndex = 3; // Bắt đầu từ dòng thứ 3 (sau tiêu đề)
@@ -1375,9 +1385,9 @@ exports.getBaoCaoChecklistMonths = async (req, res, next) => {
             typeof avgCompletion === "number" &&
             Number.isInteger(avgCompletion)
           ) {
-            row.getCell(colIndex).value = avgCompletion; // Để nguyên giá trị
+            row.getCell(colIndex).value = Number(avgCompletion); // Để nguyên giá trị
           } else if (avgCompletion !== "") {
-            row.getCell(colIndex).value = avgCompletion.toFixed(2); // Dùng toFixed(2) cho số không chẵn
+            row.getCell(colIndex).value = Number(avgCompletion.toFixed(2)); // Dùng toFixed(2) cho số không chẵn
           } else {
             row.getCell(colIndex).value = ""; // Đảm bảo ô là rỗng nếu không có dữ liệu
           }
@@ -2505,7 +2515,7 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
           { header: "Khối", key: "cv", width: 15 },
           { header: "Tọa Độ", key: "coordinates", width: 30 },
           { header: "Giờ HT", key: "gioht", width: 15 },
-          { header: "Hạng Mục", key: "relatedHangmuc", width: 40 },
+          { header: "Hạng Mục", key: "relatedHangmuc", width: 50 },
           { header: "Hợp Lệ", key: "isValid", width: 10 },
           { header: "Quét Qr", key: "isScan", width: 10 },
         ];
