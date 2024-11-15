@@ -51,7 +51,7 @@ exports.get = async (req, res) => {
         isDelete: 0,
       };
 
-      if (userData.ID_Chucvu !== 1 || userData.ent_chucvu.Chucvu !== "PSH") {
+      if ((userData.ent_chucvu.Role == 10 && userData.ID_Duan !== null) || userData.ent_chucvu.Role !== 10 ) {
         whereClause.ID_Duan = userData.ID_Duan;
       }
 
