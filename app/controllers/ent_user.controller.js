@@ -141,14 +141,14 @@ exports.register = async (req, res, next) => {
       ID_KhoiCV,
       Email,
       ID_Duan,
-      arr_Duan
+      arr_Duan,
     } = req.body;
     if (!UserName || !Password || !ID_Chucvu) {
       return res.status(400).json({
         message: "Phải nhập đầy đủ dữ liệu.",
       });
     }
-    console.log('arr_Duan', arr_Duan)
+    console.log("arr_Duan", arr_Duan);
     const userData = req.user.data;
     const user = await Ent_user.findOne({
       where: {
@@ -197,7 +197,14 @@ exports.register = async (req, res, next) => {
       Sodienthoai: Sodienthoai || null,
       Gioitinh: Gioitinh || null,
       Ngaysinh: Ngaysinh || null,
-      ID_KhoiCV: ID_Chucvu == 1 || ID_Chucvu == 5 || ID_Chucvu == 6|| ID_Chucvu ==7 || ID_Chucvu == 2 ? null : ID_KhoiCV,
+      ID_KhoiCV:
+        ID_Chucvu == 1 ||
+        ID_Chucvu == 5 ||
+        ID_Chucvu == 6 ||
+        ID_Chucvu == 7 ||
+        ID_Chucvu == 2
+          ? null
+          : ID_KhoiCV,
       arr_Duan: `${arr_Duan}`,
       isDelete: 0,
     };
@@ -218,7 +225,6 @@ exports.register = async (req, res, next) => {
   }
 };
 
-// Change Password
 exports.changePassword = async (req, res, next) => {
   try {
     if (!req.body) {
@@ -281,7 +287,6 @@ exports.changePassword = async (req, res, next) => {
   }
 };
 
-// Update user
 exports.updateUser = async (req, res) => {
   try {
     if (!req.body) {
@@ -309,7 +314,7 @@ exports.updateUser = async (req, res) => {
       Sodienthoai,
       Ngaysinh,
       Gioitinh,
-      arr_Duan
+      arr_Duan,
     } = req.body;
 
     // Kiểm tra xem có dữ liệu mật khẩu được gửi không
@@ -390,11 +395,16 @@ exports.getUserOnline = async (req, res, next) => {
       isDelete: 0,
     };
 
-    if (userData.ID_Chucvu !== 1 || userData.ent_chucvu.Chucvu !== "PSH") {
+    if (
+      (userData.ent_chucvu.Role !== 10 &&
+      userData.ID_Duan !== null) || (userData.ent_chucvu.Role !== 0 &&
+        userData.ID_Duan !== null) || (userData.ent_chucvu.Role !== 4 &&
+          userData.ID_Duan !== null)
+    ) {
       whereClause.ID_Duan = userData.ID_Duan;
     }
 
-    if (userData.ent_chucvu.Role == 10) {
+    if (userData.ent_chucvu.Role == 10 && userData.ID_Duan == null) {
       whereClause.ID_Chucvu = 2;
     }
 
@@ -1031,13 +1041,11 @@ exports.fixUserError = async (req, res) => {
     );
 
     if (nonExistentUserNames.length > 0) {
-      return res
-        .status(400)
-        .send({
-          message: `Tên tài khoản không tồn tại: ${nonExistentUserNames.join(
-            ", "
-          )}`,
-        });
+      return res.status(400).send({
+        message: `Tên tài khoản không tồn tại: ${nonExistentUserNames.join(
+          ", "
+        )}`,
+      });
     }
 
     await Ent_user.update(
@@ -1058,20 +1066,21 @@ exports.updateDuanByRole = async (req, res) => {
 
     const whereCondition = {
       isDelete: 0,
-      ID_User: userData.ID_User
+      ID_User: userData.ID_User,
     };
     if (userData) {
-      await Ent_user.update({ ID_Duan: ID_Duan }, { where: whereCondition }) .then((data) => {
-        res.status(200).json({
-          message: "Cập nhật thành công!!!",
-          data: data,
+      await Ent_user.update({ ID_Duan: ID_Duan }, { where: whereCondition })
+        .then((data) => {
+          res.status(200).json({
+            message: "Cập nhật thành công!!!",
+            data: data,
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
         });
-      })
-      .catch((err) => {
-        res.status(500).json({
-          message: err.message || "Lỗi! Vui lòng thử lại sau.",
-        });
-      });;
     }
   } catch (error) {
     res.status(500).send({ message: "Có lỗi xảy ra" });
@@ -1083,20 +1092,21 @@ exports.clearDuanByRole = async (req, res) => {
     const userData = req.user.data;
     const whereCondition = {
       isDelete: 0,
-      ID_User: userData.ID_User
+      ID_User: userData.ID_User,
     };
     if (userData) {
-      await Ent_user.update({ ID_Duan: null }, { where: whereCondition }) .then((data) => {
-        res.status(200).json({
-          message: "Cập nhật thành công!!!",
-          data: data,
+      await Ent_user.update({ ID_Duan: null }, { where: whereCondition })
+        .then((data) => {
+          res.status(200).json({
+            message: "Cập nhật thành công!!!",
+            data: data,
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
         });
-      })
-      .catch((err) => {
-        res.status(500).json({
-          message: err.message || "Lỗi! Vui lòng thử lại sau.",
-        });
-      });;
     }
   } catch (error) {
     res.status(500).send({ message: "Có lỗi xảy ra" });
@@ -1107,19 +1117,19 @@ exports.resetPassword = async (req, res) => {
   // Validate input
   const { UserName, Password } = req.body;
   if (!UserName?.trim() || !Password?.trim()) {
-    return res.status(400).json({ 
-      message: "Phải nhập đầy đủ dữ liệu!" 
+    return res.status(400).json({
+      message: "Phải nhập đầy đủ dữ liệu!",
     });
   }
 
   const transaction = await sequelize.transaction();
-  
+
   try {
     // Prepare data
     const userNames = UserName.split(",")
-      .map(name => name.trim())
-      .filter(name => name); // Remove empty strings
-    
+      .map((name) => name.trim())
+      .filter((name) => name); // Remove empty strings
+
     const hashedPassword = hashSync(Password, 10);
     const vietnamTime = new Date(Date.now() + 7 * 60 * 60000)
       .toISOString()
@@ -1130,52 +1140,49 @@ exports.resetPassword = async (req, res) => {
     const users = await Ent_user.findAll({
       where: {
         UserName: {
-          [Op.in]: userNames
-        }
+          [Op.in]: userNames,
+        },
       },
-      attributes: ['ID_User', 'UserName'],
-      transaction
+      attributes: ["ID_User", "UserName"],
+      transaction,
     });
 
     // Check for missing users
-    const foundUserNames = users.map(user => user.UserName);
-    const missingUsers = userNames.filter(name => 
-      !foundUserNames.includes(name)
+    const foundUserNames = users.map((user) => user.UserName);
+    const missingUsers = userNames.filter(
+      (name) => !foundUserNames.includes(name)
     );
 
     if (missingUsers.length > 0) {
-      throw new Error(
-        `Người dùng ${missingUsers.join(", ")} không tồn tại`
-      );
+      throw new Error(`Người dùng ${missingUsers.join(", ")} không tồn tại`);
     }
 
     // Update all passwords in one query
     await Ent_user.update(
       {
         Password: hashedPassword,
-        updateTime: vietnamTime
+        updateTime: vietnamTime,
       },
       {
         where: {
           ID_User: {
-            [Op.in]: users.map(user => user.ID_User)
-          }
+            [Op.in]: users.map((user) => user.ID_User),
+          },
         },
-        transaction
+        transaction,
       }
     );
 
     await transaction.commit();
-    
-    return res.status(200).json({ 
-      message: "Cập nhật mật khẩu thành công !" 
-    });
 
+    return res.status(200).json({
+      message: "Cập nhật mật khẩu thành công !",
+    });
   } catch (error) {
     await transaction.rollback();
     const isValidationError = error.message.includes("không tồn tại");
     return res.status(isValidationError ? 400 : 500).json({
-      message: error.message || "Lỗi! Vui lòng thử lại sau."
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
 };
