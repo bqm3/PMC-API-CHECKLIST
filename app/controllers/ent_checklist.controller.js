@@ -2057,7 +2057,9 @@ exports.uploadFiles = async (req, res) => {
                 ],
                 where: {
                   isDelete: 0,
-                  ID_KhoiCVs: { [Op.like]: validKhoiCVs },
+                  [Op.and]: Sequelize.literal(
+                    `JSON_CONTAINS(ID_KhoiCVs, '${JSON.stringify(validKhoiCVs)}')`
+                  ),
                   MaQrCode: generateQRCodeKV(
                     tenToanha,
                     tenKhuvuc,
