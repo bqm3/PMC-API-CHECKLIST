@@ -5,7 +5,7 @@ const {
   Ent_khuvuc_khoicv,
 } = require("../models/setup.model");
 const { Ent_khuvuc } = require("../models/setup.model");
-const { Op } = require("sequelize");
+const { Op, Sequelize } = require("sequelize");
 const sequelize = require("../config/db.config");
 const xlsx = require("xlsx");
 const fs = require("fs");
@@ -672,6 +672,7 @@ exports.uploadFiles = async (req, res) => {
           })
         );
         const validKhoiCVs = khoiCVs.filter((id) => id !== null);
+        console.log('validKhoiCVs', validKhoiCVs)
 
         let khuVuc = await Ent_khuvuc.findOne({
           attributes: [
@@ -689,11 +690,15 @@ exports.uploadFiles = async (req, res) => {
               tenTang,
               userData.ID_Duan
             ),
-            ID_KhoiCVs: { [Op.like]: validKhoiCVs },
+            [Op.and]: Sequelize.literal(
+              `JSON_CONTAINS(ID_KhoiCVs, '${JSON.stringify(validKhoiCVs)}')`
+            ),
             isDelete: 0,
           },
           transaction,
         });
+
+        console.log('khuVuc', khuVuc)
 
         // Generate a QR code for hạng mục
         const maQrCode = generateQRCode(

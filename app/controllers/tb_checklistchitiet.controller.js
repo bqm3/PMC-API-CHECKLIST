@@ -164,11 +164,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
               attributes: ["Checklist", "ID_Checklist", "isDelete"],
               transaction,
             });
-            console.log('checklistRecord',checklistRecord)
-
             if(checklistRecord){
-              console.log('removeVietnameseTones(ketquaValue)', removeVietnameseTones(ketquaValue))
-              console.log('removeVietnameseTones(checklistRecord?.Giatriloi)', removeVietnameseTones(checklistRecord?.Giatriloi))
               const shouldUpdateTinhtrang = 
               // TH1 : có giá trị lỗi thì check giá trị lỗi = ketquaValue thì update Tinhtrang = 1
               (removeVietnameseTones(ketquaValue) === removeVietnameseTones(checklistRecord?.Giatriloi)) || 
