@@ -51,7 +51,7 @@ exports.get = async (req, res) => {
       whereCondition.ID_Chucvu = { [Op.notIn]: [1, 5, 6, 7] };
     }
     if (userData && userData.ent_chucvu.Role == 10) {
-      whereCondition.ID_Chucvu = { [Op.notIn]: [1, 2] };
+      whereCondition.ID_Chucvu = { [Op.notIn]: [1] };
     }
 
     if (userData) {
