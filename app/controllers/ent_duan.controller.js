@@ -11,10 +11,12 @@ const {
 } = require("../models/setup.model");
 const { Op, Sequelize, fn, col, literal, where } = require("sequelize");
 const { formatVietnameseText } = require("../utils/util");
+const { uploadFile } = require("../middleware/auth_google");
 
-exports.create = (req, res) => {
+exports.create = async (req, res) => {
   try {
     const userData = req.user.data;
+    const fileId = await uploadFile(req.files[0]);
 
     if (!userData) {
       res.status(401).json({
@@ -41,7 +43,7 @@ exports.create = (req, res) => {
       Diachi: req.body.Diachi,
       Vido: req.body.Vido,
       Kinhdo: req.body.Kinhdo,
-      Logo: req.body.Logo,
+      Logo: req.body.Logo || `https://drive.google.com/thumbnail?id=${fileId.id}`,
       isDelete: 0,
     };
 
@@ -228,6 +230,8 @@ exports.getDetail = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const userData = req.user.data;
+    const fileId = await uploadFile(req.files[0]);
+
     if (req.params.id && userData) {
       Ent_duan.update(
         {
@@ -235,7 +239,7 @@ exports.update = async (req, res) => {
           Diachi: req.body.Diachi,
           Vido: req.body.Vido,
           Kinhdo: req.body.Kinhdo,
-          Logo: req.body.Logo,
+          Logo: req.body.Logo || `https://drive.google.com/thumbnail?id=${fileId.id}`,
           Ngaybatdau: req.body.Ngaybatdau,
           ID_Nhom: req.body.ID_Nhom || null,
           ID_Chinhanh: req.body.ID_Chinhanh || null,
