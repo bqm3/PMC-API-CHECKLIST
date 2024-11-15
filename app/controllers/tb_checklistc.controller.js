@@ -133,13 +133,13 @@ exports.createFirstChecklist = async (req, res, next) => {
       Giobatdau <= Gioketthuc
     ) {
       return res.status(400).json({
-        message: "Giờ bắt đầu không thuộc khoảng thời gian của ca làm việc!",
+        message: "Giờ bắt đầu không thuộc khoảng thời gian \n của ca làm việc!",
       });
     }
 
     if (Giobd <= Giobatdau && Giobd >= Gioketthuc && Giobatdau >= Gioketthuc) {
       return res.status(400).json({
-        message: "Giờ bắt đầu không thuộc khoảng thời gian của ca làm việc!",
+        message: "Giờ bắt đầu không thuộc khoảng thời gian \n của ca làm việc!",
       });
     }
 
