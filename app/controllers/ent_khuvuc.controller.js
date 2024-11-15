@@ -407,9 +407,11 @@ exports.getKhuVucFilter = async (req, res) => {
 
         // Add ID_KhoiCV condition if it exists
         if (userData.ID_KhoiCV !== null && userData.ID_KhoiCV !== undefined) {
-          andConditions.push({
-            "$ent_khuvuc_khoicvs.ID_KhoiCV$": userData.ID_KhoiCV,
-          });
+          if(userData.ent_chucvu.Role == 3 ){
+            andConditions.push({
+              "$ent_khuvuc_khoicvs.ID_KhoiCV$": userData.ID_KhoiCV,
+            });
+          }
         }
 
         // Add ID_Toanha condition if it exists in request body

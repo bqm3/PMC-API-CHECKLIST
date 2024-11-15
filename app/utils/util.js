@@ -106,6 +106,7 @@ function getPreviousMonth(month, year) {
 
   //format text vn -> en
   function removeVietnameseTones(str) {
+    if(str == null  || str == '' || str == undefined ) return '';
     return str
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')

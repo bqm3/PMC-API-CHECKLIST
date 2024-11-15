@@ -1449,9 +1449,7 @@ exports.filterChecklists = async (req, res) => {
                 },
               ],
               where: {
-                ID_KhoiCV: userData?.ID_KhoiCV
-                  ? userData?.ID_KhoiCV
-                  : ID_KhoiCV,
+                ID_KhoiCV: ID_KhoiCV ? ID_KhoiCV : userData.ID_KhoiCV,
               },
             },
           ],
@@ -1479,8 +1477,6 @@ exports.filterChecklists = async (req, res) => {
     const filteredData = checklistData.filter(
       (item) => item.ent_hangmuc !== null
     );
-
-    console.log("filteredData", filteredData.length);
 
     return res.status(200).json({
       message:
