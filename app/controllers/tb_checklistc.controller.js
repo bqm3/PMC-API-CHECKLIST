@@ -7040,8 +7040,6 @@ exports.createExcelDuAn = async (req, res) => {
 
 exports.createExcelDuAnPercent = async (req, res) => {
   try {
-    // const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
-
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("CheckList Projects");
 
@@ -7076,7 +7074,6 @@ exports.createExcelDuAnPercent = async (req, res) => {
         ID_Duan: {
           [Op.ne]: 1,
         },
-        // Ngay: yesterday
       },
       include: [
         {
@@ -7152,12 +7149,7 @@ exports.createExcelDuAnPercent = async (req, res) => {
       // Lưu tỷ lệ hoàn thành của từng người
       if (checklistC.Tong > 0) {
         const userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
-        result[projectId].createdKhois[khoiName].shifts[
-          shiftName
-        ].userCompletionRates.push(userCompletionRate);
-        console.log(`Tỷ lệ hoàn thành của ca: ${userCompletionRate}%`);
-      } else {
-        console.log(`Tỷ lệ hoàn thành của ca: 0% (Tong = 0)`);
+        result[projectId].createdKhois[khoiName].shifts[shiftName].userCompletionRates.push(userCompletionRate);
       }
     });
 
@@ -7168,26 +7160,21 @@ exports.createExcelDuAnPercent = async (req, res) => {
         let totalShifts = 0;
 
         Object.values(khoi.shifts).forEach((shift) => {
-          // Tính phần trăm hoàn thành cho ca dựa trên tỷ lệ của từng người trong ca
           let shiftCompletionRatio = shift.userCompletionRates.reduce(
             (sum, rate) => sum + rate,
             0
           );
           if (shiftCompletionRatio > 100) {
-            shiftCompletionRatio = 100; // Giới hạn phần trăm hoàn thành tối đa là 100% cho từng ca
+            shiftCompletionRatio = 100;
           }
 
-          // Tính tổng tỷ lệ hoàn thành của các ca
           totalKhoiCompletionRatio += shiftCompletionRatio;
-          totalShifts += 1; // Tăng số lượng ca
+          totalShifts += 1;
         });
 
-        // Tính phần trăm hoàn thành trung bình cho khối
         const avgKhoiCompletionRatio = totalKhoiCompletionRatio / totalShifts;
 
-        khoi.completionRatio = Number.isInteger(avgKhoiCompletionRatio)
-          ? avgKhoiCompletionRatio // No decimal places, return as is
-          : avgKhoiCompletionRatio.toFixed(2); // Otherwise, apply toFixed(2)
+        khoi.completionRatio = avgKhoiCompletionRatio.toFixed(2);
       });
     });
 
@@ -7195,20 +7182,14 @@ exports.createExcelDuAnPercent = async (req, res) => {
     const resultArray = Object.values(result);
 
     const sortedResultArray = resultArray.sort((a, b) => {
-      if (a.projectChinhanh < b.projectChinhanh) {
-        return -1; // a trước b
-      }
-      if (a.projectChinhanh > b.projectChinhanh) {
-        return 1; // a sau b
-      }
-      return 0; // nếu bằng nhau, giữ nguyên thứ tự
+      return a.projectChinhanh.localeCompare(b.projectChinhanh);
     });
 
     // Duyệt qua từng dự án và thêm vào bảng
-    sortedResultArray.forEach((project, index) => {
+    sortedResultArray.forEach((project) => {
       const { projectName, createdKhois, projectChinhanh } = project;
       let rowValues = {
-        nhom: projectChinhanh, // Thuộc CN
+        nhom: projectChinhanh,
         tenduan: projectName,
         kythuat: "",
         lamsach: "",
@@ -7222,13 +7203,11 @@ exports.createExcelDuAnPercent = async (req, res) => {
       let totalChecklistPercentage = 0;
       let numKhoisWithData = 0;
 
-      // Kiểm tra từng khối công việc
       Object.keys(createdKhois).forEach((khoiName) => {
         const khoi = createdKhois[khoiName];
         let totalKhoiCompletionRatio = 0;
         let totalShifts = 0;
 
-        // Kiểm tra từng ca làm việc trong khối
         Object.keys(khoi.shifts).forEach((shiftName) => {
           const shift = khoi.shifts[shiftName];
           const completionRate = shift.userCompletionRates.reduce(
@@ -7238,24 +7217,19 @@ exports.createExcelDuAnPercent = async (req, res) => {
 
           const shiftCompletionRatio = Math.min(completionRate, 100);
 
-          // Chỉ tính khi completionRate > 0
           if (completionRate > 0) {
             totalKhoiCompletionRatio += shiftCompletionRatio;
             totalShifts += 1;
-            rowValues.dachay = "✔️"; // Nếu có tỷ lệ hoàn thành, đặt dấu ✔️
+            rowValues.dachay = "✔️";
           }
         });
 
-        // Tính phần trăm hoàn thành trung bình cho khối
         if (totalShifts > 0) {
           const avgKhoiCompletionRatio = totalKhoiCompletionRatio / totalShifts;
-
-          // Cộng tổng tỷ lệ của khối vào tổng tỷ lệ checklist chung
           totalChecklistPercentage += avgKhoiCompletionRatio;
-          numKhoisWithData += 1; // Tăng số khối có dữ liệu
+          numKhoisWithData += 1;
         }
 
-        // Điền dữ liệu cho các khối cụ thể
         if (khoiName === "Khối kỹ thuật") {
           rowValues.kythuat = "X";
         }
@@ -7273,33 +7247,17 @@ exports.createExcelDuAnPercent = async (req, res) => {
         }
       });
 
-      // Tính tỷ lệ checklist trung bình
       let tileChecklist = 0;
       if (numKhoisWithData > 0) {
         tileChecklist = totalChecklistPercentage / numKhoisWithData;
       }
 
-      // Đảm bảo không có giá trị NaN và chỉ hiển thị khi có giá trị hợp lệ
-      rowValues.tile = isNaN(tileChecklist)
-        ? "N/A"
-        : tileChecklist.toFixed(2) + "%";
+      rowValues.tile = isNaN(tileChecklist) ? "N/A" : tileChecklist.toFixed(2) + "%";
 
-      // Thêm dữ liệu vào bảng
       worksheet.addRow(rowValues);
     });
 
-    // Tạo file buffer để xuất file Excel
     const buffer = await workbook.xlsx.writeBuffer();
-
-    await workbook.xlsx.load(buffer);
-    const rows = [];
-    worksheet.eachRow((row, rowNumber) => {
-      const rowData = [];
-      row.eachCell((cell, colNumber) => {
-        rowData.push(cell.value);
-      });
-      rows.push(rowData);
-    });
 
     res.setHeader(
       "Content-Type",
@@ -7307,11 +7265,10 @@ exports.createExcelDuAnPercent = async (req, res) => {
     );
     res.setHeader(
       "Content-Disposition",
-      "attachment; filename=" + "CheckList_Projects.xlsx"
+      "attachment; filename=CheckList_Projects.xlsx"
     );
-
-    await workbook.xlsx.write(rows);
-    res.end();
+    
+    res.end(buffer);
 
   } catch (err) {
     res.status(500).json({
@@ -7319,6 +7276,7 @@ exports.createExcelDuAnPercent = async (req, res) => {
     });
   }
 };
+
 
 async function processData(data) {
   const aggregatedData = {};
