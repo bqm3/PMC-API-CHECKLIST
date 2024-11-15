@@ -51,6 +51,7 @@ module.exports = (app) => {
   router.get("/report-checklist-percent-yesterday", tb_checklistc.reportPercentYesterday);
   router.get("/report-problem-percent-week", tb_checklistc.soSanhSuCo);
   router.get("/report-checklist-project-excel", tb_checklistc.createExcelDuAn);
+  router.post("/report-checklist-project-percent-excel", tb_checklistc.createExcelDuAnPercent);
 
     // Role: Chi nhánh
   //========================================== 
