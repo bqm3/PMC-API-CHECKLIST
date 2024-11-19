@@ -1749,21 +1749,6 @@ exports.checklistImages = async (req, res) => {
   }
 };
 
-// Helper function to remove circular references
-function removeCircularReferences(obj) {
-  const cache = new Set();
-  const stringify = JSON.stringify(obj, (key, value) => {
-    if (typeof value === "object" && value !== null) {
-      if (cache.has(value)) {
-        return; // Discard circular reference
-      }
-      cache.add(value);
-    }
-    return value;
-  });
-  cache.clear();
-  return JSON.parse(stringify);
-}
 
 exports.checklistCalv = async (req, res) => {
   try {
@@ -1864,8 +1849,6 @@ exports.checklistCalv = async (req, res) => {
         item.get({ plain: true })
       );
 
-      console.log('plainChecklistChiTiet',plainChecklistChiTiet)
-
       // Fetch checklist done items
       const checklistDoneItems = await Tb_checklistchitietdone.findAll({
         attributes: [
@@ -1915,11 +1898,6 @@ exports.checklistCalv = async (req, res) => {
         });
       });
 
-
-
-      console.log("=================")
-      console.log('checklistIds',checklistIds)
-      console.log('plainChecklistDoneItems', plainChecklistDoneItems)
       // Fetch related checklist data
       const relatedChecklists = await Ent_checklist.findAll({
         attributes: [
@@ -2109,22 +2087,44 @@ exports.reportLocation = async (req, res) => {
 
       // Loop through checklistChiTiet to group by Vido and Kinhdo
       tbChecklistChiTiet.forEach((item) => {
-        const { Vido, Kinhdo, Description } = item;
-
+        const { Vido, Kinhdo, Description, Gioht } = item;
+      
         // If Vido and Kinhdo exist, proceed
         if (Vido && Kinhdo) {
           const coordKey = `${Vido},${Kinhdo}`; // Create a unique key based on Vido and Kinhdo
-
-          // If the coordinates exist in the map, push the current item
+      
+          // Convert Gioht to total seconds
+          const [hours, minutes, seconds] = Gioht.split(":").map(Number);
+          const currentTimeInSeconds = hours * 3600 + minutes * 60 + seconds;
+      
+          // If the coordinates exist in the map
           if (coordinatesMap.has(coordKey)) {
-            coordinatesMap.get(coordKey).push(item);
+            const existingItems = coordinatesMap.get(coordKey);
+      
+            // Check if the current item is within 15 seconds of any existing item
+            const isWithinTimeRange = existingItems.some((existingItem) => {
+              const [existingHours, existingMinutes, existingSeconds] = existingItem.Gioht
+                .split(":")
+                .map(Number);
+              const existingTimeInSeconds =
+                existingHours * 3600 + existingMinutes * 60 + existingSeconds;
+      
+              const timeDiffInSeconds = Math.abs(
+                currentTimeInSeconds - existingTimeInSeconds
+              );
+              return timeDiffInSeconds <= 10; // Compare with a 10-second threshold
+            });
+      
+            if (isWithinTimeRange) {
+              existingItems.push(item); // Add to the existing list if within time range
+            }
           } else {
             // Otherwise, create a new entry for the coordinates
             coordinatesMap.set(coordKey, [item]);
           }
         }
       });
-
+      
       // Now, coordinatesMap contains groups of checklist items with the same coordinates
       // To get the result, filter out entries with more than one item (duplicates)
       const duplicateCoordinates = [];
@@ -2210,7 +2210,9 @@ exports.reportLocation = async (req, res) => {
           coordinates: entry.coordinates,
           detailedItems, // Simplified list of detailed items with Hangmuc, Khuvuc, and Tentang
         };
-      });
+      }).filter((entry) => entry.detailedItems.length > 0); // Filter entries with detailedItems > 0
+
+
       return {
         id: result.id,
         project: result.project,
@@ -2219,7 +2221,7 @@ exports.reportLocation = async (req, res) => {
         cv: result.cv,
         detailedCoordinates, // Coordinates with simplified detailed checklist items (Hangmuc, Khuvuc, Tentang)
       };
-    });
+    }).filter((result) => result.detailedCoordinates.length > 0); 
 
     // Send the final result with details
     res.status(200).json({
@@ -2410,7 +2412,7 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
       },
     });
 
-    const MIN_TRAVERSAL_TIME_BETWEEN_FLOORS = 1 * 20;
+    const MIN_TRAVERSAL_TIME_BETWEEN_FLOORS = 1 * 10;
     // Merge related checklist details with duplicate coordinates
     const resultWithDetails = results
       .map((result) => {
@@ -5552,11 +5554,10 @@ exports.createExcelTongHopCa = async (req, res) => {
             Tong: item.Tong,
             Ghichu: item.Ghichu,
           };
+          aggregatedData[shiftKey].TongC += item.TongC;
         }
-
-        aggregatedData[shiftKey].TongC = item.TongC;
       });
-
+      
       worksheet.columns = [
         { header: "STT", key: "stt", width: 5 },
         { header: "Ngày", key: "ngay", width: 15 },

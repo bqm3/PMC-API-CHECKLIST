@@ -6,6 +6,7 @@ const {
   Ent_chinhanh,
   Ent_toanha,
   Ent_nhom,
+  Ent_phanloaida,
 } = require("../models/setup.model");
 const { hashSync, genSaltSync, compareSync } = require("bcrypt");
 const bcrypt = require("bcrypt");
@@ -38,10 +39,10 @@ exports.login = async (req, res) => {
         "ID_Chucvu",
         "ID_Chinhanh",
         "ID_Duan",
+        "ID_KhoiCV",
         "Password",
         "PasswordPrivate",
         "arr_Duan",
-        "ID_KhoiCV",
         "Email",
         "isError",
         "isDelete",
@@ -50,6 +51,21 @@ exports.login = async (req, res) => {
         {
           model: Ent_duan,
           attributes: ["Duan", "Diachi", "Logo"],
+          include: [
+            {
+              model: Ent_chinhanh,
+              attributes: ["Tenchinhanh", "ID_Chinhanh"],
+            },
+            {
+              model: Ent_nhom,
+              attributes: ["Tennhom", "ID_Nhom"],
+            },
+            {
+              model: Ent_phanloaida,
+              as: "ent_phanloaida",
+              attributes: ["ID_Phanloai", "Phanloai"],
+            },
+          ],
         },
         {
           model: Ent_chucvu,

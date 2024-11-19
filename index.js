@@ -1,8 +1,8 @@
 require("dotenv").config();
 const cron = require("node-cron");
-const express = require("express");
 const PDFDocument = require("pdfkit");
 const cookieParser = require("cookie-parser");
+const express = require("express");
 const { google } = require("googleapis");
 const fs = require("fs");
 const path = require("path");
@@ -30,9 +30,8 @@ const credentials = {
   token_uri: process.env.TOKEN_URI,
   auth_provider_x509_cert_url: process.env.AUTH_PROVIDER_X509_CERT_URL,
   client_x509_cert_url: process.env.CLIENT_X509_CERT_URL,
-  universe_domain: process.env.UNIVERSE_DOMAIN
+  universe_domain: process.env.UNIVERSE_DOMAIN,
 };
-
 
 const SCOPES = ["https://www.googleapis.com/auth/drive"];
 
@@ -71,48 +70,6 @@ app.use("/upload", express.static("app/public"));
 app.get("/", (req, res) => {
   res.json("Hello World!");
 });
-// This registration token comes from the client FCM SDKs.
-app.get("/test-noti", async (req, res) => {
-  const registrationTokens = [
-    "ExponentPushToken[CzoGcLH9L4wqJGVB9V-68-]",
-    "ExponentPushToken[0eplaPHQHUcrFvaEm24iMe]",
-  ];
-
-  const message = {
-    notification: {
-      title: "Hello World 2",
-      body: "Test Body 2",
-    },
-    tokens: registrationTokens,
-  };
-
-  getMessaging()
-    .sendEachForMulticast(message)
-    .then((response) => {
-      res.json({ response });
-      console.log(response.successCount + " messages were sent successfully");
-    })
-    .catch((err) => {
-      console.log(err);
-    });
-});
-
-app.post("/generate-pdf", (req, res) => {
-  const doc = new PDFDocument();
-
-  // Set the response type to PDF
-  res.setHeader("Content-Type", "application/pdf");
-
-  // Pipe the PDF into the response
-  doc.pipe(res);
-
-  // Add content to the PDF
-  doc.fontSize(25).text("Hello World!", 100, 100);
-  doc.text("This is a sample PDF generated on the server.");
-
-  // Finalize the PDF and end the stream
-  doc.end();
-});
 
 async function exportDatabase() {
   const backupPath = path.join(
@@ -130,7 +87,6 @@ async function exportDatabase() {
     dumpToFile: backupPath,
   });
 
-  console.log(`Database exported to: ${backupPath}`);
   return backupPath;
 }
 
@@ -138,13 +94,13 @@ async function exportDatabase() {
 async function uploadFile(filePath) {
   try {
     // ID của thư mục trên Google Drive
-    const folderId = "1TAMvnXHdhkTov68oKrLbB6DE0bVZezAL"; 
+    const folderId = "1TAMvnXHdhkTov68oKrLbB6DE0bVZezAL";
 
     const createFile = await drive.files.create({
       requestBody: {
-        name: path.basename(filePath), 
-        mimeType: "application/sql", 
-        parents: [folderId], 
+        name: path.basename(filePath),
+        mimeType: "application/sql",
+        parents: [folderId],
       },
       media: {
         mimeType: "application/sql",
@@ -190,19 +146,42 @@ async function handleBackup() {
   try {
     const backupFilePath = await exportDatabase(); // Xuất cơ sở dữ liệu
     await uploadFile(backupFilePath); // Upload file lên Google Drive
+
+    if (fs.existsSync(backupFilePath)) {
+      fs.unlinkSync(backupFilePath); // Xóa file
+      console.log(`Backup file deleted: ${backupFilePath}`);
+    }
   } catch (error) {
     console.error(error);
   }
 }
 
+const lockFilePath = path.join(__dirname, "cron_backup.lock");
 cron.schedule("0 4 * * *", async () => {
-  console.log("Running Cron Job at 4 AM");
+  console.log("Starting Cron Job at 4 AM");
+
+  // Kiểm tra xem file khóa đã tồn tại chưa
+  if (fs.existsSync(lockFilePath)) {
+    console.log("Cron job is already running. Skipping this instance.");
+    return;
+  }
+
+  // Tạo file khóa
+  fs.writeFileSync(lockFilePath, "LOCKED");
+  console.log("Lock file created.");
+
   try {
-    // Gọi hàm main của bạn
+    // Thực hiện công việc của bạn
     await handleBackup();
-    console.log("Cron job completed successfully");
+    console.log("Cron job completed successfully.");
   } catch (error) {
     console.error("Error running cron job:", error);
+  } finally {
+    // Xóa file khóa
+    if (fs.existsSync(lockFilePath)) {
+      fs.unlinkSync(lockFilePath);
+      console.log("Lock file removed.");
+    }
   }
 });
 
@@ -233,5 +212,7 @@ require("./app/routes/ent_baocaochiso.routes")(app);
 
 const PORT = process.env.PORT || 6969;
 app.listen(PORT, () => {
+  console.log("📝 Original Source By: Quang Minh");
+  console.log("📝 Modified Into JavaScript By: Quang Minh");
   console.log(`Server is running on port ${PORT}.`);
 });
