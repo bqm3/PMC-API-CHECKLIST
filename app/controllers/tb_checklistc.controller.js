@@ -1335,7 +1335,7 @@ exports.getBaoCaoChecklistMonths = async (req, res, next) => {
       };
       worksheet.getCell(2, colIndex + 3).font = { bold: true };
       worksheet.getCell(2, colIndex + 4).font = { bold: true };
-      
+
     }
 
     let rowIndex = 3; // Bắt đầu từ dòng thứ 3 (sau tiêu đề)
@@ -2088,19 +2088,19 @@ exports.reportLocation = async (req, res) => {
       // Loop through checklistChiTiet to group by Vido and Kinhdo
       tbChecklistChiTiet.forEach((item) => {
         const { Vido, Kinhdo, Description, Gioht } = item;
-      
+
         // If Vido and Kinhdo exist, proceed
         if (Vido && Kinhdo) {
           const coordKey = `${Vido},${Kinhdo}`; // Create a unique key based on Vido and Kinhdo
-      
+
           // Convert Gioht to total seconds
           const [hours, minutes, seconds] = Gioht.split(":").map(Number);
           const currentTimeInSeconds = hours * 3600 + minutes * 60 + seconds;
-      
+
           // If the coordinates exist in the map
           if (coordinatesMap.has(coordKey)) {
             const existingItems = coordinatesMap.get(coordKey);
-      
+
             // Check if the current item is within 15 seconds of any existing item
             const isWithinTimeRange = existingItems.some((existingItem) => {
               const [existingHours, existingMinutes, existingSeconds] = existingItem.Gioht
@@ -2108,13 +2108,13 @@ exports.reportLocation = async (req, res) => {
                 .map(Number);
               const existingTimeInSeconds =
                 existingHours * 3600 + existingMinutes * 60 + existingSeconds;
-      
+
               const timeDiffInSeconds = Math.abs(
                 currentTimeInSeconds - existingTimeInSeconds
               );
               return timeDiffInSeconds <= 10; // Compare with a 10-second threshold
             });
-      
+
             if (isWithinTimeRange) {
               existingItems.push(item); // Add to the existing list if within time range
             }
@@ -2124,7 +2124,7 @@ exports.reportLocation = async (req, res) => {
           }
         }
       });
-      
+
       // Now, coordinatesMap contains groups of checklist items with the same coordinates
       // To get the result, filter out entries with more than one item (duplicates)
       const duplicateCoordinates = [];
@@ -2221,7 +2221,7 @@ exports.reportLocation = async (req, res) => {
         cv: result.cv,
         detailedCoordinates, // Coordinates with simplified detailed checklist items (Hangmuc, Khuvuc, Tentang)
       };
-    }).filter((result) => result.detailedCoordinates.length > 0); 
+    }).filter((result) => result.detailedCoordinates.length > 0);
 
     // Send the final result with details
     res.status(200).json({
@@ -2479,19 +2479,19 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
         // Only return results with coordinates that have invalid items
         return detailedCoordinates.length > 0
           ? {
-              id: result.id,
-              project: result.project,
-              ca: result.ca,
-              nguoi: result.nguoi,
-              tk: result.tk,
-              cv: result.cv,
-              giobd: result.giobd,
-              giokt: result.giokt,
-              ngay: result.ngay,
-              tongC: result.tongC,
-              tong: result.tong,
-              detailedCoordinates,
-            }
+            id: result.id,
+            project: result.project,
+            ca: result.ca,
+            nguoi: result.nguoi,
+            tk: result.tk,
+            cv: result.cv,
+            giobd: result.giobd,
+            giokt: result.giokt,
+            ngay: result.ngay,
+            tongC: result.tongC,
+            tong: result.tong,
+            detailedCoordinates,
+          }
           : null;
       })
       .filter((result) => result !== null); // Remove results without any invalid entries
@@ -4867,10 +4867,14 @@ exports.getProjectsChecklistStatus = async (req, res) => {
         checklistC.Tong;
 
       // Lưu tỷ lệ hoàn thành của từng người
-      const userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
-      result[projectId].createdKhois[khoiName].shifts[
-        shiftName
-      ].userCompletionRates.push(userCompletionRate);
+      let userCompletionRate = 0; // Mặc định là 0 nếu không có giá trị hợp lệ
+      if (checklistC.Tong !== 0 && checklistC.Tong != null && checklistC.TongC != null) {
+        userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
+      }
+      // Đảm bảo tỷ lệ hoàn thành không vượt quá 100%
+      userCompletionRate = userCompletionRate > 100 ? 100 : userCompletionRate;
+
+      result[projectId].createdKhois[khoiName].shifts[shiftName].userCompletionRates.push(userCompletionRate);
     });
 
     // Tính toán phần trăm hoàn thành riêng cho từng ca và tổng khối
@@ -4881,10 +4885,7 @@ exports.getProjectsChecklistStatus = async (req, res) => {
 
         Object.values(khoi.shifts).forEach((shift) => {
           // Tính phần trăm hoàn thành cho ca dựa trên tỷ lệ của từng người trong ca
-          let shiftCompletionRatio = shift.userCompletionRates.reduce(
-            (sum, rate) => sum + rate,
-            0
-          );
+          let shiftCompletionRatio = shift.userCompletionRates.reduce((sum, rate) => sum + (rate || 0), 0);
           if (shiftCompletionRatio > 100) {
             shiftCompletionRatio = 100; // Giới hạn phần trăm hoàn thành tối đa là 100% cho từng ca
           }
@@ -5557,7 +5558,7 @@ exports.createExcelTongHopCa = async (req, res) => {
           aggregatedData[shiftKey].TongC += item.TongC;
         }
       });
-      
+
       worksheet.columns = [
         { header: "STT", key: "stt", width: 5 },
         { header: "Ngày", key: "ngay", width: 15 },
@@ -6765,7 +6766,7 @@ exports.createExcelThongKeTraCuu = async (req, res) => {
       ID_Calvs,
     } = req.body;
     const userData = req.user.data;
-  } catch (error) {}
+  } catch (error) { }
 };
 
 exports.createExcelDuAn = async (req, res) => {
@@ -7268,7 +7269,7 @@ exports.createExcelDuAnPercent = async (req, res) => {
       "Content-Disposition",
       "attachment; filename=CheckList_Projects.xlsx"
     );
-    
+
     res.end(buffer);
 
   } catch (err) {

@@ -14,6 +14,7 @@ const { getMessaging } = require("firebase-admin/messaging");
 const app = express();
 
 var serviceAccount = require("./pmc-cskh-firebase-adminsdk-y7378-5122f6edc7.json");
+const { danhSachDuLieu, getProjectsChecklistStatus } = require("./app/controllers/nlr_ai.controller");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -182,6 +183,26 @@ cron.schedule("0 4 * * *", async () => {
       fs.unlinkSync(lockFilePath);
       console.log("Lock file removed.");
     }
+  }
+});
+
+cron.schedule('0 6 * * *', async () => {
+  try {
+    console.log('Cron job started at 6 AM...');
+    await danhSachDuLieu();
+    console.log('Cron job finished successfully');
+  } catch (error) {
+    console.error('Error executing cron job:', error);
+  }
+});
+
+cron.schedule('0 5 * * *', async () => {
+  try {
+    console.log('Cron job started at 5 AM...');
+    await getProjectsChecklistStatus(); 
+    console.log('Cron job finished successfully');
+  } catch (error) {
+    console.error('Error executing cron job:', error);
   }
 });
 
