@@ -1826,6 +1826,7 @@ exports.checklistCalv = async (req, res) => {
               "MaQrCode",
               "Checklist",
               "Giatridinhdanh",
+              "Giatriloi",
               "isCheck",
               "Tinhtrang",
               "Giatrinhan",

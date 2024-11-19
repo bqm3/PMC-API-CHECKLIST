@@ -53,6 +53,8 @@ exports.createCheckListChiTiet = async (req, res, next) => {
         error: "ID_ChecklistC and ID_Checklist must have the same length.",
       });
     }
+    console.log('records',records)
+    console.log('images',images)
 
     const uploadedFileIds = [];
     if (!isEmpty(images)) {
@@ -81,21 +83,26 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       const day = String(d.getDate()).padStart(2, "0");
       const formattedDate = `${year}-${month}-${day}`;
 
-      let Anh = "";
+      let anhs = [];
       if (!isEmpty(images)) {
-        // Find the corresponding image based on the fieldname format
-        const imageIndex = `Images_${index}`;
-        const matchingImage = uploadedFileIds.find(
-          (file) => file.fieldname === imageIndex
-        );
-
-        if (matchingImage) {
-          Anh = matchingImage.fileId.id;
-        } else {
-          console.log(`No matching image found for Anh: ${imageIndex}`);
+        let imageIndex = '';
+        let matchingImage = null;
+        for(let i =0; i< images.length ; i++){
+          imageIndex = `Images_${index}_${ID_Checklist}_${i}`;
+          matchingImage = uploadedFileIds.find(
+            (file) => file.fieldname === imageIndex
+          );
+          if (matchingImage) {
+            anhs.push(matchingImage.fileId.id)
+          } else {
+            console.log(`No matching image found for Anh: ${imageIndex}`);
+          }
         }
+        // Find the corresponding image based on the fieldname format
+        
       }
 
+      const Anh = anhs.join(",")
       return {
         ID_ChecklistC: records.ID_ChecklistC[0],
         ID_Checklist,
@@ -161,7 +168,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
                 ID_Checklist: checklistId,
                 isDelete: 0,
               },
-              attributes: ["Checklist", "ID_Checklist", "isDelete"],
+              attributes: ["Checklist", "ID_Checklist", "Giatriloi", "Giatridinhdanh", "isDelete"],
               transaction,
             });
             if(checklistRecord){
@@ -169,9 +176,9 @@ exports.createCheckListChiTiet = async (req, res, next) => {
               // TH1 : có giá trị lỗi thì check giá trị lỗi = ketquaValue thì update Tinhtrang = 1
               (removeVietnameseTones(ketquaValue) === removeVietnameseTones(checklistRecord?.Giatriloi)) || 
               // ketquaValue khác giá trị định danh + phải có ảnh hoặc ghi chú thì update Tinhtrang = 1
-              ((newRecords.Anh || newRecords.GhiChu) && (removeVietnameseTones(ketquaValue) !== removeVietnameseTones(checklistRecord?.Giatridinhdanh)));
+              (((newRecords[i].Anh || newRecords[i].GhiChu)) ? true : false && 
+              (removeVietnameseTones(ketquaValue) !== removeVietnameseTones(checklistRecord?.Giatridinhdanh)));
 
-              
               if (shouldUpdateTinhtrang) {
                 await Ent_checklist.update(
                   { Tinhtrang: 1 },
