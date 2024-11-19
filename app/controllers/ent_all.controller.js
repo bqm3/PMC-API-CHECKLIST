@@ -4,8 +4,10 @@ const {
   Ent_linhvuc,
   Ent_loaihinhbds,
   Ent_phanloaida,
+  Ent_duan,
 } = require("../models/setup.model");
 const hsse = require("../models/hsse.model");
+const moment = require("moment");
 
 const sequelize = require("../config/db.config");
 const xlsx = require("xlsx");
@@ -14,6 +16,7 @@ const fs = require("fs");
 const path = require("path");
 const archiver = require("archiver");
 const axios = require("axios");
+const { removeSpacesFromKeys } = require("../utils/util");
 
 exports.getNhom = async (req, res) => {
   try {
@@ -144,28 +147,101 @@ exports.getPhanloai = async (req, res) => {
   }
 };
 
-const removeSpacesFromKeys = (obj) => {
-  return Object.keys(obj).reduce((acc, key) => {
-    const newKey = key?.toUpperCase();
-    acc[newKey] = obj[key];
-    return acc;
-  }, {});
+exports.checkDateReportData = async (req, res) => {
+  try {
+    const today = moment().startOf("day");
+    // Chuyển đổi date từ chuỗi thành đối tượng Date
+    const inputDate = new Date(today);
+    if (isNaN(inputDate)) {
+      return res.status(400).json({
+        message: "Ngày không hợp lệ.",
+      });
+    }
+
+    const { ID_Duan } = req.body;
+    const duAn = await Ent_duan.findByPk(ID_Duan, {
+      where: {
+        isDelete: 0,
+      },
+      include: [
+        {
+          model: Ent_chinhanh,
+          attributes: ["Tenchinhanh", "ID_Chinhanh"],
+        },
+        {
+          model: Ent_nhom,
+          attributes: ["Tennhom", "ID_Nhom"],
+        },
+        {
+          model: Ent_phanloaida,
+          as: "ent_phanloaida",
+          attributes: ["ID_Phanloai", "Phanloai"],
+        },
+      ],
+    });
+
+    // Lấy ngày đầu tiên và ngày cuối cùng của tháng
+    const firstDayOfMonth = new Date(
+      inputDate.getFullYear(),
+      inputDate.getMonth(),
+      1
+    );
+    const lastDayOfMonth = new Date(
+      inputDate.getFullYear(),
+      inputDate.getMonth() + 1,
+      0
+    );
+
+    // Kiểm tra xem ngày có phải là ngày đầu tiên hoặc cuối cùng của tháng không
+    const isFirstOrLastDay =
+      inputDate.getTime() === firstDayOfMonth.getTime() ||
+      inputDate.getTime() === lastDayOfMonth.getTime();
+
+    if (!isFirstOrLastDay) {
+      return res.status(400).json({
+        message: "Ngày không phải là ngày đầu tiên hoặc cuối cùng của tháng.",
+        data: {
+          show: false,
+          isCheck: duAn?.ID_Phanloai !== 1 ? 0 : 1,
+        },
+      });
+      // return res.status(200).json({
+      //   message: "Ngày không phải là ngày đầu tiên hoặc cuối cùng của tháng.",
+      //   data: {
+      //     month: 12,
+      //     year: 2024,
+      //     show: true,
+      //     isCheck: duAn?.ID_Phanloai !== 1 ? 0 : 1
+      //   },
+      // });
+    }
+
+    // Lấy tháng và năm cuối cùng (nếu là ngày đầu tiên thì lấy tháng trước)
+    const finalMonth =
+      inputDate.getDate() === 1
+        ? inputDate.getMonth()
+        : inputDate.getMonth() + 1;
+    const finalYear =
+      inputDate.getDate() === 1 && finalMonth === 0
+        ? inputDate.getFullYear() - 1
+        : inputDate.getFullYear();
+
+    return res.status(200).json({
+      message: "Ngày hợp lệ.",
+      data: {
+        month: finalMonth === 0 ? 12 : finalMonth,
+        year: finalYear,
+        show: true,
+        // 1 là trụ sở văn phòng
+        isCheck: duAn?.ID_Phanloai !== 1 ? 0 : 1,
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
 };
-
-function formatDate(inputDateTime) {
-  // Parse the input date-time string (assumed to be in MM/DD/YYYY HH:mm format)
-  const date = new Date(inputDateTime);
-
-  // Get the year, month, day, hours, and minutes
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based in JS
-  const day = String(date.getDate()).padStart(2, "0");
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-
-  // Return the date-time in YYYY-MM-DD HH:mm format
-  return `${year}-${month}-${day} ${hours}:${minutes}`;
-}
 
 function convertExcelDate(excelDate) {
   // Excel's date system starts at 1900-01-01
@@ -173,7 +249,7 @@ function convertExcelDate(excelDate) {
   excelEpoch.setDate(excelEpoch.getDate() + excelDate - 2); // Adjust for Excel's leap year bug
 
   // Ensure the date is correctly formatted as YYYY-MM-DD without time
-  return excelEpoch.toISOString().split('T')[0];
+  return excelEpoch.toISOString().split("T")[0];
 }
 
 exports.uploadFiles = async (req, res) => {
@@ -187,11 +263,13 @@ exports.uploadFiles = async (req, res) => {
     const worksheet = workbook.Sheets[sheetName];
     const data = xlsx.utils.sheet_to_json(worksheet);
     await sequelize.transaction(async (transaction) => {
-    for (const item of data) {
-     
+      for (const item of data) {
         const tranforItem = removeSpacesFromKeys(item);
         const tenDuAn = tranforItem["TÊN DỰ ÁN"];
-        console.log('tranforItem["NGÀY GHI NHẬN"]',convertExcelDate(tranforItem["NGÀY GHI NHẬN"]))
+        console.log(
+          'tranforItem["NGÀY GHI NHẬN"]',
+          convertExcelDate(tranforItem["NGÀY GHI NHẬN"])
+        );
 
         const ngayGhiNhan = convertExcelDate(tranforItem["NGÀY GHI NHẬN"]);
 
@@ -327,7 +405,7 @@ exports.uploadFiles = async (req, res) => {
           { transaction }
         );
       }
-    })
+    });
     res.send({
       message: "File uploaded and data processed successfully",
       data,

@@ -8,297 +8,257 @@ const {
   Tb_checklistchitietdone,
   Ent_user,
   Ent_nhom,
+  Ent_hangmuc,
+  Ent_khuvuc,
+  Ent_toanha,
+  Ent_tang,
   Ent_chinhanh,
   Ent_phanloaida,
+  Ent_thietlapca,
 } = require("../models/setup.model");
 const { Op, Sequelize, fn, col, literal, where } = require("sequelize");
 const sequelize = require("../config/db.config");
-const xlsx = require("xlsx");
-const e = require("express");
-const fs = require("fs");
+const expres = require("express");
 const moment = require("moment");
+const OpenAI = require("openai");
+const nrl_ai = require("../models/nlr_ai.model");
+require("dotenv").config();
 
-exports.tiLeHoanThanh = async (req, res) => {
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  project: process.env.OPENAI_PRO_ID,
+});
+
+const secondsToTime = (seconds) => {
+  const hrs = Math.floor(seconds / 3600)
+    .toString()
+    .padStart(2, "0");
+  const mins = Math.floor((seconds % 3600) / 60)
+    .toString()
+    .padStart(2, "0");
+  const secs = (seconds % 60).toString().padStart(2, "0");
+  return `${hrs}:${mins}:${secs}`;
+};
+
+exports.danhSachDuLieu = async (req, res) => {
+  const t = await sequelize.transaction(); // Khởi tạo transaction
   try {
-    const year = req.query.year || new Date().getFullYear();
-    const month = req.query.month || new Date().getMonth() + 1;
-    const khoi = req.query.khoi || "all";
-    const nhom = req.query.nhom || "all";
-    const tangGiam = req.query.tangGiam || "desc";
+    const startDate = new Date("2024-10-01"); // Ngày bắt đầu
+    const endDate = new Date("2024-10-31 23:59:59"); // Ngày kết thúc (cuối ngày)
+    const pageSize = 100; // Số bản ghi xử lý mỗi lần
+    let currentPage = 0;
+    let hasMoreData = true;
+    let allFlattenedResults = []; // Mảng để chứa tất cả dữ liệu đã xử lý
 
-    let whereClause = {
-      isDelete: 0,
-      ID_Duan: {
-        [Op.ne]: 1,
-      },
-    };
+    while (hasMoreData) {
+      // Fetch data for Tb_checklistc with plain transformation
+      const dataChecklistC = await Tb_checklistc.findAll({
+        limit: pageSize,
+        offset: currentPage * pageSize,
+        attributes: [
+          "Ngay",
+          "ID_KhoiCV",
+          "ID_ThietLapCa",
+          "ID_Duan",
+          "Tinhtrang",
+          "Giobd",
+          "Giokt",
+          "ID_User",
+          "ID_Calv",
+          "Tong",
+          "TongC",
+          "isDelete",
+        ],
+        include: [
+          { model: Ent_duan, attributes: ["Duan"] },
+          { model: Ent_thietlapca, attributes: ["Ngaythu"] },
+          { model: Ent_khoicv, attributes: ["KhoiCV", "Ngaybatdau", "Chuky"] },
+          { model: Ent_calv, attributes: ["Tenca", "Giobatdau", "Gioketthuc"] },
+          {
+            model: Ent_user,
+            attributes: ["UserName", "Email", "Hoten"],
+          },
+          {
+            model: Tb_checklistchitietdone,
+            as: "tb_checklistchitietdones",
+            attributes: [
+              "Description",
+              "ID_ChecklistC",
+              "Gioht",
+              "Vido",
+              "Kinhdo",
+              "isDelete",
+            ],
+          },
+          {
+            model: Tb_checklistchitiet,
+            as: "tb_checklistchitiets",
+            attributes: [
+              "ID_Checklistchitiet",
+              "ID_ChecklistC",
+              "ID_Checklist",
+              "Ketqua",
+              "Anh",
+              "Ngay",
+              "Gioht",
+              "Ghichu",
+              "isDelete",
+            ],
+          },
+        ],
+        where: {
+          isDelete: 0,
+          Ngay: {
+            [Op.between]: [startDate, endDate],
+          },
+        },
+        transaction: t, // Đảm bảo truy vấn này sử dụng transaction
+      });
 
-    const getLastDayOfMonth = (year, month) => {
-      return new Date(year, month, 0).getDate(); // Get the last day of the given month
-    };
+      if (!dataChecklistC.length) {
+        hasMoreData = false; // Dừng nếu không còn dữ liệu
+        break;
+      }
 
-    if (khoi !== "all") {
-      whereClause.ID_KhoiCV = khoi;
+      const resultWithDetails = dataChecklistC.map((result) => {
+        const timeToSeconds = (time) => {
+          const [hours, minutes, seconds] = time.split(":").map(Number);
+          return hours * 3600 + minutes * 60 + seconds;
+        };
+
+        const allGioht = [
+          ...result.tb_checklistchitietdones.map((entry) => entry.Gioht),
+          ...result.tb_checklistchitiets.map((entry) => entry.Gioht),
+        ].filter((gioht) => gioht);
+
+        const allGiohtInSeconds = allGioht.map(timeToSeconds);
+
+        const minGioht = allGiohtInSeconds.length
+          ? Math.min(...allGiohtInSeconds)
+          : null;
+        const maxGioht = allGiohtInSeconds.length
+          ? Math.max(...allGiohtInSeconds)
+          : null;
+
+        const totalDiff =
+          allGiohtInSeconds.length > 1
+            ? allGiohtInSeconds
+                .sort((a, b) => a - b)
+                .reduce((acc, curr, index, arr) => {
+                  if (index === 0) return acc;
+                  return acc + (curr - arr[index - 1]);
+                }, 0)
+            : 0;
+
+        const avgTimeDiff =
+          totalDiff && allGiohtInSeconds.length > 1
+            ? totalDiff / (allGiohtInSeconds.length - 1)
+            : null;
+
+        const countWithGhichu = result.tb_checklistchitiets.filter(
+          (entry) => entry.Ghichu
+        ).length;
+        const countWithAnh = result.tb_checklistchitiets.filter(
+          (entry) => entry.Anh
+        ).length;
+
+        return {
+          Tenduan: result.ent_duan.Duan,
+          Giamsat: result.ent_user.Hoten,
+          Tenkhoi: result.ent_khoicv.KhoiCV,
+          Tenca: result.ent_calv.Tenca,
+          Ngay: result.Ngay,
+          Tilehoanthanh: (result.TongC / result.Tong) * 100 || 0, // Tỷ lệ hoàn thành
+          TongC: result.TongC,
+          Tong: result.Tong,
+          Thoigianmoca: result.Giobd,
+          Thoigianchecklistbatdau: minGioht
+            ? new Date(minGioht * 1000).toISOString().substr(11, 8)
+            : null,
+          Thoigianchecklistkethuc: maxGioht
+            ? new Date(maxGioht * 1000).toISOString().substr(11, 8)
+            : null,
+          Thoigiantrungbinh: avgTimeDiff || 0,
+          Thoigianchecklistngannhat: minGioht || 0,
+          Thoigianchecklistlaunhau: maxGioht || 0,
+          Soluongghichu: countWithGhichu,
+          Soluonghinhanh: countWithAnh,
+          isDelete: 0,
+        };
+      });
+
+      // Thêm kết quả vào mảng chứa tất cả kết quả
+      allFlattenedResults = allFlattenedResults.concat(resultWithDetails);
+
+      currentPage++;
     }
 
-    if (nhom !== "all") {
-      whereClause["$ent_duan.ID_Phanloai$"] = nhom;
+    // Sau khi hoàn tất việc nhập dữ liệu, thực hiện bulkCreate
+    try {
+      // Chèn tất cả dữ liệu vào bảng nrl_ai trong transaction
+      await nrl_ai.bulkCreate(allFlattenedResults, {
+        ignoreDuplicates: true, // Nếu có dữ liệu trùng lặp, bỏ qua
+        transaction: t, // Đảm bảo chèn vào cùng transaction
+      });
+
+      // Commit transaction sau khi thành công
+      await t.commit();
+
+      // Gửi phản hồi thành công sau khi chèn xong tất cả dữ liệu
+      res.status(200).json({
+        message: "Danh sách checklist đã được chèn vào bảng nrl_ai",
+      });
+    } catch (error) {
+      // Nếu có lỗi trong quá trình chèn dữ liệu, rollback transaction
+      await t.rollback();
+      
+      // Xử lý lỗi khi chèn dữ liệu vào bảng nrl_ai
+      res.status(500).json({
+        message: "Lỗi khi chèn dữ liệu vào bảng nrl_ai",
+        error: error.message,
+      });
     }
 
-    const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
+  } catch (err) {
+    // Nếu có lỗi trong quá trình fetch dữ liệu hoặc xử lý chung, rollback transaction
+    await t.rollback();
 
-    whereClause.Ngay = {
-      [Op.gte]: `${yesterday} 00:00:00`,
-      [Op.lte]: `${yesterday} 23:59:59`,
-    };
+    // Xử lý lỗi chung
+    res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
 
-    const relatedChecklists = await Tb_checklistc.findAll({
-      attributes: [
-        "ID_ChecklistC",
-        "ID_Duan",
-        "ID_KhoiCV",
-        "ID_Calv",
-        "ID_User",
-        "Ngay",
-        "TongC",
-        "Tong",
-        "isDelete",
-      ],
-      where: whereClause,
-      include: [
+
+exports.chatMessage = async (req, res) => {
+  try {
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({ error: "Message is required" });
+    }
+
+    const stream = await openai.chat.completions.create({
+      model: "gpt-4o-mini", // Hoặc "gpt-4" nếu bạn có quyền truy cập
+      messages: [
+        { role: "system", content: "You are a helpful assistant." },
         {
-          model: Ent_duan,
-          attributes: ["Duan", "ID_Nhom", "ID_Phanloai", "ID_Chinhanh", "isDelete"],
-          where: { isDelete: 0 },
-          include: [
-            { model: Ent_chinhanh, attributes: ["Tenchinhanh"] },
-            { model: Ent_phanloaida, attributes: ["Phanloai"] },
-          ],
-        },
-        {
-          model: Ent_khoicv,
-          attributes: ["KhoiCV", "isDelete"],
-          where: { isDelete: 0 },
-        },
-        {
-          model: Ent_calv,
-          attributes: ["Tenca", "isDelete"],
-          where: { isDelete: 0 },
-        },
-        {
-          model: Ent_user,
-          attributes: ["UserName", "isDelete", "Hoten"],
-          where: { isDelete: 0 },
-        },
-        {
-          model: Tb_checklistchitiet,
-          as: "tb_checklistchitiets",
-          attributes: [
-            "ID_Checklistchitiet",
-            "ID_Checklist",
-            "ID_ChecklistC",
-            "Gioht",
-            "Ketqua",
-            "Ngay",
-            "Kinhdo",
-            "Vido",
-            "Docao",
-            "Ghichu",
-            "isDelete",
-          ],
-          where: { isDelete: 0 },
-          include: [
+          role: "user",
+          content: [
             {
-              model: Ent_checklist,
-              as: "ent_checklist",
-              attributes: ["ID_Checklist", "Checklist", "isDelete"],
-              where: { isDelete: 0 },
+              type: "text",
+              text: message,
             },
           ],
         },
-        {
-          model: Tb_checklistchitietdone,
-          as: "tb_checklistchitietdones",
-          attributes: [
-            "ID_ChecklistC",
-            "Description",
-            "Gioht",
-            "Kinhdo",
-            "Vido",
-            "Docao",
-          ],
-          where: { isDelete: 0 },
-        },
       ],
     });
-
-
-    // Bước 3: Truy vấn các checklist từ Ent_checklist với các ID_Checklist từ Description
-    let checklistIds = [];
-    relatedChecklists.forEach((checklist) => {
-      checklist.tb_checklistchitietdones.forEach((doneItem) => {
-        const idChecklists = doneItem.Description.split(",").map(Number);
-        checklistIds.push(...idChecklists);
-      });
+    const reply = stream.choices[0].message.content;
+    res.status(200).json({ reply });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
-
-    // Bước 3: Truy vấn các checklist từ bảng Ent_checklist
-    const checklistData = await Ent_checklist.findAll({
-      where: {
-        ID_Checklist: {
-          [Op.in]: checklistIds,
-        },
-        isDelete: 0
-      },
-      attributes: ["ID_Checklist", "Checklist", "isDelete"],
-    });
-
-    // Tạo bản đồ ID_Checklist với thông tin Checklist
-    const checklistMap = new Map();
-    checklistData.forEach((checklist) => {
-      checklistMap.set(checklist.ID_Checklist, checklist);
-    });
-
-    // Bước 4: Thêm dữ liệu Checklist vào từng tb_checklistchitietdones
-    relatedChecklists.forEach((checklist) => {
-      checklist.tb_checklistchitietdones.forEach((doneItem) => {
-        const checklistIdsFromDescription = doneItem.Description.split(",").map(Number);
-        // Gán dữ liệu checklist từ checklistMap vào từng ID_Checklist
-        doneItem.ent_checklists = checklistIdsFromDescription.map(
-          (id) => checklistMap.get(id)
-        );
-      });
-    });
-
-
-    // Create a dictionary to group data by project, khối, and ca
-    // const result = {};
-
-    // relatedChecklists.forEach((checklistC) => {
-    //   const projectId = checklistC.ID_Duan;
-    //   const projectName = checklistC.ent_duan.Duan;
-    //   const khoiName = checklistC.ent_khoicv.KhoiCV;
-    //   const shiftName = checklistC.ent_calv.Tenca;
-
-    //   if (!result[projectId]) {
-    //     result[projectId] = {
-    //       projectName,
-    //       khois: {},
-    //     };
-    //   }
-
-    //   if (!result[projectId].khois[khoiName]) {
-    //     result[projectId].khois[khoiName] = {
-    //       shifts: {},
-    //     };
-    //   }
-
-    //   if (!result[projectId].khois[khoiName].shifts[shiftName]) {
-    //     result[projectId].khois[khoiName].shifts[shiftName] = {
-    //       totalTongC: 0,
-    //       totalTong: checklistC.Tong,
-    //       userCompletionRates: [],
-    //     };
-    //   }
-
-    //   // Accumulate data for shifts
-    //   result[projectId].khois[khoiName].shifts[shiftName].totalTongC +=
-    //     checklistC.TongC;
-
-    //   // Calculate user completion rate and add to the list
-    //   const userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
-    //   result[projectId].khois[khoiName].shifts[
-    //     shiftName
-    //   ].userCompletionRates.push(userCompletionRate);
-    // });
-
-    // // Calculate completion rates for each khối and project
-    // Object.values(result).forEach((project) => {
-    //   Object.values(project.khois).forEach((khoi) => {
-    //     let totalKhoiCompletionRatio = 0;
-    //     let totalShifts = 0;
-
-    //     Object.values(khoi.shifts).forEach((shift) => {
-    //       // Calculate shift completion ratio
-    //       let shiftCompletionRatio = shift.userCompletionRates.reduce(
-    //         (sum, rate) => sum + rate,
-    //         0
-    //       );
-    //       if (shiftCompletionRatio > 100) {
-    //         shiftCompletionRatio = 100; // Cap each shift at 100%
-    //       }
-
-    //       // Sum up completion ratios for each khối
-    //       totalKhoiCompletionRatio += shiftCompletionRatio;
-    //       totalShifts += 1;
-    //     });
-
-    //     // Calculate average completion ratio for khối
-    //     khoi.completionRatio = totalKhoiCompletionRatio / totalShifts;
-    //   });
-    // });
-
-    // // Prepare response data
-    // let projectNames = [];
-    // let percentageData = [];
-
-    // Object.values(result).forEach((project) => {
-    //   projectNames.push(project.projectName);
-
-    //   let totalCompletionRatio = 0;
-    //   let totalKhois = 0;
-
-    //   Object.values(project.khois).forEach((khoi) => {
-    //     totalCompletionRatio += khoi.completionRatio;
-    //     totalKhois += 1;
-    //   });
-
-    //   const avgCompletionRatio =
-    //     totalKhois > 0 ? totalCompletionRatio / totalKhois : 0;
-    //   percentageData.push(avgCompletionRatio.toFixed(2)); // Format to 2 decimal places
-    // });
-
-    // // Sort the percentageData based on 'tangGiam' query parameter
-    // // Tạo mảng các cặp [projectName, percentageData]
-    // const projectWithData = projectNames.map((name, index) => ({
-    //   name: name,
-    //   percentage: parseFloat(percentageData[index]), // Đảm bảo giá trị là số
-    // }));
-
-    // // Sắp xếp dựa trên percentageData
-    // if (tangGiam === "asc") {
-    //   projectWithData.sort((a, b) => a.percentage - b.percentage); // Sắp xếp tăng dần
-    // } else if (tangGiam === "desc") {
-    //   projectWithData.sort((a, b) => b.percentage - a.percentage); // Sắp xếp giảm dần
-    // }
-
-    // const topResultArray = projectWithData.slice(0, Number(top));
-
-    // // Sau khi sắp xếp, tách lại thành 2 mảng riêng
-    // projectNames = topResultArray.map((item) => item.name);
-    // percentageData = topResultArray.map((item) => item.percentage);
-
-    // const resultArray = {
-    //   categories: projectNames,
-    //   series: [
-    //     {
-    //       type: String(year),
-    //       data: [
-    //         {
-    //           name: "Tỉ lệ",
-    //           data: percentageData,
-    //         },
-    //       ],
-    //     },
-    //   ],
-    // };
-
-    res.status(200).json({
-      data: relatedChecklists,
-    });
-  } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };

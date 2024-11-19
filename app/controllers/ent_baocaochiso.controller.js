@@ -17,11 +17,25 @@ exports.create = async (req, res) => {
   try {
     const userData = req.user.data;
     const { body, files } = req;
-    const { ID_Duan, ID_User, Day, Month, Year, Electrical, Water, Ghichu } =
-      body;
+    const {
+      ID_Duan,
+      ID_User,
+      Day,
+      Month,
+      Year,
+      Electrical_CDT,
+      Water_CDT,
+      Electrical_CuDan,
+      Water_CuDan,
+      Electrical_CDT_Real,
+      Electrical_CuDan_Real,
+      Water_CDT_Real,
+      Water_CuDan_Real,
+      Ghichu,
+    } = body;
 
-    if (Electrical && Water) {
-      if (!isValidNumber(Water) || !isValidNumber(Electrical)) {
+    if (Electrical_CDT && Water_CDT) {
+      if (!isValidNumber(Water_CDT) || !isValidNumber(Electrical_CDT)) {
         return res.status(400).json({
           message:
             "Chỉ số điện và Nước phải là số hợp lệ (có thể chứa dấu . hoặc ,).",
@@ -62,8 +76,14 @@ exports.create = async (req, res) => {
         "Month",
         "Year",
         "isDelete",
-        "Electrical",
-        "Water",
+        "Electrical_CDT",
+        "Water_CDT",
+        "Electrical_CuDan",
+        "Water_CuDan",
+        "Electrical_CDT_Real",
+        "Water_CDT_Real",
+        "Electrical_CuDan_Real",
+        "Water_CuDan_Real",
       ],
       where: {
         ID_Duan: ID_Duan,
@@ -78,9 +98,15 @@ exports.create = async (req, res) => {
     if (!isEmpty(files)) {
       for (const image of files) {
         const imageType =
-          image.fieldname === "ImageElectrical"
-            ? "ImageElectrical"
-            : "ImageWater";
+        image.fieldname === "ImageElectrical_CDT"
+        ? "ImageElectrical_CDT"
+        : image.fieldname === "ImageElectrical_CuDan"
+        ? "ImageElectrical_CuDan"
+        : image.fieldname === "ImageWater_CDT"
+        ? "ImageWater_CDT"
+        : image.fieldname === "ImageWater_CuDan"
+        ? "ImageWater_CuDan"
+        : null;
         const fileId = await uploadFile(
           image,
           userData.ent_duan?.Duan,
@@ -91,16 +117,23 @@ exports.create = async (req, res) => {
         uploadedFileIds.push({ fileId, fieldname: image.fieldname });
       }
     }
+    
     // Tạo các biến để lưu trữ id tương ứng
-    let imageElectricalId = null;
-    let imageWaterId = null;
+    let imageElectricalId_CDT = ImageElectrical_CDT; // Nếu có ảnh cũ, giữ lại
+    let imageWaterId_CDT = ImageWater_CDT; // Nếu có ảnh cũ, giữ lại
+    let imageElectricalId_CuDan = ImageElectrical_CuDan; // Nếu có ảnh cũ, giữ lại
+    let imageWaterId_CuDan = ImageWater_CuDan; // Nếu có ảnh cũ, giữ lại
 
     // Duyệt qua từng phần tử trong mảng để lưu id
     uploadedFileIds.forEach((item) => {
-      if (item.fieldname === "ImageElectrical") {
-        imageElectricalId = item.fileId.id;
-      } else if (item.fieldname === "ImageWater") {
-        imageWaterId = item.fileId.id;
+      if (item.fieldname === "ImageElectrical_CDT") {
+        imageElectricalId_CDT = item.fileId.id; // Cập nhật ảnh điện
+      } else if (item.fieldname === "ImageWater_CDT") {
+        imageWaterId_CDT = item.fileId.id; // Cập nhật ảnh nước
+      } else if (item.fieldname === "ImageElectrical_CuDan") {
+        imageElectricalId_CuDan = item.fileId.id; // Cập nhật ảnh điện
+      } else if (item.fieldname === "ImageWater_CuDan") {
+        imageWaterId_CuDan = item.fileId.id; // Cập nhật ảnh nước
       }
     });
 
@@ -110,12 +143,25 @@ exports.create = async (req, res) => {
       ID_User: ID_User || null,
       Month: Month || null,
       Year: Year || null,
-      Electrical: Electrical || null,
-      Water: Water || null,
-      ImageElectrical: imageElectricalId || null,
-      ImageWater: imageWaterId || null,
-      ElectricalBefore: findCheck?.Electrical || null,
-      WaterBefore: findCheck?.Water || null,
+
+      Electrical_CDT: Electrical_CDT || null,
+      Water_CDT: Water_CDT || null,
+      ImageElectrical_CDT: imageElectricalId_CDT,
+      ImageWater_CDT: imageWaterId_CDT,
+      ElectricalBefore_CDT: findCheck?.Electrical_CDT || ElectricalBefore_CDT,
+      WaterBefore_CDT: findCheck?.Water_CDT || WaterBefore_CDT,
+
+      Electrical_CuDan: Electrical_CuDan || null,
+      Water_CuDan: Water_CuDan || null,
+      ImageElectrical_CuDan: imageElectricalId_CuDan,
+      ImageWater_CuDan: imageWaterId_CuDan,
+      ElectricalBefore_CuDan:
+        findCheck?.Electrical_CuDan || ElectricalBefore_CuDan,
+      WaterBefore_CuDan: findCheck?.Water_CuDan || WaterBefore_CuDan,
+      Electrical_CDT_Real,
+      Water_CDT_Real,
+      Electrical_CuDan_Real,
+      Water_CuDan_Real,
       Ghichu: Ghichu || null,
     };
 
@@ -151,12 +197,22 @@ exports.getbyDuan = async (req, res) => {
           "Day",
           "Month",
           "Year",
-          "Electrical",
-          "Water",
-          "ImageWater",
-          "ImageElectrical",
-          "ElectricalBefore",
-          "WaterBefore",
+          "Electrical_CDT",
+          "Water_CDT",
+          "ImageWater_CDT",
+          "ImageElectrical_CDT",
+          "ElectricalBefore_CDT",
+          "WaterBefore_CDT",
+          "Electrical_CuDan",
+          "Water_CuDan",
+          "ImageWater_CuDan",
+          "ImageElectrical_CuDan",
+          "ElectricalBefore_CuDan",
+          "WaterBefore_CuDan",
+          "Electrical_CDT_Real",
+          "Water_CDT_Real",
+          "Electrical_CuDan_Real",
+          "Water_CuDan_Real",
           "Ghichu",
           "isDelete",
         ],
@@ -206,17 +262,27 @@ exports.update = async (req, res) => {
       Day,
       Month,
       Year,
-      Electrical,
-      Water,
       Ghichu,
-      ImageElectrical,
-      ImageWater,
-      ElectricalBefore,
-      WaterBefore,
+      Electrical_CDT,
+      Water_CDT,
+      ImageElectrical_CDT,
+      ImageWater_CDT,
+      ElectricalBefore_CDT,
+      WaterBefore_CDT,
+      Electrical_CuDan,
+      Water_CuDan,
+      ImageElectrical_CuDan,
+      ImageWater_CuDan,
+      ElectricalBefore_CuDan,
+      WaterBefore_CuDan,
+      Electrical_CDT_Real,
+      Water_CDT_Real,
+      Electrical_CuDan_Real,
+      Water_CuDan_Real,
     } = body;
 
-    if (Electrical && Water) {
-      if (!isValidNumber(Water) || !isValidNumber(Electrical)) {
+    if (Electrical_CDT && Water_CDT) {
+      if (!isValidNumber(Water_CDT) || !isValidNumber(Electrical_CDT)) {
         return res.status(400).json({
           message:
             "Chỉ số điện và Nước phải là số hợp lệ (có thể chứa dấu . hoặc ,).",
@@ -262,8 +328,10 @@ exports.update = async (req, res) => {
         "Month",
         "Year",
         "isDelete",
-        "Electrical",
-        "Water",
+        "Electrical_CDT",
+        "Water_CDT",
+        "Electrical_CuDan",
+        "Water_CuDan",
       ],
       where: {
         ID_Duan: ID_Duan,
@@ -281,9 +349,15 @@ exports.update = async (req, res) => {
     if (!isEmpty(files)) {
       for (const image of files) {
         const imageType =
-          image.fieldname === "ImageElectrical"
-            ? "ImageElectrical"
-            : "ImageWater";
+          image.fieldname === "ImageElectrical_CDT"
+            ? "ImageElectrical_CDT"
+            : image.fieldname === "ImageElectrical_CuDan"
+            ? "ImageElectrical_CuDan"
+            : image.fieldname === "ImageWater_CDT"
+            ? "ImageWater_CDT"
+            : image.fieldname === "ImageWater_CuDan"
+            ? "ImageWater_CuDan"
+            : null;
         const fileId = await uploadFile(
           image,
           userData.ent_duan?.Duan,
@@ -296,14 +370,20 @@ exports.update = async (req, res) => {
     }
 
     // Gán ID ảnh đã upload vào các trường tương ứng
-    let imageElectricalId = ImageElectrical; // Nếu có ảnh cũ, giữ lại
-    let imageWaterId = ImageWater; // Nếu có ảnh cũ, giữ lại
+    let imageElectricalId_CDT = ImageElectrical_CDT; // Nếu có ảnh cũ, giữ lại
+    let imageWaterId_CDT = ImageWater_CDT; // Nếu có ảnh cũ, giữ lại
+    let imageElectricalId_CuDan = ImageElectrical_CuDan; // Nếu có ảnh cũ, giữ lại
+    let imageWaterId_CuDan = ImageWater_CuDan; // Nếu có ảnh cũ, giữ lại
 
     uploadedFileIds.forEach((item) => {
-      if (item.fieldname === "ImageElectrical") {
-        imageElectricalId = item.fileId.id; // Cập nhật ảnh điện
-      } else if (item.fieldname === "ImageWater") {
-        imageWaterId = item.fileId.id; // Cập nhật ảnh nước
+      if (item.fieldname === "ImageElectrical_CDT") {
+        imageElectricalId_CDT = item.fileId.id; // Cập nhật ảnh điện
+      } else if (item.fieldname === "ImageWater_CDT") {
+        imageWaterId_CDT = item.fileId.id; // Cập nhật ảnh nước
+      } else if (item.fieldname === "ImageElectrical_CuDan") {
+        imageElectricalId_CuDan = item.fileId.id; // Cập nhật ảnh điện
+      } else if (item.fieldname === "ImageWater_CuDan") {
+        imageWaterId_CuDan = item.fileId.id; // Cập nhật ảnh nước
       }
     });
 
@@ -314,12 +394,26 @@ exports.update = async (req, res) => {
       ID_User: ID_User || null,
       Month: Month || null,
       Year: Year || null,
-      Electrical: Electrical || null,
-      Water: Water || null,
-      ImageElectrical: imageElectricalId,
-      ImageWater: imageWaterId,
-      ElectricalBefore: findCheck?.Electrical || ElectricalBefore,
-      WaterBefore: findCheck?.Water || WaterBefore,
+
+      Electrical_CDT: Electrical_CDT || null,
+      Water_CDT: Water_CDT || null,
+      ImageElectrical_CDT: imageElectricalId_CDT,
+      ImageWater_CDT: imageWaterId_CDT,
+      ElectricalBefore_CDT: findCheck?.Electrical_CDT || ElectricalBefore_CDT,
+      WaterBefore_CDT: findCheck?.Water_CDT || WaterBefore_CDT,
+
+      Electrical_CuDan: Electrical_CuDan || null,
+      Water_CuDan: Water_CuDan || null,
+      ImageElectrical_CuDan: imageElectricalId_CuDan,
+      ImageWater_CuDan: imageWaterId_CuDan,
+      ElectricalBefore_CuDan:
+        findCheck?.Electrical_CuDan || ElectricalBefore_CuDan,
+      WaterBefore_CuDan: findCheck?.Water_CuDan || WaterBefore_CuDan,
+      
+      Electrical_CDT_Real,
+      Water_CDT_Real,
+      Electrical_CuDan_Real,
+      Water_CuDan_Real,
       Ghichu: Ghichu || null,
     };
 
