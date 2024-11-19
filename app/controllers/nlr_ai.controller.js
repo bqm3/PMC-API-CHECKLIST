@@ -18,10 +18,11 @@ const {
 } = require("../models/setup.model");
 const { Op, Sequelize, fn, col, literal, where } = require("sequelize");
 const sequelize = require("../config/db.config");
-const expres = require("express");
-const moment = require("moment");
 const OpenAI = require("openai");
+const nlp = require("compromise");
+const moment = require("moment");
 const nrl_ai = require("../models/nlr_ai.model");
+const Ent_tile = require("../models/ent_tile.model");
 require("dotenv").config();
 
 const openai = new OpenAI({
@@ -29,26 +30,40 @@ const openai = new OpenAI({
   project: process.env.OPENAI_PRO_ID,
 });
 
-const secondsToTime = (seconds) => {
-  const hrs = Math.floor(seconds / 3600)
-    .toString()
-    .padStart(2, "0");
-  const mins = Math.floor((seconds % 3600) / 60)
-    .toString()
-    .padStart(2, "0");
-  const secs = (seconds % 60).toString().padStart(2, "0");
-  return `${hrs}:${mins}:${secs}`;
-};
-
 exports.danhSachDuLieu = async (req, res) => {
   const t = await sequelize.transaction(); // Khởi tạo transaction
   try {
-    const startDate = new Date("2024-10-01"); // Ngày bắt đầu
-    const endDate = new Date("2024-10-31 23:59:59"); // Ngày kết thúc (cuối ngày)
-    const pageSize = 100; // Số bản ghi xử lý mỗi lần
+    // 1. Xác định khoảng thời gian cần lấy dữ liệu (từ ngày hôm qua đến 6h sáng hôm nay)
+    const currentDate = new Date();
+    const startDate = new Date(currentDate.setDate(currentDate.getDate() - 1)); // Ngày hôm qua
+    startDate.setHours(0, 0, 0, 0); // Cài đặt giờ của ngày hôm qua là 00:00:00
+    const endDate = new Date(); // Thời gian hiện tại (có thể điều chỉnh theo giờ hiện tại)
+    endDate.setHours(6, 0, 0, 0); // Cài đặt giờ là 6h sáng hôm nay
+
+    // 2. Lấy dữ liệu checklist cũ trước khi chèn dữ liệu mới
+    const checkDuplicates = async (
+      Tenca,
+      Ngay,
+      KhoiCV,
+      Giamsat,
+      Thoigianmoca
+    ) => {
+      return await nrl_ai.findOne({
+        where: {
+          Tenca,
+          Ngay,
+          Tenkhoi: KhoiCV,
+          Giamsat,
+          Thoigianmoca,
+        },
+        transaction: t, // Đảm bảo tìm kiếm trong transaction
+      });
+    };
+
+    const pageSize = 100;
     let currentPage = 0;
     let hasMoreData = true;
-    let allFlattenedResults = []; // Mảng để chứa tất cả dữ liệu đã xử lý
+    let allFlattenedResults = [];
 
     while (hasMoreData) {
       // Fetch data for Tb_checklistc with plain transformation
@@ -67,6 +82,7 @@ exports.danhSachDuLieu = async (req, res) => {
           "ID_Calv",
           "Tong",
           "TongC",
+          "Tinhtrang",
           "isDelete",
         ],
         include: [
@@ -111,12 +127,13 @@ exports.danhSachDuLieu = async (req, res) => {
           Ngay: {
             [Op.between]: [startDate, endDate],
           },
+          Tinhtrang: 1,
         },
         transaction: t, // Đảm bảo truy vấn này sử dụng transaction
       });
 
       if (!dataChecklistC.length) {
-        hasMoreData = false; // Dừng nếu không còn dữ liệu
+        hasMoreData = false;
         break;
       }
 
@@ -187,6 +204,30 @@ exports.danhSachDuLieu = async (req, res) => {
         };
       });
 
+      // Trước khi thêm mới, kiểm tra và xóa dữ liệu cũ nếu trùng lặp
+      for (const item of resultWithDetails) {
+        const existingRecord = await checkDuplicates(
+          item.Tenca,
+          item.Ngay,
+          item.Tenkhoi,
+          item.Giamsat,
+          item.Thoigianmoca
+        );
+        if (existingRecord) {
+          // Xóa dữ liệu cũ nếu có
+          await nrl_ai.destroy({
+            where: {
+              Tenca: item.Tenca,
+              Ngay: item.Ngay,
+              Tenkhoi: item.Tenkhoi,
+              Giamsat: item.Giamsat,
+              Thoigianmoca: item.Thoigianmoca,
+            },
+            transaction: t, // Đảm bảo xóa trong transaction
+          });
+        }
+      }
+
       // Thêm kết quả vào mảng chứa tất cả kết quả
       allFlattenedResults = allFlattenedResults.concat(resultWithDetails);
 
@@ -194,42 +235,183 @@ exports.danhSachDuLieu = async (req, res) => {
     }
 
     // Sau khi hoàn tất việc nhập dữ liệu, thực hiện bulkCreate
-    try {
-      // Chèn tất cả dữ liệu vào bảng nrl_ai trong transaction
-      await nrl_ai.bulkCreate(allFlattenedResults, {
-        ignoreDuplicates: true, // Nếu có dữ liệu trùng lặp, bỏ qua
-        transaction: t, // Đảm bảo chèn vào cùng transaction
-      });
-
-      // Commit transaction sau khi thành công
-      await t.commit();
-
-      // Gửi phản hồi thành công sau khi chèn xong tất cả dữ liệu
-      res.status(200).json({
-        message: "Danh sách checklist đã được chèn vào bảng nrl_ai",
-      });
-    } catch (error) {
-      // Nếu có lỗi trong quá trình chèn dữ liệu, rollback transaction
-      await t.rollback();
-      
-      // Xử lý lỗi khi chèn dữ liệu vào bảng nrl_ai
-      res.status(500).json({
-        message: "Lỗi khi chèn dữ liệu vào bảng nrl_ai",
-        error: error.message,
-      });
-    }
-
-  } catch (err) {
-    // Nếu có lỗi trong quá trình fetch dữ liệu hoặc xử lý chung, rollback transaction
-    await t.rollback();
-
-    // Xử lý lỗi chung
-    res.status(500).json({
-      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    await nrl_ai.bulkCreate(allFlattenedResults, {
+      ignoreDuplicates: true, // Nếu có dữ liệu trùng lặp, bỏ qua
+      transaction: t, // Đảm bảo chèn vào cùng transaction
     });
+
+    // Commit transaction sau khi thành công
+    await t.commit();
+
+    // Gửi phản hồi thành công
+    res.status(200).json({
+      message: "Danh sách checklist đã được chèn và xử lý thành công.",
+      data: allFlattenedResults,
+    });
+  } catch (error) {
+    // Nếu có lỗi, rollback transaction
+    await t.rollback();
+    res.status(500).json({ error: error.message });
   }
 };
 
+exports.getProjectsChecklistStatus = async (req, res) => {
+  try {
+    // Kiểm tra xem các ngày đã được cung cấp hay chưa, nếu không thì sử dụng ngày hôm qua
+    const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
+
+    // Lấy dữ liệu checklistC trong phạm vi ngày lọc
+    const dataChecklistCs = await Tb_checklistc.findAll({
+      attributes: [
+        "ID_ChecklistC",
+        "ID_Duan",
+        "ID_Calv",
+        "Ngay",
+        "TongC",
+        "Tong",
+        "ID_KhoiCV",
+        "isDelete",
+      ],
+      where: {
+        Ngay: yesterday,
+        isDelete: 0,
+        ID_Duan: {
+          [Op.ne]: 1,
+        },
+      },
+      include: [
+        {
+          model: Ent_duan,
+          attributes: ["Duan"],
+        },
+        {
+          model: Ent_khoicv,
+          attributes: ["KhoiCV"],
+        },
+        {
+          model: Ent_calv,
+          attributes: ["Tenca"],
+        },
+      ],
+    });
+
+    // Tạo một dictionary để nhóm dữ liệu theo dự án và khối
+    const result = {};
+
+    dataChecklistCs.forEach((checklistC) => {
+      const projectId = checklistC.ID_Duan;
+      const projectName = checklistC.ent_duan.Duan;
+      const khoiName = checklistC.ent_khoicv.KhoiCV;
+      const shiftName = checklistC.ent_calv.Tenca;
+
+      // Khởi tạo dữ liệu dự án nếu chưa tồn tại
+      if (!result[projectId]) {
+        result[projectId] = {
+          projectId,
+          projectName,
+          createdKhois: {},
+        };
+      }
+
+      // Khởi tạo dữ liệu cho khối nếu chưa tồn tại
+      if (!result[projectId].createdKhois[khoiName]) {
+        result[projectId].createdKhois[khoiName] = {
+          shifts: {},
+        };
+      }
+
+      // Khởi tạo dữ liệu cho ca nếu chưa tồn tại
+      if (!result[projectId].createdKhois[khoiName].shifts[shiftName]) {
+        result[projectId].createdKhois[khoiName].shifts[shiftName] = {
+          totalTongC: 0,
+          totalTong: 0,
+          userCompletionRates: [], // Lưu danh sách tỷ lệ hoàn thành của từng người
+        };
+      }
+
+      // Cộng dồn TongC và Tong cho ca
+      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTongC +=
+        checklistC.TongC;
+      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTong +=
+        checklistC.Tong;
+
+      // Lưu tỷ lệ hoàn thành của từng người
+      let userCompletionRate = 0; // Mặc định là 0 nếu không có giá trị hợp lệ
+      if (
+        checklistC.Tong !== 0 &&
+        checklistC.Tong != null &&
+        checklistC.TongC != null
+      ) {
+        userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
+      }
+      // Đảm bảo tỷ lệ hoàn thành không vượt quá 100%
+      userCompletionRate = userCompletionRate > 100 ? 100 : userCompletionRate;
+
+      result[projectId].createdKhois[khoiName].shifts[
+        shiftName
+      ].userCompletionRates.push(userCompletionRate);
+    });
+
+    // Tính toán phần trăm hoàn thành riêng cho từng ca và tổng khối
+    Object.values(result).forEach((project) => {
+      Object.values(project.createdKhois).forEach((khoi) => {
+        let totalKhoiCompletionRatio = 0;
+        let totalShifts = 0;
+
+        Object.values(khoi.shifts).forEach((shift) => {
+          // Tính phần trăm hoàn thành cho ca dựa trên tỷ lệ của từng người trong ca
+          let shiftCompletionRatio = shift.userCompletionRates.reduce(
+            (sum, rate) => sum + (rate || 0),
+            0
+          );
+          if (shiftCompletionRatio > 100) {
+            shiftCompletionRatio = 100; // Giới hạn phần trăm hoàn thành tối đa là 100% cho từng ca
+          }
+
+          // Tính tổng tỷ lệ hoàn thành của các ca
+          totalKhoiCompletionRatio += shiftCompletionRatio;
+          totalShifts += 1; // Tăng số lượng ca
+        });
+
+        // Tính phần trăm hoàn thành trung bình cho khối
+        const avgKhoiCompletionRatio = totalKhoiCompletionRatio / totalShifts;
+
+        khoi.completionRatio = Number.isInteger(avgKhoiCompletionRatio)
+          ? avgKhoiCompletionRatio // No decimal places, return as is
+          : avgKhoiCompletionRatio.toFixed(2); // Otherwise, apply toFixed(2)
+      });
+    });
+
+    // Chuyển result object thành mảng
+    const resultArray = Object.values(result);
+
+    // Chuyển đổi dữ liệu theo dạng của bảng ent_tile
+    const transformedRows = resultArray.map((project) => ({
+      Tenduan: project.projectName,
+      Khoibaove: project.createdKhois["Khối bảo vệ"]?.completionRatio || null,
+      Khoilamsach:
+        project.createdKhois["Khối làm sạch"]?.completionRatio || null,
+      Khoidichvu: project.createdKhois["Khối dịch vụ"]?.completionRatio || null,
+      Khoikythuat:
+        project.createdKhois["Khối kỹ thuật"]?.completionRatio || null,
+      KhoiFB: project.createdKhois["Khối F&B"]?.completionRatio || null,
+      Ngay: yesterday, // Sử dụng ngày lọc làm Ngày
+    }));
+
+    // Insert dữ liệu vào bảng ent_tile
+    await Ent_tile.bulkCreate(transformedRows);
+
+    res.status(200).json({
+      message:
+        "Trạng thái checklist của các dự án theo từng khối và ca làm việc",
+      data: resultArray,
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+  }
+};
 
 exports.chatMessage = async (req, res) => {
   try {
@@ -239,26 +421,55 @@ exports.chatMessage = async (req, res) => {
       return res.status(400).json({ error: "Message is required" });
     }
 
-    const stream = await openai.chat.completions.create({
-      model: "gpt-4o-mini", // Hoặc "gpt-4" nếu bạn có quyền truy cập
-      messages: [
-        { role: "system", content: "You are a helpful assistant." },
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: message,
-            },
-          ],
-        },
-      ],
+    // Phân tích câu hỏi với compromise
+    const doc = nlp(message);
+
+    // Tìm kiếm các từ khóa liên quan đến khối
+    const block = doc.match("khối *").text().replace("khối", "").trim();
+
+    // Tìm kiếm tháng (có thể là số hoặc chữ)
+    const month = doc.match("tháng *").text().replace("tháng", "").trim();
+    
+    // Tìm kiếm năm (có thể là số hoặc chữ)
+    const year = doc.match("năm *").text().replace("năm", "").trim();
+
+    // Tìm kiếm dự án
+    const project = doc.match("dự án *").text().replace("dự án", "").trim();
+
+    console.log("Khối:", block);
+    console.log("Tháng:", month);
+    console.log("Năm:", year);
+    console.log("Dự án:", project);
+
+    // Kiểm tra và xử lý tháng, năm
+    const monthNum = parseInt(month);
+    const yearNum = year ? parseInt(year) : new Date().getFullYear();
+
+    // Lấy ngày bắt đầu và kết thúc của tháng
+    const startOfMonth = new Date(yearNum, monthNum - 1, 1);
+    const endOfMonth = new Date(yearNum, monthNum, 0);
+
+    let whereClause = { isDelete: 0 };
+
+    // Xử lý các điều kiện tìm kiếm
+    if (project && project !== "tất cả") whereClause.Tenduan = project;
+    if (block) whereClause.Tenkhoi = block;
+    if (monthNum) whereClause.Ngay = { [Sequelize.Op.between]: [startOfMonth, endOfMonth] };
+
+    // Truy vấn cơ sở dữ liệu
+    const data = await nrl_ai.findAll({
+      where: whereClause,
     });
-    const reply = stream.choices[0].message.content;
-    res.status(200).json({ reply });
+
+    // Trả về dữ liệu tổng hợp
+    res.status(200).json({
+      message: "Dữ liệu đã được lấy thành công",
+      data: data,  // Dữ liệu từ cơ sở dữ liệu
+    });
   } catch (error) {
     return res.status(500).json({
       message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
 };
+
