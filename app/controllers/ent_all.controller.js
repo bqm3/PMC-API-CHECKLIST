@@ -308,10 +308,10 @@ exports.uploadFiles = async (req, res) => {
           return acc;
         }, {});
       };
-
+      const index = 0;
       for (const item of data) {
+        index++;
         try {
-          console.log('item["Ngày ghi nhận"]', item["Ngày ghi nhận"]);
           const tranforItem = uppercaseKeys(item);
           const ngayGhiNhan = convertExcelDate(item["Ngày ghi nhận"]);
           const tenDuAn = tranforItem["TÊN DỰ ÁN"];
@@ -356,8 +356,6 @@ exports.uploadFiles = async (req, res) => {
           const modified = convertExcelDateTime(item["Modified"]);
           const modifiedBy = tranforItem["MODIFIED BY"];
           const email = tranforItem["EMAIL"];
-
-          console.log('modified', modified)
 
           const newHSSE = await hsse.create(
             {
@@ -409,7 +407,7 @@ exports.uploadFiles = async (req, res) => {
           );
         } catch (err) {
           console.error("Error processing item:", item, "Error:", err);
-          throw err; // Rethrow error to exit transaction on failure
+          throw `${err} item : ${item} index: ${index}`; // Rethrow error to exit transaction on failure
         }
       }
     });
