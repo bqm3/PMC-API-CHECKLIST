@@ -5545,7 +5545,7 @@ exports.createExcelTongHopCa = async (req, res) => {
       const aggregatedData = {};
 
       dataChecklist.forEach((item) => {
-        const shiftKey = `${item.Ngay}-${item.ent_calv.Tenca}`;
+        const shiftKey = `${item.Ngay}-${item.ent_calv.Tenca}-${item.ent_khoicv?.KhoiCV}`;
 
         if (!aggregatedData[shiftKey]) {
           aggregatedData[shiftKey] = {
@@ -5664,6 +5664,7 @@ exports.createExcelTongHopCa = async (req, res) => {
         const formattedPercentage = Number.isInteger(completionPercentage)
           ? completionPercentage.toString() // Convert to string if integer
           : completionPercentage.toFixed(2); // Use toFixed(2) for non-integer
+          console.log('item.KhoiCV', item.KhoiCV)
 
         const newRow = worksheet.addRow([
           index + 1, // STT

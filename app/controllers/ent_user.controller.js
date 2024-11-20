@@ -164,7 +164,6 @@ exports.register = async (req, res, next) => {
         message: "Phải nhập đầy đủ dữ liệu.",
       });
     }
-    console.log("arr_Duan", arr_Duan);
     const userData = req.user.data;
     const user = await Ent_user.findOne({
       where: {

@@ -142,43 +142,47 @@ exports.danhSachDuLieu = async (req, res) => {
           const [hours, minutes, seconds] = time.split(":").map(Number);
           return hours * 3600 + minutes * 60 + seconds;
         };
-
+      
         const allGioht = [
           ...result.tb_checklistchitietdones.map((entry) => entry.Gioht),
           ...result.tb_checklistchitiets.map((entry) => entry.Gioht),
         ].filter((gioht) => gioht);
-
+      
         const allGiohtInSeconds = allGioht.map(timeToSeconds);
-
-        const minGioht = allGiohtInSeconds.length
-          ? Math.min(...allGiohtInSeconds)
-          : null;
-        const maxGioht = allGiohtInSeconds.length
-          ? Math.max(...allGiohtInSeconds)
-          : null;
-
+      
+        const sortedTimes = allGiohtInSeconds.slice().sort((a, b) => a - b);
+        let minGioht = sortedTimes.length ? sortedTimes[0] : null;
+        let maxGioht = sortedTimes.length ? sortedTimes[sortedTimes.length - 1] : null;
+      
+        // Chuyển đổi giờ bắt đầu (Giobd) sang giây để so sánh
+        const giobdInSeconds = timeToSeconds(result.Giobd);
+      
+        // Nếu Giobd > 22:00:00 (79200 giây) và maxGioht < 04:00:00 (14400 giây)
+        if (giobdInSeconds > 79200 && maxGioht !== null && maxGioht < 14400) {
+          maxGioht += 24 * 3600; // Cộng thêm 24 giờ (86400 giây) vào maxGioht
+        }
+      
         const totalDiff =
-          allGiohtInSeconds.length > 1
-            ? allGiohtInSeconds
-                .sort((a, b) => a - b)
-                .reduce((acc, curr, index, arr) => {
-                  if (index === 0) return acc;
-                  return acc + (curr - arr[index - 1]);
-                }, 0)
+          sortedTimes.length > 1
+            ? sortedTimes.reduce((acc, curr, index, arr) => {
+                if (index === 0) return acc;
+                const prev = arr[index - 1];
+                return acc + (curr < prev ? curr + 24 * 3600 - prev : curr - prev);
+              }, 0)
             : 0;
-
+      
         const avgTimeDiff =
-          totalDiff && allGiohtInSeconds.length > 1
-            ? totalDiff / (allGiohtInSeconds.length - 1)
+          totalDiff && sortedTimes.length > 1
+            ? totalDiff / (sortedTimes.length - 1)
             : null;
-
+      
         const countWithGhichu = result.tb_checklistchitiets.filter(
           (entry) => entry.Ghichu
         ).length;
         const countWithAnh = result.tb_checklistchitiets.filter(
           (entry) => entry.Anh
         ).length;
-
+      
         return {
           Tenduan: result.ent_duan.Duan,
           Giamsat: result.ent_user.Hoten,
@@ -203,6 +207,7 @@ exports.danhSachDuLieu = async (req, res) => {
           isDelete: 0,
         };
       });
+      
 
       // Trước khi thêm mới, kiểm tra và xóa dữ liệu cũ nếu trùng lặp
       for (const item of resultWithDetails) {

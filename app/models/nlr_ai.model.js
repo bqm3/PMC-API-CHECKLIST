@@ -46,12 +46,6 @@ const nrl_ai = sequelize.define(
     Thoigiantrungbinh: {
       type: DataTypes.FLOAT,
     },
-    // Thoigianchecklistngannhat: {
-    //   type: DataTypes.FLOAT,
-    // },
-    // Thoigianchecklistlaunhau: {
-    //   type: DataTypes.FLOAT,
-    // },
     Soluongghichu: {
       type: DataTypes.INTEGER,
     },
