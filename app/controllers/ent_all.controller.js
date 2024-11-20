@@ -290,6 +290,7 @@ const convertExcelDate = (excelDate) => {
 };
 
 exports.uploadFiles = async (req, res) => {
+  let index = 0;
   try {
     if (!req.file) {
       return res.status(400).send("No file uploaded.");
@@ -299,7 +300,7 @@ exports.uploadFiles = async (req, res) => {
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     const data = xlsx.utils.sheet_to_json(worksheet);
-
+   
     await sequelize.transaction(async (transaction) => {
       const uppercaseKeys = (obj) => {
         return Object.keys(obj).reduce((acc, key) => {
@@ -308,7 +309,7 @@ exports.uploadFiles = async (req, res) => {
           return acc;
         }, {});
       };
-      let index = 0;
+     
       for (const item of data) {
         index++;
         try {
@@ -421,7 +422,7 @@ exports.uploadFiles = async (req, res) => {
   } catch (err) {
     console.error("Error in file upload:", err);
     return res.status(500).json({
-      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+      message: err.message || `Lỗi! Vui lòng thử lại sau. ${index}`,
     });
   }
 };
