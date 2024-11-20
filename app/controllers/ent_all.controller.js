@@ -308,7 +308,7 @@ exports.uploadFiles = async (req, res) => {
           return acc;
         }, {});
       };
-      const index = 0;
+      let index = 0;
       for (const item of data) {
         index++;
         try {
