@@ -243,14 +243,54 @@ exports.checkDateReportData = async (req, res) => {
   }
 };
 
-function convertExcelDate(excelDate) {
-  // Excel's date system starts at 1900-01-01
-  const excelEpoch = new Date(Date.UTC(1900, 0, 1)); // Excel epoch is 1900-01-01
-  excelEpoch.setDate(excelEpoch.getDate() + excelDate - 2); // Adjust for Excel's leap year bug
+function convertExcelDateTime(excelDate) {
+  if (typeof excelDate !== 'number' || isNaN(excelDate)) {
+    throw new Error('Invalid Excel date value');
+  }
 
-  // Ensure the date is correctly formatted as YYYY-MM-DD without time
-  return excelEpoch.toISOString().split("T")[0];
+  // Excel epoch starts from 1900-01-01
+  const excelEpoch = new Date(Date.UTC(1900, 0, 1)); 
+  const days = Math.floor(excelDate); // Phần nguyên: số ngày
+  const fractionalDay = excelDate - days; // Phần thập phân: thời gian trong ngày
+
+  excelEpoch.setDate(excelEpoch.getDate() + days - 2); // Điều chỉnh Excel leap year bug
+
+  // Tính giờ, phút, giây từ phần thập phân
+  const totalSecondsInDay = Math.round(fractionalDay * 86400); // Tổng số giây trong ngày
+  const hours = Math.floor(totalSecondsInDay / 3600);
+  const minutes = Math.floor((totalSecondsInDay % 3600) / 60);
+  const seconds = totalSecondsInDay % 60;
+
+  // Định dạng ngày giờ đầy đủ
+  const year = excelEpoch.getUTCFullYear();
+  const month = String(excelEpoch.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(excelEpoch.getUTCDate()).padStart(2, '0');
+  const hour = String(hours).padStart(2, '0');
+  const minute = String(minutes).padStart(2, '0');
+  const second = String(seconds).padStart(2, '0');
+
+  return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
 }
+
+const convertExcelDate = (excelDate) => {
+  const excelStartDate = new Date(1900, 0, 1); // Excel bắt đầu từ 01/01/1900
+  const days = Math.floor(excelDate); // Phần nguyên là số ngày
+  const timeFraction = excelDate - days; // Phần thập phân là giờ, phút, giây
+
+  const date = new Date(excelStartDate.getTime() + days * 86400000); // 86400000ms = 1 ngày
+  const hours = Math.floor(timeFraction * 24); // Tính giờ
+  const minutes = Math.floor((timeFraction * 24 * 60) % 60); // Tính phút
+  const seconds = Math.floor((timeFraction * 24 * 60 * 60) % 60); // Tính giây
+
+  // Set giờ, phút, giây vào ngày
+  date.setHours(hours);
+  date.setMinutes(minutes);
+  date.setSeconds(seconds);
+
+  // Trả về ngày theo định dạng YYYY-MM-DD
+  const formattedDate = date.toISOString().slice(0, 10); // Chỉ lấy phần ngày (YYYY-MM-DD)
+  return formattedDate;
+};
 
 exports.uploadFiles = async (req, res) => {
   try {
@@ -263,19 +303,22 @@ exports.uploadFiles = async (req, res) => {
     const worksheet = workbook.Sheets[sheetName];
     const data = xlsx.utils.sheet_to_json(worksheet);
     await sequelize.transaction(async (transaction) => {
+      const uppercaseKeys = (obj) => {
+        return Object.keys(obj).reduce((acc, key) => {
+          const newKey = key.toUpperCase(); // Chuyển đổi key sang chữ in hoa
+          acc[newKey] = obj[key]; // Gán giá trị tương ứng
+          return acc;
+        }, {});
+      };
       for (const item of data) {
-        const tranforItem = removeSpacesFromKeys(item);
+        console.log('item["Ngày ghi nhận"]', item["Ngày ghi nhận"])
+        const tranforItem = uppercaseKeys(item);
+        const ngayGhiNhan = convertExcelDate(item["Ngày ghi nhận"]);
         const tenDuAn = tranforItem["TÊN DỰ ÁN"];
-        console.log(
-          'tranforItem["NGÀY GHI NHẬN"]',
-          convertExcelDate(tranforItem["NGÀY GHI NHẬN"])
-        );
-
-        const ngayGhiNhan = convertExcelDate(tranforItem["NGÀY GHI NHẬN"]);
 
         const nguoiTao = tranforItem["NGƯỜI TẠO"];
 
-        const created = convertExcelDate(tranforItem["CREATED"]);
+        const created =  convertExcelDateTime(item["Created"]);
 
         const dienCuDan = tranforItem["SỐ ĐIỆN TIÊU THỤ HÔM QUA (CƯ DÂN)"];
 
@@ -345,28 +388,36 @@ exports.uploadFiles = async (req, res) => {
 
         const polymerAnion = tranforItem["POLYMER ANION"];
 
-        const clorin = tranforItem["CLORIN"];
-
         const methanol = tranforItem["METHANOL"];
 
-        const modified = tranforItem["MODIFIED"];
+        const modified = convertExcelDateTime(item["Modified"]);
 
         const modifiedBy = tranforItem["MODIFIED BY"];
 
         const email = tranforItem["EMAIL"];
 
+        console.log('tenDuAn', tenDuAn)
         const newHSSE = await hsse.create(
           {
             Ten_du_an: tenDuAn,
             Ngay_ghi_nhan: ngayGhiNhan,
             Nguoi_tao: nguoiTao,
-            Created: created,
             Dien_cu_dan: dienCuDan,
             Dien_cdt: dienCdt,
             Nuoc_cu_dan: nuocCuDan,
             Nuoc_cdt: nuocCdt,
             Xa_thai: nuocXaThai,
             Rac_sh: racSinhHoat,
+            Muoi_dp: muoiDienPhan,
+            Pac: pac,
+            NaHSO3: naHSO3,
+            NaOH: naOH,
+            Mat_rd: matRiDuong,
+            Polymer_Anion: polymerAnion,
+            Chlorine_bot: chlorine90,
+            Chlorine_vien: chlorine90Vien,
+            Methanol: methanol,
+            Dau_may: dauMay,
             Tui_rac240: tuiRac240,
             Tui_rac120: tuiRac120,
             Tui_rac20: tuiRac20,
@@ -381,26 +432,18 @@ exports.uploadFiles = async (req, res) => {
             nuoc_bu: nuocBu,
             clo: clo,
             PH: ph,
-            dau_may: dauMay,
+            Poolblock: poolBlock,
             trat_thai: tratThai,
-            chiSoCO2: chiSoCo2,
-            chlorine90: chlorine90,
-            axitHcl: axitHcl,
-            chlorine90Vien: chlorine90Vien,
-            phMinus: phMinus,
-            poolBlock: poolBlock,
-            pn180: pn180,
-            muoiDienPhan: muoiDienPhan,
-            pac: pac,
-            naHSO3: naHSO3,
-            naOH: naOH,
-            matRiDuong: matRiDuong,
-            polymerAnion: polymerAnion,
-            clorin: clorin,
-            methanol: methanol,
-            modified: modified,
-            modifiedBy: modifiedBy,
             Email: email,
+            pHMINUS: phMinus,
+            axit: axitHcl,
+            PN180: pn180,
+            modifiedBy: modifiedBy,
+            chiSoCO2: chiSoCo2,
+            updatedAt: modified,
+            createdAt: created,
+            
+            
           },
           { transaction }
         );
