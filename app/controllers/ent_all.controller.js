@@ -244,9 +244,6 @@ exports.checkDateReportData = async (req, res) => {
 };
 
 function convertExcelDateTime(excelDate) {
-  if (typeof excelDate !== "number" || isNaN(excelDate)) {
-    throw new Error("Invalid Excel date value");
-  }
 
   // Excel epoch starts from 1900-01-01
   const excelEpoch = new Date(Date.UTC(1900, 0, 1));
@@ -360,7 +357,7 @@ exports.uploadFiles = async (req, res) => {
           const modifiedBy = tranforItem["MODIFIED BY"];
           const email = tranforItem["EMAIL"];
 
-          console.log("tenDuAn", tenDuAn);
+          console.log('modified', modified)
 
           const newHSSE = await hsse.create(
             {
