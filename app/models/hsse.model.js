@@ -19,7 +19,10 @@ const hsse = sequelize.define(
     Nguoi_tao: {
       type: DataTypes.STRING(255),
     },
-    Created: {
+    createdAt: {
+      type: DataTypes.DATE,
+    },
+    updatedAt: {
       type: DataTypes.DATE,
     },
     Dien_cu_dan: {
@@ -58,7 +61,10 @@ const hsse = sequelize.define(
     Polymer_Anion: {
       type: DataTypes.FLOAT,
     },
-    clorin: {
+    Chlorine_bot: {
+      type: DataTypes.FLOAT,
+    },
+    Chlorine_vien: {
       type: DataTypes.FLOAT,
     },
     Methanol: {
@@ -109,12 +115,31 @@ const hsse = sequelize.define(
     PH: {
       type: DataTypes.FLOAT,
     },
+    Poolblock: {
+      type: DataTypes.FLOAT,
+    },
     trat_thai: {
       type: DataTypes.FLOAT,
     },
     Email: {
-      type: DataTypes.CHAR,
+      type: DataTypes.STRING(255),
     },
+    pHMINUS: {
+      type: DataTypes.FLOAT,
+    },
+    axit: {
+      type: DataTypes.FLOAT,
+    },
+    PN180: {
+      type: DataTypes.FLOAT,
+    },
+    modifiedBy: {
+      type: DataTypes.STRING(255),
+    },
+    chiSoCO2: {
+      type: DataTypes.FLOAT,
+    },
+   
   },
   {
     freezeTableName: true,
@@ -122,5 +147,6 @@ const hsse = sequelize.define(
     tableName: "HSSE",
   }
 );
+
 
 module.exports = hsse;

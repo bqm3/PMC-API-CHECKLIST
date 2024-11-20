@@ -5540,10 +5540,10 @@ exports.createExcelTongHopCa = async (req, res) => {
         ],
         where: whereClause,
       });
-
+ // Đầy
+ // Đầy 
       // Create a map to aggregate data by shift (ca) and date
       const aggregatedData = {};
-
       dataChecklist.forEach((item) => {
         const shiftKey = `${item.Ngay}-${item.ent_calv.Tenca}-${item.ent_khoicv?.KhoiCV}`;
 
