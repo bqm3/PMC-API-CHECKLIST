@@ -244,13 +244,14 @@ exports.checkDateReportData = async (req, res) => {
 };
 
 function convertExcelDateTime(excelDate) {
-
+  console.log('excelDate',excelDate)
   // Excel epoch starts from 1900-01-01
   const excelEpoch = new Date(Date.UTC(1900, 0, 1));
   const days = Math.floor(excelDate); // Phần nguyên: số ngày
   const fractionalDay = excelDate - days; // Phần thập phân: thời gian trong ngày
 
   excelEpoch.setDate(excelEpoch.getDate() + days - 2); // Điều chỉnh Excel leap year bug
+  console.log('excelEpoch', excelEpoch)
 
   // Tính giờ, phút, giây từ phần thập phân
   const totalSecondsInDay = Math.round(fractionalDay * 86400); // Tổng số giây trong ngày
@@ -273,6 +274,8 @@ const convertExcelDate = (excelDate) => {
   const excelStartDate = new Date(1900, 0, 1); // Excel bắt đầu từ 01/01/1900
   const days = Math.floor(excelDate); // Phần nguyên là số ngày
   const timeFraction = excelDate - days; // Phần thập phân là giờ, phút, giây
+
+  console.log('timeFraction', timeFraction)
 
   const date = new Date(excelStartDate.getTime() + days * 86400000); // 86400000ms = 1 ngày
   const hours = Math.floor(timeFraction * 24); // Tính giờ
@@ -300,7 +303,7 @@ exports.uploadFiles = async (req, res) => {
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     const data = xlsx.utils.sheet_to_json(worksheet);
-   
+
     await sequelize.transaction(async (transaction) => {
       const uppercaseKeys = (obj) => {
         return Object.keys(obj).reduce((acc, key) => {
@@ -309,10 +312,11 @@ exports.uploadFiles = async (req, res) => {
           return acc;
         }, {});
       };
-     
+
       for (const item of data) {
         index++;
         try {
+
           const tranforItem = uppercaseKeys(item);
           const ngayGhiNhan = convertExcelDate(item["Ngày ghi nhận"]);
           const tenDuAn = tranforItem["TÊN DỰ ÁN"];
@@ -358,54 +362,51 @@ exports.uploadFiles = async (req, res) => {
           const modifiedBy = tranforItem["MODIFIED BY"];
           const email = tranforItem["EMAIL"];
 
-          console.log('nguoiTao', nguoiTao)
-
           const newHSSE = await hsse.create(
             {
-              Ten_du_an: tenDuAn == 'NaN' ? null : tenDuAn,
-Ngay_ghi_nhan: ngayGhiNhan == 'NaN' ? null : ngayGhiNhan,
-Nguoi_tao: nguoiTao == 'NaN' ? null : nguoiTao,
-Dien_cu_dan: dienCuDan == 'NaN' ? null : dienCuDan,
-Dien_cdt: dienCdt == 'NaN' ? null : dienCdt,
-Nuoc_cu_dan: nuocCuDan == 'NaN' ? null : nuocCuDan,
-Nuoc_cdt: nuocCdt == 'NaN' ? null : nuocCdt,
-Xa_thai: nuocXaThai == 'NaN' ? null : nuocXaThai,
-Rac_sh: racSinhHoat == 'NaN' ? null : racSinhHoat,
-Muoi_dp: muoiDienPhan == 'NaN' ? null : muoiDienPhan,
-Pac: pac == 'NaN' ? null : pac,
-NaHSO3: naHSO3 == 'NaN' ? null : naHSO3,
-NaOH: naOH == 'NaN' ? null : naOH,
-Mat_rd: matRiDuong == 'NaN' ? null : matRiDuong,
-Polymer_Anion: polymerAnion == 'NaN' ? null : polymerAnion,
-Chlorine_bot: chlorine90 == 'NaN' ? null : chlorine90,
-Chlorine_vien: chlorine90Vien == 'NaN' ? null : chlorine90Vien,
-Methanol: methanol == 'NaN' ? null : methanol,
-Dau_may: dauMay == 'NaN' ? null : dauMay,
-Tui_rac240: tuiRac240 == 'NaN' ? null : tuiRac240,
-Tui_rac120: tuiRac120 == 'NaN' ? null : tuiRac120,
-Tui_rac20: tuiRac20 == 'NaN' ? null : tuiRac20,
-Tui_rac10: tuiRac10 == 'NaN' ? null : tuiRac10,
-Tui_rac5: tuiRac5 == 'NaN' ? null : tuiRac5,
-giayvs_235: giayVs235 == 'NaN' ? null : giayVs235,
-giaivs_120: giayVs120 == 'NaN' ? null : giayVs120,
-giay_lau_tay: giayLauTay == 'NaN' ? null : giayLauTay,
-hoa_chat: hoaChat == 'NaN' ? null : hoaChat,
-nuoc_rua_tay: nuocRuaTay == 'NaN' ? null : nuocRuaTay,
-nhiet_do: nhietDo == 'NaN' ? null : nhietDo,
-nuoc_bu: nuocBu == 'NaN' ? null : nuocBu,
-clo: clo == 'NaN' ? null : clo,
-PH: ph == 'NaN' ? null : ph,
-Poolblock: poolBlock == 'NaN' ? null : poolBlock,
-trat_thai: tratThai == 'NaN' ? null : tratThai,
-Email: email == 'NaN' ? null : email,
-pHMINUS: phMinus == 'NaN' ? null : phMinus,
-axit: axitHcl == 'NaN' ? null : axitHcl,
-PN180: pn180 == 'NaN' ? null : pn180,
-modifiedBy: modifiedBy == 'NaN' ? null : modifiedBy,
-chiSoCO2: chiSoCo2 == 'NaN' ? null : chiSoCo2,
-updatedAt: modified == 'NaN' ? null : modified,
-createdAt: created == 'NaN' ? null : created,
-
+              Ten_du_an: tenDuAn == "NaN" ? null : tenDuAn,
+              Ngay_ghi_nhan: ngayGhiNhan == "NaN" ? null : ngayGhiNhan,
+              Nguoi_tao: nguoiTao == "NaN" ? null : nguoiTao,
+              Dien_cu_dan: dienCuDan == "NaN" ? null : dienCuDan,
+              Dien_cdt: dienCdt == "NaN" ? null : dienCdt,
+              Nuoc_cu_dan: nuocCuDan == "NaN" ? null : nuocCuDan,
+              Nuoc_cdt: nuocCdt == "NaN" ? null : nuocCdt,
+              Xa_thai: nuocXaThai == "NaN" ? null : nuocXaThai,
+              Rac_sh: racSinhHoat == "NaN" ? null : racSinhHoat,
+              Muoi_dp: muoiDienPhan == "NaN" ? null : muoiDienPhan,
+              Pac: pac == "NaN" ? null : pac,
+              NaHSO3: naHSO3 == "NaN" ? null : naHSO3,
+              NaOH: naOH == "NaN" ? null : naOH,
+              Mat_rd: matRiDuong == "NaN" ? null : matRiDuong,
+              Polymer_Anion: polymerAnion == "NaN" ? null : polymerAnion,
+              Chlorine_bot: chlorine90 == "NaN" ? null : chlorine90,
+              Chlorine_vien: chlorine90Vien == "NaN" ? null : chlorine90Vien,
+              Methanol: methanol == "NaN" ? null : methanol,
+              Dau_may: dauMay == "NaN" ? null : dauMay,
+              Tui_rac240: tuiRac240 == "NaN" ? null : tuiRac240,
+              Tui_rac120: tuiRac120 == "NaN" ? null : tuiRac120,
+              Tui_rac20: tuiRac20 == "NaN" ? null : tuiRac20,
+              Tui_rac10: tuiRac10 == "NaN" ? null : tuiRac10,
+              Tui_rac5: tuiRac5 == "NaN" ? null : tuiRac5,
+              giayvs_235: giayVs235 == "NaN" ? null : giayVs235,
+              giaivs_120: giayVs120 == "NaN" ? null : giayVs120,
+              giay_lau_tay: giayLauTay == "NaN" ? null : giayLauTay,
+              hoa_chat: hoaChat == "NaN" ? null : hoaChat,
+              nuoc_rua_tay: nuocRuaTay == "NaN" ? null : nuocRuaTay,
+              nhiet_do: nhietDo == "NaN" ? null : nhietDo,
+              nuoc_bu: nuocBu == "NaN" ? null : nuocBu,
+              clo: clo == "NaN" ? null : clo,
+              PH: ph == "NaN" ? null : ph,
+              Poolblock: poolBlock == "NaN" ? null : poolBlock,
+              trat_thai: tratThai == "NaN" ? null : tratThai,
+              Email: email == "NaN" ? null : email,
+              pHMINUS: phMinus == "NaN" ? null : phMinus,
+              axit: axitHcl == "NaN" ? null : axitHcl,
+              PN180: pn180 == "NaN" ? null : pn180,
+              modifiedBy: modifiedBy == "NaN" ? null : modifiedBy,
+              chiSoCO2: chiSoCo2 == "NaN" ? null : chiSoCo2,
+              updatedAt: modified == "NaN" ? null : modified,
+              createdAt: created == "NaN" ? null : created,
             },
             { transaction }
           );
@@ -421,10 +422,8 @@ createdAt: created == 'NaN' ? null : created,
       data,
     });
   } catch (err) {
-    console.error("Error in file upload:", err);
     return res.status(500).json({
       message: err.message || `Lỗi! Vui lòng thử lại sau. ${index}`,
     });
   }
 };
-
