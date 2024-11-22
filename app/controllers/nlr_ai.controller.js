@@ -425,15 +425,15 @@ exports.getProjectsChecklistStatus = async (req, res) => {
 
 exports.chatMessage = async (req, res) => {
   try {
-    const { question } = req.body;
+    const { message } = req.body;
 
-    if (!question) {
+    if (!message) {
       return res.status(400).json({ error: "No message provided" });
     }
 
     // Đảm bảo đường dẫn tới script Python là chính xác
     const response = await axios.post('https://pmc.ai.pmcweb.vn/api/v1/process', {
-      question: question
+      question: message
   });
 
   // Trả kết quả từ Flask API cho client
