@@ -20,6 +20,8 @@ const { Op, Sequelize, fn, col, literal, where } = require("sequelize");
 const sequelize = require("../config/db.config");
 const OpenAI = require("openai");
 const nlp = require("compromise");
+const path = require("path");
+const { default: axios } = require("axios");
 const moment = require("moment");
 const nrl_ai = require("../models/nlr_ai.model");
 const Ent_tile = require("../models/ent_tile.model");
@@ -142,47 +144,51 @@ exports.danhSachDuLieu = async (req, res) => {
           const [hours, minutes, seconds] = time.split(":").map(Number);
           return hours * 3600 + minutes * 60 + seconds;
         };
-      
+
         const allGioht = [
           ...result.tb_checklistchitietdones.map((entry) => entry.Gioht),
           ...result.tb_checklistchitiets.map((entry) => entry.Gioht),
         ].filter((gioht) => gioht);
-      
+
         const allGiohtInSeconds = allGioht.map(timeToSeconds);
-      
+
         const sortedTimes = allGiohtInSeconds.slice().sort((a, b) => a - b);
         let minGioht = sortedTimes.length ? sortedTimes[0] : null;
-        let maxGioht = sortedTimes.length ? sortedTimes[sortedTimes.length - 1] : null;
-      
+        let maxGioht = sortedTimes.length
+          ? sortedTimes[sortedTimes.length - 1]
+          : null;
+
         // Chuyển đổi giờ bắt đầu (Giobd) sang giây để so sánh
         const giobdInSeconds = timeToSeconds(result.Giobd);
-      
+
         // Nếu Giobd > 22:00:00 (79200 giây) và maxGioht < 04:00:00 (14400 giây)
         if (giobdInSeconds > 79200 && maxGioht !== null && maxGioht < 14400) {
           maxGioht += 24 * 3600; // Cộng thêm 24 giờ (86400 giây) vào maxGioht
         }
-      
+
         const totalDiff =
           sortedTimes.length > 1
             ? sortedTimes.reduce((acc, curr, index, arr) => {
                 if (index === 0) return acc;
                 const prev = arr[index - 1];
-                return acc + (curr < prev ? curr + 24 * 3600 - prev : curr - prev);
+                return (
+                  acc + (curr < prev ? curr + 24 * 3600 - prev : curr - prev)
+                );
               }, 0)
             : 0;
-      
+
         const avgTimeDiff =
           totalDiff && sortedTimes.length > 1
             ? totalDiff / (sortedTimes.length - 1)
             : null;
-      
+
         const countWithGhichu = result.tb_checklistchitiets.filter(
           (entry) => entry.Ghichu
         ).length;
         const countWithAnh = result.tb_checklistchitiets.filter(
           (entry) => entry.Anh
         ).length;
-      
+
         return {
           Tenduan: result.ent_duan.Duan,
           Giamsat: result.ent_user.Hoten,
@@ -207,7 +213,6 @@ exports.danhSachDuLieu = async (req, res) => {
           isDelete: 0,
         };
       });
-      
 
       // Trước khi thêm mới, kiểm tra và xóa dữ liệu cũ nếu trùng lặp
       for (const item of resultWithDetails) {
@@ -420,61 +425,22 @@ exports.getProjectsChecklistStatus = async (req, res) => {
 
 exports.chatMessage = async (req, res) => {
   try {
-    const { message } = req.body;
+    const { question } = req.body;
 
-    if (!message) {
-      return res.status(400).json({ error: "Message is required" });
+    if (!question) {
+      return res.status(400).json({ error: "No message provided" });
     }
 
-    // Phân tích câu hỏi với compromise
-    const doc = nlp(message);
+    // Đảm bảo đường dẫn tới script Python là chính xác
+    const response = await axios.post('https://pmc.ai.pmcweb.vn/api/v1/process', {
+      question: question
+  });
 
-    // Tìm kiếm các từ khóa liên quan đến khối
-    const block = doc.match("khối *").text().replace("khối", "").trim();
-
-    // Tìm kiếm tháng (có thể là số hoặc chữ)
-    const month = doc.match("tháng *").text().replace("tháng", "").trim();
-    
-    // Tìm kiếm năm (có thể là số hoặc chữ)
-    const year = doc.match("năm *").text().replace("năm", "").trim();
-
-    // Tìm kiếm dự án
-    const project = doc.match("dự án *").text().replace("dự án", "").trim();
-
-    console.log("Khối:", block);
-    console.log("Tháng:", month);
-    console.log("Năm:", year);
-    console.log("Dự án:", project);
-
-    // Kiểm tra và xử lý tháng, năm
-    const monthNum = parseInt(month);
-    const yearNum = year ? parseInt(year) : new Date().getFullYear();
-
-    // Lấy ngày bắt đầu và kết thúc của tháng
-    const startOfMonth = new Date(yearNum, monthNum - 1, 1);
-    const endOfMonth = new Date(yearNum, monthNum, 0);
-
-    let whereClause = { isDelete: 0 };
-
-    // Xử lý các điều kiện tìm kiếm
-    if (project && project !== "tất cả") whereClause.Tenduan = project;
-    if (block) whereClause.Tenkhoi = block;
-    if (monthNum) whereClause.Ngay = { [Sequelize.Op.between]: [startOfMonth, endOfMonth] };
-
-    // Truy vấn cơ sở dữ liệu
-    const data = await nrl_ai.findAll({
-      where: whereClause,
-    });
-
-    // Trả về dữ liệu tổng hợp
-    res.status(200).json({
-      message: "Dữ liệu đã được lấy thành công",
-      data: data,  // Dữ liệu từ cơ sở dữ liệu
-    });
+  // Trả kết quả từ Flask API cho client
+  res.json(response.data);
   } catch (error) {
     return res.status(500).json({
       message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
 };
-

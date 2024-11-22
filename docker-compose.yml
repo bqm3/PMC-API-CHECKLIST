@@ -1,10 +1,61 @@
-version: "3.8"
 services:
-  app:
-    build: .
+  flask:
+    build:
+      context: ./python
+      dockerfile: Dockerfile
+    container_name: checklist_gpt_service
     ports:
       - "5000:5000"
     volumes:
-      - .:/app
+      - ./python:/app
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DB_HOST=${DB_HOST}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_DATABASE_NAME=${DB_DATABASE_NAME}
+    env_file:
+      - .env
+
+  nodejs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: checklist_api_service
+    ports:
+      - "6868:6868"
+    depends_on:
+      - flask
+    volumes:
+      - .:/usr/src/app
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_DATABASE_NAME=${DB_DATABASE_NAME}
+      - DB_PORT=${DB_PORT}
+      - PORT=${PORT}
+      - NODE_ENV=${NODE_ENV}
+      - CLOUDINARY_NAME=${CLOUDINARY_NAME}
+      - CLOUDINARY_KEY=${CLOUDINARY_KEY}
+      - CLOUDINARY_SECRET=${CLOUDINARY_SECRET}
+      - OPENAI_API_KEY_QM=${OPENAI_API_KEY_QM}
+      - OPENAI_ORG_ID=${OPENAI_ORG_ID}
+      - TYPE=${TYPE}
+      - PROJECT_ID=${PROJECT_ID}
+      - PRIVATE_KEY_ID=${PRIVATE_KEY_ID}
+      - PRIVATE_KEY=${PRIVATE_KEY}
+      - CLIENT_EMAIL=${CLIENT_EMAIL}
+      - CLIENT_ID=${CLIENT_ID}
+      - AUTH_URI=${AUTH_URI}
+      - TOKEN_URI=${TOKEN_URI}
+      - AUTH_PROVIDER_X509_CERT_URL=${AUTH_PROVIDER_X509_CERT_URL}
+      - UNIVERSE_DOMAIN=${UNIVERSE_DOMAIN}
+      - CLIENT_X509_CERT_URL=${CLIENT_X509_CERT_URL}
+      - PARENT_NAME=${PARENT_NAME}
+      - CHILD_NAME=${CHILD_NAME}
+      - SCOPES=${SCOPES}
+      - EMAIL_USERNAME=${EMAIL_USERNAME}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
     env_file:
       - .env
