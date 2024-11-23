@@ -53,8 +53,6 @@ exports.createCheckListChiTiet = async (req, res, next) => {
         error: "ID_ChecklistC and ID_Checklist must have the same length.",
       });
     }
-    console.log('records',records)
-    console.log('images',images)
 
     const uploadedFileIds = [];
     if (!isEmpty(images)) {
@@ -75,8 +73,12 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       const Gioht = records.Gioht[index];
       const Ghichu = records.Ghichu[index];
       const Checklist = records.Checklist[index];
-      const isScan = (records.isScan[index] == "null" ? null : records.isScan[index]) || null;
-      const isCheckListLai = records.isCheckListLai[index] ? records.isCheckListLai[index] : 0;
+      const isScan =
+        (records.isScan[index] == "null" ? null : records.isScan[index]) ||
+        null;
+      const isCheckListLai = records.isCheckListLai[index]
+        ? records.isCheckListLai[index]
+        : 0;
       const d = new Date();
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, "0"); // Months are zero-based
@@ -85,24 +87,23 @@ exports.createCheckListChiTiet = async (req, res, next) => {
 
       let anhs = [];
       if (!isEmpty(images)) {
-        let imageIndex = '';
+        let imageIndex = "";
         let matchingImage = null;
-        for(let i =0; i< images.length ; i++){
+        for (let i = 0; i < images.length; i++) {
           imageIndex = `Images_${index}_${ID_Checklist}_${i}`;
           matchingImage = uploadedFileIds.find(
             (file) => file.fieldname === imageIndex
           );
           if (matchingImage) {
-            anhs.push(matchingImage.fileId.id)
+            anhs.push(matchingImage.fileId.id);
           } else {
             console.log(`No matching image found for Anh: ${imageIndex}`);
           }
         }
         // Find the corresponding image based on the fieldname format
-        
       }
 
-      const Anh = anhs.join(",")
+      const Anh = anhs.join(",");
       return {
         ID_ChecklistC: records.ID_ChecklistC[0],
         ID_Checklist,
@@ -124,6 +125,43 @@ exports.createCheckListChiTiet = async (req, res, next) => {
 
     try {
       await Tb_checklistchitiet.bulkCreate(newRecords, { transaction });
+      const d = new Date();
+      const month = String(d.getMonth() + 1).padStart(2, "0"); // Tháng
+      const year = d.getFullYear(); // Năm
+      const dynamicTableName = `tb_checklistchitiet_${month}_${year}`;
+
+      const query = `
+  INSERT INTO ${dynamicTableName} 
+    (ID_ChecklistC, ID_Checklist, Vido, Kinhdo, Docao, Ketqua, Gioht, Ghichu, isScan, Anh, Ngay, isCheckListLai)
+  VALUES 
+    ?`;
+
+      const values = newRecords.map((record) => [
+        record.ID_ChecklistC,
+        record.ID_Checklist,
+        record.Vido,
+        record.Kinhdo,
+        record.Docao,
+        record.Ketqua,
+        record.Gioht,
+        record.Ghichu,
+        record.isScan,
+        record.Anh,
+        record.Ngay,
+        record.isCheckListLai,
+      ]);
+      try {
+        await sequelize.query(query, {
+          replacements: [values],
+          type: sequelize.QueryTypes.INSERT,
+          transaction,
+        });
+      } catch (error) {
+        await transaction.rollback();
+        res
+          .status(500)
+          .json({ error: "Failed to insert records into dynamic table" });
+      }
 
       const uniqueIDChecklists = [...new Set(records.ID_Checklist)];
 
@@ -138,7 +176,9 @@ exports.createCheckListChiTiet = async (req, res, next) => {
             const totalTong = checklistC.Tong;
 
             if (currentTongC < totalTong) {
-              const hasIsCheckListLaiZero = newRecords.filter(item => item.isCheckListLai === 0)
+              const hasIsCheckListLaiZero = newRecords.filter(
+                (item) => item.isCheckListLai === 0
+              );
               await Tb_checklistc.update(
                 {
                   TongC: Sequelize.literal(
@@ -153,107 +193,116 @@ exports.createCheckListChiTiet = async (req, res, next) => {
             }
           }
         })
-        .catch(async(error) => {
+        .catch(async (error) => {
           console.error("Error in updating TongC: ", error);
           await transaction.rollback();
         });
 
-       
-        if (newRecords.length > 0) {
-          for (let i = 0; i < newRecords.length; i++) {
-            const checklistId = newRecords[i].ID_Checklist;
-            const ketquaValue = newRecords[i].Ketqua?.trim();
-            const checklistRecord = await Ent_checklist.findOne({
-              where: {
-                ID_Checklist: checklistId,
-                isDelete: 0,
-              },
-              attributes: ["Checklist", "ID_Checklist", "Giatriloi", "Giatridinhdanh", "isDelete"],
-              transaction,
-            });
-            if(checklistRecord){
-              const shouldUpdateTinhtrang = 
+      if (newRecords.length > 0) {
+        for (let i = 0; i < newRecords.length; i++) {
+          const checklistId = newRecords[i].ID_Checklist;
+          const ketquaValue = newRecords[i].Ketqua?.trim();
+          const checklistRecord = await Ent_checklist.findOne({
+            where: {
+              ID_Checklist: checklistId,
+              isDelete: 0,
+            },
+            attributes: [
+              "Checklist",
+              "ID_Checklist",
+              "Giatriloi",
+              "Giatridinhdanh",
+              "isDelete",
+            ],
+            transaction,
+          });
+          if (checklistRecord) {
+            const shouldUpdateTinhtrang =
               // TH1 : có giá trị lỗi thì check giá trị lỗi = ketquaValue thì update Tinhtrang = 1
-              (removeVietnameseTones(ketquaValue) === removeVietnameseTones(checklistRecord?.Giatriloi)) || 
+              removeVietnameseTones(ketquaValue) ===
+                removeVietnameseTones(checklistRecord?.Giatriloi) ||
               // ketquaValue khác giá trị định danh + phải có ảnh hoặc ghi chú thì update Tinhtrang = 1
-              (((newRecords[i].Anh || newRecords[i].GhiChu)) ? true : false && 
-              (removeVietnameseTones(ketquaValue) !== removeVietnameseTones(checklistRecord?.Giatridinhdanh)));
+              (newRecords[i].Anh || newRecords[i].GhiChu
+                ? true
+                : false &&
+                  removeVietnameseTones(ketquaValue) !==
+                    removeVietnameseTones(checklistRecord?.Giatridinhdanh));
 
-              if (shouldUpdateTinhtrang) {
-                await Ent_checklist.update(
-                  { Tinhtrang: 1 },
-                  {
-                    where: {
-                      ID_Checklist: checklistId,
-                      isDelete: 0,
-                    },
-                    transaction,
-                  }
-                );
-              }
+            if (shouldUpdateTinhtrang) {
+              await Ent_checklist.update(
+                { Tinhtrang: 1 },
+                {
+                  where: {
+                    ID_Checklist: checklistId,
+                    isDelete: 0,
+                  },
+                  transaction,
+                }
+              );
             }
-
-          
           }
         }
+      }
 
       await transaction.commit();
+      return res.status(200).json({
+        message: "Successfully "
+      });
+      // const hasImageAndNote = newRecords.filter(
+      //   (record) => record.Anh && record.Ghichu && record.Gioht
+      // );
 
-      const hasImageAndNote = newRecords.filter(
-        (record) => record.Anh && record.Ghichu && record.Gioht
-      );
+      // if (hasImageAndNote.length > 0) {
+      //   // Fetch Checklist names for records with images and notes
+      //   const checklistNames = await Promise.all(
+      //     hasImageAndNote.map(async (record) => {
+      //       const checklist = await Ent_checklist.findOne({
+      //         attributes: [
+      //           "Checklist",
+      //           "ID_Checklist",
+      //           "isDelete",
+      //           "isImportant",
+      //         ],
+      //         where: {
+      //           ID_Checklist: record.ID_Checklist,
+      //           isDelete: 0,
+      //           isImportant: 1,
+      //         },
+      //       });
+      //       return checklist ? checklist.Checklist : null;
+      //     })
+      //   );
 
-      if (hasImageAndNote.length > 0) {
-        // Fetch Checklist names for records with images and notes
-        const checklistNames = await Promise.all(
-          hasImageAndNote.map(async (record) => {
-            const checklist = await Ent_checklist.findOne({
-              attributes: [
-                "Checklist",
-                "ID_Checklist",
-                "isDelete",
-                "isImportant",
-              ],
-              where: {
-                ID_Checklist: record.ID_Checklist,
-                isDelete: 0,
-                isImportant: 1,
-              },
-            });
-            return checklist ? checklist.Checklist : null;
-          })
-        );
+      //   const messageBody = checklistNames
+      //     .filter((name, index) => name)
+      //     .map(
+      //       (name, index) =>
+      //         `${name}, Giờ kiểm tra: ${hasImageAndNote[index].Gioht}, Ghi chú: ${hasImageAndNote[index].Ghichu}`
+      //     )
+      //     .join(" và ");
 
-        const messageBody = checklistNames
-          .filter((name, index) => name)
-          .map(
-            (name, index) =>
-              `${name}, Giờ kiểm tra: ${hasImageAndNote[index].Gioht}, Ghi chú: ${hasImageAndNote[index].Ghichu}`
-          )
-          .join(" và ");
+      //   const message = {
+      //     title: "PMC Checklist",
+      //     body: messageBody,
+      //     data: {
+      //       Ketqua: records.Ketqua,
+      //       Gioht: records.Gioht,
+      //       Ghichu: records.Ghichu,
+      //       userData,
+      //     },
+      //   };
 
-        const message = {
-          title: "PMC Checklist",
-          body: messageBody,
-          data: {
-            Ketqua: records.Ketqua,
-            Gioht: records.Gioht,
-            Ghichu: records.Ghichu,
-            userData,
-          },
-        };
-
-        req.body.message = message;
-        const notificationResult = await notiPush(message);
-        return res.status(200).json({
-          message: "Records created and updated successfully",
-          notificationResult,
-        });
-      } else {
-        return res.status(200).json({
-          message: "Records created and updated successfully",
-        });
-      }
+      //   req.body.message = message;
+      //   const notificationResult = await notiPush(message);
+      //   return res.status(200).json({
+      //     message: "Records created and updated successfully",
+      //     notificationResult,
+      //   });
+      // } else {
+      //   return res.status(200).json({
+      //     message: "Records created and updated successfully",
+      //   });
+      // }
     } catch (error) {
       await transaction.rollback();
       console.error("Error during transaction:", error);
