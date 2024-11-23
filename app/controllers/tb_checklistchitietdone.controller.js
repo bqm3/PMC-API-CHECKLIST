@@ -3,11 +3,13 @@ const {
   Tb_checklistc,
   Ent_checklist,
 } = require("../models/setup.model");
+const sequelize = require("../config/db.config");
 const { Op, Sequelize } = require("sequelize");
 
-exports.create = (req, res) => {
+exports.create = async (req, res) => {
   try {
     const userData = req.user.data;
+    const transaction = await sequelize.transaction();
 
     if (!userData) {
       res.status(401).json({
@@ -15,6 +17,7 @@ exports.create = (req, res) => {
       });
       return;
     }
+
     const {
       ID_Checklists,
       Description,
@@ -26,7 +29,10 @@ exports.create = (req, res) => {
       Gioht,
       isScan,
       isCheckListLai,
+      valueChecks, // This is the array of values for Ketqua
     } = req.body;
+
+    console.log("req.body", req.body);
 
     if (!Description || !Gioht) {
       res.status(400).json({
@@ -48,6 +54,46 @@ exports.create = (req, res) => {
       isDelete: 0,
     };
 
+    const d = new Date();
+    const month = String(d.getMonth() + 1).padStart(2, "0"); // Tháng
+    const year = d.getFullYear(); // Năm
+    const dynamicTableName = `tb_checklistchitiet_${month}_${year}`;
+
+    // Map the valueChecks to the Ketqua column and prepare the values for insertion
+    const values = ID_Checklists.map((id, index) => [
+      ID_ChecklistC,
+      id,
+      Vido || null,
+      Kinhdo || null,
+      Docao || null,
+      valueChecks[index] || null,
+      Gioht,
+      "", // Ghichu
+      isScan,
+      null, // Anh
+      new Date().toISOString().split("T")[0], // Ngay (current date)
+      isCheckListLai || 0,
+    ]);
+
+    const query = `
+      INSERT INTO ${dynamicTableName} 
+        (ID_ChecklistC, ID_Checklist, Vido, Kinhdo, Docao, Ketqua, Gioht, Ghichu, isScan, Anh, Ngay, isCheckListLai)
+      VALUES 
+        ?`;
+
+    try {
+      await sequelize.query(query, {
+        replacements: [values],
+        type: sequelize.QueryTypes.INSERT,
+        transaction,
+      });
+    } catch (error) {
+      console.error("Error inserting into dynamic table:", error);
+      await transaction.rollback();
+      res
+        .status(500)
+        .json({ error: "Failed to insert records into dynamic table" });
+    }
     // Save Tb_checklistchitietdone in the database
     Tb_checklistchitietdone.create(data)
       .then(async (createdData) => {
@@ -87,6 +133,7 @@ exports.create = (req, res) => {
             }
           );
 
+          await transaction.commit();
           res.status(200).json({
             message: "Checklist thành công!",
             data: createdData,
