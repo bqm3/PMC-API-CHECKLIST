@@ -68,7 +68,7 @@ exports.create = async (req, res) => {
       Docao || null,
       valueChecks[index] || null,
       Gioht,
-      "", // Ghichu
+      null, // Ghichu
       isScan,
       null, // Anh
       new Date().toISOString().split("T")[0], // Ngay (current date)
