@@ -125,43 +125,43 @@ exports.createCheckListChiTiet = async (req, res, next) => {
 
     try {
       await Tb_checklistchitiet.bulkCreate(newRecords, { transaction });
-      const d = new Date();
-      const month = String(d.getMonth() + 1).padStart(2, "0"); // Tháng
-      const year = d.getFullYear(); // Năm
-      const dynamicTableName = `tb_checklistchitiet_${month}_${year}`;
+  //     const d = new Date();
+  //     const month = String(d.getMonth() + 1).padStart(2, "0"); // Tháng
+  //     const year = d.getFullYear(); // Năm
+  //     const dynamicTableName = `tb_checklistchitiet_${month}_${year}`;
 
-      const query = `
-  INSERT INTO ${dynamicTableName} 
-    (ID_ChecklistC, ID_Checklist, Vido, Kinhdo, Docao, Ketqua, Gioht, Ghichu, isScan, Anh, Ngay, isCheckListLai)
-  VALUES 
-    ?`;
+  //     const query = `
+  // INSERT INTO ${dynamicTableName} 
+  //   (ID_ChecklistC, ID_Checklist, Vido, Kinhdo, Docao, Ketqua, Gioht, Ghichu, isScan, Anh, Ngay, isCheckListLai)
+  // VALUES 
+  //   ?`;
 
-      const values = newRecords.map((record) => [
-        record.ID_ChecklistC,
-        record.ID_Checklist,
-        record.Vido,
-        record.Kinhdo,
-        record.Docao,
-        record.Ketqua,
-        record.Gioht,
-        record.Ghichu,
-        record.isScan,
-        record.Anh,
-        record.Ngay,
-        record.isCheckListLai,
-      ]);
-      try {
-        await sequelize.query(query, {
-          replacements: [values],
-          type: sequelize.QueryTypes.INSERT,
-          transaction,
-        });
-      } catch (error) {
-        await transaction.rollback();
-        res
-          .status(500)
-          .json({ error: "Failed to insert records into dynamic table" });
-      }
+  //     const values = newRecords.map((record) => [
+  //       record.ID_ChecklistC,
+  //       record.ID_Checklist,
+  //       record.Vido,
+  //       record.Kinhdo,
+  //       record.Docao,
+  //       record.Ketqua,
+  //       record.Gioht,
+  //       record.Ghichu,
+  //       record.isScan,
+  //       record.Anh,
+  //       record.Ngay,
+  //       record.isCheckListLai,
+  //     ]);
+  //     try {
+  //       await sequelize.query(query, {
+  //         replacements: [values],
+  //         type: sequelize.QueryTypes.INSERT,
+  //         transaction,
+  //       });
+  //     } catch (error) {
+  //       await transaction.rollback();
+  //       res
+  //         .status(500)
+  //         .json({ error: "Failed to insert records into dynamic table" });
+  //     }
 
       const uniqueIDChecklists = [...new Set(records.ID_Checklist)];
 

@@ -13,7 +13,6 @@ const bcrypt = require("bcrypt");
 const jsonwebtoken = require("jsonwebtoken");
 const { Op, where } = require("sequelize");
 const fetch = require("node-fetch");
-const moment = require("moment-timezone");
 const sequelize = require("../config/db.config");
 const xlsx = require("xlsx");
 const { convertDateFormat, formatVietnameseText } = require("../utils/util");
