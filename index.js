@@ -186,25 +186,25 @@ cron.schedule("0 4 * * *", async () => {
   }
 });
 
-cron.schedule('0 6 * * *', async () => {
-  try {
-    console.log('Cron job started at 6 AM...');
-    await danhSachDuLieu();
-    console.log('Cron job finished successfully');
-  } catch (error) {
-    console.error('Error executing cron job:', error);
-  }
-});
+// cron.schedule('0 6 * * *', async () => {
+//   try {
+//     console.log('Cron job started at 6 AM...');
+//     await danhSachDuLieu();
+//     console.log('Cron job finished successfully');
+//   } catch (error) {
+//     console.error('Error executing cron job:', error);
+//   }
+// });
 
-cron.schedule('0 5 * * *', async () => {
-  try {
-    console.log('Cron job started at 5 AM...');
-    await getProjectsChecklistStatus(); 
-    console.log('Cron job finished successfully');
-  } catch (error) {
-    console.error('Error executing cron job:', error);
-  }
-});
+// cron.schedule('0 5 * * *', async () => {
+//   try {
+//     console.log('Cron job started at 5 AM...');
+//     await getProjectsChecklistStatus(); 
+//     console.log('Cron job finished successfully');
+//   } catch (error) {
+//     console.error('Error executing cron job:', error);
+//   }
+// });
 
 
 require("./app/routes/ent_calv.routes")(app);
