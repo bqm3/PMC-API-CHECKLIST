@@ -32,6 +32,9 @@ const Ent_duan = sequelize.define(
     Logo: {
       type: DataTypes.TEXT,
     },
+    ID_LoaiCS: {
+      type: DataTypes.CHAR,
+    },
     isDelete: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
@@ -41,6 +44,14 @@ const Ent_duan = sequelize.define(
     freezeTableName: true,
     timestamps: true,
     tableName: "ent_duan",
+  },
+  {
+    indexes: [
+      {
+        unique: false,  
+        fields: ['isDelete'], 
+      },
+    ],
   }
 );
 

@@ -49,7 +49,7 @@ exports.login = async (req, res) => {
       include: [
         {
           model: Ent_duan,
-          attributes: ["Duan", "Diachi", "Logo"],
+          attributes: ["Duan", "Diachi", "Logo", "ID_LoaiCS"],
           include: [
             {
               model: Ent_chinhanh,

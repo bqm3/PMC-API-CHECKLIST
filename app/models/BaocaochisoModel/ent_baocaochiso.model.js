@@ -1,5 +1,5 @@
 const { Sequelize, DataTypes } = require("sequelize");
-const sequelize = require("../config/db.config");
+const sequelize = require("../../config/db.config");
 
 const Ent_baocaochiso = sequelize.define(
   "ent_baocaochiso",
@@ -10,10 +10,13 @@ const Ent_baocaochiso = sequelize.define(
       autoIncrement: true,
       primaryKey: true,
     },
+    ID_User: {
+      type: DataTypes.INTEGER,
+    },
     ID_Duan: {
       type: DataTypes.INTEGER,
     },
-    ID_User: {
+    ID_Hangmuc_Chiso: {
       type: DataTypes.INTEGER,
     },
     Day: {
@@ -25,53 +28,17 @@ const Ent_baocaochiso = sequelize.define(
     Year: {
       type: DataTypes.INTEGER,
     },
-    Electrical_CDT: {
+    Chiso: {
       type: DataTypes.FLOAT,
     },
-    Water_CDT: {
-      type: DataTypes.FLOAT,
-    },
-    ImageElectrical_CDT: {
+    Image: {
       type: DataTypes.CHAR,
     },
-    ImageWater_CDT: {
+    Chiso_Before: {
+      type: DataTypes.FLOAT,
+    },
+    Chiso_Read_Img: {
       type: DataTypes.CHAR,
-    },
-    ElectricalBefore_CDT: {
-      type: DataTypes.FLOAT,
-    },
-    WaterBefore_CDT: {
-      type: DataTypes.FLOAT,
-    },
-    Electrical_CuDan: {
-      type: DataTypes.FLOAT,
-    },
-    Water_CuDan: {
-      type: DataTypes.FLOAT,
-    },
-    ImageElectrical_CuDan: {
-      type: DataTypes.CHAR,
-    },
-    ImageWater_CuDan: {
-      type: DataTypes.CHAR,
-    },
-    ElectricalBefore_CuDan: {
-      type: DataTypes.FLOAT,
-    },
-    WaterBefore_CuDan: {
-      type: DataTypes.FLOAT,
-    },
-    Electrical_CDT_Real: {
-      type: DataTypes.FLOAT,
-    },
-    Water_CDT_Real: {
-      type: DataTypes.FLOAT,
-    },
-    Electrical_CuDan_Real: {
-      type: DataTypes.FLOAT,
-    },
-    Water_CuDan_Real: {
-      type: DataTypes.FLOAT,
     },
     Ghichu: {
       type: DataTypes.TEXT,

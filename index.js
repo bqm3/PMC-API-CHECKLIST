@@ -229,11 +229,14 @@ require("./app/routes/ent_all.routes")(app);
 require("./app/routes/ai.routes")(app);
 require("./app/routes/sql.routes")(app);
 require("./app/routes/get_image.routes")(app);
-require("./app/routes/ent_baocaochiso.routes")(app);
+require("./app/routes/BaocaochisoRoute/ent_baocaochiso.routes")(app);
+require("./app/routes/BaocaochisoRoute/ent_loai_chiso.routes")(app);
+require("./app/routes/BaocaochisoRoute/ent_duan_loai_chiso.routes")(app);
+require("./app/routes/BaocaochisoRoute/ent_hangmuc_chiso.routes")(app);
 
 const PORT = process.env.PORT || 6969;
 app.listen(PORT, () => {
-  console.log("📝 Original Source By: Quang Minh");
-  console.log("📝 Modified Into JavaScript By: Quang Minh");
+  console.log("📝 Original Source By: NDM2903");
+  console.log("📝 Modified Into JavaScript By: NDM2903");
   console.log(`Server is running on port ${PORT}.`);
 });
