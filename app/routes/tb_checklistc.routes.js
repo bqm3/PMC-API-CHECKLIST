@@ -42,7 +42,7 @@ module.exports = (app) => {
   // Role: VIP
   //========================================== 
   router.get("/list-checklist-error", tb_checklistc.getChecklistsErrorFromYesterday);
-  // router.get("/percent-checklist-project", tb_checklistc.getProjectsChecklistStatus);
+  router.get("/percent-checklist-project", tb_checklistc.getProjectsChecklistStatus);
   router.get("/quan-ly-vi-tri", tb_checklistc.getLocationsChecklist);
   router.get("/ti-le-hoan-thanh", tb_checklistc.tiLeHoanThanh);
   router.get("/ti-le-su-co", tb_checklistc.tiLeSuco);
@@ -56,7 +56,7 @@ module.exports = (app) => {
     // Role: Chi nhánh
   //========================================== 
   router.get("/chi-nhanh-list-checklist-error",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.getChecklistsErrorFromYesterday);
-  // router.get("/chi-nhanh-percent-checklist-project",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.getProjectsChecklistStatus);
+  router.get("/chi-nhanh-percent-checklist-project",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.getProjectsChecklistStatus);
   router.get("/chi-nhanh-quan-ly-vi-tri",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.getLocationsChecklist);
   router.get("/chi-nhanh-ti-le-hoan-thanh",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.tiLeHoanThanh);
   router.get("/chi-nhanh-ti-le-su-co",[isAuthenticated, isAdmin], tb_checklistc_chinhanh.tiLeSuco);
