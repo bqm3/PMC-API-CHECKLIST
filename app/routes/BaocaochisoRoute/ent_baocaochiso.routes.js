@@ -2,8 +2,8 @@ const multer = require("multer");
 const upload = multer();
 
 module.exports = (app) => {
-  const ent_baocaochiso = require("../controllers/ent_baocaochiso.controller.js");
-  const { isAuthenticated, isAdmin,isRoleGD } = require("../middleware/auth_middleware.js");
+  const ent_baocaochiso = require("../../controllers/BaocaochisoController/ent_baocaochiso.controller.js");
+  const { isAuthenticated, isAdmin,isRoleGD } = require("../../middleware/auth_middleware.js");
 
   var router = require("express").Router();
 
