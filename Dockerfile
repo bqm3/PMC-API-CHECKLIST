@@ -1,12 +1,20 @@
-FROM python:3.9-slim
+# Sử dụng Node.js phiên bản ổn định
+FROM node:20
 
-RUN pip install -U pip setuptools wheel && \
-    pip install spacy && \
-    python -m spacy download en_core_web_sm
+# Thiết lập thư mục làm việc trong container
+WORKDIR /usr/src/app
 
-WORKDIR /app
-COPY . /app
+# Copy package.json và package-lock.json
+COPY package*.json ./
 
-# Chạy ứng dụng
-CMD ["python", "nlr_ai.py"]
+# Cài đặt các dependencies
+RUN npm install
 
+# Copy toàn bộ mã nguồn vào container
+COPY . .
+
+# Expose port để kết nối
+EXPOSE 3000
+
+# Command để chạy ứng dụng
+CMD ["node", "index.js"]

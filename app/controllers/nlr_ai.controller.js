@@ -265,163 +265,163 @@ exports.danhSachDuLieu = async (req, res) => {
   }
 };
 
-exports.getProjectsChecklistStatus = async (req, res) => {
-  try {
-    // Kiểm tra xem các ngày đã được cung cấp hay chưa, nếu không thì sử dụng ngày hôm qua
-    const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
+// exports.getProjectsChecklistStatus = async (req, res) => {
+//   try {
+//     // Kiểm tra xem các ngày đã được cung cấp hay chưa, nếu không thì sử dụng ngày hôm qua
+//     const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
 
-    // Lấy dữ liệu checklistC trong phạm vi ngày lọc
-    const dataChecklistCs = await Tb_checklistc.findAll({
-      attributes: [
-        "ID_ChecklistC",
-        "ID_Duan",
-        "ID_Calv",
-        "Ngay",
-        "TongC",
-        "Tong",
-        "ID_KhoiCV",
-        "isDelete",
-      ],
-      where: {
-        Ngay: yesterday,
-        isDelete: 0,
-        ID_Duan: {
-          [Op.ne]: 1,
-        },
-      },
-      include: [
-        {
-          model: Ent_duan,
-          attributes: ["Duan"],
-        },
-        {
-          model: Ent_khoicv,
-          attributes: ["KhoiCV"],
-        },
-        {
-          model: Ent_calv,
-          attributes: ["Tenca"],
-        },
-      ],
-    });
+//     // Lấy dữ liệu checklistC trong phạm vi ngày lọc
+//     const dataChecklistCs = await Tb_checklistc.findAll({
+//       attributes: [
+//         "ID_ChecklistC",
+//         "ID_Duan",
+//         "ID_Calv",
+//         "Ngay",
+//         "TongC",
+//         "Tong",
+//         "ID_KhoiCV",
+//         "isDelete",
+//       ],
+//       where: {
+//         Ngay: yesterday,
+//         isDelete: 0,
+//         ID_Duan: {
+//           [Op.ne]: 1,
+//         },
+//       },
+//       include: [
+//         {
+//           model: Ent_duan,
+//           attributes: ["Duan"],
+//         },
+//         {
+//           model: Ent_khoicv,
+//           attributes: ["KhoiCV"],
+//         },
+//         {
+//           model: Ent_calv,
+//           attributes: ["Tenca"],
+//         },
+//       ],
+//     });
 
-    // Tạo một dictionary để nhóm dữ liệu theo dự án và khối
-    const result = {};
+//     // Tạo một dictionary để nhóm dữ liệu theo dự án và khối
+//     const result = {};
 
-    dataChecklistCs.forEach((checklistC) => {
-      const projectId = checklistC.ID_Duan;
-      const projectName = checklistC.ent_duan.Duan;
-      const khoiName = checklistC.ent_khoicv.KhoiCV;
-      const shiftName = checklistC.ent_calv.Tenca;
+//     dataChecklistCs.forEach((checklistC) => {
+//       const projectId = checklistC.ID_Duan;
+//       const projectName = checklistC.ent_duan.Duan;
+//       const khoiName = checklistC.ent_khoicv.KhoiCV;
+//       const shiftName = checklistC.ent_calv.Tenca;
 
-      // Khởi tạo dữ liệu dự án nếu chưa tồn tại
-      if (!result[projectId]) {
-        result[projectId] = {
-          projectId,
-          projectName,
-          createdKhois: {},
-        };
-      }
+//       // Khởi tạo dữ liệu dự án nếu chưa tồn tại
+//       if (!result[projectId]) {
+//         result[projectId] = {
+//           projectId,
+//           projectName,
+//           createdKhois: {},
+//         };
+//       }
 
-      // Khởi tạo dữ liệu cho khối nếu chưa tồn tại
-      if (!result[projectId].createdKhois[khoiName]) {
-        result[projectId].createdKhois[khoiName] = {
-          shifts: {},
-        };
-      }
+//       // Khởi tạo dữ liệu cho khối nếu chưa tồn tại
+//       if (!result[projectId].createdKhois[khoiName]) {
+//         result[projectId].createdKhois[khoiName] = {
+//           shifts: {},
+//         };
+//       }
 
-      // Khởi tạo dữ liệu cho ca nếu chưa tồn tại
-      if (!result[projectId].createdKhois[khoiName].shifts[shiftName]) {
-        result[projectId].createdKhois[khoiName].shifts[shiftName] = {
-          totalTongC: 0,
-          totalTong: 0,
-          userCompletionRates: [], // Lưu danh sách tỷ lệ hoàn thành của từng người
-        };
-      }
+//       // Khởi tạo dữ liệu cho ca nếu chưa tồn tại
+//       if (!result[projectId].createdKhois[khoiName].shifts[shiftName]) {
+//         result[projectId].createdKhois[khoiName].shifts[shiftName] = {
+//           totalTongC: 0,
+//           totalTong: 0,
+//           userCompletionRates: [], // Lưu danh sách tỷ lệ hoàn thành của từng người
+//         };
+//       }
 
-      // Cộng dồn TongC và Tong cho ca
-      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTongC +=
-        checklistC.TongC;
-      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTong +=
-        checklistC.Tong;
+//       // Cộng dồn TongC và Tong cho ca
+//       result[projectId].createdKhois[khoiName].shifts[shiftName].totalTongC +=
+//         checklistC.TongC;
+//       result[projectId].createdKhois[khoiName].shifts[shiftName].totalTong +=
+//         checklistC.Tong;
 
-      // Lưu tỷ lệ hoàn thành của từng người
-      let userCompletionRate = 0; // Mặc định là 0 nếu không có giá trị hợp lệ
-      if (
-        checklistC.Tong !== 0 &&
-        checklistC.Tong != null &&
-        checklistC.TongC != null
-      ) {
-        userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
-      }
-      // Đảm bảo tỷ lệ hoàn thành không vượt quá 100%
-      userCompletionRate = userCompletionRate > 100 ? 100 : userCompletionRate;
+//       // Lưu tỷ lệ hoàn thành của từng người
+//       let userCompletionRate = 0; // Mặc định là 0 nếu không có giá trị hợp lệ
+//       if (
+//         checklistC.Tong !== 0 &&
+//         checklistC.Tong != null &&
+//         checklistC.TongC != null
+//       ) {
+//         userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
+//       }
+//       // Đảm bảo tỷ lệ hoàn thành không vượt quá 100%
+//       userCompletionRate = userCompletionRate > 100 ? 100 : userCompletionRate;
 
-      result[projectId].createdKhois[khoiName].shifts[
-        shiftName
-      ].userCompletionRates.push(userCompletionRate);
-    });
+//       result[projectId].createdKhois[khoiName].shifts[
+//         shiftName
+//       ].userCompletionRates.push(userCompletionRate);
+//     });
 
-    // Tính toán phần trăm hoàn thành riêng cho từng ca và tổng khối
-    Object.values(result).forEach((project) => {
-      Object.values(project.createdKhois).forEach((khoi) => {
-        let totalKhoiCompletionRatio = 0;
-        let totalShifts = 0;
+//     // Tính toán phần trăm hoàn thành riêng cho từng ca và tổng khối
+//     Object.values(result).forEach((project) => {
+//       Object.values(project.createdKhois).forEach((khoi) => {
+//         let totalKhoiCompletionRatio = 0;
+//         let totalShifts = 0;
 
-        Object.values(khoi.shifts).forEach((shift) => {
-          // Tính phần trăm hoàn thành cho ca dựa trên tỷ lệ của từng người trong ca
-          let shiftCompletionRatio = shift.userCompletionRates.reduce(
-            (sum, rate) => sum + (rate || 0),
-            0
-          );
-          if (shiftCompletionRatio > 100) {
-            shiftCompletionRatio = 100; // Giới hạn phần trăm hoàn thành tối đa là 100% cho từng ca
-          }
+//         Object.values(khoi.shifts).forEach((shift) => {
+//           // Tính phần trăm hoàn thành cho ca dựa trên tỷ lệ của từng người trong ca
+//           let shiftCompletionRatio = shift.userCompletionRates.reduce(
+//             (sum, rate) => sum + (rate || 0),
+//             0
+//           );
+//           if (shiftCompletionRatio > 100) {
+//             shiftCompletionRatio = 100; // Giới hạn phần trăm hoàn thành tối đa là 100% cho từng ca
+//           }
 
-          // Tính tổng tỷ lệ hoàn thành của các ca
-          totalKhoiCompletionRatio += shiftCompletionRatio;
-          totalShifts += 1; // Tăng số lượng ca
-        });
+//           // Tính tổng tỷ lệ hoàn thành của các ca
+//           totalKhoiCompletionRatio += shiftCompletionRatio;
+//           totalShifts += 1; // Tăng số lượng ca
+//         });
 
-        // Tính phần trăm hoàn thành trung bình cho khối
-        const avgKhoiCompletionRatio = totalKhoiCompletionRatio / totalShifts;
+//         // Tính phần trăm hoàn thành trung bình cho khối
+//         const avgKhoiCompletionRatio = totalKhoiCompletionRatio / totalShifts;
 
-        khoi.completionRatio = Number.isInteger(avgKhoiCompletionRatio)
-          ? avgKhoiCompletionRatio // No decimal places, return as is
-          : avgKhoiCompletionRatio.toFixed(2); // Otherwise, apply toFixed(2)
-      });
-    });
+//         khoi.completionRatio = Number.isInteger(avgKhoiCompletionRatio)
+//           ? avgKhoiCompletionRatio // No decimal places, return as is
+//           : avgKhoiCompletionRatio.toFixed(2); // Otherwise, apply toFixed(2)
+//       });
+//     });
 
-    // Chuyển result object thành mảng
-    const resultArray = Object.values(result);
+//     // Chuyển result object thành mảng
+//     const resultArray = Object.values(result);
 
-    // Chuyển đổi dữ liệu theo dạng của bảng ent_tile
-    const transformedRows = resultArray.map((project) => ({
-      Tenduan: project.projectName,
-      Khoibaove: project.createdKhois["Khối bảo vệ"]?.completionRatio || null,
-      Khoilamsach:
-        project.createdKhois["Khối làm sạch"]?.completionRatio || null,
-      Khoidichvu: project.createdKhois["Khối dịch vụ"]?.completionRatio || null,
-      Khoikythuat:
-        project.createdKhois["Khối kỹ thuật"]?.completionRatio || null,
-      KhoiFB: project.createdKhois["Khối F&B"]?.completionRatio || null,
-      Ngay: yesterday, // Sử dụng ngày lọc làm Ngày
-    }));
+//     // Chuyển đổi dữ liệu theo dạng của bảng ent_tile
+//     const transformedRows = resultArray.map((project) => ({
+//       Tenduan: project.projectName,
+//       Khoibaove: project.createdKhois["Khối bảo vệ"]?.completionRatio || null,
+//       Khoilamsach:
+//         project.createdKhois["Khối làm sạch"]?.completionRatio || null,
+//       Khoidichvu: project.createdKhois["Khối dịch vụ"]?.completionRatio || null,
+//       Khoikythuat:
+//         project.createdKhois["Khối kỹ thuật"]?.completionRatio || null,
+//       KhoiFB: project.createdKhois["Khối F&B"]?.completionRatio || null,
+//       Ngay: yesterday, // Sử dụng ngày lọc làm Ngày
+//     }));
 
-    // Insert dữ liệu vào bảng ent_tile
-    await Ent_tile.bulkCreate(transformedRows);
+//     // Insert dữ liệu vào bảng ent_tile
+//     await Ent_tile.bulkCreate(transformedRows);
 
-    res.status(200).json({
-      message:
-        "Trạng thái checklist của các dự án theo từng khối và ca làm việc",
-      data: resultArray,
-    });
-  } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
-  }
-};
+//     res.status(200).json({
+//       message:
+//         "Trạng thái checklist của các dự án theo từng khối và ca làm việc",
+//       data: resultArray,
+//     });
+//   } catch (err) {
+//     res
+//       .status(500)
+//       .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+//   }
+// };
 
 exports.chatMessage = async (req, res) => {
   try {

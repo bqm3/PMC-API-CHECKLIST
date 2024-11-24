@@ -1,10 +1,3 @@
-const { hashSync, genSaltSync, compareSync } = require("bcrypt");
-const bcrypt = require("bcrypt");
-const jsonwebtoken = require("jsonwebtoken");
-const { Op } = require("sequelize");
-const fetch = require("node-fetch");
-const moment = require("moment-timezone");
-
 exports.notiAll = async (req, res) => {
   if(Object.keys(req.query).length === 0){
     let loadingIOS = false 
