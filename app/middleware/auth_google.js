@@ -33,25 +33,29 @@ const auth = new google.auth.GoogleAuth({
 
 
 const uploadFile = async (fileObject) => {
-  const resizedBuffer = await sharp(fileObject.buffer)
-  .resize({ width: 600, height: 800 }) // Set desired width
-  .toBuffer();
-  const bufferStream = new stream.PassThrough();
-  bufferStream.end(resizedBuffer);
-  const { data } = await google.drive({ version: "v3", auth }).files.create({
-    media: {
-      mimeType: fileObject.mimeType,
-      body: bufferStream,
-    },
-    requestBody: {
-      name: fileObject.originalname,
-      parents: [process.env.PARENT_NAME],
-    },
-    fields: "id,name",
-  });
-  return {
-    name: data.name,
-    id: data.id,
+  try{
+    const resizedBuffer = await sharp(fileObject.buffer)
+    .resize({ width: 600, height: 800 }) // Set desired width
+    .toBuffer();
+    const bufferStream = new stream.PassThrough();
+    bufferStream.end(resizedBuffer);
+    const { data } = await google.drive({ version: "v3", auth }).files.create({
+      media: {
+        mimeType: fileObject.mimeType,
+        body: bufferStream,
+      },
+      requestBody: {
+        name: fileObject.originalname,
+        parents: [process.env.PARENT_NAME],
+      },
+      fields: "id,name",
+    });
+    return {
+      name: data.name,
+      id: data.id,
+    }
+  }catch(err){
+    return undefined;
   }
 };
 
