@@ -6,7 +6,7 @@ module.exports = (app) => {
 
   // Create a new Ent_calv
   router.get("/",[isAuthenticated], ent_loai_chiso.getAllLoai_Chiso)
-  router.get("/byDuan",[isAuthenticated], ent_loai_chiso.getbyDuAN)
+  router.get("/byDuan",[isAuthenticated], ent_loai_chiso.getbyDuAn)
   router.post("/create",[isAuthenticated], ent_loai_chiso.createLoai_Chiso);
   router.put("/update/:id",[isAuthenticated], ent_loai_chiso.updateLoai_Chiso);
   router.put("/delete/:id",[isAuthenticated], ent_loai_chiso.deleteLoai_Chiso);

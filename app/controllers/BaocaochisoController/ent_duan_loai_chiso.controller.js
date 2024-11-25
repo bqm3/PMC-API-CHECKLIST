@@ -37,7 +37,7 @@ exports.updateDuanLoaiCS = async (req, res) => {
   try {
     const userData = req.user.data;
     const ID_Duan = userData.ID_Duan;
-    const { ID_LoaiCS } = req.body; 
+    const { ID_LoaiCS } = req.body;
 
     const updated = await Ent_duan.update(
       { ID_LoaiCS },

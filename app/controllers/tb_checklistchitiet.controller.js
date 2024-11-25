@@ -74,7 +74,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       const Gioht = records.Gioht[index];
       const Ghichu = records.Ghichu[index];
       const Checklist = records.Checklist[index];
-      const Key_Image = records.Key_Image[index];
+      // const Key_Image = records.Key_Image[index];
       const isScan =
         (records.isScan[index] == "null" ? null : records.isScan[index]) ||
         null;
