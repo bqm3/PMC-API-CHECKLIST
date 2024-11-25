@@ -43,7 +43,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     records.Docao = ensureArray(records.Docao);
     records.Ketqua = ensureArray(records.Ketqua);
     records.Ghichu = ensureArray(records.Ghichu);
-    records.Key_Image = ensureArray(records.Key_Image);
+    // records.Key_Image = ensureArray(records.Key_Image);
     records.Gioht = ensureArray(records.Gioht);
     records.Checklist = ensureArray(records.Checklist);
     records.isScan = ensureArray(records.isScan);
@@ -87,7 +87,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       const day = String(d.getDate()).padStart(2, "0");
       const formattedDate = `${year}-${month}-${day}`;
 
-      if (Key_Image == undefined) {
+      // if (Key_Image == undefined) {
         let Anh = "";
         if (!isEmpty(images)) {
           // Find the corresponding image based on the fieldname format
@@ -116,42 +116,42 @@ exports.createCheckListChiTiet = async (req, res, next) => {
           Ngay: formattedDate,
           isCheckListLai,
         };
-      } else {
-        let anhs = [];
-        if (!isEmpty(images)) {
-          let imageIndex = "";
-          let matchingImage = null;
-          for (let i = 0; i < images.length; i++) {
-            imageIndex = `Images_${index}_${ID_Checklist}_${i}`;
-            matchingImage = uploadedFileIds.find(
-              (file) => file.fieldname === imageIndex
-            );
-            if (matchingImage) {
-              anhs.push(matchingImage.fileId.id);
-            } else {
-              console.log(`No matching image found for Anh: ${imageIndex}`);
-            }
-          }
-          // Find the corresponding image based on the fieldname format
-        }
+      // } else {
+      //   let anhs = [];
+      //   if (!isEmpty(images)) {
+      //     let imageIndex = "";
+      //     let matchingImage = null;
+      //     for (let i = 0; i < images.length; i++) {
+      //       imageIndex = `Images_${index}_${ID_Checklist}_${i}`;
+      //       matchingImage = uploadedFileIds.find(
+      //         (file) => file.fieldname === imageIndex
+      //       );
+      //       if (matchingImage) {
+      //         anhs.push(matchingImage.fileId.id);
+      //       } else {
+      //         console.log(`No matching image found for Anh: ${imageIndex}`);
+      //       }
+      //     }
+      //     // Find the corresponding image based on the fieldname format
+      //   }
 
-        const Anh = anhs.join(",");
-        return {
-          ID_ChecklistC: records.ID_ChecklistC[0],
-          ID_Checklist,
-          Vido,
-          Kinhdo,
-          Docao,
-          Ketqua,
-          Gioht,
-          Ghichu,
-          Checklist,
-          isScan,
-          Anh,
-          Ngay: formattedDate,
-          isCheckListLai,
-        };
-      }
+      //   const Anh = anhs.join(",");
+      //   return {
+      //     ID_ChecklistC: records.ID_ChecklistC[0],
+      //     ID_Checklist,
+      //     Vido,
+      //     Kinhdo,
+      //     Docao,
+      //     Ketqua,
+      //     Gioht,
+      //     Ghichu,
+      //     Checklist,
+      //     isScan,
+      //     Anh,
+      //     Ngay: formattedDate,
+      //     isCheckListLai,
+      //   };
+      // }
     });
 
     const transaction = await sequelize.transaction();
