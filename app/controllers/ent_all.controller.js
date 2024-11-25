@@ -198,22 +198,22 @@ exports.checkDateReportData = async (req, res) => {
       inputDate.getTime() === lastDayOfMonth.getTime();
 
     if (!isFirstOrLastDay) {
-      return res.status(400).json({
-        message: "Ngày không phải là ngày đầu tiên hoặc cuối cùng của tháng.",
-        data: {
-          show: false,
-          isCheck: duAn?.ID_Phanloai !== 1 ? 0 : 1,
-        },
-      });
-      // return res.status(200).json({
+      // return res.status(400).json({
       //   message: "Ngày không phải là ngày đầu tiên hoặc cuối cùng của tháng.",
       //   data: {
-      //     month: 12,
-      //     year: 2024,
-      //     show: true,
-      //     isCheck: duAn?.ID_Phanloai !== 1 ? 0 : 1
+      //     show: false,
+      //     isCheck: duAn?.ID_Phanloai !== 1 ? 0 : 1,
       //   },
       // });
+      return res.status(200).json({
+        message: "Ngày không phải là ngày đầu tiên hoặc cuối cùng của tháng.",
+        data: {
+          month: 12,
+          year: 2024,
+          show: true,
+          isCheck: duAn?.ID_Phanloai !== 1 ? 0 : 1
+        },
+      });
     }
 
     // Lấy tháng và năm cuối cùng (nếu là ngày đầu tiên thì lấy tháng trước)
