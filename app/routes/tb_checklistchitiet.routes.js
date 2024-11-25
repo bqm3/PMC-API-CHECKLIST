@@ -12,7 +12,6 @@ module.exports = (app) => {
   router.post(
     "/create",
     [isAuthenticated, upload.any()],
-    // uploader.array("Images"),
     tb_checklistchitiet.createCheckListChiTiet
   );
 

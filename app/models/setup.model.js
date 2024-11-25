@@ -22,7 +22,44 @@ const Ent_chinhanh = require('./ent_chinhanh.model')
 const Ent_linhvuc = require('./ent_linhvuc.model')
 const Ent_loaihinhbds = require('./ent_loaihinhbds.model')
 const Ent_phanloaida = require('./ent_phanloaida.model')
-const Ent_baocaochiso = require('./ent_baocaochiso.model')
+
+
+//bao cao chi so
+const Ent_Loai_Chiso = require('./BaocaochisoModel/ent_loai_chiso.model')
+const Ent_Hangmuc_Chiso = require('./BaocaochisoModel/ent_hangmuc_chiso.model')
+const Ent_baocaochiso = require('./BaocaochisoModel/ent_baocaochiso.model')
+
+Ent_Hangmuc_Chiso.belongsTo(Ent_duan, {as: "ent_duan", foreignKey: "ID_Duan"})
+Ent_Hangmuc_Chiso.belongsTo(Ent_Loai_Chiso, {as:"ent_loai_chiso", foreignKey: "ID_LoaiCS"})
+
+// Ent_duan.belongsToMany(Ent_Loai_Chiso, {
+//   through: 'ent_loai_chiso',
+//   foreignKey: 'ID_Duan',
+//   otherKey: 'ID_LoaiCS',
+//   as: 'ent_loaics'
+// });
+
+Ent_baocaochiso.belongsTo(Ent_Hangmuc_Chiso, {as: "ent_hangmuc_chiso",
+  foreignKey: "ID_Hangmuc_Chiso",
+});
+
+Ent_baocaochiso.belongsTo(Ent_user, {
+  foreignKey: "ID_User",
+});
+
+Ent_user.hasOne(Ent_baocaochiso, {
+  foreignKey: "ID_User",
+});
+
+Ent_baocaochiso.hasMany(Ent_duan, {
+  as: "ent_duan",  // The actual alias used in the model
+  foreignKey: "ID_Duan",
+})
+
+Ent_duan.belongsTo(Ent_baocaochiso, {
+  foreignKey: "ID_Duan",
+});
+
 
 //Duan an + khoi cv  ====================================================================
 Ent_duan.hasMany(Ent_duan_khoicv, {as: "ent_duan_khoicv",foreignKey: 'ID_Duan'})
@@ -221,22 +258,6 @@ Tb_checklistchitietdone.belongsTo(Tb_checklistc, {
   foreignKey: "ID_ChecklistC",
 });
 
-Ent_baocaochiso.belongsTo(Ent_user, {
-  foreignKey: "ID_User",
-});
-
-Ent_user.hasOne(Ent_baocaochiso, {
-  foreignKey: "ID_User",
-});
-
-Ent_baocaochiso.hasMany(Ent_duan, {
-  as: "ent_duan",  // The actual alias used in the model
-  foreignKey: "ID_Duan",
-})
-
-Ent_duan.belongsTo(Ent_baocaochiso, {
-  foreignKey: "ID_Duan",
-});
 
 module.exports = {
   Ent_toanha,
@@ -262,5 +283,7 @@ module.exports = {
   Ent_linhvuc,
   Ent_loaihinhbds,
   Ent_phanloaida,
-  Ent_baocaochiso
+  Ent_baocaochiso,
+  Ent_Loai_Chiso,
+  Ent_Hangmuc_Chiso,
 };
