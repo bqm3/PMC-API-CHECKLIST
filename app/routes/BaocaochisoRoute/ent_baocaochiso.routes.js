@@ -9,7 +9,7 @@ module.exports = (app) => {
 
   router.post("/create", [isAuthenticated, upload.any()], ent_baocaochiso.create)
   
-  router.get("/", [isAuthenticated], ent_baocaochiso.getbyDuan)
+  router.get("/", [isAuthenticated], ent_baocaochiso.getbyDuAn)
 
   router.put("/:id", [isAuthenticated, upload.any()], ent_baocaochiso.update)
   router.put("/delete/:id", [isAuthenticated, isRoleGD], ent_baocaochiso.delete)

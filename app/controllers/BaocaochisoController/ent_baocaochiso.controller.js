@@ -12,7 +12,7 @@ const {
 } = require("../../models/setup.model");
 const { Op, fn, col } = require("sequelize");
 const sequelize = require("../../config/db.config");
-const { getPreviousMonth , convertDateFormat} = require("../../utils/util");
+const { getPreviousMonth , convertDateFormat, isValidNumber} = require("../../utils/util");
 
 exports.create = async (req, res) => {
   const uploadedFileIds = [];
@@ -86,8 +86,6 @@ exports.create = async (req, res) => {
       let Image_ID = "";
       if (!isEmpty(images)) {
         const imageIndex = `Image_${i}`;
-        console.log("imageIndex", imageIndex);
-        console.log("uploadedFileIds", uploadedFileIds);
         const matchingImage = uploadedFileIds.find(
           (file) => file.fieldname === imageIndex
         );
@@ -151,7 +149,7 @@ exports.create = async (req, res) => {
   }
 };
 
-exports.getbyDuan = async (req, res) => {
+exports.getbyDuAn = async (req, res) => {
   try {
     const userData = req.user.data;
     let whereCondition = {
@@ -452,7 +450,4 @@ exports.delete = async (req, res) => {
   }
 };
 
-const isValidNumber = (value) => {
-  const regex = /^(\d+([.,]\d{1,2})?)$/; // Số nguyên hoặc số thập phân có dấu '.' hoặc ','
-  return regex.test(value);
-};
+

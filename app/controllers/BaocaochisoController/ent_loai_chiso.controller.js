@@ -16,7 +16,7 @@ exports.getAllLoai_Chiso = async (req, res) => {
   }
 };
 
-exports.getbyDuAN = async (req, res) => {
+exports.getbyDuAn = async (req, res) => {
   try {
     const userData = req.user.data;
     const ID_LoaiCS = userData.ent_duan.ID_LoaiCS;
