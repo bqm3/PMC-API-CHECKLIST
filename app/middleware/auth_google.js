@@ -31,7 +31,9 @@ const auth = new google.auth.GoogleAuth({
   scopes: SCOPES,
 });
 
+
 const uploadFile = async (fileObject) => {
+  // console.log('fileObject', fileObject)
   const resizedBuffer = await sharp(fileObject.buffer)
   .resize({ width: 600, height: 800 }) // Set desired width
   .toBuffer();
