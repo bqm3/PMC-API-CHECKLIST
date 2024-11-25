@@ -45,24 +45,29 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     records.Ghichu = ensureArray(records.Ghichu);
     // records.Key_Image = ensureArray(records.Key_Image);
     records.Gioht = ensureArray(records.Gioht);
-    records.Checklist = ensureArray(records.Checklist);
+    // records.Checklist = ensureArray(records.Checklist);
     records.isScan = ensureArray(records.isScan);
-    records.isCheckListLai = ensureArray(records?.isCheckListLai);
+    // records.isCheckListLai = ensureArray(records?.isCheckListLai);
 
     if (records.ID_ChecklistC.length !== records.ID_Checklist.length) {
       return res.status(400).json({
         error: "ID_ChecklistC and ID_Checklist must have the same length.",
       });
     }
+   
 
     const uploadedFileIds = [];
     if (!isEmpty(images)) {
       for (const image of images) {
         const fileId = await uploadFile(image);
-        uploadedFileIds.push({ fileId, fieldname: image.fieldname });
+        if(fileId == undefined){
+          continue;
+        }else {
+          uploadedFileIds.push({ fileId, fieldname: image.fieldname });
+        }
       }
     }
-
+    console.log('records', records)
     const newRecords = records.ID_Checklist.map((ID_Checklist, index) => {
       const Vido =
         records.Vido[index] == "null" ? null : records.Vido[index] || null;
@@ -73,23 +78,24 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       const Ketqua = records.Ketqua[index] || null;
       const Gioht = records.Gioht[index];
       const Ghichu = records.Ghichu[index];
-      const Checklist = records.Checklist[index];
       // const Key_Image = records.Key_Image[index];
       const isScan =
         (records.isScan[index] == "null" ? null : records.isScan[index]) ||
         null;
-      const isCheckListLai = records.isCheckListLai[index]
-        ? records.isCheckListLai[index]
-        : 0;
+      // const isCheckListLai = records.isCheckListLai[index]
+      //   ? records.isCheckListLai[index]
+      //   : 0;
       const d = new Date();
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, "0"); // Months are zero-based
       const day = String(d.getDate()).padStart(2, "0");
       const formattedDate = `${year}-${month}-${day}`;
 
+      console.log('records 123', records)
       // if (Key_Image == undefined) {
         let Anh = "";
-        if (!isEmpty(images)) {
+        if (!isEmpty(images) && uploadedFileIds.length > 0) {
+          console.log('uploadedFileIds', uploadedFileIds)
           // Find the corresponding image based on the fieldname format
           const imageIndex = `Images_${index}`;
           const matchingImage = uploadedFileIds.find(
@@ -110,15 +116,15 @@ exports.createCheckListChiTiet = async (req, res, next) => {
           Ketqua,
           Gioht,
           Ghichu,
-          Checklist,
+          // Checklist,
           isScan,
           Anh,
           Ngay: formattedDate,
-          isCheckListLai,
+          // isCheckListLai,
         };
       // } else {
       //   let anhs = [];
-      //   if (!isEmpty(images)) {
+      //   if (!isEmpty(images) && uploadedFileIds.length > 0) {
       //     let imageIndex = "";
       //     let matchingImage = null;
       //     for (let i = 0; i < images.length; i++) {
@@ -135,7 +141,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       //     // Find the corresponding image based on the fieldname format
       //   }
 
-      //   const Anh = anhs.join(",");
+      //   const Anh = anhs.length > 0 ? anhs.join(",") : null;
       //   return {
       //     ID_ChecklistC: records.ID_ChecklistC[0],
       //     ID_Checklist,
@@ -145,7 +151,6 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       //     Ketqua,
       //     Gioht,
       //     Ghichu,
-      //     Checklist,
       //     isScan,
       //     Anh,
       //     Ngay: formattedDate,
@@ -153,6 +158,8 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       //   };
       // }
     });
+
+    console.log('newRecords', newRecords)
 
     const transaction = await sequelize.transaction();
 
@@ -227,13 +234,13 @@ exports.createCheckListChiTiet = async (req, res, next) => {
             const totalTong = checklistC.Tong;
 
             if (currentTongC < totalTong) {
-              const hasIsCheckListLaiZero = newRecords.filter(
-                (item) => item.isCheckListLai === 0
-              );
+              // const hasIsCheckListLaiZero = newRecords.filter(
+              //   (item) => item.isCheckListLai === 0
+              // );
               await Tb_checklistc.update(
                 {
                   TongC: Sequelize.literal(
-                    `TongC + ${hasIsCheckListLaiZero?.length}`
+                    `TongC + ${records.ID_ChecklistC?.length}`
                   ),
                 },
                 {
@@ -273,7 +280,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
               removeVietnameseTones(ketquaValue) ===
                 removeVietnameseTones(checklistRecord?.Giatriloi) ||
               // TH2: ketquaValue khác giá trị định danh + phải có ảnh hoặc ghi chú thì update Tinhtrang = 1
-              (((newRecords[i].Anh || newRecords[i].GhiChu)
+              (((newRecords[i]?.Anh || newRecords[i]?.GhiChu)
                 ? true
                 : false) &&
                   removeVietnameseTones(ketquaValue) !==
