@@ -487,7 +487,7 @@ exports.update = async (req, res) => {
         Giatriloi: req.body.Giatriloi || "",
         isCheck: req.body.isCheck,
         Tieuchuan: req.body.Tieuchuan || "",
-        // sCalv: JSON.stringify(validCalv) || null,
+        sCalv: JSON.stringify(validCalv) || null,
         // calv_1: JSON.stringify(validCalv[0]) || null,
         // calv_2: JSON.stringify(validCalv[1]) || null,
         // calv_3: JSON.stringify(validCalv[2]) || null,

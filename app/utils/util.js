@@ -107,12 +107,17 @@ function getPreviousMonth(month, year) {
   //format text vn -> en
   function removeVietnameseTones(str) {
     if(str == null  || str == '' || str == undefined ) return '';
-    return str
+    return str.trim()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/đ/g, 'd')
-      .replace(/Đ/g, 'D');
+      .replace(/Đ/g, 'D')
   }
+
+  const isValidNumber = (value) => {
+    const regex = /^(\d+([.,]\d{1,2})?)$/; // Số nguyên hoặc số thập phân có dấu '.' hoặc ','
+    return regex.test(value);
+  };
   
 
 module.exports = {
@@ -121,5 +126,6 @@ module.exports = {
   formatVietnameseText,
   removeSpacesFromKeys,
   removeVietnameseTones,
-  getPreviousMonth
+  getPreviousMonth,
+  isValidNumber
 };
