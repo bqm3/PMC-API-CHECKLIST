@@ -85,25 +85,21 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       const day = String(d.getDate()).padStart(2, "0");
       const formattedDate = `${year}-${month}-${day}`;
 
-      let anhs = [];
+      let Anh = "";
       if (!isEmpty(images)) {
-        let imageIndex = "";
-        let matchingImage = null;
-        for (let i = 0; i < images.length; i++) {
-          imageIndex = `Images_${index}_${ID_Checklist}_${i}`;
-          matchingImage = uploadedFileIds.find(
-            (file) => file.fieldname === imageIndex
-          );
-          if (matchingImage) {
-            anhs.push(matchingImage.fileId.id);
-          } else {
-            console.log(`No matching image found for Anh: ${imageIndex}`);
-          }
-        }
+        const imageIndex = `Images_${index}`;
+        const matchingImage = uploadedFileIds.find(
+          (file) => file.fieldname === imageIndex
+        );
+        if (matchingImage) {
+          Anh = matchingImage.fileId.id;
+        } else {
+          console.log(`No matching image found for Anh: ${imageIndex}`);
         // Find the corresponding image based on the fieldname format
       }
+    }
 
-      const Anh = anhs.join(",");
+      // const Anh = anhs.join(",");
       return {
         ID_ChecklistC: records.ID_ChecklistC[0],
         ID_Checklist,
@@ -263,64 +259,64 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       }
 
       await transaction.commit();
-      return res.status(200).json({
-        message: "Successfully ",
-      });
-      // const hasImageAndNote = newRecords.filter(
-      //   (record) => record.Anh && record.Ghichu && record.Gioht
-      // );
+      // return res.status(200).json({
+      //   message: "Successfully ",
+      // });
+      const hasImageAndNote = newRecords.filter(
+        (record) => record.Anh && record.Ghichu && record.Gioht
+      );
 
-      // if (hasImageAndNote.length > 0) {
-      //   // Fetch Checklist names for records with images and notes
-      //   const checklistNames = await Promise.all(
-      //     hasImageAndNote.map(async (record) => {
-      //       const checklist = await Ent_checklist.findOne({
-      //         attributes: [
-      //           "Checklist",
-      //           "ID_Checklist",
-      //           "isDelete",
-      //           "isImportant",
-      //         ],
-      //         where: {
-      //           ID_Checklist: record.ID_Checklist,
-      //           isDelete: 0,
-      //           isImportant: 1,
-      //         },
-      //       });
-      //       return checklist ? checklist.Checklist : null;
-      //     })
-      //   );
+      if (hasImageAndNote.length > 0) {
+        // Fetch Checklist names for records with images and notes
+        const checklistNames = await Promise.all(
+          hasImageAndNote.map(async (record) => {
+            const checklist = await Ent_checklist.findOne({
+              attributes: [
+                "Checklist",
+                "ID_Checklist",
+                "isDelete",
+                "isImportant",
+              ],
+              where: {
+                ID_Checklist: record.ID_Checklist,
+                isDelete: 0,
+                isImportant: 1,
+              },
+            });
+            return checklist ? checklist.Checklist : null;
+          })
+        );
 
-      //   const messageBody = checklistNames
-      //     .filter((name, index) => name)
-      //     .map(
-      //       (name, index) =>
-      //         `${name}, Giờ kiểm tra: ${hasImageAndNote[index].Gioht}, Ghi chú: ${hasImageAndNote[index].Ghichu}`
-      //     )
-      //     .join(" và ");
+        const messageBody = checklistNames
+          .filter((name, index) => name)
+          .map(
+            (name, index) =>
+              `${name}, Giờ kiểm tra: ${hasImageAndNote[index].Gioht}, Ghi chú: ${hasImageAndNote[index].Ghichu}`
+          )
+          .join(" và ");
 
-      //   const message = {
-      //     title: "PMC Checklist",
-      //     body: messageBody,
-      //     data: {
-      //       Ketqua: records.Ketqua,
-      //       Gioht: records.Gioht,
-      //       Ghichu: records.Ghichu,
-      //       userData,
-      //     },
-      //   };
+        const message = {
+          title: "PMC Checklist",
+          body: messageBody,
+          data: {
+            Ketqua: records.Ketqua,
+            Gioht: records.Gioht,
+            Ghichu: records.Ghichu,
+            userData,
+          },
+        };
 
-      //   req.body.message = message;
-      //   const notificationResult = await notiPush(message);
-      //   return res.status(200).json({
-      //     message: "Records created and updated successfully",
-      //     notificationResult,
-      //   });
-      // } else {
-      //   return res.status(200).json({
-      //     message: "Records created and updated successfully",
-      //   });
-      // }
+        req.body.message = message;
+        const notificationResult = await notiPush(message);
+        return res.status(200).json({
+          message: "Records created and updated successfully",
+          notificationResult,
+        });
+      } else {
+        return res.status(200).json({
+          message: "Records created and updated successfully",
+        });
+      }
     } catch (error) {
       await transaction.rollback();
       console.error("Error during transaction:", error);
