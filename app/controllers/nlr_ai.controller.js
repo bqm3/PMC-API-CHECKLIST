@@ -254,10 +254,10 @@ exports.danhSachDuLieu = async (req, res) => {
     await t.commit();
 
     // Gửi phản hồi thành công
-    res.status(200).json({
-      message: "Danh sách checklist đã được chèn và xử lý thành công.",
-      data: allFlattenedResults,
-    });
+    // res.status(200).json({
+    //   message: "Danh sách checklist đã được chèn và xử lý thành công.",
+    //   data: allFlattenedResults,
+    // });
   } catch (error) {
     // Nếu có lỗi, rollback transaction
     await t.rollback();
@@ -411,11 +411,11 @@ exports.getProjectsChecklistStatus = async (req, res) => {
     // Insert dữ liệu vào bảng ent_tile
     await Ent_tile.bulkCreate(transformedRows);
 
-    res.status(200).json({
-      message:
-        "Trạng thái checklist của các dự án theo từng khối và ca làm việc",
-      data: resultArray,
-    });
+    // res.status(200).json({
+    //   message:
+    //     "Trạng thái checklist của các dự án theo từng khối và ca làm việc",
+    //   data: resultArray,
+    // });
   } catch (err) {
     res
       .status(500)

@@ -1,6 +1,5 @@
 require("dotenv").config();
 const cron = require("node-cron");
-const PDFDocument = require("pdfkit");
 const cookieParser = require("cookie-parser");
 const express = require("express");
 const { google } = require("googleapis");
@@ -10,7 +9,6 @@ const mysqldump = require("mysqldump");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const admin = require("firebase-admin");
-const { getMessaging } = require("firebase-admin/messaging");
 const app = express();
 
 var serviceAccount = require("./pmc-cskh-firebase-adminsdk-y7378-5122f6edc7.json");
@@ -33,6 +31,8 @@ const credentials = {
   client_x509_cert_url: process.env.CLIENT_X509_CERT_URL,
   universe_domain: process.env.UNIVERSE_DOMAIN,
 };
+
+const folderId = "1TAMvnXHdhkTov68oKrLbB6DE0bVZezAL";
 
 const SCOPES = ["https://www.googleapis.com/auth/drive"];
 
@@ -91,20 +91,37 @@ async function exportDatabase() {
   return backupPath;
 }
 
+// Hàm xóa file cũ trong thư mục Google Drive
+async function deleteOldFiles(folderId) {
+  try {
+    const files = await drive.files.list({
+      q: `'${folderId}' in parents`,
+      fields: "files(id, name, createdTime)",
+    });
+
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    for (const file of files.data.files) {
+      if (new Date(file.createdTime) < oneWeekAgo) {
+        await drive.files.delete({ fileId: file.id });
+        console.log(`Deleted old file: ${file.name}`);
+      }
+    }
+  } catch (error) {
+    console.error("Error deleting old files:", error.response?.data || error.message);
+  }
+}
+
 // Hàm upload file lên Google Drive
 async function uploadFile(filePath) {
   try {
-    // ID của thư mục trên Google Drive
-    const folderId = "1TAMvnXHdhkTov68oKrLbB6DE0bVZezAL";
-
     const createFile = await drive.files.create({
       requestBody: {
         name: path.basename(filePath),
-        mimeType: "application/sql",
+        mimeType: "text/plain",
         parents: [folderId],
       },
       media: {
-        mimeType: "application/sql",
+        mimeType: "text/plain",
         body: fs.createReadStream(filePath),
       },
     });
@@ -112,11 +129,10 @@ async function uploadFile(filePath) {
     const fileId = createFile.data.id;
     console.log(`File uploaded with ID: ${fileId}`);
 
-    // Đặt quyền cho file
     const getUrl = await setFilePublic(fileId);
-    console.log(getUrl.data);
+    console.log("File is publicly accessible at:", getUrl.data.webViewLink);
   } catch (error) {
-    console.error(error);
+    console.error("Error uploading file:", error.response?.data || error.message);
   }
 }
 
@@ -131,37 +147,64 @@ async function setFilePublic(fileId) {
       },
     });
 
-    const getUrl = await drive.files.get({
+    return await drive.files.get({
       fileId,
       fields: "webViewLink, webContentLink",
     });
-
-    return getUrl;
   } catch (error) {
-    console.error(error);
+    console.error("Error setting file to public:", error.response?.data || error.message);
+  }
+}
+
+// Hàm kiểm tra dung lượng Drive
+async function checkDriveQuota() {
+  try {
+    const driveInfo = await drive.about.get({ fields: "storageQuota" });
+    const { usage, limit } = driveInfo.data.storageQuota;
+
+    console.log(`Drive usage: ${usage}/${limit || "unlimited"}`);
+    if (limit && Number(usage) >= Number(limit)) {
+      console.error("Drive quota exceeded. Skipping backup.");
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("Error checking Drive quota:", error.response?.data || error.message);
+    return false;
   }
 }
 
 // Hàm thực hiện toàn bộ quá trình
 async function handleBackup() {
   try {
+    const quotaAvailable = await checkDriveQuota();
+    if (!quotaAvailable) return;
+
     const backupFilePath = await exportDatabase(); // Xuất cơ sở dữ liệu
-    await uploadFile(backupFilePath); // Upload file lên Google Drive
+    await deleteOldFiles(folderId); // Xóa file cũ trước khi tải file mới
+    await retry(async () => {
+      await uploadFile(backupFilePath);
+    }, {
+      retries: 3,
+      factor: 2,
+      minTimeout: 1000,
+    });
 
     if (fs.existsSync(backupFilePath)) {
-      fs.unlinkSync(backupFilePath); // Xóa file
+      fs.unlinkSync(backupFilePath); // Xóa file backup
       console.log(`Backup file deleted: ${backupFilePath}`);
     }
   } catch (error) {
-    console.error(error);
+    console.error("Error during backup process:", error.response?.data || error.message);
   }
 }
 
+// Lên lịch chạy cron
 const lockFilePath = path.join(__dirname, "cron_backup.lock");
-cron.schedule("0 4 * * *", async () => {
-  console.log("Starting Cron Job at 4 AM");
+cron.schedule("47 8 * * *", async () => {
+  console.log("Starting Cron Job at 8:15 AM");
 
-  // Kiểm tra xem file khóa đã tồn tại chưa
+  // Kiểm tra file khóa
   if (fs.existsSync(lockFilePath)) {
     console.log("Cron job is already running. Skipping this instance.");
     return;
@@ -172,11 +215,10 @@ cron.schedule("0 4 * * *", async () => {
   console.log("Lock file created.");
 
   try {
-    // Thực hiện công việc của bạn
     await handleBackup();
     console.log("Cron job completed successfully.");
   } catch (error) {
-    console.error("Error running cron job:", error);
+    console.error("Error running cron job:", error.message);
   } finally {
     // Xóa file khóa
     if (fs.existsSync(lockFilePath)) {
@@ -186,25 +228,25 @@ cron.schedule("0 4 * * *", async () => {
   }
 });
 
-// cron.schedule('0 6 * * *', async () => {
-//   try {
-//     console.log('Cron job started at 6 AM...');
-//     await danhSachDuLieu();
-//     console.log('Cron job finished successfully');
-//   } catch (error) {
-//     console.error('Error executing cron job:', error);
-//   }
-// });
+cron.schedule('0 5 * * *', async () => {
+  try {
+    console.log('Cron job started at 6 AM...');
+    await danhSachDuLieu();
+    console.log('Cron job finished successfully');
+  } catch (error) {
+    console.error('Error executing cron job:', error);
+  }
+});
 
-// cron.schedule('0 5 * * *', async () => {
-//   try {
-//     console.log('Cron job started at 5 AM...');
-//     await getProjectsChecklistStatus(); 
-//     console.log('Cron job finished successfully');
-//   } catch (error) {
-//     console.error('Error executing cron job:', error);
-//   }
-// });
+cron.schedule('0 6 * * *', async () => {
+  try {
+    console.log('Cron job started at 5 AM...');
+    await getProjectsChecklistStatus(); 
+    console.log('Cron job finished successfully');
+  } catch (error) {
+    console.error('Error executing cron job:', error);
+  }
+});
 
 
 require("./app/routes/ent_calv.routes")(app);
