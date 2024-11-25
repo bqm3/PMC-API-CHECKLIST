@@ -43,7 +43,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     records.Docao = ensureArray(records.Docao);
     records.Ketqua = ensureArray(records.Ketqua);
     records.Ghichu = ensureArray(records.Ghichu);
-    records.Key_Image  = ensureArray(records.Key_Image);
+    records.Key_Image = ensureArray(records.Key_Image);
     records.Gioht = ensureArray(records.Gioht);
     records.Checklist = ensureArray(records.Checklist);
     records.isScan = ensureArray(records.isScan);
@@ -252,7 +252,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       if (newRecords.length > 0) {
         for (let i = 0; i < newRecords.length; i++) {
           const checklistId = newRecords[i].ID_Checklist;
-          const ketquaValue = newRecords[i].Ketqua?.trim();
+          const ketquaValue = newRecords[i].Ketqua;
           const checklistRecord = await Ent_checklist.findOne({
             where: {
               ID_Checklist: checklistId,
@@ -272,10 +272,10 @@ exports.createCheckListChiTiet = async (req, res, next) => {
               // TH1 : có giá trị lỗi thì check giá trị lỗi = ketquaValue thì update Tinhtrang = 1
               removeVietnameseTones(ketquaValue) ===
                 removeVietnameseTones(checklistRecord?.Giatriloi) ||
-              // ketquaValue khác giá trị định danh + phải có ảnh hoặc ghi chú thì update Tinhtrang = 1
-              (newRecords[i].Anh || newRecords[i].GhiChu
+              // TH2: ketquaValue khác giá trị định danh + phải có ảnh hoặc ghi chú thì update Tinhtrang = 1
+              (((newRecords[i].Anh || newRecords[i].GhiChu)
                 ? true
-                : false &&
+                : false) &&
                   removeVietnameseTones(ketquaValue) !==
                     removeVietnameseTones(checklistRecord?.Giatridinhdanh));
 
