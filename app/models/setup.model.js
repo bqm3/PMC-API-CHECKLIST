@@ -27,7 +27,7 @@ const Ent_phanloaida = require('./ent_phanloaida.model')
 //bao cao chi so
 const Ent_Loai_Chiso = require('./BaocaochisoModel/ent_loai_chiso.model')
 const Ent_Hangmuc_Chiso = require('./BaocaochisoModel/ent_hangmuc_chiso.model')
-const Ent_baocaochiso = require('./BaocaochisoModel/ent_baocaochiso.model')
+const Ent_Baocaochiso = require('./BaocaochisoModel/ent_baocaochiso.model')
 
 Ent_Hangmuc_Chiso.belongsTo(Ent_duan, {as: "ent_duan", foreignKey: "ID_Duan"})
 Ent_Hangmuc_Chiso.belongsTo(Ent_Loai_Chiso, {as:"ent_loai_chiso", foreignKey: "ID_LoaiCS"})
@@ -39,24 +39,24 @@ Ent_Hangmuc_Chiso.belongsTo(Ent_Loai_Chiso, {as:"ent_loai_chiso", foreignKey: "I
 //   as: 'ent_loaics'
 // });
 
-Ent_baocaochiso.belongsTo(Ent_Hangmuc_Chiso, {as: "ent_hangmuc_chiso",
+Ent_Baocaochiso.belongsTo(Ent_Hangmuc_Chiso, {as: "ent_hangmuc_chiso",
   foreignKey: "ID_Hangmuc_Chiso",
 });
 
-Ent_baocaochiso.belongsTo(Ent_user, {
+Ent_Baocaochiso.belongsTo(Ent_user, {
   foreignKey: "ID_User",
 });
 
-Ent_user.hasOne(Ent_baocaochiso, {
+Ent_user.hasOne(Ent_Baocaochiso, {
   foreignKey: "ID_User",
 });
 
-Ent_baocaochiso.hasMany(Ent_duan, {
+Ent_Baocaochiso.hasMany(Ent_duan, {
   as: "ent_duan",  // The actual alias used in the model
   foreignKey: "ID_Duan",
 })
 
-Ent_duan.belongsTo(Ent_baocaochiso, {
+Ent_duan.belongsTo(Ent_Baocaochiso, {
   foreignKey: "ID_Duan",
 });
 
@@ -283,7 +283,7 @@ module.exports = {
   Ent_linhvuc,
   Ent_loaihinhbds,
   Ent_phanloaida,
-  Ent_baocaochiso,
+  Ent_Baocaochiso,
   Ent_Loai_Chiso,
   Ent_Hangmuc_Chiso,
 };

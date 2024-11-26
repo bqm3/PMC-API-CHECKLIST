@@ -208,8 +208,6 @@ exports.checkDateReportData = async (req, res) => {
       return res.status(200).json({
         message: "Ngày không phải là ngày đầu tiên hoặc cuối cùng của tháng.",
         data: {
-          month: 12,
-          year: 2024,
           show: true,
           isCheck: duAn?.ID_Phanloai !== 1 ? 0 : 1
         },

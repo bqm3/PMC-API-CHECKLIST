@@ -1,7 +1,7 @@
 const { Sequelize, DataTypes } = require("sequelize");
 const sequelize = require("../../config/db.config");
 
-const Ent_baocaochiso = sequelize.define(
+const Ent_Baocaochiso = sequelize.define(
   "ent_baocaochiso",
   {
     ID_Baocaochiso: {
@@ -55,4 +55,4 @@ const Ent_baocaochiso = sequelize.define(
   }
 );
 
-module.exports = Ent_baocaochiso;
+module.exports = Ent_Baocaochiso;

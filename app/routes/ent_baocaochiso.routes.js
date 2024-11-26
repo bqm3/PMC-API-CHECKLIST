@@ -15,85 +15,85 @@ module.exports = (app) => {
   var router = require("express").Router();
 
   //  Loai chi so
-  router.get("loai-chiso/", [isAuthenticated], ent_loai_chiso.getAllLoai_Chiso);
-  router.get("loai-chiso/byDuan", [isAuthenticated], ent_loai_chiso.getbyDuAn);
+  router.get("/loai-chiso/", [isAuthenticated], ent_loai_chiso.getAllLoai_Chiso);
+  router.get("/loai-chiso/byDuan", [isAuthenticated], ent_loai_chiso.getbyDuAn);
   router.post(
-    "loai-chiso/create",
+    "/loai-chiso/create",
     [isAuthenticated],
     ent_loai_chiso.createLoai_Chiso
   );
   router.put(
-    "loai-chiso/update/:id",
+    "/loai-chiso/update/:id",
     [isAuthenticated],
     ent_loai_chiso.updateLoai_Chiso
   );
   router.put(
-    "loai-chiso/delete/:id",
+    "/loai-chiso/delete/:id",
     [isAuthenticated],
     ent_loai_chiso.deleteLoai_Chiso
   );
 
   router.get(
-    "hangmuc-chiso/",
+    "/hangmuc-chiso/",
     [isAuthenticated],
     ent_hangmuc_chiso.getAllHangmucChiso
   );
   router.get(
-    "hangmuc-chiso/byDuan",
+    "/hangmuc-chiso/byDuan",
     [isAuthenticated],
     ent_hangmuc_chiso.getHangmucChisoById
   );
 
   router.post(
-    "hangmuc-chiso/create",
+    "/hangmuc-chiso/create",
     [isAuthenticated],
     ent_hangmuc_chiso.createHangmucChiso
   );
   router.put(
-    "hangmuc-chiso/update/:ID_Hangmuc_Chiso",
+    "/hangmuc-chiso/update/:ID_Hangmuc_Chiso",
     [isAuthenticated],
     ent_hangmuc_chiso.updateHangmucChiso
   );
   router.put(
-    "hangmuc-chiso/delete/:ID_Hangmuc_Chiso",
+    "/hangmuc-chiso/delete/:ID_Hangmuc_Chiso",
     [isAuthenticated],
     ent_hangmuc_chiso.deleteHangmucChiso
   );
 
   router.post(
-    "duan-loaics/create",
+    "/duan-loaics/create",
     isAuthenticated,
     ent_duan_loai_chiso.createDuanLoaiCS
   );
   router.put(
-    "duan-loaics/update",
+    "/duan-loaics/update",
     isAuthenticated,
     ent_duan_loai_chiso.updateDuanLoaiCS
   );
   router.put(
-    "duan-loaics/delete",
+    "/duan-loaics/delete",
     isAuthenticated,
     ent_duan_loai_chiso.deleteDuanLoaiCS
   );
 
   router.post(
-    "ent_baocaochiso/create",
+    "/ent_baocaochiso/create",
     [isAuthenticated, upload.any()],
     ent_baocaochiso.create
   );
 
-  router.get("ent_baocaochiso/", [isAuthenticated], ent_baocaochiso.getbyDuAn);
+  router.get("/ent_baocaochiso/", [isAuthenticated], ent_baocaochiso.getbyDuAn);
 
   router.put(
-    "ent_baocaochiso/:id",
+    "/ent_baocaochiso/:id",
     [isAuthenticated, upload.any()],
     ent_baocaochiso.update
   );
   router.put(
-    "ent_baocaochiso/delete/:id",
+    "/ent_baocaochiso/delete/:id",
     [isAuthenticated, isRoleGD],
     ent_baocaochiso.delete
   );
 
-  app.use("/api/v2/", router);
+  app.use("/api/v2", router);
 };
