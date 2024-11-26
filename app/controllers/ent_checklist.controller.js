@@ -1493,6 +1493,249 @@ exports.filterChecklists = async (req, res) => {
   }
 };
 
+exports.filterChecklistWeb = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    const ID_ChecklistC = req.params.idc;
+    const ID_Hangmucs = req.body.dataHangmuc;
+    const ID_KhoiCV = req.body.ID_KhoiCV;
+
+    const tbChecklist = await Tb_checklistc.findByPk(ID_ChecklistC, {
+      attributes: ["ID_Hangmucs", "isDelete"],
+      where: {
+        isDelete: 0,
+      },
+    });
+
+    const checklistItems = await Tb_checklistchitiet.findAll({
+      attributes: ["isDelete", "ID_Checklist", "ID_ChecklistC"],
+      where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC },
+    });
+
+    const checklistDoneItems = await Tb_checklistchitietdone.findAll({
+      attributes: ["Description", "isDelete", "ID_ChecklistC"],
+      where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC },
+    });
+
+    const arrPush = [];
+    checklistDoneItems.forEach((item) => {
+      const idChecklists = item.Description.split(",").map(Number);
+      if (idChecklists.length > 0) {
+        idChecklists.forEach((it) => {
+          if (Number(item.ID_ChecklistC) === Number(req.params.idc)) {
+            arrPush.push({
+              ID_ChecklistC: parseInt(item.ID_ChecklistC),
+              ID_Checklist: it,
+              Gioht: item.Gioht,
+            });
+          }
+        });
+      }
+    });
+
+    const checklistIds =
+      checklistItems
+        .map((item) => item?.ID_Checklist)
+        .filter((id) => !isNaN(id)) || [];
+
+    const checklistDoneIds = arrPush
+      .map((item) => item?.ID_Checklist)
+      .filter((id) => !isNaN(id));
+
+    let whereCondition = {
+      isDelete: 0,
+      ID_Hangmuc: {
+        [Op.in]: ID_Hangmucs,
+      },
+    };
+
+    whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
+
+    if (
+      checklistIds &&
+      Array.isArray(checklistIds) &&
+      checklistIds.length > 0 &&
+      checklistDoneIds &&
+      checklistDoneIds.length > 0
+    ) {
+      whereCondition.ID_Checklist = {
+        [Op.notIn]: [...checklistIds, ...checklistDoneIds],
+      };
+    } else if (
+      checklistIds &&
+      Array.isArray(checklistIds) &&
+      checklistIds.length > 0 &&
+      checklistDoneIds.length === 0
+    ) {
+      whereCondition.ID_Checklist = {
+        [Op.notIn]: checklistIds,
+      };
+    } else if (
+      checklistDoneIds &&
+      checklistDoneIds.length > 0 &&
+      checklistIds.length == 0
+    ) {
+      whereCondition.ID_Checklist = {
+        [Op.notIn]: checklistDoneIds,
+      };
+    }
+
+    const checklistData = await Ent_checklist.findAll({
+      attributes: [
+        "ID_Checklist",
+        "ID_Khuvuc",
+        "ID_Hangmuc",
+        "ID_Tang",
+        "Sothutu",
+        "Maso",
+        "MaQrCode",
+        "isImportant",
+        "Checklist",
+        "Ghichu",
+        "Tieuchuan",
+        "Giatridinhdanh",
+        "Giatriloi",
+        "isCheck",
+        "Giatrinhan",
+        "Tinhtrang",
+        "ID_User",
+        "sCalv",
+        "calv_1",
+        "calv_2",
+        "calv_3",
+        "calv_4",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_hangmuc,
+          attributes: [
+            "Hangmuc",
+            "Tieuchuankt",
+            "ID_Hangmuc",
+            "MaQrCode",
+            "FileTieuChuan",
+          ],
+          where: {
+            ID_Hangmuc: {
+              [Op.in]: tbChecklist.ID_Hangmucs,
+            },
+          },
+        },
+        {
+          model: Ent_khuvuc,
+          attributes: [
+            "Tenkhuvuc",
+            "MaQrCode",
+            "Makhuvuc",
+            "Sothutu",
+            "ID_Toanha",
+            "ID_Khuvuc",
+          ],
+          include: [
+            {
+              model: Ent_toanha,
+              attributes: ["Toanha", "ID_Toanha"],
+              include: {
+                model: Ent_duan,
+                attributes: [
+                  "ID_Duan",
+                  "Duan",
+                  "Diachi",
+                  "Vido",
+                  "Kinhdo",
+                  "Logo",
+                ],
+                where: { ID_Duan: userData.ID_Duan },
+              },
+            },
+            {
+              model: Ent_khuvuc_khoicv,
+              attributes: ["ID_KhoiCV", "ID_Khuvuc", "ID_KV_CV"],
+              include: [
+                {
+                  model: Ent_khoicv,
+                  attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
+                },
+              ],
+              where: {
+                ID_KhoiCV: ID_KhoiCV ? ID_KhoiCV : userData.ID_KhoiCV,
+              },
+            },
+          ],
+        },
+        {
+          model: Ent_tang,
+          attributes: ["Tentang"],
+        },
+      ],
+      where: whereCondition,
+      order: [
+        ["ID_Khuvuc", "ASC"],
+        ["Sothutu", "ASC"],
+        ["ID_Checklist", "ASC"],
+      ],
+    });
+
+    if (!checklistData || checklistData.length === 0) {
+      return res.status(200).json({
+        message: "Không còn checklist cho ca làm việc này!",
+        data: [],
+      });
+    }
+
+    // Tái cấu trúc dữ liệu
+    const khuVucMap = {};
+
+    checklistData.forEach((item) => {
+      const khuVucKey = item.ID_Khuvuc;
+      const hangMucKey = item.ID_Hangmuc;
+
+      // Khởi tạo khu vực nếu chưa tồn tại
+      if (!khuVucMap[khuVucKey]) {
+        khuVucMap[khuVucKey] = {
+          ent_khuvuc: item.ent_khuvuc,
+          hangmucs: {},
+        };
+      }
+
+      // Khởi tạo hạng mục nếu chưa tồn tại
+      if (!khuVucMap[khuVucKey].hangmucs[hangMucKey]) {
+        khuVucMap[khuVucKey].hangmucs[hangMucKey] = {
+          ent_hangmuc: item.ent_hangmuc,
+          checklists: [],
+        };
+      }
+
+      // Thêm checklist vào danh sách checklists
+      khuVucMap[khuVucKey].hangmucs[hangMucKey].checklists.push({
+        ID_Checklist: item.ID_Checklist,
+        Checklist: item.Checklist,
+        Tinhtrang: item.Tinhtrang,
+        isImportant: item.isImportant,
+        ID_Khuvuc: item.ID_Khuvuc,
+        ID_Hangmuc: item.ID_Hangmuc,
+      });
+    });
+
+    // Chuyển dữ liệu từ object sang array
+    const result = Object.values(khuVucMap).map((khuvuc) => ({
+      ent_khuvuc: khuvuc.ent_khuvuc,
+      hangmucs: Object.values(khuvuc.hangmucs),
+    }));
+
+    // Trả về kết quả
+    return res.status(200).json({
+      message: "Danh sách checklist theo khu vực và hạng mục!",
+      data: result,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Có lỗi xảy ra!",
+    });
+  }
+};
+
 exports.filterReturn = async (req, res) => {
   try {
     const userData = req.user.data;
@@ -2011,26 +2254,26 @@ exports.uploadFiles = async (req, res) => {
           }
 
           const khoiCongViecList = tenKhoiCongViec
-          ?.split(",")
-          ?.map((khoi) => khoi.trim());
-        const khoiCVs = await Promise.all(
-          khoiCongViecList.map(async (khoiCongViec) => {
-            const khoiCV = await Ent_khoicv.findOne({
-              attributes: ["ID_KhoiCV", "KhoiCV", "isDelete"],
-              where: {
-                [Op.and]: [
-                  sequelize.where(sequelize.col("KhoiCV"), {
-                    [Op.like]: `%${removeVietnameseTones(khoiCongViec)}%`,
-                  }),
-                  { isDelete: 0 },
-                ],
-              },
-              transaction,
-            });
-            return khoiCV ? khoiCV.ID_KhoiCV : null;
-          })
-        );
-        const validKhoiCVs = khoiCVs.filter((id) => id !== null);
+            ?.split(",")
+            ?.map((khoi) => khoi.trim());
+          const khoiCVs = await Promise.all(
+            khoiCongViecList.map(async (khoiCongViec) => {
+              const khoiCV = await Ent_khoicv.findOne({
+                attributes: ["ID_KhoiCV", "KhoiCV", "isDelete"],
+                where: {
+                  [Op.and]: [
+                    sequelize.where(sequelize.col("KhoiCV"), {
+                      [Op.like]: `%${removeVietnameseTones(khoiCongViec)}%`,
+                    }),
+                    { isDelete: 0 },
+                  ],
+                },
+                transaction,
+              });
+              return khoiCV ? khoiCV.ID_KhoiCV : null;
+            })
+          );
+          const validKhoiCVs = khoiCVs.filter((id) => id !== null);
 
           const hangmuc = await Ent_hangmuc.findOne({
             attributes: [
@@ -2058,7 +2301,9 @@ exports.uploadFiles = async (req, res) => {
                 where: {
                   isDelete: 0,
                   [Op.and]: Sequelize.literal(
-                    `JSON_CONTAINS(ID_KhoiCVs, '${JSON.stringify(validKhoiCVs)}')`
+                    `JSON_CONTAINS(ID_KhoiCVs, '${JSON.stringify(
+                      validKhoiCVs
+                    )}')`
                   ),
                   MaQrCode: generateQRCodeKV(
                     tenToanha,
