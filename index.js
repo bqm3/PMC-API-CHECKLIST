@@ -73,158 +73,158 @@ app.get("/", (req, res) => {
   res.json("Hello World!");
 });
 
-// async function exportDatabase() {
-//   const backupPath = path.join(
-//     __dirname,
-//     `backup_checklist_${new Date().toISOString().slice(0, 10)}.sql`
-//   );
+async function exportDatabase() {
+  const backupPath = path.join(
+    __dirname,
+    `backup_checklist_${new Date().toISOString().slice(0, 10)}.sql`
+  );
 
-//   await mysqldump({
-//     connection: {
-//       host: process.env.DB_HOST,
-//       user: process.env.DB_USERNAME,
-//       password: process.env.DB_PASSWORD,
-//       database: process.env.DB_DATABASE_NAME,
-//     },
-//     dumpToFile: backupPath,
-//   });
+  await mysqldump({
+    connection: {
+      host: process.env.DB_HOST,
+      user: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_DATABASE_NAME,
+    },
+    dumpToFile: backupPath,
+  });
 
-//   return backupPath;
-// }
+  return backupPath;
+}
 
-// // Hàm upload file lên Google Drive
-// async function uploadFile(filePath) {
-//   try {
-//     // ID của thư mục trên Google Drive
-//     const folderId = "1TAMvnXHdhkTov68oKrLbB6DE0bVZezAL";
+// Hàm upload file lên Google Drive
+async function uploadFile(filePath) {
+  try {
+    // ID của thư mục trên Google Drive
+    const folderId = "1TAMvnXHdhkTov68oKrLbB6DE0bVZezAL";
 
-//     const createFile = await drive.files.create({
-//       requestBody: {
-//         name: path.basename(filePath),
-//         mimeType: "application/sql",
-//         parents: [folderId],
-//       },
-//       media: {
-//         mimeType: "application/sql",
-//         body: fs.createReadStream(filePath),
-//       },
-//     });
+    const createFile = await drive.files.create({
+      requestBody: {
+        name: path.basename(filePath),
+        mimeType: "application/sql",
+        parents: [folderId],
+      },
+      media: {
+        mimeType: "application/sql",
+        body: fs.createReadStream(filePath),
+      },
+    });
 
-//     const fileId = createFile.data.id;
-//     console.log(`File uploaded with ID: ${fileId}`);
+    const fileId = createFile.data.id;
+    console.log(`File uploaded with ID: ${fileId}`);
 
-//     // Đặt quyền cho file
-//     const getUrl = await setFilePublic(fileId);
-//     console.log(getUrl.data);
-//   } catch (error) {
-//     console.error(error);
-//   }
-// }
+    // Đặt quyền cho file
+    const getUrl = await setFilePublic(fileId);
+    console.log(getUrl.data);
+  } catch (error) {
+    console.error(error);
+  }
+}
 
-// // Hàm đặt quyền công khai cho file
-// async function setFilePublic(fileId) {
-//   try {
-//     await drive.permissions.create({
-//       fileId,
-//       requestBody: {
-//         role: "reader",
-//         type: "anyone",
-//       },
-//     });
+// Hàm đặt quyền công khai cho file
+async function setFilePublic(fileId) {
+  try {
+    await drive.permissions.create({
+      fileId,
+      requestBody: {
+        role: "reader",
+        type: "anyone",
+      },
+    });
 
-//     const getUrl = await drive.files.get({
-//       fileId,
-//       fields: "webViewLink, webContentLink",
-//     });
+    const getUrl = await drive.files.get({
+      fileId,
+      fields: "webViewLink, webContentLink",
+    });
 
-//     return getUrl;
-//   } catch (error) {
-//     console.error(error);
-//   }
-// }
+    return getUrl;
+  } catch (error) {
+    console.error(error);
+  }
+}
 
-// // Hàm thực hiện toàn bộ quá trình
-// async function handleBackup() {
-//   try {
-//     const driveInfo = await drive.about.get({ fields: 'storageQuota' });
-//     const { limit, usage } = driveInfo.data.storageQuota;
+// Hàm thực hiện toàn bộ quá trình
+async function handleBackup() {
+  try {
+    const driveInfo = await drive.about.get({ fields: 'storageQuota' });
+    const { limit, usage } = driveInfo.data.storageQuota;
 
-//     if (Number(usage) >= Number(limit)) {
-//       console.error('Drive quota exceeded. Skipping backup.');
-//       return;
-//     }
+    if (Number(usage) >= Number(limit)) {
+      console.error('Drive quota exceeded. Skipping backup.');
+      return;
+    }
 
-//     const backupFilePath = await exportDatabase(); // Xuất cơ sở dữ liệu
-//     await uploadFile(backupFilePath); // Upload file lên Google Drive
+    const backupFilePath = await exportDatabase(); // Xuất cơ sở dữ liệu
+    await uploadFile(backupFilePath); // Upload file lên Google Drive
 
-//     if (fs.existsSync(backupFilePath)) {
-//       fs.unlinkSync(backupFilePath); // Xóa file
-//       console.log(`Backup file deleted: ${backupFilePath}`);
-//     }
-//   } catch (error) {
-//     console.error(error);
-//   }
-// }
+    if (fs.existsSync(backupFilePath)) {
+      fs.unlinkSync(backupFilePath); // Xóa file
+      console.log(`Backup file deleted: ${backupFilePath}`);
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}
 
-// const lockFilePath = path.join(__dirname, "cron_backup.lock");
-// cron.schedule("11 10 * * *", async () => {
-//   console.log("Starting Cron Job at 4 AM");
+const lockFilePath = path.join(__dirname, "cron_backup.lock");
+cron.schedule("11 10 * * *", async () => {
+  console.log("Starting Cron Job at 4 AM");
 
-//   // Kiểm tra xem file khóa đã tồn tại chưa
-//   if (fs.existsSync(lockFilePath)) {
-//     console.log("Cron job is already running. Skipping this instance.");
-//     return;
-//   }
+  // Kiểm tra xem file khóa đã tồn tại chưa
+  if (fs.existsSync(lockFilePath)) {
+    console.log("Cron job is already running. Skipping this instance.");
+    return;
+  }
 
-//   // Tạo file khóa
-//   fs.writeFileSync(lockFilePath, "LOCKED");
-//   console.log("Lock file created.");
+  // Tạo file khóa
+  fs.writeFileSync(lockFilePath, "LOCKED");
+  console.log("Lock file created.");
 
-//   try {
-//     // Thực hiện công việc của bạn
-//     await handleBackup();
-//     console.log("Cron job completed successfully.");
-//   } catch (error) {
-//     console.error("Error running cron job:", error);
-//   } finally {
-//     // Xóa file khóa
-//     if (fs.existsSync(lockFilePath)) {
-//       fs.unlinkSync(lockFilePath);
-//       console.log("Lock file removed.");
-//     }
-//   }
-// });
+  try {
+    // Thực hiện công việc của bạn
+    await handleBackup();
+    console.log("Cron job completed successfully.");
+  } catch (error) {
+    console.error("Error running cron job:", error);
+  } finally {
+    // Xóa file khóa
+    if (fs.existsSync(lockFilePath)) {
+      fs.unlinkSync(lockFilePath);
+      console.log("Lock file removed.");
+    }
+  }
+});
 
-// async function checkDriveStorage() {
-//   try {
-//     // Khởi tạo xác thực
-//     const auth = new google.auth.GoogleAuth({
-//       keyFile: credentials, // Thay bằng đường dẫn tới tệp JSON của bạn
-//       scopes: ["https://www.googleapis.com/auth/drive.metadata.readonly"],
-//     });
+async function checkDriveStorage() {
+  try {
+    // Khởi tạo xác thực
+    const auth = new google.auth.GoogleAuth({
+      keyFile: credentials, // Thay bằng đường dẫn tới tệp JSON của bạn
+      scopes: ["https://www.googleapis.com/auth/drive.metadata.readonly"],
+    });
 
-//     const drive = google.drive({ version: "v3", auth });
+    const drive = google.drive({ version: "v3", auth });
 
-//     // Gọi API để lấy thông tin dung lượng
-//     const response = await drive.about.get({
-//       fields: "storageQuota",
-//     });
+    // Gọi API để lấy thông tin dung lượng
+    const response = await drive.about.get({
+      fields: "storageQuota",
+    });
 
-//     const { storageQuota } = response.data;
+    const { storageQuota } = response.data;
 
-//     console.log("Dung lượng Drive:");
-//     console.log(`Tổng dung lượng: ${storageQuota.limit || "Không giới hạn"}`);
-//     console.log(`Đã sử dụng: ${storageQuota.usage}`);
-//     console.log(`Dung lượng đã sử dụng cho Drive: ${storageQuota.usageInDrive}`);
-//     console.log(
-//       `Dung lượng đã sử dụng cho các mục dùng chung: ${storageQuota.usageInDriveTrash}`
-//     );
-//   } catch (error) {
-//     console.error("Lỗi khi kiểm tra dung lượng:", error.message);
-//   }
-// }
+    console.log("Dung lượng Drive:");
+    console.log(`Tổng dung lượng: ${storageQuota.limit || "Không giới hạn"}`);
+    console.log(`Đã sử dụng: ${storageQuota.usage}`);
+    console.log(`Dung lượng đã sử dụng cho Drive: ${storageQuota.usageInDrive}`);
+    console.log(
+      `Dung lượng đã sử dụng cho các mục dùng chung: ${storageQuota.usageInDriveTrash}`
+    );
+  } catch (error) {
+    console.error("Lỗi khi kiểm tra dung lượng:", error.message);
+  }
+}
 
-// checkDriveStorage()
+checkDriveStorage()
 
 cron.schedule("0 5 * * *", async () => {
   try {
