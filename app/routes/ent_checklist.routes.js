@@ -31,6 +31,12 @@ module.exports = (app) => {
   );
 
   router.put(
+    "/filter-mul-web/:idc/",
+    isAuthenticated,
+    ent_checklist.filterChecklistWeb
+  );
+
+  router.put(
     "/filter-return/:idc/:id_calv",
     isAuthenticated,
     ent_checklist.filterReturn
