@@ -4,7 +4,7 @@ const {
   deleteFileFromGoogleDrive,
 } = require("../../middleware/auth_google_child");
 const {
-  Ent_baocaochiso,
+  Ent_Baocaochiso,
   Ent_user,
   Ent_duan,
   Ent_Hangmuc_Chiso,
@@ -44,7 +44,7 @@ exports.create = async (req, res) => {
     records.Ghichu = ensureArray(records?.Ghichu);
 
     // Kiểm tra xem báo cáo đã tồn tại chưa
-    // const findBaoCao = await Ent_baocaochiso.findOne({
+    // const findBaoCao = await Ent_Baocaochiso.findOne({
     //   where: {
     //     Month,
     //     Year,
@@ -100,7 +100,7 @@ exports.create = async (req, res) => {
 
       // Lấy dữ liệu tháng trước
       const dateCheck = getPreviousMonth(Month, Year);
-      const findCheck = await Ent_baocaochiso.findOne({
+      const findCheck = await Ent_Baocaochiso.findOne({
         attributes: ["Chiso"],
         where: {
           ID_Hangmuc_Chiso,
@@ -127,7 +127,7 @@ exports.create = async (req, res) => {
       };
 
       // Lưu dữ liệu
-      await Ent_baocaochiso.create(data, { transaction });
+      await Ent_Baocaochiso.create(data, { transaction });
     }
 
     // Commit transaction
@@ -159,7 +159,7 @@ exports.getbyDuAn = async (req, res) => {
 
     if (userData) {
       // Lấy dữ liệu từ cơ sở dữ liệu
-      const data = await Ent_baocaochiso.findAll({
+      const data = await Ent_Baocaochiso.findAll({
         attributes: [
           "ID_Baocaochiso",
           "ID_User",
@@ -274,7 +274,7 @@ exports.update = async (req, res) => {
     }
 
     // Kiểm tra báo cáo đã tồn tại cho tháng này
-    const findBaoCao = await Ent_baocaochiso.findOne({
+    const findBaoCao = await Ent_Baocaochiso.findOne({
       attributes: [
         "ID_Baocaochiso",
         "ID_Duan",
@@ -303,7 +303,7 @@ exports.update = async (req, res) => {
 
     // Kiểm tra báo cáo của tháng trước
     const dateCheck = getPreviousMonth(Month, Year);
-    const findCheck = await Ent_baocaochiso.findOne({
+    const findCheck = await Ent_Baocaochiso.findOne({
       attributes: [
         "ID_Baocaochiso",
         "ID_Duan",
@@ -401,7 +401,7 @@ exports.update = async (req, res) => {
     };
 
     // Cập nhật báo cáo trong transaction
-    await Ent_baocaochiso.update(data, {
+    await Ent_Baocaochiso.update(data, {
       where: { ID_Baocaochiso: req.params.id },
       transaction,
     });
@@ -423,7 +423,7 @@ exports.delete = async (req, res) => {
   try {
     const userData = req.user.data;
 
-    Ent_baocaochiso.update(
+    Ent_Baocaochiso.update(
       {
         isDelete: 1, // 1: xóa, 0: chưa xóa
       },

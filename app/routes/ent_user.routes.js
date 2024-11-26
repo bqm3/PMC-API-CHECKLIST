@@ -10,6 +10,7 @@ module.exports = (app) => {
     router.post("/login", ent_user.login);
     router.get("/get-online",[isAuthenticated], ent_user.getUserOnline);
     router.get("/gs",[isAuthenticated], ent_user.getGiamSat);
+    router.get("/getPhone",[isAuthenticated], ent_user.getPhone);
     router.get("/:id",[isAuthenticated], ent_user.getDetail);
     router.post("/check-auth",[isAuthenticated], ent_user.checkAuth);
     router.put("/duan/update/:id",[isAuthenticated], ent_user.updateDuanByRole);

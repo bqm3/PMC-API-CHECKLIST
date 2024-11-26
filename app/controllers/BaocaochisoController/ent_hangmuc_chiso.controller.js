@@ -1,4 +1,4 @@
-const { Ent_Hangmuc_Chiso, Ent_Loai_Chiso } = require("../../models/setup.model");
+const { Ent_Hangmuc_Chiso, Ent_Loai_Chiso, Ent_Baocaochiso } = require("../../models/setup.model");
 
 // Tạo mới hạng mục chỉ số
 exports.createHangmucChiso = async (req, res) => {
@@ -121,6 +121,13 @@ exports.deleteHangmucChiso = async (req, res) => {
     if (!hangmucChiso) {
       return res.status(404).json({ message: "Hạng mục chỉ số không tồn tại" });
     }
+
+    const checkbaocao = await Ent_Baocaochiso.findAll(
+      {where: {
+        ID_Hangmuc_Chiso: ID_Hangmuc_Chiso,
+        isDelete: 0
+      }}
+    )
 
     // Đánh dấu hạng mục chỉ số là đã xóa (soft delete)
     await hangmucChiso.update({ isDelete: 1 });

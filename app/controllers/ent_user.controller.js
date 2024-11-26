@@ -1200,3 +1200,47 @@ exports.resetPassword = async (req, res) => {
     });
   }
 };
+
+//lấy sdt giám đốc dự án, kỹ sư trưởng, giám sát trưởng, trưởng ca kỹ thuật
+exports.getPhone = async (req, res) => {
+  try {
+    const userData = req.user.data;
+
+    // Tìm danh sách người dùng theo điều kiện
+    const users = await Ent_user.findAll({
+      attributes: ["ID_Chucvu", "Hoten","Sodienthoai"],
+      where: {
+        ID_Duan: userData.ID_Duan, 
+        isDelete: 0, 
+      },
+      include: [
+        {
+          model: Ent_chucvu,
+          attributes: ["ID_Chucvu","Chucvu", "Role", "isDelete"],
+          where: {
+            Role: { [Op.in]: [1, 2] },
+            isDelete: 0,
+          },
+        },
+      ],
+    });
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy người dùng nào phù hợp.',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: users,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Đã xảy ra lỗi trong khi lấy dữ liệu.',
+      error: error.message,
+    });
+  }
+};
