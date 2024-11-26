@@ -1,5 +1,6 @@
 const multer = require("multer");
-const upload = multer();
+const { uploadChecklist, resizeImage } = require("../middleware/upload_image.js");
+// const upload = multer();
 
 module.exports = (app) => {
   const tb_checklistchitiet = require("../controllers/tb_checklistchitiet.controller.js");
@@ -11,7 +12,7 @@ module.exports = (app) => {
 
   router.post(
     "/create",
-    [isAuthenticated, upload.any()],
+    [isAuthenticated, uploadChecklist.any("images"),resizeImage],
     tb_checklistchitiet.createCheckListChiTiet
   );
 
@@ -32,11 +33,11 @@ module.exports = (app) => {
     tb_checklistchitiet.getCheckList
   );
 
-  router.post(
-    '/upload-images',
-    [isAuthenticated, upload.any()],
-    tb_checklistchitiet.uploadImages
-  )
+  // router.post(
+  //   '/upload-images',
+  //   [isAuthenticated, uploadChecklist],
+  //   tb_checklistchitiet.uploadImages
+  // )
   
 
   router.post(

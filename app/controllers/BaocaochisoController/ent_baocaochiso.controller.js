@@ -61,18 +61,18 @@ exports.create = async (req, res) => {
 
     const isEmpty = (obj) => !obj || Object.keys(obj).length === 0;
 
-    if (!isEmpty(images)) {
-      for (const image of images) {
-        const fileId = await uploadFile(
-          image,
-          userData.ent_duan?.Duan,
-          image.fieldname,
-          records.Month[0],
-          records.Year[0]
-        );
-        uploadedFileIds.push({ fileId, fieldname: image.fieldname });
-      }
-    }
+    // if (!isEmpty(images)) {
+    //   for (const image of images) {
+    //     const fileId = await uploadFile(
+    //       image,
+    //       userData.ent_duan?.Duan,
+    //       image.fieldname,
+    //       records.Month[0],
+    //       records.Year[0]
+    //     );
+    //     uploadedFileIds.push({ fileId, fieldname: image.fieldname });
+    //   }
+    // }
 
     for (let i = 0; i < records.ID_Hangmuc_Chiso.length; i++) {
       const ID_Hangmuc_Chiso = records.ID_Hangmuc_Chiso[i];
@@ -84,19 +84,18 @@ exports.create = async (req, res) => {
       const Ghichu = records.Ghichu[i];
 
       let Image_ID = "";
-      if (!isEmpty(images)) {
-        const imageIndex = `Image_${i}`;
-        const matchingImage = uploadedFileIds.find(
-          (file) => file.fieldname === imageIndex
-        );
+      // if (!isEmpty(images)) {
+      //   const imageIndex = `Image_${i}`;
+      //   const matchingImage = uploadedFileIds.find(
+      //     (file) => file.fieldname === imageIndex
+      //   );
 
-        if (matchingImage) {
-          Image_ID = matchingImage.fileId.id;
-        } else {
-          console.log(`No matching image found for Anh: ${imageIndex}`);
-        }
-      }
-      console.log("Image_ID", Image_ID);
+      //   if (matchingImage) {
+      //     Image_ID = matchingImage.fileId.id;
+      //   } else {
+      //     console.log(`No matching image found for Anh: ${imageIndex}`);
+      //   }
+      // }
 
       // Lấy dữ liệu tháng trước
       const dateCheck = getPreviousMonth(Month, Year);

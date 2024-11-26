@@ -577,6 +577,7 @@ exports.getThongKe = async (req, res, next) => {
       const fromDate = req.body.fromDate;
       const toDate = req.body.toDate;
       const ID_Calv = req.body.ID_Calv;
+      const ID_KhoiCV = req.body.ID_KhoiCV ? req.body.ID_KhoiCV : null;
       const orConditions = [
         {
           Ngay: { [Op.between]: [fromDate, toDate] }, // Filter by Ngay attribute between fromDate and toDate
@@ -595,6 +596,11 @@ exports.getThongKe = async (req, res, next) => {
           "$tb_checklistc.ID_Calv$": ID_Calv,
         });
       }
+
+      if(ID_KhoiCV !== null && ID_KhoiCV !== undefined) {
+        orConditions.push({ "$tb_checklistc.ID_KhoiCV$": ID_KhoiCV });
+      }
+
       const page = parseInt(req.query.page) || 0;
       const pageSize = parseInt(req.query.limit) || 100; // Số lượng phần tử trên mỗi trang
       const offset = page * pageSize;
@@ -6773,7 +6779,7 @@ exports.createExcelThongKeTraCuu = async (req, res) => {
 
 exports.createExcelDuAn = async (req, res) => {
   try {
-    // const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
+    const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
 
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("CheckList Projects");
@@ -6809,17 +6815,12 @@ exports.createExcelDuAn = async (req, res) => {
         ID_Duan: {
           [Op.ne]: 1,
         },
-        // Ngay: yesterday
+        Ngay: yesterday
       },
       include: [
         {
           model: Ent_duan,
           attributes: ["Duan"],
-          where: {
-            ID_Duan: {
-              [Op.ne]: 1,
-            },
-          },
           include: [
             {
               model: Ent_chinhanh,
@@ -6980,9 +6981,8 @@ exports.createExcelDuAn = async (req, res) => {
         });
 
         // Tính phần trăm hoàn thành trung bình cho khối
-        if (totalShifts > 0) {
-          const avgKhoiCompletionRatio = totalKhoiCompletionRatio / totalShifts;
-
+        if (totalShifts >= 0) {
+          const avgKhoiCompletionRatio = totalKhoiCompletionRatio / totalShifts ? totalKhoiCompletionRatio / totalShifts : 0;
           // Cộng tổng tỷ lệ của khối vào tổng tỷ lệ checklist chung
           totalChecklistPercentage += avgKhoiCompletionRatio;
           numKhoisWithData += 1; // Tăng số khối có dữ liệu
@@ -7014,7 +7014,7 @@ exports.createExcelDuAn = async (req, res) => {
 
       // Đảm bảo không có giá trị NaN và chỉ hiển thị khi có giá trị hợp lệ
       rowValues.tile = isNaN(tileChecklist)
-        ? "N/A"
+        ? 0
         : tileChecklist.toFixed(2) + "%";
 
       // Thêm dữ liệu vào bảng
@@ -7046,6 +7046,7 @@ exports.createExcelDuAnPercent = async (req, res) => {
   try {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("CheckList Projects");
+    const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
 
     // Thêm các tiêu đề cột cho bảng Excel
     worksheet.columns = [
@@ -7078,16 +7079,13 @@ exports.createExcelDuAnPercent = async (req, res) => {
         ID_Duan: {
           [Op.ne]: 1,
         },
+        Ngay: yesterday
       },
       include: [
         {
           model: Ent_duan,
           attributes: ["Duan"],
-          where: {
-            ID_Duan: {
-              [Op.ne]: 1,
-            },
-          },
+         
           include: [
             {
               model: Ent_chinhanh,
@@ -7256,7 +7254,7 @@ exports.createExcelDuAnPercent = async (req, res) => {
         tileChecklist = totalChecklistPercentage / numKhoisWithData;
       }
 
-      rowValues.tile = isNaN(tileChecklist) ? "N/A" : tileChecklist.toFixed(2) + "%";
+      rowValues.tile = isNaN(tileChecklist) ? 0 : tileChecklist.toFixed(2) + "%";
 
       worksheet.addRow(rowValues);
     });
