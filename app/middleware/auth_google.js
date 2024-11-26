@@ -23,12 +23,9 @@ const credentials = {
   universe_domain: process.env.UNIVERSE_DOMAIN
 };
 
-
-const SCOPES = ["https://www.googleapis.com/auth/drive"];
-
 const auth = new google.auth.GoogleAuth({
   credentials: credentials,
-  scopes: SCOPES,
+  scopes: process.env.SCOPES,
 });
 
 
@@ -55,6 +52,7 @@ const uploadFile = async (fileObject) => {
       id: data.id,
     }
   }catch(err){
+    console.log('err',err)
     return undefined;
   }
 };
