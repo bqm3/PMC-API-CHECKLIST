@@ -52,7 +52,7 @@ exports.create = async (req, res) => {
       isDelete: 0,
     };
 
-    const d = new Date();
+    // const d = new Date();
     // const month = String(d.getMonth() + 1).padStart(2, "0"); // Tháng
     // const year = d.getFullYear(); // Năm
     // const dynamicTableName = `tb_checklistchitiet_${month}_${year}`;
@@ -92,6 +92,7 @@ exports.create = async (req, res) => {
     //     .status(500)
     //     .json({ error: "Failed to insert records into dynamic table" });
     // }
+    
     // Save Tb_checklistchitietdone in the database
     Tb_checklistchitietdone.create(data)
       .then(async (createdData) => {

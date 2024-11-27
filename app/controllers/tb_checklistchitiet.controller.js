@@ -54,13 +54,20 @@ exports.createCheckListChiTiet = async (req, res, next) => {
         error: "ID_ChecklistC and ID_Checklist must have the same length.",
       });
     }
-    console.log('images',images)
 
-    const uploadedFiles = images.map((file) => ({
-      fieldname: file.fieldname, // Lấy fieldname từ tệp tải lên
-      fileId: { id: file.filename },
-      filePath: file.path,
-    }));
+    const uploadedFiles = req.files.map((file) => {
+      // Lấy thư mục và tên tệp từ đường dẫn
+      const projectFolder = path.basename(path.dirname(file.path)); // Tên dự án (thư mục cha của tệp)
+      const filename = path.basename(file.filename); // Tên tệp gốc
+
+      return {
+        fieldname: file.fieldname, // Lấy fieldname từ tệp tải lên
+        fileId: { id: `${projectFolder}/${filename}` }, // Đường dẫn thư mục dự án và tên ảnh
+        filePath: file.path, // Đường dẫn vật lý của tệp
+      };
+    });
+
+    // Mảng uploadedFileIds chứa tất cả các đối tượng tệp
     const uploadedFileIds = [];
     uploadedFiles.forEach((file) => {
       uploadedFileIds.push(file); // Đẩy đối tượng tệp vào mảng
@@ -119,13 +126,11 @@ exports.createCheckListChiTiet = async (req, res, next) => {
         };
       } else {
         let anhs = [];
-        console.log('uploadedFileIds', uploadedFileIds)
         if (!isEmpty(images) && uploadedFileIds.length > 0) {
           let imageIndex = "";
           let matchingImage = null;
           for (let i = 0; i < images.length; i++) {
             imageIndex = `Images_${index}_${ID_Checklist}_${i}`;
-            console.log('imageIndex', imageIndex)
             matchingImage = uploadedFileIds.find(
               (file) => file.fieldname === imageIndex
             );
