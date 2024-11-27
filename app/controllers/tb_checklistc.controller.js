@@ -196,7 +196,7 @@ exports.createFirstChecklist = async (req, res, next) => {
         "isCheck",
         "Giatrinhan",
         "ID_User",
-        "sCalv",
+       
         "calv_1",
         "calv_2",
         "calv_3",
