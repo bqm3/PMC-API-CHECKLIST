@@ -1990,6 +1990,7 @@ exports.checklistCalv = async (req, res) => {
           "ID_ThietLapCa",
           "ID_Duan",
           "Tinhtrang",
+          "ID_Hangmucs",
           "Giobd",
           "Giokt",
           "ID_User",
