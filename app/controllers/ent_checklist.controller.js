@@ -33,7 +33,6 @@ exports.create = async (req, res) => {
         });
         return;
       }
-      const sCalv = req.body.sCalv;
 
       const data = {
         ID_Khuvuc: req.body.ID_Khuvuc,
@@ -50,11 +49,6 @@ exports.create = async (req, res) => {
         Giatrinhan: req.body.Giatrinhan || "",
         Giatriloi: req.body.Giatriloi || "",
         ID_User: userData.ID_User,
-        sCalv: sCalv ? sCalv : null,
-        calv_1: sCalv[0] || null,
-        calv_2: sCalv[1] || null,
-        calv_3: sCalv[2] || null,
-        calv_4: sCalv[3] || null,
         isDelete: 0,
         Tinhtrang: 0,
         isImportant: req.body.isImportant || 0,
@@ -216,7 +210,6 @@ exports.get = async (req, res) => {
         "Giatridinhdanh",
         "isCheck",
         "Giatrinhan",
-        "sCalv",
         "Tinhtrang",
         "calv_1",
         "calv_2",
@@ -359,12 +352,7 @@ exports.getDetail = async (req, res) => {
           "Giatridinhdanh",
           "isCheck",
           "Giatrinhan",
-          "sCalv",
-          "calv_1",
-          "calv_2",
           "Giatriloi",
-          "calv_3",
-          "calv_4",
           "ID_User",
           "isDelete",
           "isImportant",
@@ -487,7 +475,6 @@ exports.update = async (req, res) => {
         Giatriloi: req.body.Giatriloi || "",
         isCheck: req.body.isCheck,
         Tieuchuan: req.body.Tieuchuan || "",
-        sCalv: JSON.stringify(validCalv) || null,
         // calv_1: JSON.stringify(validCalv[0]) || null,
         // calv_2: JSON.stringify(validCalv[1]) || null,
         // calv_3: JSON.stringify(validCalv[2]) || null,
@@ -861,7 +848,6 @@ exports.getChecklist = async (req, res) => {
 
     let whereCondition = {
       isDelete: 0,
-      [Op.or]: { sCalv: { [Op.like]: `%${ID_Calv}%` } },
     };
 
     whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
@@ -913,7 +899,7 @@ exports.getChecklist = async (req, res) => {
         "Giatriloi",
         "Giatrinhan",
         "ID_User",
-        "sCalv",
+       
         "calv_1",
         "calv_2",
         "calv_3",
@@ -1389,7 +1375,7 @@ exports.filterChecklists = async (req, res) => {
         "Giatrinhan",
         "Tinhtrang",
         "ID_User",
-        "sCalv",
+       
         "calv_1",
         "calv_2",
         "calv_3",
@@ -1599,7 +1585,7 @@ exports.filterChecklistWeb = async (req, res) => {
         "Giatrinhan",
         "Tinhtrang",
         "ID_User",
-        "sCalv",
+       
         "calv_1",
         "calv_2",
         "calv_3",
@@ -1784,7 +1770,7 @@ exports.filterReturn = async (req, res) => {
         "isImportant",
         "Tinhtrang",
         "ID_User",
-        "sCalv",
+       
         "calv_1",
         "calv_2",
         "calv_3",
@@ -1914,7 +1900,7 @@ exports.getListChecklistWeb = async (req, res) => {
         "isImportant",
         "isCheck",
         "Giatrinhan",
-        "sCalv",
+       
         "Tinhtrang",
         "calv_1",
         "calv_2",
@@ -2038,7 +2024,7 @@ exports.getChecklistTotal = async (req, res) => {
         "isCheck",
         "Giatrinhan",
         "ID_User",
-        "sCalv",
+       
         "calv_1",
         "calv_2",
         "calv_3",
@@ -2388,7 +2374,7 @@ exports.uploadFiles = async (req, res) => {
               "isImportant",
               "isCheck",
               "Giatrinhan",
-              "sCalv",
+             
               "Tinhtrang",
               "calv_1",
               "calv_2",
