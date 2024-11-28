@@ -71,33 +71,37 @@ exports.create = async (req, res) => {
       `,
       { transaction }
     );
-    
+
     // Thực hiện INSERT dữ liệu
     const query = `
-     INSERT INTO ${dynamicTableName} 
-        (ID_ChecklistC, Description, Gioht, Vido, Kinhdo, Docao, isScan, isCheckListLai)
-       VALUES ?;`;
+  INSERT INTO ${dynamicTableName} 
+    (ID_ChecklistC, Description, Gioht, Vido, Kinhdo, Docao, isScan, isCheckListLai)
+  VALUES (
+    ${ID_ChecklistC},
+    '${Description}',
+    '${Gioht}',
+    ${Vido},
+    ${Kinhdo},
+    ${Docao},
+    ${isScan},
+    ${isCheckListLai || 0}
+  );
+`;
 
-       await sequelize.query(query, {
-        replacements:[
-          [
-            ID_ChecklistC,
-          Description,
-          Gioht,
-          Vido,
-          Kinhdo,
-          Docao,
-          isScan,
-          isCheckListLai,
-          ]
-        ],
-        type: sequelize.QueryTypes.INSERT,
-        transaction, // Chạy trong transaction
-      }
-    );
-    
+try {
+  await sequelize.query(query, {
+    type: sequelize.QueryTypes.INSERT,
+    transaction,
+  });
+} catch (error) {
+  await transaction.rollback();
+  console.error("Error details:", error);
+  res.status(500).json({ error: error.message || "Failed to insert records into dynamic table" });
+}
+
+
     // Save Tb_checklistchitietdone in the database
-    Tb_checklistchitietdone.create(data, { transaction })
+    await Tb_checklistchitietdone.create(data, { transaction })
       .then(async (createdData) => {
         try {
           // Find the checklist record to check current TongC
