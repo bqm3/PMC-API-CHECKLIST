@@ -56,29 +56,48 @@ exports.create = async (req, res) => {
     const month = String(d.getMonth() + 1).padStart(2, "0"); // Tháng
     const year = d.getFullYear(); // Năm
     const dynamicTableName = `tb_checklistchitietdone_${month}_${year}`;
-
+    await sequelize.query(
+      `
+      CREATE TABLE IF NOT EXISTS ${dynamicTableName} (
+        ID_ChecklistC INT,
+        Description TEXT,
+        Gioht TIME,
+        Vido VARCHAR(50) DEFAULT NULL,
+        Kinhdo VARCHAR(50) DEFAULT NULL,
+        Docao VARCHAR(50) DEFAULT NULL,
+        isScan INT DEFAULT NULL,
+        isCheckListLai INT DEFAULT 0
+      );
+      `,
+      { transaction }
+    );
+    
+    // Thực hiện INSERT dữ liệu
     const query = `
-      INSERT INTO ${dynamicTableName} 
-        (ID_ChecklistC,Description,Gioht, Vido, Kinhdo, Docao, isScan, isCheckListLai)
-      VALUES 
-        ?`;
+     INSERT INTO ${dynamicTableName} 
+        (ID_ChecklistC, Description, Gioht, Vido, Kinhdo, Docao, isScan, isCheckListLai)
+       VALUES ?;`;
 
-    try {
-      await sequelize.query(query, {
-        replacements: [data],
+       await sequelize.query(query, {
+        replacements:[
+          [
+            ID_ChecklistC,
+          Description,
+          Gioht,
+          Vido,
+          Kinhdo,
+          Docao,
+          isScan,
+          isCheckListLai,
+          ]
+        ],
         type: sequelize.QueryTypes.INSERT,
-        transaction,
-      });
-    } catch (error) {
-      console.error("Error inserting into dynamic table:", error);
-      await transaction.rollback();
-      res
-        .status(500)
-        .json({ error: "Failed to insert records into dynamic table" });
-    }
-
+        transaction, // Chạy trong transaction
+      }
+    );
+    
     // Save Tb_checklistchitietdone in the database
-    Tb_checklistchitietdone.create(data)
+    Tb_checklistchitietdone.create(data, { transaction })
       .then(async (createdData) => {
         try {
           // Find the checklist record to check current TongC
@@ -127,7 +146,8 @@ exports.create = async (req, res) => {
           });
         }
       })
-      .catch((err) => {
+      .catch(async (err) => {
+        await transaction.rollback();
         res.status(500).json({
           message: err.message || "Lỗi! Vui lòng thử lại sau.",
         });

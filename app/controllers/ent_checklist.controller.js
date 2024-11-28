@@ -544,7 +544,7 @@ exports.deleteMul = async (req, res) => {
     const idsToDelete = deleteRows.map((row) => row.ID_Checklist);
     if (userData) {
       Ent_checklist.update(
-        { isDelete: 1 },
+        { isDelete: 1, ID_User: userData.ID_User },
         {
           where: {
             ID_Checklist: idsToDelete,
