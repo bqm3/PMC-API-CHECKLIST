@@ -1,7 +1,9 @@
 const multer = require("multer");
 const upload = multer();
 
+
 module.exports = (app) => {
+  const { uploadBaoCaoChiSo, resizeImage } = require("../middleware/upload_image.js");
   const ent_loai_chiso = require("../controllers/BaocaochisoController/ent_loai_chiso.controller");
   const ent_baocaochiso = require("../controllers/BaocaochisoController/ent_baocaochiso.controller.js");
   const ent_duan_loai_chiso = require("../controllers/BaocaochisoController/ent_duan_loai_chiso.controller.js");
@@ -78,7 +80,7 @@ module.exports = (app) => {
 
   router.post(
     "/ent_baocaochiso/create",
-    [isAuthenticated, upload.any()],
+    [isAuthenticated, uploadBaoCaoChiSo.any("images"),resizeImage],
     ent_baocaochiso.create
   );
 
@@ -86,7 +88,7 @@ module.exports = (app) => {
 
   router.put(
     "/ent_baocaochiso/:id",
-    [isAuthenticated, upload.any()],
+    [isAuthenticated, uploadBaoCaoChiSo.any("images"),resizeImage],
     ent_baocaochiso.update
   );
   router.put(
