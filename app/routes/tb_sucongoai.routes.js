@@ -1,5 +1,6 @@
 const multer = require("multer");
 const upload = multer();
+const { uploadSuCongNgoai, resizeImage } = require("../middleware/upload_image.js");
 
 module.exports = (app) => {
   const tb_sucongoai = require("../controllers/tb_sucongoai.controller.js");
@@ -7,10 +8,10 @@ module.exports = (app) => {
 
   var router = require("express").Router();
 
-  router.post("/create", [isAuthenticated, upload.any()], tb_sucongoai.create);
+  router.post("/create", [isAuthenticated, uploadSuCongNgoai.any("images"),resizeImage], tb_sucongoai.create);
   
   router.get("/", [isAuthenticated], tb_sucongoai.get);
-  router.put("/status/:id", [isAuthenticated, upload.any()], tb_sucongoai.updateStatus);
+  router.put("/status/:id", [isAuthenticated, uploadSuCongNgoai.any("images"),resizeImage], tb_sucongoai.updateStatus);
   router.get('/getDetail/:id', [isAuthenticated], tb_sucongoai.getDetail);
   router.put("/delete/:id", [isAuthenticated], tb_sucongoai.delete);
   router.get("/dashboard-by-duan", [isAuthenticated], tb_sucongoai.dashboardByDuAn);

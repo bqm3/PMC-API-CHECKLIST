@@ -3,40 +3,65 @@ const path = require("path");
 const fs = require("fs");
 const sharp = require("sharp");
 
-const uploadFolder = path.join(__dirname, "..", "public", "checklist");
 
-const storageChecklist = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const userData = req.user.data;
+const storageChecklist = (uploadFolderKey) =>
+  multer.diskStorage({
+    destination: (req, file, cb) => {
+      const userData = req.user.data;
 
-    if (!userData || !userData.ent_duan || !userData.ent_duan.Duan) {
-      return cb(new Error("Project name (Duan) is required"), null);
-    }
+      if (!userData || !userData.ent_duan || !userData.ent_duan.Duan) {
+        return cb(new Error("Project name (Duan) is required"), null);
+      }
 
-    const projectName = userData.ent_duan.Duan.replace(/[^a-zA-Z0-9-_]/g, "_"); // Loại bỏ ký tự không hợp lệ
-    const projectFolder = path.join(uploadFolder, projectName); // Tạo đường dẫn thư mục theo tên dự án
+      const uploadFolderMap = {
+        checklist: path.join(__dirname, "..", "public", "checklist"),
+        sucongoai: path.join(__dirname, "..", "public", "sucongoai"),
+        baocaochiso: path.join(__dirname, "..", "public", "baocaochiso"),
+      };
 
-    // Kiểm tra và tạo thư mục nếu chưa tồn tại
-    if (!fs.existsSync(projectFolder)) {
-      fs.mkdirSync(projectFolder, { recursive: true });
-    }
+      const uploadFolder = uploadFolderMap[uploadFolderKey];
 
-    cb(null, projectFolder); // Chỉ định thư mục đích
-  },
-  filename: (req, file, cb) => {
-    const userData = req.user.data;
+      if (!uploadFolder) {
+        return cb(new Error("Invalid upload folder key"), null);
+      }
 
-    if (!userData || !userData.ID_Duan) {
-      return cb(new Error("ID_Duan is required"), null);
-    }
+      const projectName = userData.ent_duan.Duan.replace(
+        /[^a-zA-Z0-9-_]/g,
+        "_"
+      );
+      const projectFolder = path.join(uploadFolder, projectName);
 
-    // Tên tệp với ID_Duan và thời gian hiện tại
-    const filename = `${userData.ID_Duan}_${Date.now()}${path.extname(file.originalname)}`;
-    cb(null, filename);
-  },
+      if (!fs.existsSync(projectFolder)) {
+        fs.mkdirSync(projectFolder, { recursive: true });
+      }
+
+      cb(null, projectFolder);
+    },
+    filename: (req, file, cb) => {
+      const userData = req.user.data;
+
+      if (!userData || !userData.ID_Duan) {
+        return cb(new Error("ID_Duan is required"), null);
+      }
+
+      const filename = `${userData.ID_Duan}_${Date.now()}${path.extname(
+        file.originalname
+      )}`;
+      cb(null, filename);
+    },
+  });
+
+const uploadChecklist = multer({
+  storage: storageChecklist("checklist"),
 });
 
-const uploadChecklist = multer({ storage: storageChecklist });
+const uploadSuCongNgoai = multer({
+  storage: storageChecklist("sucongoai"),
+});
+
+const uploadBaoCaoChiSo = multer({
+  storage: storageChecklist("baocaochiso"),
+});
 
 // Hàm xử lý resize ảnh
 const resizeImage = (req, res, next) => {
@@ -75,5 +100,7 @@ const resizeImage = (req, res, next) => {
 
 module.exports = {
   uploadChecklist,
+  uploadSuCongNgoai,
+  uploadBaoCaoChiSo,
   resizeImage,
 };

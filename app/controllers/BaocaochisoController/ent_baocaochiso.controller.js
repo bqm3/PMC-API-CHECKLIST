@@ -1,4 +1,4 @@
-const moment = require("moment-timezone")
+const moment = require("moment-timezone");
 const {
   uploadFile,
   deleteFileFromGoogleDrive,
@@ -11,8 +11,13 @@ const {
   Ent_Loai_Chiso,
 } = require("../../models/setup.model");
 const { Op, fn, col } = require("sequelize");
+var path = require("path");
 const sequelize = require("../../config/db.config");
-const { getPreviousMonth , convertDateFormat, isValidNumber} = require("../../utils/util");
+const {
+  getPreviousMonth,
+  convertDateFormat,
+  isValidNumber,
+} = require("../../utils/util");
 
 exports.create = async (req, res) => {
   const uploadedFileIds = [];
@@ -31,8 +36,6 @@ exports.create = async (req, res) => {
       }
       return data;
     };
-
-    const uploadedFileIds = [];
 
     records.ID_Hangmuc_Chiso = ensureArray(records.ID_Hangmuc_Chiso);
     records.Day = ensureArray(records.Day);
@@ -59,20 +62,25 @@ exports.create = async (req, res) => {
     //     .json({ message: `Báo cáo đã tồn tại cho tháng ${Month}/${Year}` });
     // }
 
-    const isEmpty = (obj) => !obj || Object.keys(obj).length === 0;
+    const isEmpty = (obj) => Object.keys(obj).length === 0;
 
-    // if (!isEmpty(images)) {
-    //   for (const image of images) {
-    //     const fileId = await uploadFile(
-    //       image,
-    //       userData.ent_duan?.Duan,
-    //       image.fieldname,
-    //       records.Month[0],
-    //       records.Year[0]
-    //     );
-    //     uploadedFileIds.push({ fileId, fieldname: image.fieldname });
-    //   }
-    // }
+    const uploadedFiles = req.files.map((file) => {
+      // Lấy thư mục và tên tệp từ đường dẫn
+      const projectFolder = path.basename(path.dirname(file.path)); // Tên dự án (thư mục cha của tệp)
+      const filename = path.basename(file.filename); // Tên tệp gốc
+
+      return {
+        fieldname: file.fieldname, // Lấy fieldname từ tệp tải lên
+        fileId: { id: `${projectFolder}/${filename}` }, // Đường dẫn thư mục dự án và tên ảnh
+        filePath: file.path, // Đường dẫn vật lý của tệp
+      };
+    });
+
+    // Mảng uploadedFileIds chứa tất cả các đối tượng tệp
+    const uploadedFileIds = [];
+    uploadedFiles.forEach((file) => {
+      uploadedFileIds.push(file); // Đẩy đối tượng tệp vào mảng
+    });
 
     for (let i = 0; i < records.ID_Hangmuc_Chiso.length; i++) {
       const ID_Hangmuc_Chiso = records.ID_Hangmuc_Chiso[i];
@@ -83,19 +91,25 @@ exports.create = async (req, res) => {
       const Chiso_Read_Img = records.Chiso_Read_Img[i];
       const Ghichu = records.Ghichu[i];
 
-      let Image_ID = "";
-      // if (!isEmpty(images)) {
-      //   const imageIndex = `Image_${i}`;
-      //   const matchingImage = uploadedFileIds.find(
-      //     (file) => file.fieldname === imageIndex
-      //   );
+      let anhs = [];
+      if (!isEmpty(images) && uploadedFileIds.length > 0) {
+        let imageIndex = "";
 
-      //   if (matchingImage) {
-      //     Image_ID = matchingImage.fileId.id;
-      //   } else {
-      //     console.log(`No matching image found for Anh: ${imageIndex}`);
-      //   }
-      // }
+        console.log("uploadedFileIds", uploadedFileIds);
+        let matchingImage = null;
+
+        imageIndex = `Image_${i}`;
+        matchingImage = uploadedFileIds.find(
+          (file) => file.fieldname == imageIndex
+        );
+        if (matchingImage) {
+          anhs.push(matchingImage.fileId.id);
+        } else {
+          console.log(`No matching image found for Anh: ${imageIndex}`);
+        }
+      }
+
+      const Anh = anhs.length > 0 ? anhs.join(",") : null;
 
       // Lấy dữ liệu tháng trước
       const dateCheck = getPreviousMonth(Month, Year);
@@ -114,11 +128,11 @@ exports.create = async (req, res) => {
         ID_User: ID_User || null,
         ID_Duan: ID_Duan || null,
         ID_Hangmuc_Chiso: ID_Hangmuc_Chiso || null,
-        Day: convertDateFormat(Day,true),      
+        Day: convertDateFormat(Day, true),
         Month: Month || null,
         Year: Year || null,
         Chiso: Chiso || null,
-        Image: Image_ID,
+        Image: Anh,
         Chiso_Before: findCheck?.Chiso || null,
         Chiso_Read_Img: Chiso_Read_Img || null,
         Ghichu: Ghichu || "",
@@ -198,7 +212,11 @@ exports.getbyDuAn = async (req, res) => {
           },
         ],
         where: whereCondition,
-        order: [["Year", "DESC"], ["Month", "DESC"], ["Day", "DESC"]],
+        order: [
+          ["Year", "DESC"],
+          ["Month", "DESC"],
+          ["Day", "DESC"],
+        ],
       });
 
       // Nhóm dữ liệu theo tháng và năm
@@ -230,7 +248,6 @@ exports.getbyDuAn = async (req, res) => {
     });
   }
 };
-
 
 exports.update = async (req, res) => {
   const transaction = await sequelize.transaction(); // Bắt đầu transaction
@@ -448,5 +465,3 @@ exports.delete = async (req, res) => {
     });
   }
 };
-
-

@@ -5,9 +5,11 @@ const {
   Ent_loaihinhbds,
   Ent_phanloaida,
   Ent_duan,
+  Ent_Baocaochiso,
 } = require("../models/setup.model");
 const hsse = require("../models/hsse.model");
 const moment = require("moment");
+require("moment-timezone");
 
 const sequelize = require("../config/db.config");
 const xlsx = require("xlsx");
@@ -148,21 +150,31 @@ exports.getPhanloai = async (req, res) => {
 };
 
 exports.checkDateReportData = async (req, res) => {
+  const transaction = await sequelize.transaction();
+
   try {
-    const today = moment().startOf("day");
-    // Chuyển đổi date từ chuỗi thành đối tượng Date
-    const inputDate = new Date(today);
-    if (isNaN(inputDate)) {
-      return res.status(400).json({
-        message: "Ngày không hợp lệ.",
-      });
+    // Lấy ngày hiện tại và đặt về đầu ngày
+    const nowVietnam = moment().tz("Asia/Ho_Chi_Minh");
+    let ngay = nowVietnam.format("DD/MM/YYYY");
+    let thang = nowVietnam.month() + 1;
+    let nam = nowVietnam.year();
+
+    // let day = nowVietnam.date();
+    let day = 30;
+
+    if (day == 1) {
+      if (thang == 1) {
+        thang = 12;
+        nam -= 1;
+      } else {
+        thang -= 1;
+      }
     }
 
     const { ID_Duan } = req.body;
     const duAn = await Ent_duan.findByPk(ID_Duan, {
-      where: {
-        isDelete: 0,
-      },
+      where: { isDelete: 0 },
+      attributes: ["ID_Phanloai"],
       include: [
         {
           model: Ent_chinhanh,
@@ -180,76 +192,70 @@ exports.checkDateReportData = async (req, res) => {
       ],
     });
 
-    // Lấy ngày đầu tiên và ngày cuối cùng của tháng
-    const firstDayOfMonth = new Date(
-      inputDate.getFullYear(),
-      inputDate.getMonth(),
-      1
-    );
-    const lastDayOfMonth = new Date(
-      inputDate.getFullYear(),
-      inputDate.getMonth() + 1,
-      0
-    );
+    let isDauThang = day == 1;
+    let isCuoiThang = day == nowVietnam.daysInMonth();
 
-    // Kiểm tra xem ngày có phải là ngày đầu tiên hoặc cuối cùng của tháng không
-    const isFirstOrLastDay =
-      inputDate.getTime() === firstDayOfMonth.getTime() ||
-      inputDate.getTime() === lastDayOfMonth.getTime();
-
-    if (!isFirstOrLastDay) {
-      // return res.status(400).json({
-      //   message: "Ngày không phải là ngày đầu tiên hoặc cuối cùng của tháng.",
-      //   data: {
-      //     show: false,
-      //     isCheck: duAn?.ID_Phanloai !== 1 ? 0 : 1,
-      //   },
-      // });
+    // Kiểm tra nếu không phải là ngày đầu hoặc cuối tháng
+    if (!isDauThang && !isCuoiThang) {
       return res.status(200).json({
         message: "Ngày không phải là ngày đầu tiên hoặc cuối cùng của tháng.",
         data: {
+          show: false,
+          isCheck: duAn?.ID_Phanloai !== 1 ? 0 : 1,
+        },
+      });
+    } else {
+      const findBaoCao = await Ent_Baocaochiso.findOne({
+        where: {
+          Month: thang,
+          Year: nam,
+          isDelete: 0,
+        },
+      });
+      // Nếu báo cáo đã tồn tại
+      if (findBaoCao) {
+        return res.status(200).json({
+          message: `Báo cáo đã tồn tại cho tháng ${thang}/${nam}`,
+          data: {
+            show: false,
+            isCheck: duAn?.ID_Phanloai !== 1 ? 0 : 1,
+          },
+        });
+      }
+
+      return res.status(200).json({
+        message: "Ngày hợp lệ.",
+        data: {
+          month: thang,
+          year: nam,
           show: true,
-          isCheck: duAn?.ID_Phanloai !== 1 ? 0 : 1
+          isCheck: duAn?.ID_Phanloai !== 1 ? 0 : 1,
         },
       });
     }
-
-    // Lấy tháng và năm cuối cùng (nếu là ngày đầu tiên thì lấy tháng trước)
-    const finalMonth =
-      inputDate.getDate() === 1
-        ? inputDate.getMonth()
-        : inputDate.getMonth() + 1;
-    const finalYear =
-      inputDate.getDate() === 1 && finalMonth === 0
-        ? inputDate.getFullYear() - 1
-        : inputDate.getFullYear();
-
-    return res.status(200).json({
-      message: "Ngày hợp lệ.",
-      data: {
-        month: finalMonth === 0 ? 12 : finalMonth,
-        year: finalYear,
-        show: true,
-        // 1 là trụ sở văn phòng
-        isCheck: duAn?.ID_Phanloai !== 1 ? 0 : 1,
-      },
-    });
   } catch (err) {
+    // Ghi log lỗi để theo dõi
+    console.error("Lỗi trong checkDateReportData:", err);
+
+    // Trả về lỗi máy chủ
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
+  } finally {
+    // Đảm bảo đóng giao dịch
+    if (transaction) await transaction.commit();
   }
 };
 
 function convertExcelDateTime(excelDate) {
-  console.log('excelDate',excelDate)
+  console.log("excelDate", excelDate);
   // Excel epoch starts from 1900-01-01
   const excelEpoch = new Date(Date.UTC(1900, 0, 1));
   const days = Math.floor(excelDate); // Phần nguyên: số ngày
   const fractionalDay = excelDate - days; // Phần thập phân: thời gian trong ngày
 
   excelEpoch.setDate(excelEpoch.getDate() + days - 2); // Điều chỉnh Excel leap year bug
-  console.log('excelEpoch', excelEpoch)
+  console.log("excelEpoch", excelEpoch);
 
   // Tính giờ, phút, giây từ phần thập phân
   const totalSecondsInDay = Math.round(fractionalDay * 86400); // Tổng số giây trong ngày
@@ -273,7 +279,7 @@ const convertExcelDate = (excelDate) => {
   const days = Math.floor(excelDate); // Phần nguyên là số ngày
   const timeFraction = excelDate - days; // Phần thập phân là giờ, phút, giây
 
-  console.log('timeFraction', timeFraction)
+  console.log("timeFraction", timeFraction);
 
   const date = new Date(excelStartDate.getTime() + days * 86400000); // 86400000ms = 1 ngày
   const hours = Math.floor(timeFraction * 24); // Tính giờ
@@ -314,7 +320,6 @@ exports.uploadFiles = async (req, res) => {
       for (const item of data) {
         index++;
         try {
-
           const tranforItem = uppercaseKeys(item);
           const ngayGhiNhan = convertExcelDate(item["Ngày ghi nhận"]);
           const tenDuAn = tranforItem["TÊN DỰ ÁN"];
