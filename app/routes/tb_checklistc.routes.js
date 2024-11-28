@@ -9,26 +9,10 @@ module.exports = (app) => {
 
   var router = require("express").Router();
 
-  router.post(
-    "/create",
-    [isAuthenticated],
-    tb_checklistc.createFirstChecklist
-  );
-
-  router.get(
-    "/ca/:id",
-    [isAuthenticated],
-    tb_checklistc.checklistCalv
-  );
-
-  // Tra cứu, Tìm kiếm
-  router.post("/date", [isAuthenticated], tb_checklistc.checklistCalvDate)
-
   // Xuất báo cáo
   //==================================
   router.post("/reports/:id", [isAuthenticated], tb_checklistc.createExcelTongHopCa);
   router.post("/preview-reports/:id", [isAuthenticated], tb_checklistc.createPreviewReports);
-  router.post("/thong-ke-tra-cuu", [isAuthenticated], tb_checklistc.createExcelThongKeTraCuu);
   router.post("/baocao", [isAuthenticated], tb_checklistc.createExcelFile);
   router.post("/thong-ke", [isAuthenticated], tb_checklistc.getThongKe);
   router.post("/report-article-important", [isAuthenticated], tb_checklistc.getThongKeHangMucQuanTrong);
@@ -82,6 +66,20 @@ module.exports = (app) => {
   router.put("/open/:id", [isAuthenticated], tb_checklistc.open);
   router.get("/update-tongC/:id1/:id2", tb_checklistc.updateTongC);
   router.put("/delete/:id", [isAuthenticated], tb_checklistc.delete);
+  router.post(
+    "/create",
+    [isAuthenticated],
+    tb_checklistc.createFirstChecklist
+  );
+
+  router.get(
+    "/ca/:id",
+    [isAuthenticated],
+    tb_checklistc.checklistCalv
+  );
+
+  // Tra cứu, Tìm kiếm
+  router.post("/date", [isAuthenticated], tb_checklistc.checklistCalvDate)
 
  
   router.post(
