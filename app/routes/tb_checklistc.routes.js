@@ -21,11 +21,8 @@ module.exports = (app) => {
     tb_checklistc.checklistCalv
   );
 
-  router.get(
-    "/ca-dinh-ky/:id",
-    [isAuthenticated],
-    tb_checklistc.checklistCalvDinhKy
-  );
+  // Tra cứu, Tìm kiếm
+  router.post("/date", [isAuthenticated], tb_checklistc.checklistCalvDate)
 
   // Xuất báo cáo
   //==================================
@@ -95,3 +92,6 @@ module.exports = (app) => {
 
   app.use("/api/v2/tb_checklistc", router);
 };
+
+
+

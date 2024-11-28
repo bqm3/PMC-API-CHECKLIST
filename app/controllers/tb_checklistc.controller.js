@@ -196,7 +196,7 @@ exports.createFirstChecklist = async (req, res, next) => {
         "isCheck",
         "Giatrinhan",
         "ID_User",
-       
+
         "calv_1",
         "calv_2",
         "calv_3",
@@ -597,7 +597,7 @@ exports.getThongKe = async (req, res, next) => {
         });
       }
 
-      if(ID_KhoiCV !== null && ID_KhoiCV !== undefined) {
+      if (ID_KhoiCV !== null && ID_KhoiCV !== undefined) {
         orConditions.push({ "$tb_checklistc.ID_KhoiCV$": ID_KhoiCV });
       }
 
@@ -1289,7 +1289,6 @@ exports.getBaoCaoChecklistMonths = async (req, res, next) => {
     // Set the width of the "Tên dự án" column (Column B) dynamically
     worksheet.getColumn(2).width = 30; // Set the width to 30 (you can adjust this value)
 
-
     // Tạo các cột cho từng ngày trong tháng với các khối KT, AN, LS, DV, F&B
     for (let day = 1; day <= daysInMonth; day++) {
       const colIndex = (day - 1) * 5 + 3; // Tính toán vị trí cột
@@ -1341,7 +1340,6 @@ exports.getBaoCaoChecklistMonths = async (req, res, next) => {
       };
       worksheet.getCell(2, colIndex + 3).font = { bold: true };
       worksheet.getCell(2, colIndex + 4).font = { bold: true };
-
     }
 
     let rowIndex = 3; // Bắt đầu từ dòng thứ 3 (sau tiêu đề)
@@ -1755,7 +1753,6 @@ exports.checklistImages = async (req, res) => {
   }
 };
 
-
 exports.checklistCalv = async (req, res) => {
   try {
     const userData = req.user.data;
@@ -1766,6 +1763,11 @@ exports.checklistCalv = async (req, res) => {
         ID_ChecklistC: ID_ChecklistC,
         ID_Duan: userData.ID_Duan,
       };
+
+      const detailCaChecklist= await Tb_checklistc.findOne({
+        attributes: ["ID_ChecklistC", "Ngay", "isDelete", "ID_Duan"],
+        where: whereClause
+      })
 
       // Fetch checklist detail items
       const dataChecklistChiTiet = await Tb_checklistchitiet.findAll({
@@ -1883,7 +1885,10 @@ exports.checklistCalv = async (req, res) => {
       plainChecklistChiTiet.forEach((item) => {
         item.status = 0;
         if (item.isScan === 1) {
-          item.ent_checklist.ent_hangmuc = { ...item.ent_checklist.ent_hangmuc, isScan: 1 };
+          item.ent_checklist.ent_hangmuc = {
+            ...item.ent_checklist.ent_hangmuc,
+            isScan: 1,
+          };
         }
         arrPush.push(item);
         // checklistIds.push(item.ID_Checklist);
@@ -2010,6 +2015,7 @@ exports.checklistCalv = async (req, res) => {
         ],
         where: { isDelete: 0 },
       });
+      console.log()
 
       res.status(200).json({
         message: "Danh sách checklist",
@@ -2111,9 +2117,8 @@ exports.reportLocation = async (req, res) => {
 
             // Check if the current item is within 15 seconds of any existing item
             const isWithinTimeRange = existingItems.some((existingItem) => {
-              const [existingHours, existingMinutes, existingSeconds] = existingItem.Gioht
-                .split(":")
-                .map(Number);
+              const [existingHours, existingMinutes, existingSeconds] =
+                existingItem.Gioht.split(":").map(Number);
               const existingTimeInSeconds =
                 existingHours * 3600 + existingMinutes * 60 + existingSeconds;
 
@@ -2200,36 +2205,39 @@ exports.reportLocation = async (req, res) => {
     });
 
     // Merge related checklist details with duplicate coordinates
-    const resultWithDetails = results.map((result) => {
-      const detailedCoordinates = result.duplicateCoordinates.map((entry) => {
-        const detailedItems = entry.checklistItems.map((item) => {
-          // Get the first related Hangmuc, Khuvuc, and Tentang from the checklist
-          const relatedItem = relatedChecklists.find((checklist) =>
-            item.checklistIds.includes(checklist.ID_Checklist)
-          );
-          return {
-            Gioht: item.Gioht,
-            relatedHangmuc: relatedItem
-              ? `${relatedItem.ent_hangmuc.Hangmuc} - ${relatedItem.ent_khuvuc.Tenkhuvuc} - ${relatedItem.ent_tang.Tentang} - ${relatedItem.ent_khuvuc.ent_toanha.Toanha}`
-              : null, // Show Hangmuc, Khuvuc (Area), and Tentang (Floor)
-          };
-        });
+    const resultWithDetails = results
+      .map((result) => {
+        const detailedCoordinates = result.duplicateCoordinates
+          .map((entry) => {
+            const detailedItems = entry.checklistItems.map((item) => {
+              // Get the first related Hangmuc, Khuvuc, and Tentang from the checklist
+              const relatedItem = relatedChecklists.find((checklist) =>
+                item.checklistIds.includes(checklist.ID_Checklist)
+              );
+              return {
+                Gioht: item.Gioht,
+                relatedHangmuc: relatedItem
+                  ? `${relatedItem.ent_hangmuc.Hangmuc} - ${relatedItem.ent_khuvuc.Tenkhuvuc} - ${relatedItem.ent_tang.Tentang} - ${relatedItem.ent_khuvuc.ent_toanha.Toanha}`
+                  : null, // Show Hangmuc, Khuvuc (Area), and Tentang (Floor)
+              };
+            });
+            return {
+              coordinates: entry.coordinates,
+              detailedItems, // Simplified list of detailed items with Hangmuc, Khuvuc, and Tentang
+            };
+          })
+          .filter((entry) => entry.detailedItems.length > 0); // Filter entries with detailedItems > 0
+
         return {
-          coordinates: entry.coordinates,
-          detailedItems, // Simplified list of detailed items with Hangmuc, Khuvuc, and Tentang
+          id: result.id,
+          project: result.project,
+          ca: result.ca,
+          nguoi: result.nguoi,
+          cv: result.cv,
+          detailedCoordinates, // Coordinates with simplified detailed checklist items (Hangmuc, Khuvuc, Tentang)
         };
-      }).filter((entry) => entry.detailedItems.length > 0); // Filter entries with detailedItems > 0
-
-
-      return {
-        id: result.id,
-        project: result.project,
-        ca: result.ca,
-        nguoi: result.nguoi,
-        cv: result.cv,
-        detailedCoordinates, // Coordinates with simplified detailed checklist items (Hangmuc, Khuvuc, Tentang)
-      };
-    }).filter((result) => result.detailedCoordinates.length > 0);
+      })
+      .filter((result) => result.detailedCoordinates.length > 0);
 
     // Send the final result with details
     res.status(200).json({
@@ -2487,19 +2495,19 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
         // Only return results with coordinates that have invalid items
         return detailedCoordinates.length > 0
           ? {
-            id: result.id,
-            project: result.project,
-            ca: result.ca,
-            nguoi: result.nguoi,
-            tk: result.tk,
-            cv: result.cv,
-            giobd: result.giobd,
-            giokt: result.giokt,
-            ngay: result.ngay,
-            tongC: result.tongC,
-            tong: result.tong,
-            detailedCoordinates,
-          }
+              id: result.id,
+              project: result.project,
+              ca: result.ca,
+              nguoi: result.nguoi,
+              tk: result.tk,
+              cv: result.cv,
+              giobd: result.giobd,
+              giokt: result.giokt,
+              ngay: result.ngay,
+              tongC: result.tongC,
+              tong: result.tong,
+              detailedCoordinates,
+            }
           : null;
       })
       .filter((result) => result !== null); // Remove results without any invalid entries
@@ -2901,6 +2909,189 @@ exports.checklistCalvDinhKy = async (req, res) => {
   }
 };
 
+exports.checklistCalvDate = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    let { startDate, endDate } = req.body;
+
+  // Nếu không có startDate hoặc endDate, gán ngày hiện tại
+  if (!startDate) {
+    startDate = moment().format('YYYY-MM-DD'); // Ngày hiện tại
+  }
+  if (!endDate) {
+    endDate = moment().format('YYYY-MM-DD'); // Ngày hiện tại
+  }
+
+  // Định dạng ngày theo yêu cầu
+  const formattedStartDate = moment(startDate).format('YYYY-MM-DD');
+  const formattedEndDate = moment(endDate).format('YYYY-MM-DD');
+
+    if (userData) {
+      let whereClause = {
+        ID_Duan: userData?.ID_Duan,
+        isDelete: 0,
+        Ngay: {
+          [Op.gte]: formattedStartDate,
+          [Op.lte]: formattedEndDate,
+        },
+      };
+
+      // Nếu quyền là 1 (ID_Chucvu === 1) thì không cần thêm điều kiện ID_KhoiCV
+      if (
+        userData.ID_Chucvu !== 1 &&
+        userData.ID_Chucvu !== 2 &&
+        userData.ID_Chucvu !== 3
+      ) {
+        whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
+        whereClause.ID_User = userData?.ID_User;
+      }
+
+      const totalCount = await Tb_checklistc.count({
+        attributes: [
+          "ID_ChecklistC",
+          "ID_Hangmucs",
+          "ID_Duan",
+          "ID_KhoiCV",
+          "ID_Calv",
+          "ID_ThietLapCa",
+          "Ngay",
+          "Giobd",
+          "Giochupanh1",
+          "Anh1",
+          "Giochupanh2",
+          "Anh2",
+          "Giochupanh3",
+          "Anh3",
+          "Giochupanh4",
+          "Anh4",
+          "Giokt",
+          "Ghichu",
+          "Tinhtrang",
+          "isDelete",
+        ],
+        include: [
+          {
+            model: Ent_duan,
+            attributes: ["ID_Duan", "Duan", "Diachi", "Vido", "Kinhdo"],
+          },
+          {
+            model: Ent_khoicv,
+            attributes: ["ID_KhoiCV", "KhoiCV"],
+          },
+          {
+            model: Ent_calv,
+            attributes: ["ID_Calv", "Tenca", "Giobatdau", "Gioketthuc"],
+          },
+          {
+            model: Ent_user,
+            attributes: ["ID_User", "Hoten", "ID_Chucvu"],
+            include: [
+              {
+                model: Ent_chucvu,
+                attributes: ["Chucvu", "Role"],
+              },
+            ],
+          },
+        ],
+        where: whereClause,
+      });
+      // const totalPages = Math.ceil(totalCount / pageSize);
+      await Tb_checklistc.findAll({
+        attributes: [
+          "ID_ChecklistC",
+          "ID_Hangmucs",
+          "ID_Duan",
+          "ID_KhoiCV",
+          "ID_Calv",
+          "ID_ThietLapCa",
+          "ID_User",
+          "Ngay",
+          "Tong",
+          "TongC",
+          "Giobd",
+          "Giochupanh1",
+          "Anh1",
+          "Giochupanh2",
+          "Anh2",
+          "Giochupanh3",
+          "Anh3",
+          "Giochupanh4",
+          "Anh4",
+          "Giokt",
+          "Ghichu",
+          "Tinhtrang",
+          "isDelete",
+        ],
+        include: [
+          {
+            model: Ent_duan,
+            attributes: ["ID_Duan", "Duan", "Diachi", "Vido", "Kinhdo"],
+          },
+          {
+            model: Ent_thietlapca,
+            attributes: ["Ngaythu", "isDelete"],
+          },
+          {
+            model: Ent_khoicv,
+            attributes: ["ID_KhoiCV", "KhoiCV"],
+          },
+          {
+            model: Ent_calv,
+            attributes: ["ID_Calv", "Tenca", "Giobatdau", "Gioketthuc"],
+          },
+          {
+            model: Ent_user,
+            attributes: ["ID_User", "Hoten", "ID_Chucvu"],
+
+            include: [
+              {
+                model: Ent_chucvu,
+                attributes: ["Chucvu", "Role"],
+              },
+            ],
+          },
+        ],
+        where: whereClause,
+        order: [
+          ["Ngay", "DESC"],
+          ["ID_ChecklistC", "DESC"],
+        ],
+        // offset: offset,
+        // limit: pageSize,
+      })
+        .then((data) => {
+          if (data) {
+            res.status(200).json({
+              message: "Danh sách checklistc!",
+              // page: page,
+              // pageSize: pageSize,
+              // totalPages: totalPages,
+              data: data,
+            });
+          } else {
+            res.status(400).json({
+              message: "Không có checklistc!",
+              data: [],
+            });
+          }
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    } else {
+      return res.status(401).json({
+        message: "Bạn không có quyền truy cập",
+      });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
 exports.checklistYearByKhoiCV = async (req, res) => {
   try {
     const userData = req.user.data;
@@ -2912,7 +3103,7 @@ exports.checklistYearByKhoiCV = async (req, res) => {
     let whereClause = {
       isDelete: 0,
       ID_Duan: userData.ID_Duan, // Filter by project
-      Tinhtrang: 1
+      Tinhtrang: 1,
     };
 
     if (khoi !== "all") {
@@ -2936,7 +3127,7 @@ exports.checklistYearByKhoiCV = async (req, res) => {
         "ID_Calv",
         "isDelete",
         "ID_Duan",
-        "Tinhtrang"
+        "Tinhtrang",
       ],
       where: whereClause,
       include: [
@@ -3241,7 +3432,7 @@ exports.tiLeHoanThanh = async (req, res) => {
       ID_Duan: {
         [Op.ne]: 1,
       },
-      Tinhtrang: 1
+      Tinhtrang: 1,
     };
 
     const getLastDayOfMonth = (year, month) => {
@@ -3290,7 +3481,7 @@ exports.tiLeHoanThanh = async (req, res) => {
         "TongC",
         "Tong",
         "isDelete",
-        "Tinhtrang"
+        "Tinhtrang",
       ],
       where: whereClause,
       include: [
@@ -3457,7 +3648,7 @@ exports.tiLeSuco = async (req, res) => {
       ID_Duan: {
         [Op.ne]: 1,
       },
-      Tinhtrang: 1
+      Tinhtrang: 1,
     };
 
     // if (khoi !== "all") {
@@ -3619,7 +3810,7 @@ exports.suCoChiTiet = async (req, res) => {
     ID_Duan: {
       [Op.ne]: 1,
     },
-    Tinhtrang: 1
+    Tinhtrang: 1,
   };
 
   whereClause.Ngay = {
@@ -3772,7 +3963,7 @@ exports.soSanhSuCo = async (req, res) => {
         ID_Duan: {
           [Op.ne]: 1,
         },
-        Tinhtrang: 1
+        Tinhtrang: 1,
       },
       raw: true,
     });
@@ -3791,7 +3982,7 @@ exports.soSanhSuCo = async (req, res) => {
           [Op.gte]: startOfTwoWeeksAgo,
           [Op.lte]: endOfTwoWeeksAgo,
         },
-        Tinhtrang: 1
+        Tinhtrang: 1,
       },
       raw: true,
     });
@@ -3875,7 +4066,7 @@ exports.reportPercentWeek = async (req, res) => {
       ID_Duan: {
         [Op.ne]: 1,
       },
-      Tinhtrang: 1
+      Tinhtrang: 1,
     };
 
     let prevWhereClause = {
@@ -3883,7 +4074,7 @@ exports.reportPercentWeek = async (req, res) => {
       ID_Duan: {
         [Op.ne]: 1,
       },
-      Tinhtrang: 1
+      Tinhtrang: 1,
     };
 
     // if (khoi !== "all") {
@@ -3935,7 +4126,7 @@ exports.reportPercentWeek = async (req, res) => {
         "Tong",
         "ID_KhoiCV",
         "isDelete",
-        "Tinhtrang"
+        "Tinhtrang",
       ],
       where: lastWhereClause,
       include: [
@@ -3956,7 +4147,7 @@ exports.reportPercentWeek = async (req, res) => {
         "Tong",
         "ID_KhoiCV",
         "isDelete",
-        "Tinhtrang"
+        "Tinhtrang",
       ],
       where: prevWhereClause,
       include: [
@@ -4006,7 +4197,7 @@ exports.reportPercentYesterday = async (req, res) => {
         "Tong",
         "ID_KhoiCV",
         "isDelete",
-        "Tinhtrang"
+        "Tinhtrang",
       ],
       where: {
         Ngay: yesterday,
@@ -4014,7 +4205,7 @@ exports.reportPercentYesterday = async (req, res) => {
         ID_Duan: {
           [Op.ne]: 1,
         },
-        Tinhtrang: 1
+        Tinhtrang: 1,
       },
       include: [
         {
@@ -4174,7 +4365,7 @@ exports.checklistPercent = async (req, res) => {
     let whereClause = {
       isDelete: 0,
       ID_Duan: userData.ID_Duan,
-      Tinhtrang: 1
+      Tinhtrang: 1,
     };
 
     const results = await Tb_checklistc.findAll({
@@ -4876,13 +5067,19 @@ exports.getProjectsChecklistStatus = async (req, res) => {
 
       // Lưu tỷ lệ hoàn thành của từng người
       let userCompletionRate = 0; // Mặc định là 0 nếu không có giá trị hợp lệ
-      if (checklistC.Tong !== 0 && checklistC.Tong != null && checklistC.TongC != null) {
+      if (
+        checklistC.Tong !== 0 &&
+        checklistC.Tong != null &&
+        checklistC.TongC != null
+      ) {
         userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
       }
       // Đảm bảo tỷ lệ hoàn thành không vượt quá 100%
       userCompletionRate = userCompletionRate > 100 ? 100 : userCompletionRate;
 
-      result[projectId].createdKhois[khoiName].shifts[shiftName].userCompletionRates.push(userCompletionRate);
+      result[projectId].createdKhois[khoiName].shifts[
+        shiftName
+      ].userCompletionRates.push(userCompletionRate);
     });
 
     // Tính toán phần trăm hoàn thành riêng cho từng ca và tổng khối
@@ -4893,7 +5090,10 @@ exports.getProjectsChecklistStatus = async (req, res) => {
 
         Object.values(khoi.shifts).forEach((shift) => {
           // Tính phần trăm hoàn thành cho ca dựa trên tỷ lệ của từng người trong ca
-          let shiftCompletionRatio = shift.userCompletionRates.reduce((sum, rate) => sum + (rate || 0), 0);
+          let shiftCompletionRatio = shift.userCompletionRates.reduce(
+            (sum, rate) => sum + (rate || 0),
+            0
+          );
           if (shiftCompletionRatio > 100) {
             shiftCompletionRatio = 100; // Giới hạn phần trăm hoàn thành tối đa là 100% cho từng ca
           }
@@ -5547,8 +5747,8 @@ exports.createExcelTongHopCa = async (req, res) => {
         ],
         where: whereClause,
       });
- // Đầy
- // Đầy 
+      // Đầy
+      // Đầy
       // Create a map to aggregate data by shift (ca) and date
       const aggregatedData = {};
       dataChecklist.forEach((item) => {
@@ -5671,7 +5871,7 @@ exports.createExcelTongHopCa = async (req, res) => {
         const formattedPercentage = Number.isInteger(completionPercentage)
           ? completionPercentage.toString() // Convert to string if integer
           : completionPercentage.toFixed(2); // Use toFixed(2) for non-integer
-          console.log('item.KhoiCV', item.KhoiCV)
+        console.log("item.KhoiCV", item.KhoiCV);
 
         const newRow = worksheet.addRow([
           index + 1, // STT
@@ -6775,7 +6975,7 @@ exports.createExcelThongKeTraCuu = async (req, res) => {
       ID_Calvs,
     } = req.body;
     const userData = req.user.data;
-  } catch (error) { }
+  } catch (error) {}
 };
 
 exports.createExcelDuAn = async (req, res) => {
@@ -6816,7 +7016,7 @@ exports.createExcelDuAn = async (req, res) => {
         ID_Duan: {
           [Op.ne]: 1,
         },
-        Ngay: yesterday
+        Ngay: yesterday,
       },
       include: [
         {
@@ -6983,7 +7183,10 @@ exports.createExcelDuAn = async (req, res) => {
 
         // Tính phần trăm hoàn thành trung bình cho khối
         if (totalShifts >= 0) {
-          const avgKhoiCompletionRatio = totalKhoiCompletionRatio / totalShifts ? totalKhoiCompletionRatio / totalShifts : 0;
+          const avgKhoiCompletionRatio =
+            totalKhoiCompletionRatio / totalShifts
+              ? totalKhoiCompletionRatio / totalShifts
+              : 0;
           // Cộng tổng tỷ lệ của khối vào tổng tỷ lệ checklist chung
           totalChecklistPercentage += avgKhoiCompletionRatio;
           numKhoisWithData += 1; // Tăng số khối có dữ liệu
@@ -7080,13 +7283,13 @@ exports.createExcelDuAnPercent = async (req, res) => {
         ID_Duan: {
           [Op.ne]: 1,
         },
-        Ngay: yesterday
+        Ngay: yesterday,
       },
       include: [
         {
           model: Ent_duan,
           attributes: ["Duan"],
-         
+
           include: [
             {
               model: Ent_chinhanh,
@@ -7152,7 +7355,9 @@ exports.createExcelDuAnPercent = async (req, res) => {
       // Lưu tỷ lệ hoàn thành của từng người
       if (checklistC.Tong > 0) {
         const userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
-        result[projectId].createdKhois[khoiName].shifts[shiftName].userCompletionRates.push(userCompletionRate);
+        result[projectId].createdKhois[khoiName].shifts[
+          shiftName
+        ].userCompletionRates.push(userCompletionRate);
       }
     });
 
@@ -7255,7 +7460,9 @@ exports.createExcelDuAnPercent = async (req, res) => {
         tileChecklist = totalChecklistPercentage / numKhoisWithData;
       }
 
-      rowValues.tile = isNaN(tileChecklist) ? 0 : tileChecklist.toFixed(2) + "%";
+      rowValues.tile = isNaN(tileChecklist)
+        ? 0
+        : tileChecklist.toFixed(2) + "%";
 
       worksheet.addRow(rowValues);
     });
@@ -7272,14 +7479,12 @@ exports.createExcelDuAnPercent = async (req, res) => {
     );
 
     res.end(buffer);
-
   } catch (err) {
     res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
 };
-
 
 async function processData(data) {
   const aggregatedData = {};
