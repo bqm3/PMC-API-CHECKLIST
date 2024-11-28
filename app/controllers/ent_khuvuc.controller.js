@@ -330,7 +330,7 @@ exports.delete = async (req, res) => {
     const userData = req.user.data;
     if (req.params.id && userData) {
       Ent_khuvuc.update(
-        { isDelete: 1 },
+        { isDelete: 1, ID_User: userData.ID_User },
         {
           where: {
             ID_Khuvuc: req.params.id,
@@ -362,7 +362,7 @@ exports.deleteMul = async (req, res) => {
     const idsToDelete = deleteRows.map((row) => row.ID_Khuvuc);
     if (userData) {
       Ent_khuvuc.update(
-        { isDelete: 1 },
+        { isDelete: 1, ID_User: userData.ID_User },
         {
           where: {
             ID_Khuvuc: idsToDelete,

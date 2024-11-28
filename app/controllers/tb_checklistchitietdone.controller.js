@@ -41,60 +41,67 @@ exports.create = async (req, res) => {
 
     // Create a Tb_checklistchitietdone
     const data = {
+      ID_ChecklistC: ID_ChecklistC || null,
       Description: Description || "",
-      Vido: Vido || null,
       Gioht: Gioht,
+      Vido: Vido || null,
       Kinhdo: Kinhdo || null,
       Docao: Docao || null,
-      ID_ChecklistC: ID_ChecklistC || null,
       isScan: isScan || null,
       isCheckListLai: isCheckListLai || 0,
       isDelete: 0,
     };
 
-    // const d = new Date();
-    // const month = String(d.getMonth() + 1).padStart(2, "0"); // Tháng
-    // const year = d.getFullYear(); // Năm
-    // const dynamicTableName = `tb_checklistchitiet_${month}_${year}`;
+    const d = new Date();
+    const month = String(d.getMonth() + 1).padStart(2, "0"); // Tháng
+    const year = d.getFullYear(); // Năm
+    const dynamicTableName = `tb_checklistchitietdone_${month}_${year}`;
+    await sequelize.query(
+      `
+      CREATE TABLE IF NOT EXISTS ${dynamicTableName} (
+        ID_ChecklistC INT,
+        Description TEXT,
+        Gioht TIME,
+        Vido VARCHAR(50) DEFAULT NULL,
+        Kinhdo VARCHAR(50) DEFAULT NULL,
+        Docao VARCHAR(50) DEFAULT NULL,
+        isScan INT DEFAULT NULL,
+        isCheckListLai INT DEFAULT 0
+      );
+      `,
+      { transaction }
+    );
 
-    // // Map the valueChecks to the Ketqua column and prepare the values for insertion
-    // const values = ID_Checklists.map((id, index) => [
-    //   ID_ChecklistC,
-    //   id,
-    //   Vido || null,
-    //   Kinhdo || null,
-    //   Docao || null,
-    //   valueChecks[index] || null,
-    //   Gioht,
-    //   null, // Ghichu
-    //   isScan,
-    //   null, // Anh
-    //   new Date().toISOString().split("T")[0], // Ngay (current date)
-    //   isCheckListLai || 0,
-    // ]);
+    // Thực hiện INSERT dữ liệu
+    const query = `
+  INSERT INTO ${dynamicTableName} 
+    (ID_ChecklistC, Description, Gioht, Vido, Kinhdo, Docao, isScan, isCheckListLai)
+  VALUES (
+    ${ID_ChecklistC},
+    '${Description}',
+    '${Gioht}',
+    ${Vido},
+    ${Kinhdo},
+    ${Docao},
+    ${isScan},
+    ${isCheckListLai || 0}
+  );
+`;
 
-    // const query = `
-    //   INSERT INTO ${dynamicTableName} 
-    //     (ID_ChecklistC, ID_Checklist, Vido, Kinhdo, Docao, Ketqua, Gioht, Ghichu, isScan, Anh, Ngay, isCheckListLai)
-    //   VALUES 
-    //     ?`;
+try {
+  await sequelize.query(query, {
+    type: sequelize.QueryTypes.INSERT,
+    transaction,
+  });
+} catch (error) {
+  await transaction.rollback();
+  console.error("Error details:", error);
+  res.status(500).json({ error: error.message || "Failed to insert records into dynamic table" });
+}
 
-    // try {
-    //   await sequelize.query(query, {
-    //     replacements: [values],
-    //     type: sequelize.QueryTypes.INSERT,
-    //     transaction,
-    //   });
-    // } catch (error) {
-    //   console.error("Error inserting into dynamic table:", error);
-    //   await transaction.rollback();
-    //   res
-    //     .status(500)
-    //     .json({ error: "Failed to insert records into dynamic table" });
-    // }
-    
+
     // Save Tb_checklistchitietdone in the database
-    Tb_checklistchitietdone.create(data)
+    await Tb_checklistchitietdone.create(data, { transaction })
       .then(async (createdData) => {
         try {
           // Find the checklist record to check current TongC
@@ -143,7 +150,8 @@ exports.create = async (req, res) => {
           });
         }
       })
-      .catch((err) => {
+      .catch(async (err) => {
+        await transaction.rollback();
         res.status(500).json({
           message: err.message || "Lỗi! Vui lòng thử lại sau.",
         });

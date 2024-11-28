@@ -118,6 +118,12 @@ function getPreviousMonth(month, year) {
     const regex = /^(\d+([.,]\d{1,2})?)$/; // Số nguyên hoặc số thập phân có dấu '.' hoặc ','
     return regex.test(value);
   };
+
+  const getDynamicTableName = (date) => {
+    const month = new Date(date).getMonth() + 1; // Lấy tháng (bắt đầu từ 0)
+    const year = new Date(date).getFullYear(); // Lấy năm
+    return `tb_checklistchitiet_${month.toString().padStart(2, '0')}_${year}`;
+  };
   
 
 module.exports = {
@@ -127,5 +133,6 @@ module.exports = {
   removeSpacesFromKeys,
   removeVietnameseTones,
   getPreviousMonth,
-  isValidNumber
+  isValidNumber,
+  getDynamicTableName
 };
