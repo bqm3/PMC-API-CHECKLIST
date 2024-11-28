@@ -9,16 +9,9 @@ const {
 } = require("../models/setup.model");
 const hsse = require("../models/hsse.model");
 const moment = require("moment");
-require("moment-timezone");
-
 const sequelize = require("../config/db.config");
 const xlsx = require("xlsx");
-const e = require("express");
-const fs = require("fs");
-const path = require("path");
-const archiver = require("archiver");
-const axios = require("axios");
-const { removeSpacesFromKeys } = require("../utils/util");
+require("moment-timezone");
 
 exports.getNhom = async (req, res) => {
   try {
@@ -159,8 +152,8 @@ exports.checkDateReportData = async (req, res) => {
     let thang = nowVietnam.month() + 1;
     let nam = nowVietnam.year();
 
-    // let day = nowVietnam.date();
-    let day = 30;
+    let day = nowVietnam.date();
+    // let day = 30;
 
     if (day == 1) {
       if (thang == 1) {
@@ -200,7 +193,7 @@ exports.checkDateReportData = async (req, res) => {
       return res.status(200).json({
         message: "Ngày không phải là ngày đầu tiên hoặc cuối cùng của tháng.",
         data: {
-          show: false,
+          show: true,
           isCheck: duAn?.ID_Phanloai !== 1 ? 0 : 1,
         },
       });
@@ -248,7 +241,6 @@ exports.checkDateReportData = async (req, res) => {
 };
 
 function convertExcelDateTime(excelDate) {
-  console.log("excelDate", excelDate);
   // Excel epoch starts from 1900-01-01
   const excelEpoch = new Date(Date.UTC(1900, 0, 1));
   const days = Math.floor(excelDate); // Phần nguyên: số ngày

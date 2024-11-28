@@ -123,6 +123,7 @@ exports.create = async (req, res) => {
         },
       });
 
+      console.log('Chiso', Chiso)
       // Chuẩn bị dữ liệu để lưu
       const data = {
         ID_User: ID_User || null,
@@ -131,7 +132,7 @@ exports.create = async (req, res) => {
         Day: convertDateFormat(Day, true),
         Month: Month || null,
         Year: Year || null,
-        Chiso: Chiso || null,
+        Chiso: isValidNumber(Chiso) || null,
         Image: Anh,
         Chiso_Before: findCheck?.Chiso || null,
         Chiso_Read_Img: Chiso_Read_Img || null,
