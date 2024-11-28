@@ -580,7 +580,8 @@ exports.getThongKe = async (req, res, next) => {
       const ID_KhoiCV = req.body.ID_KhoiCV ? req.body.ID_KhoiCV : null;
       const orConditions = [
         {
-          Ngay: { [Op.between]: [fromDate, toDate] }, // Filter by Ngay attribute between fromDate and toDate
+          Ngay: { [Op.between]: [fromDate, toDate] }, // Filter by Ngay attribute between fromDate and toDate,
+          isDelete: 0
         },
       ];
 

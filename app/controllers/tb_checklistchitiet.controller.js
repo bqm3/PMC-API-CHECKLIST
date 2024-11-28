@@ -294,6 +294,17 @@ exports.createCheckListChiTiet = async (req, res, next) => {
                   transaction,
                 }
               );
+            } else {
+              await Ent_checklist.update(
+                { Tinhtrang: 0 },
+                {
+                  where: {
+                    ID_Checklist: checklistId,
+                    isDelete: 0,
+                  },
+                  transaction,
+                }
+              );
             }
           }
         }

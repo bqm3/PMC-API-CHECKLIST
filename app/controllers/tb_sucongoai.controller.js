@@ -11,6 +11,7 @@ const {
   Ent_toanha,
   Ent_khuvuc_khoicv,
 } = require("../models/setup.model");
+var path = require("path");
 const { Op, fn, col } = require("sequelize");
 const sequelize = require("../config/db.config");
 
@@ -27,17 +28,56 @@ exports.create = async (req, res) => {
       ID_User,
     } = body;
 
+    const images = req.files;
+
+    // const uploadedFileIds = [];
+    // if (files) {
+    //   for (const image of files) {
+    //     const fileId = await uploadFile(image);
+    //     uploadedFileIds.push({ id: fileId, name: image.originalname });
+    //   }
+    // }
+    // const ids = uploadedFileIds.map((file) => file.id.id);
+
+    // // Nối các id lại thành chuỗi, cách nhau bằng dấu phẩy
+    // const idsString = ids.join(",");
+    const isEmpty = (obj) => Object.keys(obj).length === 0;
+
+    const uploadedFiles = req.files.map((file) => {
+      // Lấy thư mục và tên tệp từ đường dẫn
+      const projectFolder = path.basename(path.dirname(file.path)); // Tên dự án (thư mục cha của tệp)
+      const filename = path.basename(file.filename); // Tên tệp gốc
+
+      return {
+        fieldname: file.fieldname, // Lấy fieldname từ tệp tải lên
+        fileId: { id: `${projectFolder}/${filename}` }, // Đường dẫn thư mục dự án và tên ảnh
+        filePath: file.path, // Đường dẫn vật lý của tệp
+      };
+    });
+
     const uploadedFileIds = [];
-    if (files) {
-      for (const image of files) {
-        const fileId = await uploadFile(image);
-        uploadedFileIds.push({ id: fileId, name: image.originalname });
+    uploadedFiles.forEach((file) => {
+      uploadedFileIds.push(file); // Đẩy đối tượng tệp vào mảng
+    });
+
+    let anhs = [];
+    if (!isEmpty(images) && uploadedFileIds.length > 0) {
+      let imageIndex = "";
+      let matchingImage = null;
+      for (let i = 0; i < images.length; i++) {
+        imageIndex = `Images`;
+        matchingImage = uploadedFileIds.find(
+          (file) => file.fieldname === imageIndex
+        );
+        if (matchingImage) {
+          anhs.push(matchingImage.fileId.id);
+        } else {
+          console.log(`No matching image found for Anh: ${imageIndex}`);
+        }
       }
     }
-    const ids = uploadedFileIds.map((file) => file.id.id);
 
-    // Nối các id lại thành chuỗi, cách nhau bằng dấu phẩy
-    const idsString = ids.join(",");
+    const idsString = anhs.length > 0 ? anhs.join(",") : null;
 
     const data = {
       Ngaysuco: Ngaysuco || null,
@@ -169,17 +209,58 @@ exports.updateStatus = async (req, res) => {
     const userData = req.user.data;
     const ID_Suco = req.params.id;
     const { files } = req;
+    const images = req.files;
+    
+    // const uploadedFileIds = [];
+    // if (files) {
+    //   for (const image of files) {
+    //     const fileId = await uploadFile(image);
+    //     uploadedFileIds.push({ id: fileId, name: image.originalname });
+    //   }
+    // }
+    // const ids = uploadedFileIds.map((file) => file.id.id);
+
+    // // Nối các id lại thành chuỗi, cách nhau bằng dấu phẩy
+    // const idsString = ids.join(",");
+
+    const isEmpty = (obj) => Object.keys(obj).length === 0;
+
+    const uploadedFiles = req.files.map((file) => {
+      // Lấy thư mục và tên tệp từ đường dẫn
+      const projectFolder = path.basename(path.dirname(file.path)); // Tên dự án (thư mục cha của tệp)
+      const filename = path.basename(file.filename); // Tên tệp gốc
+
+      return {
+        fieldname: file.fieldname, // Lấy fieldname từ tệp tải lên
+        fileId: { id: `${projectFolder}/${filename}` }, // Đường dẫn thư mục dự án và tên ảnh
+        filePath: file.path, // Đường dẫn vật lý của tệp
+      };
+    });
+
     const uploadedFileIds = [];
-    if (files) {
-      for (const image of files) {
-        const fileId = await uploadFile(image);
-        uploadedFileIds.push({ id: fileId, name: image.originalname });
+    uploadedFiles.forEach((file) => {
+      uploadedFileIds.push(file); // Đẩy đối tượng tệp vào mảng
+    });
+
+    let anhs = [];
+    if (!isEmpty(images) && uploadedFileIds.length > 0) {
+      let imageIndex = "";
+      let matchingImage = null;
+      for (let i = 0; i < images.length; i++) {
+        imageIndex = `Images`;
+        matchingImage = uploadedFileIds.find(
+          (file) => file.fieldname === imageIndex
+        );
+        if (matchingImage) {
+          anhs.push(matchingImage.fileId.id);
+        } else {
+          console.log(`No matching image found for Anh: ${imageIndex}`);
+        }
       }
     }
-    const ids = uploadedFileIds.map((file) => file.id.id);
 
-    // Nối các id lại thành chuỗi, cách nhau bằng dấu phẩy
-    const idsString = ids.join(",");
+    const idsString = anhs.length > 0 ? anhs.join(",") : null;
+
     const { Tinhtrangxuly, ngayXuLy, Ghichu, ID_Hangmuc } = req.body;
     if (ID_Suco && userData) {
       const updateFields = {
