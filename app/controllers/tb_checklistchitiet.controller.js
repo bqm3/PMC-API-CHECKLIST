@@ -174,9 +174,9 @@ exports.createCheckListChiTiet = async (req, res, next) => {
         CREATE TABLE IF NOT EXISTS ${dynamicTableName} (
           ID_ChecklistC INT,
           ID_Checklist INT,
-          Vido FLOAT DEFAULT NULL,
-          Kinhdo FLOAT DEFAULT NULL,
-          Docao FLOAT DEFAULT NULL,
+          Vido VARCHAR(50) DEFAULT NULL,
+          Kinhdo VARCHAR(50) DEFAULT NULL,
+          Docao VARCHAR(50) DEFAULT NULL,
           Ketqua VARCHAR(255) DEFAULT NULL,
           Gioht DATETIME,
           Ghichu TEXT DEFAULT NULL,
