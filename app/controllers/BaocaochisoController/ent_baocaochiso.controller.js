@@ -122,8 +122,6 @@ exports.create = async (req, res) => {
           isDelete: 0,
         },
       });
-
-      console.log('Chiso', Chiso)
       // Chuẩn bị dữ liệu để lưu
       const data = {
         ID_User: ID_User || null,
