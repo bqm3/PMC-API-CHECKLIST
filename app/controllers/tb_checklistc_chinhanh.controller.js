@@ -1609,7 +1609,6 @@ exports.getProjectsChecklistStatus = async (req, res) => {
     const userData = req.user.data;
     // Lấy ngày hôm qua
     const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
-    const now = moment().subtract(1, "days").format("YYYY-MM-DD");
 
     // Lấy tất cả dữ liệu checklistC cho ngày hôm qua
     const dataChecklistCs = await Tb_checklistc.findAll({
