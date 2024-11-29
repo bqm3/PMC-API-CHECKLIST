@@ -75,7 +75,7 @@ exports.create = async (req, res) => {
       );
 
       // Insert data into the dynamic table
-      const isScanValue = isScan !== undefined ? isScan : "NULL";
+      const isScanValue = isScan !== undefined ? isScan : null;
       const insertQuery = `
       INSERT INTO ${dynamicTableName} 
         (ID_ChecklistC, Description, Gioht, Vido, Kinhdo, Docao, isScan, isCheckListLai)
@@ -128,7 +128,7 @@ exports.create = async (req, res) => {
       );
 
       // Commit transaction after all operations are successful
-      await transaction.commit();
+      // await transaction.commit();
 
       // Return success response
       res.status(200).json({
