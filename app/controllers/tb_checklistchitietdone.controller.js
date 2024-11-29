@@ -28,8 +28,7 @@ exports.create = async (req, res) => {
       Docao,
       Gioht,
       isScan,
-      isCheckListLai,
-      valueChecks, // This is the array of values for Ketqua
+      isCheckListLai
     } = req.body;
 
     if (!Description || !Gioht) {
@@ -48,7 +47,7 @@ exports.create = async (req, res) => {
       Kinhdo: Kinhdo || null,
       Docao: Docao || null,
       isScan: isScan || null,
-      isCheckListLai: isCheckListLai || 0,
+      isCheckListLai: isCheckListLai !== 1 ? 0 : 1,
       isDelete: 0,
     };
 
@@ -60,42 +59,42 @@ exports.create = async (req, res) => {
 
     try {
       // Create dynamic table if it doesn't exist
-      // await sequelize.query(
-      //   `
-      //     CREATE TABLE IF NOT EXISTS ${dynamicTableName} (
-      //       ID_ChecklistC INT,
-      //       Description TEXT,
-      //       Gioht TIME,
-      //       Vido VARCHAR(50) DEFAULT NULL,
-      //       Kinhdo VARCHAR(50) DEFAULT NULL,
-      //       Docao VARCHAR(50) DEFAULT NULL,
-      //       isScan INT DEFAULT NULL,
-      //       isCheckListLai INT DEFAULT 0
-      //     );
-      //   `,
-      //   { transaction }
-      // );
+      await sequelize.query(
+        `
+          CREATE TABLE IF NOT EXISTS ${dynamicTableName} (
+            ID_ChecklistC INT,
+            Description TEXT,
+            Gioht TIME,
+            Vido VARCHAR(50) DEFAULT NULL,
+            Kinhdo VARCHAR(50) DEFAULT NULL,
+            Docao VARCHAR(50) DEFAULT NULL,
+            isScan INT DEFAULT NULL,
+            isCheckListLai INT DEFAULT 0
+          );
+        `,
+        { transaction }
+      );
 
       // // Insert data into the dynamic table
-      // const insertQuery = `
-      //   INSERT INTO ${dynamicTableName} 
-      //     (ID_ChecklistC, Description, Gioht, Vido, Kinhdo, Docao, isScan, isCheckListLai)
-      //   VALUES (
-      //     ${ID_ChecklistC},
-      //     '${Description}',
-      //     '${Gioht}',
-      //     ${Vido},
-      //     ${Kinhdo},
-      //     ${Docao},
-      //     ${isScan},
-      //     ${isCheckListLai || 0}
-      //   );
-      // `;
+      const insertQuery = `
+        INSERT INTO ${dynamicTableName} 
+          (ID_ChecklistC, Description, Gioht, Vido, Kinhdo, Docao, isScan, isCheckListLai)
+        VALUES (
+          ${ID_ChecklistC},
+          '${Description}',
+          '${Gioht}',
+          ${Vido},
+          ${Kinhdo},
+          ${Docao},
+          ${isScan},
+          ${isCheckListLai !== 1 ? 0: 1}
+        );
+      `;
 
-      // await sequelize.query(insertQuery, {
-      //   type: sequelize.QueryTypes.INSERT,
-      //   transaction,
-      // });
+      await sequelize.query(insertQuery, {
+        type: sequelize.QueryTypes.INSERT,
+        transaction,
+      });
 
       // Save to Tb_checklistchitietdone table
       const createdData = await Tb_checklistchitietdone.create(data, { transaction });
