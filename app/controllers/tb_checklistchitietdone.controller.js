@@ -59,42 +59,42 @@ exports.create = async (req, res) => {
 
     try {
       // Create dynamic table if it doesn't exist
-      await sequelize.query(
-        `
-          CREATE TABLE IF NOT EXISTS ${dynamicTableName} (
-            ID_ChecklistC INT,
-            Description TEXT,
-            Gioht TIME,
-            Vido VARCHAR(50) DEFAULT NULL,
-            Kinhdo VARCHAR(50) DEFAULT NULL,
-            Docao VARCHAR(50) DEFAULT NULL,
-            isScan INT DEFAULT NULL,
-            isCheckListLai INT DEFAULT 0
-          );
-        `,
-        { transaction }
-      );
+      // await sequelize.query(
+      //   `
+      //     CREATE TABLE IF NOT EXISTS ${dynamicTableName} (
+      //       ID_ChecklistC INT,
+      //       Description TEXT,
+      //       Gioht TIME,
+      //       Vido VARCHAR(50) DEFAULT NULL,
+      //       Kinhdo VARCHAR(50) DEFAULT NULL,
+      //       Docao VARCHAR(50) DEFAULT NULL,
+      //       isScan INT DEFAULT NULL,
+      //       isCheckListLai INT DEFAULT 0
+      //     );
+      //   `,
+      //   { transaction }
+      // );
 
       // // Insert data into the dynamic table
-      const insertQuery = `
-        INSERT INTO ${dynamicTableName} 
-          (ID_ChecklistC, Description, Gioht, Vido, Kinhdo, Docao, isScan, isCheckListLai)
-        VALUES (
-          ${ID_ChecklistC},
-          '${Description}',
-          '${Gioht}',
-          ${Vido},
-          ${Kinhdo},
-          ${Docao},
-          ${isScan},
-          ${isCheckListLai !== 1 ? 0: 1}
-        );
-      `;
+      // const insertQuery = `
+      //   INSERT INTO ${dynamicTableName} 
+      //     (ID_ChecklistC, Description, Gioht, Vido, Kinhdo, Docao, isScan, isCheckListLai)
+      //   VALUES (
+      //     ${ID_ChecklistC},
+      //     '${Description}',
+      //     '${Gioht}',
+      //     ${Vido},
+      //     ${Kinhdo},
+      //     ${Docao},
+      //     ${isScan},
+      //     ${isCheckListLai !== 1 ? 0: 1}
+      //   );
+      // `;
 
-      await sequelize.query(insertQuery, {
-        type: sequelize.QueryTypes.INSERT,
-        transaction,
-      });
+      // await sequelize.query(insertQuery, {
+      //   type: sequelize.QueryTypes.INSERT,
+      //   transaction,
+      // });
 
       // Save to Tb_checklistchitietdone table
       const createdData = await Tb_checklistchitietdone.create(data, { transaction });
