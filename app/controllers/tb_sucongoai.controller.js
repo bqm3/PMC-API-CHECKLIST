@@ -65,7 +65,7 @@ exports.create = async (req, res) => {
       let imageIndex = "";
       let matchingImage = null;
       for (let i = 0; i < images.length; i++) {
-        imageIndex = `Images`;
+        imageIndex = `Images_${i}`;
         matchingImage = uploadedFileIds.find(
           (file) => file.fieldname === imageIndex
         );

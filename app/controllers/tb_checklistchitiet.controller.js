@@ -287,6 +287,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
                 {
                   where: {
                     ID_Checklist: checklistId,
+                    isCheck: 0,
                     isDelete: 0,
                   },
                   transaction,
