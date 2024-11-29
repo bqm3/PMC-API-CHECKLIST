@@ -214,7 +214,6 @@ exports.createCheckListChiTiet = async (req, res, next) => {
           transaction,
         });
       } catch (error) {
-        await transaction.rollback();
         res
           .status(500)
           .json({ error: "Failed to insert records into dynamic table" });
@@ -252,7 +251,6 @@ exports.createCheckListChiTiet = async (req, res, next) => {
         })
         .catch(async (error) => {
           console.error("Error in updating TongC: ", error);
-          await transaction.rollback();
         });
 
       if (newRecords.length > 0) {
