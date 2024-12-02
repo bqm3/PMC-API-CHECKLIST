@@ -16,7 +16,7 @@ const sequelize = require("../../config/db.config");
 const {
   getPreviousMonth,
   convertDateFormat,
-  isValidNumber,
+  formatNumber,
 } = require("../../utils/util");
 
 exports.create = async (req, res) => {
@@ -114,7 +114,7 @@ exports.create = async (req, res) => {
       // Lấy dữ liệu tháng trước
       const dateCheck = getPreviousMonth(Month, Year);
       const findCheck = await Ent_Baocaochiso.findOne({
-        attributes: ["Chiso"],
+        attributes: ["Chiso", "ID_Hangmuc_Chiso", "Month", "Year", "isDelete"],
         where: {
           ID_Hangmuc_Chiso,
           Month: dateCheck.month,
@@ -130,14 +130,13 @@ exports.create = async (req, res) => {
         Day: convertDateFormat(Day, true),
         Month: Month || null,
         Year: Year || null,
-        Chiso: isValidNumber(Chiso) || null,
+        Chiso: formatNumber(Chiso) || null,
         Image: Anh,
         Chiso_Before: findCheck?.Chiso || null,
         Chiso_Read_Img: Chiso_Read_Img || null,
         Ghichu: Ghichu || "",
         isDelete: 0,
       };
-
       // Lưu dữ liệu
       await Ent_Baocaochiso.create(data, { transaction });
     }
@@ -156,7 +155,6 @@ exports.create = async (req, res) => {
       }
     }
 
-    console.error("Error:", error.message);
     res.status(500).json({ message: "Lỗi! Vui lòng thử lại sau." });
   }
 };
@@ -280,7 +278,7 @@ exports.update = async (req, res) => {
     } = body;
 
     if (Electrical_CDT && Water_CDT) {
-      if (!isValidNumber(Water_CDT) || !isValidNumber(Electrical_CDT)) {
+      if (!formatNumber(Water_CDT) || !formatNumber(Electrical_CDT)) {
         return res.status(400).json({
           message:
             "Chỉ số điện và Nước phải là số hợp lệ (có thể chứa dấu . hoặc ,).",

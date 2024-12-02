@@ -56,6 +56,8 @@ module.exports = (app) => {
     [isAuthenticated],
     ent_hangmuc_chiso.updateHangmucChiso
   );
+  
+  router.get("/hangmuc-chiso/byDuan/:ID_Hangmuc_Chiso", [isAuthenticated], ent_hangmuc_chiso.getDetailHangmucChiso);
   router.put(
     "/hangmuc-chiso/delete/:ID_Hangmuc_Chiso",
     [isAuthenticated],

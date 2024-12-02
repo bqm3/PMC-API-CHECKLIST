@@ -333,9 +333,9 @@ exports.updateUser = async (req, res) => {
 
     // Kiểm tra xem có dữ liệu mật khẩu được gửi không
     let updateData = {
-      ID_Duan,
+      ID_Duan: ID_Duan !== ''? ID_Duan: null,
       ID_Chucvu,
-      ID_KhoiCV: ID_Chucvu == 1 || ID_Chucvu == 2 ? null : ID_KhoiCV,
+      ID_KhoiCV: ID_KhoiCV == '' ? null : ( ID_Chucvu == 1 || ID_Chucvu == 2 ? null : ID_KhoiCV),
       UserName,
       Hoten,
       Sodienthoai,
@@ -346,6 +346,7 @@ exports.updateUser = async (req, res) => {
       arrData,
       arr_Duan: `${arr_Duan}`,
       isDelete: 0,
+      updateTime: new Date(), // Add the current time to the update
     };
 
     if (Password) {

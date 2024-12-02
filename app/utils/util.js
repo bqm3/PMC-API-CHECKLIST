@@ -129,6 +129,14 @@ const isValidNumber = (value) => {
   return regex.test(value);
 };
 
+function formatNumber(input) {
+  // Loại bỏ tất cả các chữ cái và ký tự không phải số hoặc dấu phẩy
+  const cleanedInput = input.replace(/[^\d,]/g, "");
+  // Thay dấu phẩy (,) bằng dấu chấm (.)
+  const formattedInput = cleanedInput.replace(/,/g, ".");
+  return formattedInput;
+}
+
 const getDynamicTableName = (date) => {
   const month = new Date(date).getMonth() + 1; // Lấy tháng (bắt đầu từ 0)
   const year = new Date(date).getFullYear(); // Lấy năm
@@ -158,5 +166,6 @@ module.exports = {
   getPreviousMonth,
   isValidNumber,
   getDynamicTableName,
-  getMonthsRange
+  getMonthsRange,
+  formatNumber
 };

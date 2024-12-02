@@ -5,7 +5,7 @@ exports.createHangmucChiso = async (req, res) => {
   try {
     const userData = req.user.data;
     const ID_Duan = userData.ID_Duan;
-    const {ID_LoaiCS, Ten_Hangmuc_Chiso } = req.body;
+    const {ID_LoaiCS, Ten_Hangmuc_Chiso, Donvi, Heso } = req.body;
 
     // Kiểm tra xem các thông tin cần thiết có hợp lệ không
     if (!ID_Duan || !ID_LoaiCS || !Ten_Hangmuc_Chiso) {
@@ -17,6 +17,8 @@ exports.createHangmucChiso = async (req, res) => {
       ID_Duan,
       ID_LoaiCS,
       Ten_Hangmuc_Chiso,
+      Donvi,
+      Heso,
     });
 
     res.status(201).json({
@@ -51,7 +53,6 @@ exports.getAllHangmucChiso = async (req, res) => {
 
 // Lấy thông tin chi tiết của một hạng mục chỉ số theo ID
 exports.getHangmucChisoById = async (req, res) => {
-  console.log("vao day")
   try {
     const userData = req.user.data;
     const ID_Duan = userData.ID_Duan;
@@ -82,11 +83,43 @@ exports.getHangmucChisoById = async (req, res) => {
   }
 };
 
+exports.getDetailHangmucChiso = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    const { ID_Hangmuc_Chiso } = req.params;
+    const ID_Duan = userData.ID_Duan;
+
+    const hangmucChiso = await Ent_Hangmuc_Chiso.findByPk(ID_Hangmuc_Chiso,{
+      where: { ID_Duan: ID_Duan , isDelete: 0},
+      include: [
+        {
+          model: Ent_Loai_Chiso,
+          as: "ent_loai_chiso",
+          attributes: ["ID_LoaiCS", "TenLoaiCS"]
+        }
+      ]
+    });
+
+    if (!hangmucChiso) {
+      return res.status(404).json({ message: "Hạng mục chỉ số không tồn tại" });
+    }
+
+    res
+      .status(200)
+      .json({ message: "Lấy thông tin thành công", data: hangmucChiso });
+  } catch (error) {
+    console.log(error.message)
+    res
+      .status(500)
+      .json({ message: "Lỗi khi lấy thông tin hạng mục chỉ số", error });
+  }
+}
+
 // Cập nhật thông tin hạng mục chỉ số
 exports.updateHangmucChiso = async (req, res) => {
   try {
     const { ID_Hangmuc_Chiso } = req.params;
-    const { ID_LoaiCS, Ten_Hangmuc_Chiso } = req.body;
+    const { ID_LoaiCS, Ten_Hangmuc_Chiso, Donvi, Heso } = req.body;
 
     const hangmucChiso = await Ent_Hangmuc_Chiso.findByPk(ID_Hangmuc_Chiso);
 
@@ -98,6 +131,8 @@ exports.updateHangmucChiso = async (req, res) => {
     const updatedHangmucChiso = await hangmucChiso.update({
       ID_LoaiCS,
       Ten_Hangmuc_Chiso,
+      Heso,
+      Donvi
     });
 
     res.status(200).json({
@@ -121,13 +156,6 @@ exports.deleteHangmucChiso = async (req, res) => {
     if (!hangmucChiso) {
       return res.status(404).json({ message: "Hạng mục chỉ số không tồn tại" });
     }
-
-    const checkbaocao = await Ent_Baocaochiso.findAll(
-      {where: {
-        ID_Hangmuc_Chiso: ID_Hangmuc_Chiso,
-        isDelete: 0
-      }}
-    )
 
     // Đánh dấu hạng mục chỉ số là đã xóa (soft delete)
     await hangmucChiso.update({ isDelete: 1 });
