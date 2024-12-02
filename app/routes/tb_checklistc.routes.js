@@ -30,6 +30,7 @@ module.exports = (app) => {
   router.get("/su-co", tb_checklistc.suCoChiTiet);
   router.get("/report-checklist-percent-week", tb_checklistc.reportPercentWeek);
   router.get("/report-checklist-percent-yesterday", tb_checklistc.reportPercentYesterday);
+  router.get("/report-checklist-percent-a-week", tb_checklistc.reportPercentLast7Days);
   router.get("/report-problem-percent-week", tb_checklistc.soSanhSuCo);
   router.get("/report-checklist-project-excel", tb_checklistc.createExcelDuAn);
   router.post("/report-checklist-project-percent-excel", tb_checklistc.createExcelDuAnPercent);
