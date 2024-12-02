@@ -3,9 +3,10 @@ const { Op } = require("sequelize");
 
 exports.createDuanLoaiCS = async (req, res) => {
   try {
-    const { ID_Duan, ID_LoaiCS } = req.body; // ID_LoaiCS là chuỗi dạng "1,2,3"
+    const userData = req.user.data;
+    const { ID_LoaiCS } = req.body; // ID_LoaiCS là chuỗi dạng "1,2,3"
 
-    const duan = await Ent_duan.findByPk(ID_Duan);
+    const duan = await Ent_duan.findByPk(userData.ID_Duan);
 
     if (!duan) {
       return res.status(404).json({ message: "Không tìm thấy dự án" });
@@ -22,7 +23,7 @@ exports.createDuanLoaiCS = async (req, res) => {
     await Ent_duan.update(
       { ID_LoaiCS: updatedLoaiCS },
       {
-        where: { ID_Duan },
+        where: { ID_Duan : userData.ID_Duan },
       }
     );
 

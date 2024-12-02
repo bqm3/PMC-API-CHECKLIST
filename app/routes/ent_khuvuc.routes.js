@@ -19,6 +19,7 @@ module.exports = (app) => {
   // router.post("/filter_qr", [isAuthenticated], ent_khuvuc.filterByQr)
 
   router.post("/uploads", [isAuthenticated, upload.single('files')], ent_khuvuc.uploadFiles)
+  router.put("/fix-uploads", [isAuthenticated, upload.single('files')], ent_khuvuc.updateQrCodes)
 
   app.use("/api/v2/ent_khuvuc", router);
 };

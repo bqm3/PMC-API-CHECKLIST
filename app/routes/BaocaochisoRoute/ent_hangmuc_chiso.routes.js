@@ -4,8 +4,9 @@ module.exports = (app) => {
 
   var router = require("express").Router();
 
-  // Create a new Ent_calv
   router.get("/", [isAuthenticated], ent_hangmuc_chiso.getAllHangmucChiso);
+  
+  router.get("/byDuan/:ID_Hangmuc_Chiso", [isAuthenticated], ent_hangmuc_chiso.getDetailHangmucChiso);
   router.get("/byDuan", [isAuthenticated], ent_hangmuc_chiso.getHangmucChisoById);
   
   router.post(
