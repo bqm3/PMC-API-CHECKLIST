@@ -1676,25 +1676,26 @@ exports.filterChecklistWeb = async (req, res) => {
     checklistData.forEach((item) => {
       const khuVucKey = item.ID_Khuvuc;
       const hangMucKey = item.ID_Hangmuc;
-
-      // Khởi tạo khu vực nếu chưa tồn tại
+  
       if (!khuVucMap[khuVucKey]) {
         khuVucMap[khuVucKey] = {
           ent_khuvuc: item.ent_khuvuc,
           hangmucs: {},
         };
       }
-
+    
       // Khởi tạo hạng mục nếu chưa tồn tại
       if (!khuVucMap[khuVucKey].hangmucs[hangMucKey]) {
         khuVucMap[khuVucKey].hangmucs[hangMucKey] = {
-          ent_hangmuc: item.ent_hangmuc,
-          checklists: [],
+          ent_hangmuc: {
+            ...item.ent_hangmuc,
+            checklists: []
+          },
         };
       }
-
-      // Thêm checklist vào danh sách checklists
-      khuVucMap[khuVucKey].hangmucs[hangMucKey].checklists.push({
+    
+      // Thêm checklist vào danh sách checklists của ent_hangmuc
+      khuVucMap[khuVucKey].hangmucs[hangMucKey].ent_hangmuc.checklists.push({
         ID_Checklist: item.ID_Checklist,
         Checklist: item.Checklist,
         Tinhtrang: item.Tinhtrang,
@@ -1703,6 +1704,7 @@ exports.filterChecklistWeb = async (req, res) => {
         ID_Hangmuc: item.ID_Hangmuc,
       });
     });
+
 
     // Chuyển dữ liệu từ object sang array
     const result = Object.values(khuVucMap).map((khuvuc) => ({
