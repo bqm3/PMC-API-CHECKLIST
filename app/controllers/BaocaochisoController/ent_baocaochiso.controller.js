@@ -220,7 +220,7 @@ exports.getbyDuAn = async (req, res) => {
 
       // Nhóm dữ liệu theo tháng và năm
       const groupedData = data.reduce((result, item) => {
-        const yearMonth = `${item.Year}-${item.Month}`;
+        const yearMonth = `Tháng ${item.Month} - Năm ${item.Year}`;
         if (!result[yearMonth]) {
           result[yearMonth] = [];
         }
