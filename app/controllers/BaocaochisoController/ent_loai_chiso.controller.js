@@ -94,3 +94,4 @@ exports.deleteLoai_Chiso = async (req, res) => {
     res.status(500).json({ message: "Lỗi khi xóa loại chỉ số", error });
   }
 };
+

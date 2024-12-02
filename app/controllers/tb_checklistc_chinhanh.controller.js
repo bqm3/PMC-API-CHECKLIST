@@ -1196,17 +1196,15 @@ exports.reportPercentYesterday = async (req, res) => {
     const avgCompletionRatios = {};
     Object.keys(avgKhoiCompletion).forEach((khoiName) => {
       const { totalCompletion, projectCount } = avgKhoiCompletion[khoiName];
-
-      const averageCompletion =
-        projectCount > 0 ? totalCompletion / projectCount : null;
-
-      // If the average completion is not null and is a whole number, don't use .toFixed(2)
-      avgCompletionRatios[khoiName] =
-        averageCompletion !== null
-          ? Number.isInteger(averageCompletion)
-            ? averageCompletion // If it's an integer, no decimals
-            : averageCompletion.toFixed(2) // Otherwise, keep 2 decimals
-          : null;
+      if (projectCount > 0) {
+        const averageCompletion = totalCompletion / projectCount;
+        avgCompletionRatios[khoiName] = Number.isInteger(averageCompletion)
+          ? averageCompletion
+          : averageCompletion.toFixed(2);
+      } else {
+        // Gán mặc định là 0 khi không có project nào
+        avgCompletionRatios[khoiName] = 0;
+      }
     });
     // Bạn có thể trả về kết quả này trong response của API
     res.status(200).json({

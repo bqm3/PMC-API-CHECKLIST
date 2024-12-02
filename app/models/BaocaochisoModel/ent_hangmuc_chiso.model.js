@@ -19,6 +19,12 @@ const Ent_Hangmuc_Chiso = sequelize.define(
     Ten_Hangmuc_Chiso: {
       type: DataTypes.CHAR,
     },
+    Heso: {
+      type: DataTypes.FLOAT,
+    },
+    Donvi: {
+      type: DataTypes.CHAR,
+    },
     isDelete: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
