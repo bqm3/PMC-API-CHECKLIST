@@ -1,4 +1,4 @@
-const { Ent_Loai_Chiso } = require("../../models/setup.model");
+const { Ent_Loai_Chiso, Ent_duan } = require("../../models/setup.model");
 const { Op } = require("sequelize");
 
 exports.getAllLoai_Chiso = async (req, res) => {
@@ -19,9 +19,9 @@ exports.getAllLoai_Chiso = async (req, res) => {
 exports.getbyDuAn = async (req, res) => {
   try {
     const userData = req.user.data;
-    const ID_LoaiCS = userData.ent_duan.ID_LoaiCS;
-
-    const ID_LoaiCSArray = ID_LoaiCS.split(",").map((id) => parseInt(id.trim()));
+    const ID_Duan = userData.ID_Duan;
+    const data = await Ent_duan.findByPk(ID_Duan,{attributes:["ID_Duan","ID_LoaiCS"]});
+    const ID_LoaiCSArray = data?.ID_LoaiCS.split(",").map((id) => parseInt(id.trim()));
 
     const loaiChisoList = await Ent_Loai_Chiso.findAll({
       where: {
