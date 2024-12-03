@@ -68,18 +68,13 @@ const resizeImage = (req, res, next) => {
   if (req.files && req.files.length > 0) {
     const resizePromises = req.files.map((file) => {
       const originalPath = file.path;
-      const tempPath = originalPath.replace(
-        path.extname(originalPath),
-        "-temp" + path.extname(originalPath)
-      );
 
       return sharp(originalPath)
         .resize(800, 600, { fit: sharp.fit.inside, withoutEnlargement: true }) // Resize ảnh
         .jpeg({ quality: 80 }) // Giảm chất lượng ảnh
-        .toFile(tempPath) // Ghi vào tệp tạm
-        .then(() => {
-          fs.unlinkSync(originalPath); // Xóa tệp gốc
-          fs.renameSync(tempPath, originalPath); // Đổi tên tệp tạm thành tệp gốc
+        .toBuffer() // Trả về buffer thay vì tạo tệp tạm
+        .then((data) => {
+          fs.writeFileSync(originalPath, data); // Ghi đè dữ liệu đã resize vào tệp gốc
         })
         .catch((err) => {
           console.error("Error resizing image:", err);
@@ -90,13 +85,14 @@ const resizeImage = (req, res, next) => {
     Promise.all(resizePromises)
       .then(() => next()) // Tiếp tục xử lý
       .catch((err) => {
-        console.error("Error resizing images.", err);
+        console.error("Error resizing images:", err);
         res.status(500).send("Error resizing images.");
       });
   } else {
     next(); // Không có ảnh, tiếp tục
   }
 };
+
 
 module.exports = {
   uploadChecklist,

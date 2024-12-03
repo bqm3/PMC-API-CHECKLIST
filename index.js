@@ -73,24 +73,7 @@ app.get("/", (req, res) => {
   res.json("Hello World!");
 });
 
-// async function exportDatabase() {
-//   const backupPath = path.join(
-//     __dirname,
-//     `backup_checklist_${new Date().toISOString().slice(0, 10)}.sql`
-//   );
 
-//   await mysqldump({
-//     connection: {
-//       host: process.env.DB_HOST,
-//       user: process.env.DB_USERNAME,
-//       password: process.env.DB_PASSWORD,
-//       database: process.env.DB_DATABASE_NAME,
-//     },
-//     dumpToFile: backupPath,
-//   });
-
-//   return backupPath;
-// }
 
 // // Hàm upload file lên Google Drive
 // async function uploadFile(filePath) {
@@ -226,25 +209,25 @@ app.get("/", (req, res) => {
 
 // checkDriveStorage()
 
-// cron.schedule("0 5 * * *", async () => {
-//   try {
-//     console.log("Cron job started at 6 AM...");
-//     await danhSachDuLieu();
-//     console.log("Cron job finished successfully");
-//   } catch (error) {
-//     console.error("Error executing cron job:", error);
-//   }
-// });
+cron.schedule("0 5 * * *", async () => {
+  try {
+    console.log("Cron job started at 6 AM...");
+    await danhSachDuLieu();
+    console.log("Cron job finished successfully");
+  } catch (error) {
+    console.error("Error executing cron job:", error);
+  }
+});
 
-// cron.schedule("0 6 * * *", async () => {
-//   try {
-//     console.log("Cron job started at 5 AM...");
-//     await getProjectsChecklistStatus();
-//     console.log("Cron job finished successfully");
-//   } catch (error) {
-//     console.error("Error executing cron job:", error);
-//   }
-// });
+cron.schedule("0 6 * * *", async () => {
+  try {
+    console.log("Cron job started at 5 AM...");
+    await getProjectsChecklistStatus();
+    console.log("Cron job finished successfully");
+  } catch (error) {
+    console.error("Error executing cron job:", error);
+  }
+});
 
 require("./app/routes/ent_calv.routes")(app);
 require("./app/routes/ent_user.routes")(app);
