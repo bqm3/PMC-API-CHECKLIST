@@ -2190,20 +2190,6 @@ exports.uploadFiles = async (req, res) => {
       for (const [index, item] of data.entries()) {
         try {
           const transformedItem = removeSpacesFromKeys(item);
-          // const tenKhuvuc = transformedItem["TÊNKHUVỰC"];
-          // const tenDuan = transformedItem["TÊNDỰÁN"];
-          // const tenToanha = transformedItem["TÊNTÒANHÀ"];
-          // const tenKhoiCongViec = transformedItem["TÊNKHỐICÔNGVIỆC"];
-          // const tenTang = transformedItem["TÊNTẦNG"];
-          // const tenHangmuc = transformedItem["TÊNHẠNGMỤC"];
-          // const tenChecklist = transformedItem["TÊNCHECKLIST"];
-          // const tieuChuanChecklist = transformedItem["TIÊUCHUẨNCHECKLIST"];
-          // const giaTriDanhDinh = transformedItem["GIÁTRỊĐỊNHDANH"];
-          // const cacGiaTriNhan = transformedItem["CÁCGIÁTRỊNHẬN"];
-
-          // const quanTrong = transformedItem["QUANTRỌNG"];
-          // const ghiChu = transformedItem["GHICHÚ"];
-          // const nhap = transformedItem["NHẬP"];
 
           const tenKhuvuc = formatVietnameseText(transformedItem["TÊNKHUVỰC"]);
           const tenDuan = formatVietnameseText(transformedItem["TÊNDỰÁN"]);
@@ -2418,6 +2404,272 @@ exports.uploadFiles = async (req, res) => {
   }
 };
 
+exports.uploadFixFiles = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).send("No file uploaded.");
+    }
+
+    const userData = req.user.data;
+
+    // Read the uploaded Excel file from buffer
+    const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
+
+    // Extract data from the first sheet
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const data = xlsx.utils.sheet_to_json(worksheet);
+
+    await sequelize.transaction(async (transaction) => {
+      // Tạo object để lưu số thứ tự cho từng nhóm checklist
+      const checklistOrderMap = {};
+
+      for (const [index, item] of data.entries()) {
+        try {
+          const transformedItem = removeSpacesFromKeys(item);
+
+          const tenKhuvuc = formatVietnameseText(transformedItem["TÊNKHUVỰC"]);
+          const tenDuan = formatVietnameseText(transformedItem["TÊNDỰÁN"]);
+          const tenToanha = formatVietnameseText(transformedItem["TÊNTÒANHÀ"]);
+          const tenKhoiCongViec = transformedItem["TÊNKHỐICÔNGVIỆC"];
+
+          const tenTang = formatVietnameseText(transformedItem["TÊNTẦNG"]);
+          const tenHangmuc = formatVietnameseText(
+            transformedItem["TÊNHẠNGMỤC"]
+          );
+          const tenChecklist = formatVietnameseText(
+            transformedItem["TÊNCHECKLIST"]
+          );
+          const tieuChuanChecklist = formatVietnameseText(
+            transformedItem["TIÊUCHUẨNCHECKLIST"]
+          );
+          const giaTriDanhDinh = formatVietnameseText(
+            transformedItem["GIÁTRỊĐỊNHDANH"]
+          );
+          const giaTriLoi = formatVietnameseText(transformedItem["GIÁTRỊLỖI"]);
+          const cacGiaTriNhan = formatVietnameseText(
+            transformedItem["CÁCGIÁTRỊNHẬN"]
+          );
+          const quanTrong = formatVietnameseText(transformedItem["QUANTRỌNG"]);
+          const ghiChu = formatVietnameseText(transformedItem["GHICHÚ"]);
+          const nhap = formatVietnameseText(transformedItem["NHẬP"]);
+
+          if (!tenChecklist) {
+            console.log("Bỏ qua do thiếu tên checklist");
+            continue;
+          }
+
+          if (!tenTang) {
+            console.log("Bỏ qua do thiếu tên tầng");
+            continue;
+          }
+
+          const maQrKhuVuc = generateQRCodeKV(tenToanha,
+            tenKhuvuc,
+            tenTang,
+            userData.ID_Duan);
+          const maQrHangMuc = generateQRCode(tenToanha,
+            tenKhuvuc,
+            tenHangmuc,
+            tenTang);
+
+          
+
+          const khoiCongViecList = tenKhoiCongViec
+            ?.split(",")
+            ?.map((khoi) => khoi.trim());
+          const khoiCVs = await Promise.all(
+            khoiCongViecList.map(async (khoiCongViec) => {
+              const khoiCV = await Ent_khoicv.findOne({
+                attributes: ["ID_KhoiCV", "KhoiCV", "isDelete"],
+                where: {
+                  [Op.and]: [
+                    sequelize.where(sequelize.col("KhoiCV"), {
+                      [Op.like]: `%${removeVietnameseTones(khoiCongViec)}%`,
+                    }),
+                    { isDelete: 0 },
+                  ],
+                },
+                transaction,
+              });
+              return khoiCV ? khoiCV.ID_KhoiCV : null;
+            })
+          );
+          const validKhoiCVs = khoiCVs.filter((id) => id !== null);
+
+          const hangmuc = await Ent_hangmuc.findOne({
+            attributes: [
+              "Hangmuc",
+              "Tieuchuankt",
+              "ID_Khuvuc",
+              "MaQrCode",
+              "FileTieuChuan",
+              "ID_Hangmuc",
+              "isDelete",
+            ],
+            include: [
+              {
+                model: Ent_khuvuc,
+                attributes: [
+                  "ID_Toanha",
+                  "ID_Khuvuc",
+                  "ID_KhoiCVs",
+                  "Sothutu",
+                  "MaQrCode",
+                  "Tenkhuvuc",
+                  "ID_User",
+                  "isDelete",
+                ],
+                where: {
+                  isDelete: 0,
+                  [Op.and]: Sequelize.literal(
+                    `JSON_CONTAINS(ID_KhoiCVs, '${JSON.stringify(
+                      validKhoiCVs
+                    )}')`
+                  ),
+                  MaQrCode: generateQRCodeKV(
+                    tenToanha,
+                    tenKhuvuc,
+                    tenTang,
+                    userData.ID_Duan
+                  ),
+                },
+              },
+            ],
+            where: {
+              MaQrCode: generateQRCode(
+                tenToanha,
+                tenKhuvuc,
+                tenHangmuc,
+                tenTang
+              ),
+              Hangmuc: tenHangmuc,
+              isDelete: 0,
+            },
+            transaction,
+          });
+
+          const tang = await Ent_tang.findOne({
+            attributes: ["Tentang", "ID_Tang", "ID_Duan", "isDelete"],
+            where: {
+              Tentang: tenTang.trim(),
+              ID_Duan: userData.ID_Duan,
+              isDelete: 0,
+            },
+            transaction,
+          });
+
+          if (!tang) {
+            console.log(`Dòng ${index + 2}: Không tìm thấy tầng '${tenTang}'.`);
+            continue;
+          }
+          // Tạo khóa duy nhất cho mỗi nhóm checklist dựa vào ID_Khuvuc, ID_Tang, ID_Hangmuc
+          const checklistKey = `${hangmuc.ID_Khuvuc}-${tang.ID_Tang}-${hangmuc.ID_Hangmuc}`;
+
+          // Kiểm tra nếu nhóm này chưa có trong checklistOrderMap thì khởi tạo
+          if (!checklistOrderMap[checklistKey]) {
+            checklistOrderMap[checklistKey] = 1; // Bắt đầu từ số thứ tự 1
+          } else {
+            checklistOrderMap[checklistKey] += 1; // Tăng số thứ tự cho checklist cùng nhóm
+          }
+
+          const sttChecklist = checklistOrderMap[checklistKey]; // Lấy số thứ tự hiện tại cho checklist
+
+          const data = {
+            ID_Khuvuc: hangmuc.ID_Khuvuc,
+            ID_Tang: tang.ID_Tang,
+            ID_Hangmuc: hangmuc.ID_Hangmuc,
+            Sothutu: sttChecklist, // Sử dụng số thứ tự vừa tính toán
+            Maso: "",
+            MaQrCode: "",
+            Checklist: tenChecklist,
+            Ghichu: ghiChu || "",
+            Tieuchuan: tieuChuanChecklist || "",
+            Giatridinhdanh: giaTriDanhDinh || "",
+            Giatrinhan: cacGiaTriNhan || "",
+            Giatriloi: giaTriLoi || "",
+            isImportant:
+              quanTrong !== undefined && quanTrong !== null && quanTrong !== ""
+                ? 1
+                : 0,
+            isCheck: nhap !== undefined && nhap !== null && nhap !== "" ? 1 : 0,
+            ID_User: userData.ID_User,
+            isDelete: 0,
+            Tinhtrang: 0,
+          };
+
+          const existingChecklist = await Ent_checklist.findOne({
+            attributes: [
+              "ID_Checklist",
+              "ID_Khuvuc",
+              "ID_Tang",
+              "ID_Hangmuc",
+              "Sothutu",
+              "Maso",
+              "MaQrCode",
+              "Checklist",
+              "Ghichu",
+              "Tieuchuan",
+              "Giatridinhdanh",
+              "isImportant",
+              "isCheck",
+              "Giatrinhan",
+             
+              "Tinhtrang",
+              "calv_1",
+              "calv_2",
+              "calv_3",
+              "calv_4",
+              "ID_User",
+              "isDelete",
+            ],
+            where: {
+              ID_Khuvuc: hangmuc.ID_Khuvuc,
+              ID_Tang: tang.ID_Tang,
+              ID_Hangmuc: hangmuc.ID_Hangmuc,
+              Checklist: tenChecklist,
+              isDelete: 0,
+            },
+            transaction,
+          });
+
+          console.log('existingChecklist', existingChecklist)
+
+          // Nếu checklist đã tồn tại thì bỏ qua
+          if (!existingChecklist) {
+            await Ent_checklist.create(data, { transaction });
+          } else {
+            await existingChecklist.update(
+              {
+                Tieuchuan: tieuChuanChecklist || existingChecklist.Tieuchuan,
+                Giatridinhdanh: giaTriDanhDinh || existingChecklist.Giatridinhdanh,
+                Giatrinhan: cacGiaTriNhan || existingChecklist.Giatrinhan,
+                Giatriloi: giaTriLoi || existingChecklist.Giatriloi,
+                Ghichu: ghiChu || existingChecklist.Ghichu,
+                isImportant: quanTrong ? 1 : existingChecklist.isImportant,
+                isCheck: nhap ? 1 : existingChecklist.isCheck,
+              },
+              { transaction }
+            );
+            console.log(`Cập nhật checklist: ${tenChecklist}`);
+          }
+        } catch (error) {
+          throw new Error(`Lỗi ở dòng ${index + 2}: ${error.message}`);
+        }
+      }
+    });
+
+    res.send({
+      message: "Upload dữ liệu thành công",
+      data,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+}
+
 function generateQRCode(toaNha, khuVuc, hangMuc, tenTang) {
   // Hàm lấy ký tự đầu tiên của mỗi từ trong chuỗi
   function getInitials(string) {
@@ -2453,19 +2705,4 @@ function generateQRCodeKV(tenToa, khuVuc, tenTang, ID) {
   // Tạo chuỗi QR
   const qrCode = `QR-${ID}-${tenToa}-${khuVucInitials}-${tenTang}`;
   return qrCode;
-}
-
-function generateQRCodeChecklist(tenChecklist) {
-  // Hàm lấy ký tự đầu tiên của mỗi từ trong chuỗi
-  function getInitials(string) {
-    return string
-      .split(" ") // Tách chuỗi thành mảng các từ
-      .map((word) => word.charAt(0).toUpperCase()) // Lấy ký tự đầu tiên của mỗi từ và viết hoa
-      .join(""); // Nối lại thành chuỗi
-  }
-
-  // Lấy ký tự đầu của khu vực và hạng mục
-  const checkListInitials = getInitials(tenChecklist);
-
-  return checkListInitials;
 }
