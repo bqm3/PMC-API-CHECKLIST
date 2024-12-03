@@ -848,7 +848,7 @@ exports.getThongKeHangMucQuanTrong = async (req, res, next) => {
 
     let dataChecklistC = [];
     const isRecentData =
-      new Date(startDateFormat) >= new Date("2024-12-03 00:00:00");
+      new Date(startDateFormat) >= new Date("2025-01-01 00:00:00");
     if (isRecentData) {
       for (const { year, month } of monthsRange) {
         const tableName = `tb_checklistchitiet_${month}_${year}`;
@@ -1866,7 +1866,7 @@ exports.checklistCalv = async (req, res) => {
         ID_ChecklistC: ID_ChecklistC,
         ID_Duan: userData.ID_Duan,
       };
-      const targetDate = new Date("2024-12-03");
+      const targetDate = new Date("2025-01-01");
       const checklistDate = new Date(dataChecklistC?.Ngay);
 
       if (checklistDate >= targetDate) {
@@ -4880,7 +4880,6 @@ exports.reportPercentLast7Days = async (req, res) => {
   }
 };
 
-
 exports.checklistPercent = async (req, res) => {
   try {
     const userData = req.user.data;
@@ -5140,10 +5139,10 @@ exports.getChecklistsErrorFromWeekbyDuan = async (req, res) => {
 
     const yesterday = moment().subtract(1, "days");
 
-    const formattedYesterday = yesterday.format("YYYY-MM-DD"); // This will give '2024-12-03'
+    const formattedYesterday = yesterday.format("YYYY-MM-DD"); // This will give '2025-01-01'
 
     // Determine if the date is >= 25-11-2024
-    const targetDate = moment("2024-12-03"); // Target date is 2024-12-03
+    const targetDate = moment("2025-01-01"); // Target date is 2025-01-01
 
     // Get the month and year from yesterday
     const month = yesterday.month() + 1; // Moment's month() is zero-indexed, so add 1
@@ -6711,7 +6710,7 @@ exports.createExcelTongHopCa = async (req, res) => {
         };
 
         const isRecentData =
-          new Date(startDateFormat) >= new Date("2024-12-03 00:00:00");
+          new Date(startDateFormat) >= new Date("2025-01-01 00:00:00");
         let dataChecklistC = [];
         if (isRecentData) {
           for (const { year, month } of monthsRange) {
@@ -7420,7 +7419,7 @@ exports.createPreviewReports = async (req, res) => {
         };
 
         const isRecentData =
-          new Date(startDateFormat) >= new Date("2024-12-03 00:00:00");
+          new Date(startDateFormat) >= new Date("2025-01-01 00:00:00");
         let dataChecklistC = [];
         if (isRecentData) {
           for (const { year, month } of monthsRange) {
