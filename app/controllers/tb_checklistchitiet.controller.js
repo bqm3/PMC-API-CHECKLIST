@@ -274,12 +274,12 @@ exports.createCheckListChiTiet = async (req, res, next) => {
           if (checklistRecord) {
             const shouldUpdateTinhtrang =
               // TH1 : có giá trị lỗi thì check giá trị lỗi = ketquaValue thì update Tinhtrang = 1
-              removeVietnameseTones(ketquaValue) ===
-                removeVietnameseTones(checklistRecord?.Giatriloi) ||
+              removeVietnameseTones(ketquaValue).toLowerCase() ===
+                removeVietnameseTones(checklistRecord?.Giatriloi).toLowerCase() ||
               // TH2: ketquaValue khác giá trị định danh + phải có ảnh hoặc ghi chú thì update Tinhtrang = 1
               ((newRecords[i]?.Anh || newRecords[i]?.GhiChu ? true : false) &&
-                removeVietnameseTones(ketquaValue) !==
-                  removeVietnameseTones(checklistRecord?.Giatridinhdanh));
+                removeVietnameseTones(ketquaValue).toLowerCase() !==
+                  removeVietnameseTones(checklistRecord?.Giatridinhdanh)).toLowerCase();
 
             if (shouldUpdateTinhtrang) {
               await Ent_checklist.update(

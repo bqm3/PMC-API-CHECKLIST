@@ -2193,16 +2193,19 @@ exports.checklistCalv = async (req, res) => {
               include: [
                 {
                   model: Ent_khoicv,
+                  as: "ent_khoicv",
                   attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
                 },
                 {
                   model: Ent_calv,
+                  as: "ent_calv",
                   attributes: ["Tenca", "Giobatdau", "Gioketthuc"],
                 },
               ],
             },
             {
               model: Ent_checklist,
+              as: "ent_checklist",
               attributes: [
                 "ID_Checklist",
                 "ID_Hangmuc",
@@ -2230,10 +2233,12 @@ exports.checklistCalv = async (req, res) => {
                 },
                 {
                   model: Ent_khuvuc,
+                  as: "ent_khuvuc",
                   attributes: ["Tenkhuvuc", "MaQrCode", "ID_Khuvuc"],
                   include: [
                     {
                       model: Ent_toanha,
+                      as: "ent_toanha",
                       attributes: ["Toanha", "ID_Toanha"],
                     },
                   ],
@@ -2244,6 +2249,7 @@ exports.checklistCalv = async (req, res) => {
                 },
                 {
                   model: Ent_user,
+                  as: "ent_user",
                   attributes: ["UserName", "Hoten", "Sodienthoai"],
                 },
               ],
@@ -2252,7 +2258,7 @@ exports.checklistCalv = async (req, res) => {
         });
 
         // Convert fetched data to plain JavaScript objects
-        const plainChecklistChiTiet = dataChecklistChiTiet.map((item) =>
+        const plainChecklistChiTiet = dataChecklistChiTiet?.map((item) =>
           item.get({ plain: true })
         );
 
@@ -2271,7 +2277,7 @@ exports.checklistCalv = async (req, res) => {
         });
 
         // Convert done items to plain objects
-        const plainChecklistDoneItems = checklistDoneItems.map((item) =>
+        const plainChecklistDoneItems = checklistDoneItems?.map((item) =>
           item.get({ plain: true })
         );
 
@@ -2349,6 +2355,7 @@ exports.checklistCalv = async (req, res) => {
               include: [
                 {
                   model: Ent_toanha,
+                  as: "ent_toanha",
                   attributes: ["Toanha", "ID_Toanha"],
                 },
               ],
@@ -2365,13 +2372,13 @@ exports.checklistCalv = async (req, res) => {
           },
         });
 
-        const plainRelatedChecklists = relatedChecklists.map((item) =>
+        const plainRelatedChecklists = relatedChecklists?.map((item) =>
           item.get({ plain: true })
         );
 
         itemDoneList.forEach((item) => {
           const relatedChecklist = plainRelatedChecklists.find(
-            (rl) => rl.ID_Checklist === item.ID_Checklist
+            (rl) => rl.ID_Checklist == item.ID_Checklist
           );
 
           if (relatedChecklist) {
@@ -2393,6 +2400,7 @@ exports.checklistCalv = async (req, res) => {
       }
     }
   } catch (err) {
+    console.log('err', err)
     res
       .status(500)
       .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
