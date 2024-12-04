@@ -128,6 +128,7 @@ exports.get = async (req, res) => {
         "Noidungsuco",
         "Duongdancacanh",
         "ID_User",
+        "ID_Handler",
         "Tinhtrangxuly",
         "Anhkiemtra",
         "Ghichu",
@@ -149,6 +150,7 @@ exports.get = async (req, res) => {
         },
         {
           model: Ent_user,
+          as: "ent_user",
           attributes: ["UserName", "Email", "Hoten", "ID_Duan"],
           include: [
             {
@@ -170,6 +172,28 @@ exports.get = async (req, res) => {
           where: {
             ID_Duan: userData.ID_Duan,
           },
+        },
+        {
+          model: Ent_user,
+          as: "ent_handler",
+          attributes: ["UserName", "Email", "Hoten", "ID_Duan"],
+          include: [
+            {
+              model: Ent_duan,
+              attributes: [
+                "ID_Duan",
+                "Duan",
+                "Diachi",
+                "Vido",
+                "Kinhdo",
+                "Logo",
+              ],
+            },
+            {
+              model: Ent_chucvu,
+              attributes: ["Chucvu", "Role"],
+            },
+          ],
         },
       ],
       limit: 30,
@@ -208,53 +232,43 @@ exports.updateStatus = async (req, res) => {
   try {
     const userData = req.user.data;
     const ID_Suco = req.params.id;
-    const { files } = req;
     const images = req.files;
-    
-    // const uploadedFileIds = [];
-    // if (files) {
-    //   for (const image of files) {
-    //     const fileId = await uploadFile(image);
-    //     uploadedFileIds.push({ id: fileId, name: image.originalname });
-    //   }
-    // }
-    // const ids = uploadedFileIds.map((file) => file.id.id);
-
-    // // Nối các id lại thành chuỗi, cách nhau bằng dấu phẩy
-    // const idsString = ids.join(",");
-
+  
+    const uploadedFileIds = [];
+    let anhs = [];
     const isEmpty = (obj) => Object.keys(obj).length === 0;
 
-    const uploadedFiles = req.files.map((file) => {
-      // Lấy thư mục và tên tệp từ đường dẫn
-      const projectFolder = path.basename(path.dirname(file.path)); // Tên dự án (thư mục cha của tệp)
-      const filename = path.basename(file.filename); // Tên tệp gốc
+    if(images !== undefined){
+      const uploadedFiles = req.files.map((file) => {
+        // Lấy thư mục và tên tệp từ đường dẫn
+        const projectFolder = path.basename(path.dirname(file.path)); // Tên dự án (thư mục cha của tệp)
+        const filename = path.basename(file.filename); // Tên tệp gốc
+  
+        return {
+          fieldname: file.fieldname, // Lấy fieldname từ tệp tải lên
+          fileId: { id: `${projectFolder}/${filename}` }, // Đường dẫn thư mục dự án và tên ảnh
+          filePath: file.path, // Đường dẫn vật lý của tệp
+        };
+      });
+  
+    
+      uploadedFiles.forEach((file) => {
+        uploadedFileIds.push(file); // Đẩy đối tượng tệp vào mảng
+      });
 
-      return {
-        fieldname: file.fieldname, // Lấy fieldname từ tệp tải lên
-        fileId: { id: `${projectFolder}/${filename}` }, // Đường dẫn thư mục dự án và tên ảnh
-        filePath: file.path, // Đường dẫn vật lý của tệp
-      };
-    });
-
-    const uploadedFileIds = [];
-    uploadedFiles.forEach((file) => {
-      uploadedFileIds.push(file); // Đẩy đối tượng tệp vào mảng
-    });
-
-    let anhs = [];
-    if (!isEmpty(images) && uploadedFileIds.length > 0) {
-      let imageIndex = "";
-      let matchingImage = null;
-      for (let i = 0; i < images.length; i++) {
-        imageIndex = `Images`;
-        matchingImage = uploadedFileIds.find(
-          (file) => file.fieldname === imageIndex
-        );
-        if (matchingImage) {
-          anhs.push(matchingImage.fileId.id);
-        } else {
-          console.log(`No matching image found for Anh: ${imageIndex}`);
+      if (!isEmpty(images) && uploadedFileIds.length > 0) {
+        let imageIndex = "";
+        let matchingImage = null;
+        for (let i = 0; i < images.length; i++) {
+          imageIndex = `Images`;
+          matchingImage = uploadedFileIds.find(
+            (file) => file.fieldname === imageIndex
+          );
+          if (matchingImage) {
+            anhs.push(matchingImage.fileId.id);
+          } else {
+            console.log(`No matching image found for Anh: ${imageIndex}`);
+          }
         }
       }
     }
@@ -264,6 +278,7 @@ exports.updateStatus = async (req, res) => {
     const { Tinhtrangxuly, ngayXuLy, Ghichu, ID_Hangmuc } = req.body;
     if (ID_Suco && userData) {
       const updateFields = {
+        ID_Handler: userData.ID_User,
         Tinhtrangxuly: Tinhtrangxuly,
         Ngayxuly: ngayXuLy,
         Anhkiemtra: idsString,
@@ -320,6 +335,7 @@ exports.getDetail = async (req, res) => {
         "Noidungsuco",
         "Duongdancacanh",
         "ID_User",
+        "ID_Handler",
         "Tinhtrangxuly",
         "Anhkiemtra",
         "Ghichu",
@@ -341,6 +357,7 @@ exports.getDetail = async (req, res) => {
         },
         {
           model: Ent_user,
+          as: "ent_user",
           attributes: ["UserName", "Email", "Hoten", "ID_Duan"],
           include: [
             {
@@ -354,6 +371,28 @@ exports.getDetail = async (req, res) => {
                 "Logo",
               ],
               where: { ID_Duan: userData.ID_Duan },
+            },
+            {
+              model: Ent_chucvu,
+              attributes: ["Chucvu", "Role"],
+            },
+          ],
+        },
+        {
+          model: Ent_user,
+          as: "ent_handler",
+          attributes: ["UserName", "Email", "Hoten", "ID_Duan"],
+          include: [
+            {
+              model: Ent_duan,
+              attributes: [
+                "ID_Duan",
+                "Duan",
+                "Diachi",
+                "Vido",
+                "Kinhdo",
+                "Logo",
+              ],
             },
             {
               model: Ent_chucvu,
@@ -445,6 +484,7 @@ exports.dashboardByDuAn = async (req, res) => {
         "Giosuco",
         "Noidungsuco",
         "ID_User",
+        "ID_Handler",
         "Tinhtrangxuly",
         "Ngayxuly",
         "isDelete",
@@ -494,6 +534,18 @@ exports.dashboardByDuAn = async (req, res) => {
         {
           model: Ent_user,
           as: "ent_user",
+          attributes: [
+            "ID_Duan",
+            "Hoten",
+            "UserName",
+            "Email",
+            "ID_Chucvu",
+            "isDelete",
+          ],
+        },
+        {
+          model: Ent_user,
+          as: "ent_handler",
           attributes: [
             "ID_Duan",
             "Hoten",
@@ -613,6 +665,7 @@ exports.dashboardAll = async (req, res) => {
         "Giosuco",
         "Noidungsuco",
         "ID_User",
+        "ID_Handler",
         "Tinhtrangxuly",
         "Ngayxuly",
         "isDelete",
@@ -631,6 +684,7 @@ exports.dashboardAll = async (req, res) => {
         },
         {
           model: Ent_user,
+          as: "ent_user",
           attributes: ["ID_Duan", "Hoten", "UserName"],
           include: {
             model: Ent_duan,
@@ -640,6 +694,15 @@ exports.dashboardAll = async (req, res) => {
             ID_Duan: {
               [Op.ne]: 1,
             },
+          },
+        },
+        {
+          model: Ent_user,
+          as: "ent_handler",
+          attributes: ["ID_Duan", "Hoten", "UserName"],
+          include: {
+            model: Ent_duan,
+            attributes: ["ID_Duan", "Duan", "Diachi", "Vido", "Kinhdo", "Logo"],
           },
         },
       ],
@@ -712,6 +775,7 @@ exports.getSucoNam = async (req, res) => {
         "Noidungsuco",
         "Duongdancacanh",
         "ID_User",
+        "ID_Handler",
         "Tinhtrangxuly",
         "Anhkiemtra",
         "Ghichu",
@@ -733,6 +797,29 @@ exports.getSucoNam = async (req, res) => {
         },
         {
           model: Ent_user,
+          as: "ent_user",
+          attributes: ["UserName", "Email", "Hoten", "ID_Duan"],
+          include: [
+            {
+              model: Ent_duan,
+              attributes: [
+                "ID_Duan",
+                "Duan",
+                "Diachi",
+                "Vido",
+                "Kinhdo",
+                "Logo",
+              ],
+            },
+            {
+              model: Ent_chucvu,
+              attributes: ["Chucvu", "Role"],
+            },
+          ],
+        },
+        {
+          model: Ent_user,
+          as: "ent_handler",
           attributes: ["UserName", "Email", "Hoten", "ID_Duan"],
           include: [
             {
@@ -828,6 +915,7 @@ exports.getSuCoBenNgoai = async (req, res) => {
         },
         {
           model: Ent_user,
+          as: "ent_user",
           attributes: ["ID_Duan", "Hoten", "UserName"],
           include: {
             model: Ent_duan,
@@ -866,6 +954,7 @@ exports.getSuCoBenNgoai = async (req, res) => {
         },
         {
           model: Ent_user,
+          as: "ent_user",
           attributes: ["ID_Duan", "Hoten", "UserName"],
           include: {
             model: Ent_duan,
@@ -905,6 +994,7 @@ exports.getSuCoBenNgoai = async (req, res) => {
         "Noidungsuco",
         "Duongdancacanh",
         "ID_User",
+        "ID_Handler",
         "Tinhtrangxuly",
         "Anhkiemtra",
         "Ghichu",
@@ -926,6 +1016,7 @@ exports.getSuCoBenNgoai = async (req, res) => {
         },
         {
           model: Ent_user,
+          as: "ent_user",
           attributes: ["UserName", "Email", "Hoten", "ID_Duan"],
           include: [
             {
@@ -949,6 +1040,28 @@ exports.getSuCoBenNgoai = async (req, res) => {
               [Op.ne]: 1,
             },
           },
+        },
+        {
+          model: Ent_user,
+          as: "ent_handler",
+          attributes: ["UserName", "Email", "Hoten", "ID_Duan"],
+          include: [
+            {
+              model: Ent_duan,
+              attributes: [
+                "ID_Duan",
+                "Duan",
+                "Diachi",
+                "Vido",
+                "Kinhdo",
+                "Logo",
+              ],
+            },
+            {
+              model: Ent_chucvu,
+              attributes: ["Chucvu", "Role"],
+            },
+          ],
         },
       ],
       where: {
@@ -1069,6 +1182,7 @@ exports.getSuCoBenNgoaiChiNhanh = async (req, res) => {
         "Noidungsuco",
         "Duongdancacanh",
         "ID_User",
+        "ID_Handler",
         "Tinhtrangxuly",
         "Anhkiemtra",
         "Ghichu",
@@ -1090,6 +1204,7 @@ exports.getSuCoBenNgoaiChiNhanh = async (req, res) => {
         },
         {
           model: Ent_user,
+          as: "ent_user",
           attributes: ["UserName", "Email", "Hoten", "ID_Duan"],
           include: [
             {
@@ -1106,6 +1221,29 @@ exports.getSuCoBenNgoaiChiNhanh = async (req, res) => {
               where: {
                 ID_Chinhanh: userData.ID_Chinhanh,
               },
+            },
+            {
+              model: Ent_chucvu,
+              attributes: ["Chucvu", "Role"],
+            },
+          ],
+        },
+        {
+          model: Ent_user,
+          as: "ent_handler",
+          attributes: ["UserName", "Email", "Hoten", "ID_Duan"],
+          include: [
+            {
+              model: Ent_duan,
+              attributes: [
+                "ID_Duan",
+                "Duan",
+                "Diachi",
+                "Vido",
+                "Kinhdo",
+                "Logo",
+                "ID_Chinhanh",
+              ],
             },
             {
               model: Ent_chucvu,
@@ -1180,6 +1318,7 @@ exports.getSuCoNamChiNhanh = async (req, res) => {
         "Noidungsuco",
         "Duongdancacanh",
         "ID_User",
+        "ID_Handler",
         "Tinhtrangxuly",
         "Anhkiemtra",
         "Ghichu",
@@ -1201,6 +1340,7 @@ exports.getSuCoNamChiNhanh = async (req, res) => {
         },
         {
           model: Ent_user,
+          as:"ent_user",
           attributes: ["UserName", "Email", "Hoten", "ID_Duan"],
           include: [
             {
@@ -1217,6 +1357,29 @@ exports.getSuCoNamChiNhanh = async (req, res) => {
               where: {
                 ID_Chinhanh: userData.ID_Chinhanh,
               },
+            },
+            {
+              model: Ent_chucvu,
+              attributes: ["Chucvu", "Role"],
+            },
+          ],
+        },
+        {
+          model: Ent_user,
+          as:"ent_handler",
+          attributes: ["UserName", "Email", "Hoten", "ID_Duan"],
+          include: [
+            {
+              model: Ent_duan,
+              attributes: [
+                "ID_Duan",
+                "Duan",
+                "Diachi",
+                "Vido",
+                "Kinhdo",
+                "Logo",
+                "ID_Chinhanh",
+              ],
             },
             {
               model: Ent_chucvu,
@@ -1286,6 +1449,7 @@ exports.dashboardAllChiNhanh = async (req, res) => {
         "Giosuco",
         "Noidungsuco",
         "ID_User",
+        "ID_Handler",
         "Tinhtrangxuly",
         "Ngayxuly",
         "isDelete",
@@ -1304,6 +1468,7 @@ exports.dashboardAllChiNhanh = async (req, res) => {
         },
         {
           model: Ent_user,
+          as: "ent_user",
           attributes: ["ID_Duan", "Hoten", "UserName"],
           include: {
             model: Ent_duan,
@@ -1319,6 +1484,23 @@ exports.dashboardAllChiNhanh = async (req, res) => {
             where: {
               ID_Chinhanh: userData.ID_Chinhanh,
             },
+          },
+        },
+        {
+          model: Ent_user,
+          as: "ent_handler",
+          attributes: ["ID_Duan", "Hoten", "UserName"],
+          include: {
+            model: Ent_duan,
+            attributes: [
+              "ID_Duan",
+              "Duan",
+              "Diachi",
+              "Vido",
+              "Kinhdo",
+              "Logo",
+              "ID_Chinhanh",
+            ],
           },
         },
       ],
