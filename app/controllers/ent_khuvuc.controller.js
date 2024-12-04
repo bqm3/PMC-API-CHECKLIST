@@ -104,6 +104,7 @@ exports.get = async (req, res) => {
     let whereCondition = {
       isDelete: 0,
     };
+
     if (userData) {
       orConditions.push({ "$ent_toanha.ID_Duan$": userData?.ID_Duan });
       if (userData?.ID_KhoiCV !== null && userData?.ID_KhoiCV !== undefined) {
@@ -390,7 +391,6 @@ exports.deleteMul = async (req, res) => {
 exports.getKhuVucFilter = async (req, res) => {
   try {
     const userData = req.user?.data;
-
     if (userData) {
       // Initialize where condition
       const whereCondition = {
@@ -400,24 +400,36 @@ exports.getKhuVucFilter = async (req, res) => {
       // Tạo danh sách điều kiện
       const andConditions = [];
 
-        // Add ID_Duan condition if it exists
-        if (userData.ID_Duan !== null) {
-          andConditions.push({ "$ent_toanha.ID_Duan$": userData.ID_Duan });
-        }
+      if (userData?.ent_chucvu.Role == 5 && userData?.arr_Duan !== null) {
+        const arrDuanArray = userData?.arr_Duan.split(",").map(Number);
 
-        // Add ID_KhoiCV condition if it exists
-        if (userData.ID_KhoiCV !== null && userData.ID_KhoiCV !== undefined) {
-          if(userData.ent_chucvu.Role == 3 ){
-            andConditions.push({
-              "$ent_khuvuc_khoicvs.ID_KhoiCV$": userData.ID_KhoiCV,
-            });
-          }
+        // Kiểm tra ID_Duan có thuộc mảng không
+        const exists = arrDuanArray.includes(userData?.ID_Duan);
+        if (!exists) {
+          andConditions.push({
+            "$ent_khuvuc_khoicvs.ID_KhoiCV$": userData.ID_KhoiCV,
+          });
         }
+      }
 
-        // Add ID_Toanha condition if it exists in request body
-        if (req.body?.ID_Toanha !== null && req.body?.ID_Toanha !== undefined) {
-          andConditions.push({ ID_Toanha: req.body.ID_Toanha });
+      // Add ID_Duan condition if it exists
+      if (userData.ID_Duan !== null) {
+        andConditions.push({ "$ent_toanha.ID_Duan$": userData.ID_Duan });
+      }
+
+      // Add ID_KhoiCV condition if it exists
+      if (userData.ID_KhoiCV !== null && userData.ID_KhoiCV !== undefined) {
+        if (userData.ent_chucvu.Role == 3) {
+          andConditions.push({
+            "$ent_khuvuc_khoicvs.ID_KhoiCV$": userData.ID_KhoiCV,
+          });
         }
+      }
+
+      // Add ID_Toanha condition if it exists in request body
+      if (req.body?.ID_Toanha !== null && req.body?.ID_Toanha !== undefined) {
+        andConditions.push({ ID_Toanha: req.body.ID_Toanha });
+      }
 
       // Nếu có điều kiện AND thì thêm vào whereCondition
       if (andConditions.length > 0) {

@@ -331,6 +331,18 @@ exports.updateUser = async (req, res) => {
       arr_Duan,
     } = req.body;
 
+    const now = new Date();
+      const utcNow = now.getTime() + now.getTimezoneOffset() * 60000;
+      const vietnamTime = new Date(utcNow + 7 * 60 * 60000);
+
+      const year = vietnamTime.getFullYear();
+      const month = String(vietnamTime.getMonth() + 1).padStart(2, "0");
+      const day = String(vietnamTime.getDate()).padStart(2, "0");
+      const hours = String(vietnamTime.getHours()).padStart(2, "0");
+      const minutes = String(vietnamTime.getMinutes()).padStart(2, "0");
+      const seconds = String(vietnamTime.getSeconds()).padStart(2, "0");
+
+      const formattedVietnamTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     // Kiểm tra xem có dữ liệu mật khẩu được gửi không
     let updateData = {
       ID_Duan: ID_Duan !== ''? ID_Duan: null,
@@ -346,7 +358,7 @@ exports.updateUser = async (req, res) => {
       arrData,
       arr_Duan: `${arr_Duan}`,
       isDelete: 0,
-      updateTime: new Date(), // Add the current time to the update
+      updateTime: formattedVietnamTime, // Add the current time to the update
     };
 
     if (Password) {
@@ -419,8 +431,80 @@ exports.getUserOnline = async (req, res, next) => {
       whereClause.ID_Duan = userData.ID_Duan;
     }
 
-    if (userData.ent_chucvu.Role == 10 && userData.ID_Duan == null) {
-      whereClause.ID_Chucvu = 2;
+    if (userData.ent_chucvu.Role === 10 && userData.ID_Duan === null) {
+      whereClause["$ent_chucvu.Role$"] = { [Op.notIn]: [2, 3] };
+    }
+
+    await Ent_user.findAll({
+      attributes: [
+        "ID_User",
+        "UserName",
+        "Email",
+        "Hoten",
+        "Sodienthoai",
+        "PasswordPrivate",
+        "arr_Duan",
+        "ID_Duan",
+        "ID_KhoiCV",
+        "ID_Chucvu",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_duan,
+          attributes: ["Duan", "Diachi", "Logo"],
+        },
+        {
+          model: Ent_chucvu,
+          attributes: ["Chucvu", "Role"],
+        },
+        {
+          model: Ent_khoicv,
+          attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
+        },
+      ],
+      where: whereClause,
+      order: [
+        ["ID_Duan", "ASC"],
+        ["ID_Chucvu", "ASC"],
+      ],
+    })
+      .then((data) => {
+        res.status(200).json({
+          message: "Danh sách nhân viên!",
+          data: data,
+        });
+      })
+      .catch((err) => {
+        res.status(500).json({
+          message: err.message || "Lỗi! Vui lòng thử lại sau.",
+        });
+      });
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+exports.getUserRoleOnline = async (req, res, next) => {
+  try {
+    const userData = req.user.data;
+    let whereClause = {
+      isDelete: 0,
+    };
+
+    if (
+      (userData.ent_chucvu.Role !== 10 &&
+      userData.ID_Duan !== null) || (userData.ent_chucvu.Role !== 0 &&
+        userData.ID_Duan !== null) || (userData.ent_chucvu.Role !== 4 &&
+          userData.ID_Duan !== null)
+    ) {
+      whereClause.ID_Duan = userData.ID_Duan;
+    }
+
+    if (userData.ent_chucvu.Role === 10 && userData.ID_Duan === null) {
+      whereClause["$ent_chucvu.Role$"] = { [Op.notIn]: [2, 3] };
     }
 
     await Ent_user.findAll({

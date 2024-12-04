@@ -54,4 +54,14 @@ const isRoleKST = asyncHandler((req, res, next) => {
   next();
 });
 
-module.exports = { isAuthenticated, isAdmin, isRoleKST, isRoleGD };
+const isRoleBQT = asyncHandler((req, res, next) => {
+  const { ID_Chucvu, ent_chucvu } = req.user.data;
+
+  if (ent_chucvu?.Role !== 5)
+    return res.status(401).json({
+      success: false,
+      message: "Không có quyền truy cập",
+    });
+  next();
+});
+module.exports = { isAuthenticated, isAdmin, isRoleKST, isRoleGD, isRoleBQT };
