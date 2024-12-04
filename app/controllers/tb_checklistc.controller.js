@@ -583,10 +583,13 @@ exports.getThongKe = async (req, res, next) => {
       const orConditions = [
         {
           Ngay: { [Op.between]: [fromDate, toDate] }, // Filter by Ngay attribute between fromDate and toDate,
-          isDelete: 0
+          isDelete: 0,
         },
       ];
 
+      if (userData.ent_chucvu.Role == 3) {
+        orConditions.push({ "$tb_checklistc.ID_User$": userData?.ID_User });
+      }
       if (userData?.ID_KhoiCV !== null && userData?.ID_KhoiCV !== undefined) {
         orConditions.push({ "$tb_checklistc.ID_KhoiCV$": userData?.ID_KhoiCV });
       }
@@ -658,7 +661,7 @@ exports.getThongKe = async (req, res, next) => {
         where: orConditions,
       });
       const totalPages = Math.ceil(totalCount / pageSize);
-      console.log('totalPages', totalPages)
+      console.log("totalPages", totalPages);
       await Tb_checklistc.findAll({
         attributes: [
           "ID_ChecklistC",
@@ -1873,8 +1876,8 @@ exports.checklistCalv = async (req, res) => {
         const month = String(checklistDate.getMonth() + 1).padStart(2, "0"); // Get month
         const year = checklistDate.getFullYear();
 
-        const tableName =  `tb_checklistchitiet_${month}_${year}`;
-        const dynamicTableNameDone  = `tb_checklistchitietdone_${month}_${year}`;
+        const tableName = `tb_checklistchitiet_${month}_${year}`;
+        const dynamicTableNameDone = `tb_checklistchitietdone_${month}_${year}`;
         defineDynamicModelChiTiet(tableName, sequelize);
         const dataChecklistChiTiet = await sequelize.models[tableName].findAll({
           attributes: [
@@ -2400,7 +2403,7 @@ exports.checklistCalv = async (req, res) => {
       }
     }
   } catch (err) {
-    console.log('err', err)
+    console.log("err", err);
     res
       .status(500)
       .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
@@ -4700,9 +4703,9 @@ exports.reportPercentYesterday = async (req, res) => {
       // Lưu tỷ lệ hoàn thành của từng người (nếu Tong > 0)
       if (checklistC.Tong > 0) {
         const userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
-        result[projectId].createdKhois[khoiName].shifts[shiftName].userCompletionRates.push(
-          userCompletionRate
-        );
+        result[projectId].createdKhois[khoiName].shifts[
+          shiftName
+        ].userCompletionRates.push(userCompletionRate);
       }
     });
 
@@ -4747,7 +4750,7 @@ exports.reportPercentYesterday = async (req, res) => {
 
     Object.values(result).forEach((project) => {
       Object.keys(avgKhoiCompletion).forEach((khoiName) => {
-        console.log('khoiName', khoiName)
+        console.log("khoiName", khoiName);
         const khoi = project.createdKhois[khoiName];
         if (khoi && khoi.completionRatio !== null) {
           avgKhoiCompletion[khoiName].totalCompletion += parseFloat(
@@ -4771,7 +4774,6 @@ exports.reportPercentYesterday = async (req, res) => {
         avgCompletionRatios[khoiName] = 0;
       }
     });
-    
 
     // Trả về kết quả
     res.status(200).json({
@@ -4791,9 +4793,9 @@ exports.reportPercentYesterday = async (req, res) => {
 exports.reportPercentLast7Days = async (req, res) => {
   try {
     // Lấy ngày hôm nay và 7 ngày gần nhất
-    const today = moment().startOf('day');
+    const today = moment().startOf("day");
     const last7Days = Array.from({ length: 7 }, (_, i) =>
-      today.clone().subtract(i, 'days').format('YYYY-MM-DD')
+      today.clone().subtract(i, "days").format("YYYY-MM-DD")
     ).reverse(); // Đảo ngược để hiển thị ngày theo thứ tự
 
     // Lấy tất cả dữ liệu checklistC trong 7 ngày gần nhất
@@ -4837,12 +4839,19 @@ exports.reportPercentLast7Days = async (req, res) => {
       const shiftName = ent_calv.Tenca; // Lấy tên ca
 
       if (!groupedData[Ngay].khois[khoiName]) {
-        groupedData[Ngay].khois[khoiName] = { totalTongC: 0, totalTong: 0, shifts: {} };
+        groupedData[Ngay].khois[khoiName] = {
+          totalTongC: 0,
+          totalTong: 0,
+          shifts: {},
+        };
       }
 
       // Nếu chưa có ca này, khởi tạo
       if (!groupedData[Ngay].khois[khoiName].shifts[shiftName]) {
-        groupedData[Ngay].khois[khoiName].shifts[shiftName] = { totalTongC: 0, totalTong: 0 };
+        groupedData[Ngay].khois[khoiName].shifts[shiftName] = {
+          totalTongC: 0,
+          totalTong: 0,
+        };
       }
 
       // Cộng dồn TongC và Tong cho từng ca (shift) trong khối
@@ -4855,22 +4864,32 @@ exports.reportPercentLast7Days = async (req, res) => {
     });
 
     // Tạo mảng categories và series cho frontend
-    const categories = last7Days.map(day => moment(day).format('dddd')); // Danh sách các ngày trong tuần
+    const categories = last7Days.map((day) => moment(day).format("dddd")); // Danh sách các ngày trong tuần
 
     const series = Object.entries(groupedData).map(([day, dataForDay]) => {
       return {
-        year: '2024',  // Giả sử là năm 2024
-        data: Object.entries(dataForDay.khois).map(([khoiName, { totalTongC, totalTong, shifts }]) => {
-          const completionRates = Object.entries(shifts).map(([shiftName, { totalTongC: shiftTongC, totalTong: shiftTong }]) => {
-            const completionRate = shiftTong > 0 ? ((shiftTongC / shiftTong) * 100).toFixed(2) : 0;
-            return {
-              name: `${khoiName} - ${shiftName}`, // Tên khối và ca
-              data: categories.map(() => completionRate) // Tỷ lệ hoàn thành cho khối và ca này trong 7 ngày
-            };
-          });
+        year: "2024", // Giả sử là năm 2024
+        data: Object.entries(dataForDay.khois)
+          .map(([khoiName, { totalTongC, totalTong, shifts }]) => {
+            const completionRates = Object.entries(shifts).map(
+              ([
+                shiftName,
+                { totalTongC: shiftTongC, totalTong: shiftTong },
+              ]) => {
+                const completionRate =
+                  shiftTong > 0
+                    ? ((shiftTongC / shiftTong) * 100).toFixed(2)
+                    : 0;
+                return {
+                  name: `${khoiName} - ${shiftName}`, // Tên khối và ca
+                  data: categories.map(() => completionRate), // Tỷ lệ hoàn thành cho khối và ca này trong 7 ngày
+                };
+              }
+            );
 
-          return completionRates;
-        }).flat() // Làm phẳng mảng để tất cả các ca của từng khối được đưa vào
+            return completionRates;
+          })
+          .flat(), // Làm phẳng mảng để tất cả các ca của từng khối được đưa vào
       };
     });
 
@@ -4879,8 +4898,8 @@ exports.reportPercentLast7Days = async (req, res) => {
       message: "Tỷ lệ checklist 7 ngày gần nhất",
       data: {
         categories,
-        series
-      }
+        series,
+      },
     });
   } catch (err) {
     console.error("Error fetching checklist data: ", err);

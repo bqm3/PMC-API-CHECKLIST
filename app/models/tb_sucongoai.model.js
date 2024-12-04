@@ -19,6 +19,9 @@ const Tb_sucongoai = sequelize.define("tb_sucongoai", {
    ID_User: {
     type: DataTypes.INTEGER,
    },
+   ID_Handler: {
+    type: DataTypes.INTEGER,
+   },
    Ngaysuco: {
      type: DataTypes.DATE,
    },
