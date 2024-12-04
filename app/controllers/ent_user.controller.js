@@ -331,6 +331,18 @@ exports.updateUser = async (req, res) => {
       arr_Duan,
     } = req.body;
 
+    const now = new Date();
+      const utcNow = now.getTime() + now.getTimezoneOffset() * 60000;
+      const vietnamTime = new Date(utcNow + 7 * 60 * 60000);
+
+      const year = vietnamTime.getFullYear();
+      const month = String(vietnamTime.getMonth() + 1).padStart(2, "0");
+      const day = String(vietnamTime.getDate()).padStart(2, "0");
+      const hours = String(vietnamTime.getHours()).padStart(2, "0");
+      const minutes = String(vietnamTime.getMinutes()).padStart(2, "0");
+      const seconds = String(vietnamTime.getSeconds()).padStart(2, "0");
+
+      const formattedVietnamTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     // Kiểm tra xem có dữ liệu mật khẩu được gửi không
     let updateData = {
       ID_Duan: ID_Duan !== ''? ID_Duan: null,
@@ -346,7 +358,7 @@ exports.updateUser = async (req, res) => {
       arrData,
       arr_Duan: `${arr_Duan}`,
       isDelete: 0,
-      updateTime: new Date(), // Add the current time to the update
+      updateTime: formattedVietnamTime, // Add the current time to the update
     };
 
     if (Password) {

@@ -2410,7 +2410,21 @@ exports.checklistCalv = async (req, res) => {
 exports.reportLocation = async (req, res) => {
   try {
     const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
+    const userData = req.user.data;
 
+    const orConditions = [
+      {
+        Ngay: yesterday, // Filter by Ngay attribute between fromDate and toDate,
+        isDelete: 0
+      },
+    ];
+    console.log('userData', userData)
+
+    if (userData?.ent_chucvu.Role == 10 && userData?.ID_Duan !== null) {
+      orConditions.push({ ID_Duan: userData?.ID_Duan });
+    }
+
+    console.log('orConditions', orConditions)
     // Fetch checklist data with related information
     const dataChecklistC = await Tb_checklistc.findAll({
       attributes: [
@@ -2464,10 +2478,7 @@ exports.reportLocation = async (req, res) => {
           ],
         },
       ],
-      where: {
-        isDelete: 0,
-        Ngay: yesterday,
-      },
+      where: orConditions
     });
 
     const results = dataChecklistC.map((checklist) => {
@@ -4777,7 +4788,7 @@ exports.reportPercentYesterday = async (req, res) => {
     res.status(200).json({
       message:
         "Trạng thái checklist của các dự án theo từng khối và ca làm việc",
-      data: Object.values(result),
+      // data: Object.values(result),
       avgCompletionRatios,
     });
   } catch (err) {
@@ -4788,105 +4799,327 @@ exports.reportPercentYesterday = async (req, res) => {
   }
 };
 
-exports.reportPercentLast7Days = async (req, res) => {
+exports.reportPercentLastWeek = async (req, res) => {
   try {
-    // Lấy ngày hôm nay và 7 ngày gần nhất
-    const today = moment().startOf('day');
-    const last7Days = Array.from({ length: 7 }, (_, i) =>
-      today.clone().subtract(i, 'days').format('YYYY-MM-DD')
-    ).reverse(); // Đảo ngược để hiển thị ngày theo thứ tự
+    // Khởi tạo mảng để lưu kết quả
+    let reportData = [];
 
-    // Lấy tất cả dữ liệu checklistC trong 7 ngày gần nhất
-    const dataChecklistCs = await Tb_checklistc.findAll({
-      attributes: ["Ngay", "TongC", "Tong", "ID_KhoiCV", "ID_Calv"],
-      where: {
-        Ngay: { [Op.in]: last7Days }, // Lọc theo 7 ngày gần nhất
-        isDelete: 0,
-        ID_Duan: { [Op.ne]: 1 },
-        Tinhtrang: 1,
-      },
-      include: [
-        {
-          model: Ent_duan,
-          attributes: ["Duan"],
+    // Lặp qua 7 ngày từ hôm qua
+    for (let i = 1; i <= 7; i++) {
+      // Lấy ngày trước `i` ngày
+      const targetDate = moment().subtract(i, "days").format("YYYY-MM-DD");
+
+      // Lấy dữ liệu checklistC cho ngày targetDate
+      const dataChecklistCs = await Tb_checklistc.findAll({
+        attributes: [
+          "ID_ChecklistC",
+          "ID_Duan",
+          "ID_Calv",
+          "Ngay",
+          "TongC",
+          "Tong",
+          "ID_KhoiCV",
+          "isDelete",
+          "Tinhtrang",
+        ],
+        where: {
+          Ngay: targetDate,
+          isDelete: 0,
+          ID_Duan: {
+            [Op.ne]: 1,
+          },
+          Tinhtrang: 1,
         },
-        {
-          model: Ent_khoicv,
-          attributes: ["KhoiCV"],
-        },
-        {
-          model: Ent_calv,
-          attributes: ["Tenca"],
-        },
-      ],
-    });
+        include: [
+          {
+            model: Ent_duan,
+            attributes: ["Duan"],
+          },
+          {
+            model: Ent_khoicv,
+            attributes: ["KhoiCV"],
+          },
+          {
+            model: Ent_calv,
+            attributes: ["Tenca"],
+          },
+        ],
+      });
 
-    // Nhóm dữ liệu theo ngày, khối và ca (shift)
-    const groupedData = {};
-    last7Days.forEach((day) => {
-      groupedData[day] = {
-        date: day,
-        khois: {}, // Lưu tỷ lệ từng khối theo ngày
-      };
-    });
+      // Tạo dictionary để nhóm dữ liệu theo dự án và khối
+      const result = {};
 
-    // Cộng dồn TongC và Tong cho các ca trong ngày và khối
-    dataChecklistCs.forEach((item) => {
-      const { Ngay, TongC, Tong, ent_khoicv, ent_calv } = item;
-      const khoiName = ent_khoicv.KhoiCV;
-      const shiftName = ent_calv.Tenca; // Lấy tên ca
+      dataChecklistCs.forEach((checklistC) => {
+        const projectId = checklistC.ID_Duan;
+        const projectName = checklistC.ent_duan.Duan;
+        const khoiName = checklistC.ent_khoicv.KhoiCV;
+        const shiftName = checklistC.ent_calv.Tenca;
 
-      if (!groupedData[Ngay].khois[khoiName]) {
-        groupedData[Ngay].khois[khoiName] = { totalTongC: 0, totalTong: 0, shifts: {} };
-      }
+        // Khởi tạo dữ liệu dự án nếu chưa tồn tại
+        if (!result[projectId]) {
+          result[projectId] = {
+            projectId,
+            projectName,
+            createdKhois: {},
+          };
+        }
 
-      // Nếu chưa có ca này, khởi tạo
-      if (!groupedData[Ngay].khois[khoiName].shifts[shiftName]) {
-        groupedData[Ngay].khois[khoiName].shifts[shiftName] = { totalTongC: 0, totalTong: 0 };
-      }
+        // Khởi tạo dữ liệu cho khối nếu chưa tồn tại
+        if (!result[projectId].createdKhois[khoiName]) {
+          result[projectId].createdKhois[khoiName] = {
+            shifts: {},
+          };
+        }
 
-      // Cộng dồn TongC và Tong cho từng ca (shift) trong khối
-      groupedData[Ngay].khois[khoiName].shifts[shiftName].totalTongC += TongC;
-      groupedData[Ngay].khois[khoiName].shifts[shiftName].totalTong += Tong;
+        // Khởi tạo dữ liệu cho ca nếu chưa tồn tại
+        if (!result[projectId].createdKhois[khoiName].shifts[shiftName]) {
+          result[projectId].createdKhois[khoiName].shifts[shiftName] = {
+            totalTongC: 0,
+            totalTong: 0,
+            userCompletionRates: [],
+          };
+        }
 
-      // Cộng dồn cho tổng TongC và Tong của khối trong ngày
-      groupedData[Ngay].khois[khoiName].totalTongC += TongC;
-      groupedData[Ngay].khois[khoiName].totalTong += Tong;
-    });
+        // Cộng dồn TongC và Tong cho ca
+        result[projectId].createdKhois[khoiName].shifts[shiftName].totalTongC +=
+          checklistC.TongC;
+        result[projectId].createdKhois[khoiName].shifts[shiftName].totalTong =
+          checklistC.Tong;
 
-    // Tạo mảng categories và series cho frontend
-    const categories = last7Days.map(day => moment(day).format('dddd')); // Danh sách các ngày trong tuần
+        // Lưu tỷ lệ hoàn thành của từng người (nếu Tong > 0)
+        if (checklistC.Tong > 0) {
+          const userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
+          result[projectId].createdKhois[khoiName].shifts[shiftName].userCompletionRates.push(
+            userCompletionRate
+          );
+        }
+      });
 
-    const series = Object.entries(groupedData).map(([day, dataForDay]) => {
-      return {
-        year: '2024',  // Giả sử là năm 2024
-        data: Object.entries(dataForDay.khois).map(([khoiName, { totalTongC, totalTong, shifts }]) => {
-          const completionRates = Object.entries(shifts).map(([shiftName, { totalTongC: shiftTongC, totalTong: shiftTong }]) => {
-            const completionRate = shiftTong > 0 ? ((shiftTongC / shiftTong) * 100).toFixed(2) : 0;
-            return {
-              name: `${khoiName} - ${shiftName}`, // Tên khối và ca
-              data: categories.map(() => completionRate) // Tỷ lệ hoàn thành cho khối và ca này trong 7 ngày
-            };
+      // Tính toán phần trăm hoàn thành riêng cho từng ca và tổng khối
+      Object.values(result).forEach((project) => {
+        Object.values(project.createdKhois).forEach((khoi) => {
+          let totalKhoiCompletionRatio = 0;
+          let totalShifts = 0;
+
+          Object.values(khoi.shifts).forEach((shift) => {
+            if (shift.userCompletionRates.length > 0) {
+              let shiftCompletionRatio = shift.userCompletionRates.reduce(
+                (sum, rate) => sum + rate,
+                0
+              );
+              shiftCompletionRatio = Math.min(shiftCompletionRatio, 100); // Giới hạn tối đa là 100%
+              totalKhoiCompletionRatio += shiftCompletionRatio;
+              totalShifts += 1;
+            }
           });
 
-          return completionRates;
-        }).flat() // Làm phẳng mảng để tất cả các ca của từng khối được đưa vào
+          // Tính phần trăm hoàn thành trung bình cho khối (nếu có shift)
+          if (totalShifts > 0) {
+            const avgKhoiCompletionRatio = totalKhoiCompletionRatio / totalShifts;
+            khoi.completionRatio = Number.isInteger(avgKhoiCompletionRatio)
+              ? avgKhoiCompletionRatio
+              : avgKhoiCompletionRatio.toFixed(2);
+          } else {
+            khoi.completionRatio = null; // Không có shift nào
+          }
+        });
+      });
+
+      // Tính trung bình completionRatio cho từng khối
+      const avgKhoiCompletion = {
+        "Khối kỹ thuật": { totalCompletion: 0, projectCount: 0 },
+        "Khối làm sạch": { totalCompletion: 0, projectCount: 0 },
+        "Khối dịch vụ": { totalCompletion: 0, projectCount: 0 },
+        "Khối bảo vệ": { totalCompletion: 0, projectCount: 0 },
+        "Khối F&B": { totalCompletion: 0, projectCount: 0 },
       };
+
+      Object.values(result).forEach((project) => {
+        Object.keys(avgKhoiCompletion).forEach((khoiName) => {
+          const khoi = project.createdKhois[khoiName];
+          if (khoi && khoi.completionRatio !== null) {
+            avgKhoiCompletion[khoiName].totalCompletion += parseFloat(
+              khoi.completionRatio
+            );
+            avgKhoiCompletion[khoiName].projectCount += 1;
+          }
+        });
+      });
+
+      const avgCompletionRatios = {};
+      Object.keys(avgKhoiCompletion).forEach((khoiName) => {
+        const { totalCompletion, projectCount } = avgKhoiCompletion[khoiName];
+        if (projectCount > 0) {
+          const averageCompletion = totalCompletion / projectCount;
+          avgCompletionRatios[khoiName] = Number.isInteger(averageCompletion)
+            ? averageCompletion
+            : averageCompletion.toFixed(2);
+        } else {
+          avgCompletionRatios[khoiName] = 0;
+        }
+      });
+
+      // Push dữ liệu vào mảng tạm với ngày tương ứng
+      reportData.push({
+        date: targetDate,
+        avgCompletionRatios,
+      });
+    }
+
+    const series = [
+      {
+        year: 'Tất cả',
+        data: [
+          { name: 'Khối bảo vệ', data: [] },
+          { name: 'Khối làm sạch', data: [] },
+          { name: 'Khối kỹ thuật', data: [] },
+          { name: 'Khối dịch vụ', data: [] },
+          { name: 'Khối F&B', data: [] },
+        ],
+      },
+    ];
+    
+    // Đảo ngược dữ liệu để dễ dàng ghép với ngày trong tuần (giả sử dữ liệu là ngày từ gần nhất đến xa nhất)
+    reportData.reverse();
+    
+    // Khởi tạo categories mới từ ngày trong "date"
+    const categories = reportData?.map(dayData =>
+      moment(dayData.date).format("DD-MM")
+    ) || [];
+    
+    // Đi qua từng ngày trong mảng responseData và thêm dữ liệu vào `series`
+    reportData.forEach((dayData) => {
+      const dayOfWeek = dayData.date;  // Sử dụng ngày trong định dạng "YYYY-MM-DD"
+    
+      // Thêm dữ liệu cho từng khối vào `series`
+      Object.keys(dayData.avgCompletionRatios).forEach((blockName) => {
+        const completionRatio = parseFloat(dayData.avgCompletionRatios[blockName]);
+    
+        // Tìm khối tương ứng trong `series`
+        const blockIndex = series[0].data.findIndex(block => block.name === blockName);
+        
+        // Thêm tỷ lệ hoàn thành vào `data` của khối tương ứng
+        if (blockIndex !== -1) {
+          series[0].data[blockIndex].data.push(completionRatio);
+        }
+      });
     });
 
-    // Trả về dữ liệu theo định dạng yêu cầu
+    // Trả về kết quả
     res.status(200).json({
-      message: "Tỷ lệ checklist 7 ngày gần nhất",
-      data: {
-        categories,
-        series
-      }
+      message:
+        "Trạng thái checklist của các dự án theo từng khối và ca làm việc trong 7 ngày",
+      data: {categories, series},
     });
   } catch (err) {
     console.error("Error fetching checklist data: ", err);
-    res.status(500).json({ message: "Lỗi! Vui lòng thử lại sau." });
+    res
+      .status(500)
+      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
+
+
+
+// exports.reportPercentLast7Days = async (req, res) => {
+//   try {
+//     // Lấy ngày hôm nay và 7 ngày gần nhất
+//     const today = moment().startOf('day');
+//     const last7Days = Array.from({ length: 7 }, (_, i) =>
+//       today.clone().subtract(i, 'days').format('YYYY-MM-DD')
+//     ).reverse(); // Đảo ngược để hiển thị ngày theo thứ tự
+
+//     // Lấy tất cả dữ liệu checklistC trong 7 ngày gần nhất
+//     const dataChecklistCs = await Tb_checklistc.findAll({
+//       attributes: ["Ngay", "TongC", "Tong", "ID_KhoiCV", "ID_Calv"],
+//       where: {
+//         Ngay: { [Op.in]: last7Days }, // Lọc theo 7 ngày gần nhất
+//         isDelete: 0,
+//         ID_Duan: { [Op.ne]: 1 },
+//         Tinhtrang: 1,
+//       },
+//       include: [
+//         {
+//           model: Ent_duan,
+//           attributes: ["Duan"],
+//         },
+//         {
+//           model: Ent_khoicv,
+//           attributes: ["KhoiCV"],
+//         },
+//         {
+//           model: Ent_calv,
+//           attributes: ["Tenca"],
+//         },
+//       ],
+//     });
+
+//     // Nhóm dữ liệu theo ngày, khối và ca (shift)
+//     const groupedData = {};
+//     last7Days.forEach((day) => {
+//       groupedData[day] = {
+//         date: day,
+//         khois: {}, // Lưu tỷ lệ từng khối theo ngày
+//       };
+//     });
+
+//     // Cộng dồn TongC và Tong cho các ca trong ngày và khối
+//     dataChecklistCs.forEach((item) => {
+//       const { Ngay, TongC, Tong, ent_khoicv, ent_calv } = item;
+//       const khoiName = ent_khoicv.KhoiCV;
+//       const shiftName = ent_calv.Tenca; // Lấy tên ca
+
+//       if (!groupedData[Ngay].khois[khoiName]) {
+//         groupedData[Ngay].khois[khoiName] = { totalTongC: 0, totalTong: 0, shifts: {} };
+//       }
+
+//       // Nếu chưa có ca này, khởi tạo
+//       if (!groupedData[Ngay].khois[khoiName].shifts[shiftName]) {
+//         groupedData[Ngay].khois[khoiName].shifts[shiftName] = { totalTongC: 0, totalTong: 0 };
+//       }
+
+//       // Cộng dồn TongC và Tong cho từng ca (shift) trong khối
+//       groupedData[Ngay].khois[khoiName].shifts[shiftName].totalTongC += TongC;
+//       groupedData[Ngay].khois[khoiName].shifts[shiftName].totalTong += Tong;
+
+//       // Cộng dồn cho tổng TongC và Tong của khối trong ngày
+//       groupedData[Ngay].khois[khoiName].totalTongC += TongC;
+//       groupedData[Ngay].khois[khoiName].totalTong += Tong;
+//     });
+
+//     // Tạo mảng categories và series cho frontend
+//     const categories = last7Days.map(day => moment(day).format('dddd')); // Danh sách các ngày trong tuần
+
+//     const series = Object.entries(groupedData).map(([day, dataForDay]) => {
+//       return {
+//         year: '2024',  // Giả sử là năm 2024
+//         data: Object.entries(dataForDay.khois).map(([khoiName, { totalTongC, totalTong, shifts }]) => {
+//           const completionRates = Object.entries(shifts).map(([shiftName, { totalTongC: shiftTongC, totalTong: shiftTong }]) => {
+//             const completionRate = shiftTong > 0 ? ((shiftTongC / shiftTong) * 100).toFixed(2) : 0;
+//             return {
+//               name: `${khoiName} - ${shiftName}`, // Tên khối và ca
+//               data: categories.map(() => completionRate) // Tỷ lệ hoàn thành cho khối và ca này trong 7 ngày
+//             };
+//           });
+
+//           return completionRates;
+//         }).flat() // Làm phẳng mảng để tất cả các ca của từng khối được đưa vào
+//       };
+//     });
+
+//     // Trả về dữ liệu theo định dạng yêu cầu
+//     res.status(200).json({
+//       message: "Tỷ lệ checklist 7 ngày gần nhất",
+//       data: {
+//         categories,
+//         series
+//       }
+//     });
+//   } catch (err) {
+//     console.error("Error fetching checklist data: ", err);
+//     res.status(500).json({ message: "Lỗi! Vui lòng thử lại sau." });
+//   }
+// };
 
 exports.checklistPercent = async (req, res) => {
   try {
