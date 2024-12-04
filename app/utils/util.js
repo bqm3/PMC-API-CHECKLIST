@@ -118,6 +118,7 @@ function removeVietnameseTones(str) {
   if (str == null || str == "" || str == undefined) return "";
   return str
     .trim()
+    .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/đ/g, "d")

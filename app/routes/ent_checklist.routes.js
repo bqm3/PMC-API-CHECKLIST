@@ -44,6 +44,7 @@ module.exports = (app) => {
 
   router.put("/delete-mul", [isAuthenticated], ent_checklist.deleteMul)
   router.post("/uploads", [isAuthenticated, upload.single('files')], ent_checklist.uploadFiles)
+  router.post("/fix-uploads", [isAuthenticated, upload.single('files')], ent_checklist.uploadFixFiles)
 
   app.use("/api/v2/ent_checklist", router);
 };

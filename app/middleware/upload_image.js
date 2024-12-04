@@ -10,13 +10,14 @@ const storageChecklist = (uploadFolderKey) =>
       const userData = req.user.data;
 
       if (!userData || !userData.ent_duan || !userData.ent_duan.Duan) {
-        return cb(new Error("Project name (Duan) is required"), null);
+        return cb(new Error("Tên dự án phải bắt buộc"), null);
       }
 
       const uploadFolderMap = {
         checklist: path.join(__dirname, "..", "public", "checklist"),
         sucongoai: path.join(__dirname, "..", "public", "sucongoai"),
         baocaochiso: path.join(__dirname, "..", "public", "baocaochiso"),
+        logo: path.join(__dirname, "..", "public", "logo"),
       };
 
       const uploadFolder = uploadFolderMap[uploadFolderKey];
@@ -63,6 +64,10 @@ const uploadBaoCaoChiSo = multer({
   storage: storageChecklist("baocaochiso"),
 });
 
+const uploadLogo = multer({
+  storage: storageChecklist("logo"),
+});
+
 // Hàm xử lý resize ảnh
 const resizeImage = (req, res, next) => {
   if (req.files && req.files.length > 0) {
@@ -99,4 +104,5 @@ module.exports = {
   uploadSuCongNgoai,
   uploadBaoCaoChiSo,
   resizeImage,
+  uploadLogo
 };
