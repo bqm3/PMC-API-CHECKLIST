@@ -431,8 +431,80 @@ exports.getUserOnline = async (req, res, next) => {
       whereClause.ID_Duan = userData.ID_Duan;
     }
 
-    if (userData.ent_chucvu.Role == 10 && userData.ID_Duan == null) {
-      whereClause.ID_Chucvu = 2;
+    if (userData.ent_chucvu.Role === 10 && userData.ID_Duan === null) {
+      whereClause["$ent_chucvu.Role$"] = { [Op.notIn]: [2, 3] };
+    }
+
+    await Ent_user.findAll({
+      attributes: [
+        "ID_User",
+        "UserName",
+        "Email",
+        "Hoten",
+        "Sodienthoai",
+        "PasswordPrivate",
+        "arr_Duan",
+        "ID_Duan",
+        "ID_KhoiCV",
+        "ID_Chucvu",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_duan,
+          attributes: ["Duan", "Diachi", "Logo"],
+        },
+        {
+          model: Ent_chucvu,
+          attributes: ["Chucvu", "Role"],
+        },
+        {
+          model: Ent_khoicv,
+          attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
+        },
+      ],
+      where: whereClause,
+      order: [
+        ["ID_Duan", "ASC"],
+        ["ID_Chucvu", "ASC"],
+      ],
+    })
+      .then((data) => {
+        res.status(200).json({
+          message: "Danh sách nhân viên!",
+          data: data,
+        });
+      })
+      .catch((err) => {
+        res.status(500).json({
+          message: err.message || "Lỗi! Vui lòng thử lại sau.",
+        });
+      });
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+exports.getUserRoleOnline = async (req, res, next) => {
+  try {
+    const userData = req.user.data;
+    let whereClause = {
+      isDelete: 0,
+    };
+
+    if (
+      (userData.ent_chucvu.Role !== 10 &&
+      userData.ID_Duan !== null) || (userData.ent_chucvu.Role !== 0 &&
+        userData.ID_Duan !== null) || (userData.ent_chucvu.Role !== 4 &&
+          userData.ID_Duan !== null)
+    ) {
+      whereClause.ID_Duan = userData.ID_Duan;
+    }
+
+    if (userData.ent_chucvu.Role === 10 && userData.ID_Duan === null) {
+      whereClause["$ent_chucvu.Role$"] = { [Op.notIn]: [2, 3] };
     }
 
     await Ent_user.findAll({

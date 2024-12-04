@@ -91,9 +91,21 @@ exports.get = async (req, res) => {
       };
 
       // Nếu quyền là 1 (ID_Chucvu === 1) thì không cần thêm điều kiện ID_KhoiCV
-      if (userData.ID_Chucvu !== 1 && userData.ID_Chucvu !== 2) {
+      if (userData.ID_Chucvu !== 1 && userData.ID_Chucvu !== 2 && userData.ID_Chucvu !== 11) {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
       }
+
+      if (userData?.ent_chucvu.Role === 5 && userData?.arr_Duan !== null) {
+        const arrDuanArray = userData?.arr_Duan.split(",").map(Number);
+  
+        // Kiểm tra ID_Duan có thuộc mảng không
+        const exists = arrDuanArray.includes(userData?.ID_Duan);
+        if (!exists) {
+          // Thêm điều kiện tham chiếu cột từ bảng liên kết
+          whereClause.ID_KhoiCV = userData.ID_KhoiCV;
+        }
+      }
+
 
       await Ent_calv.findAll({
         attributes: [

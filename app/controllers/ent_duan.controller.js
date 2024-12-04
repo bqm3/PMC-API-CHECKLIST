@@ -10,6 +10,7 @@ const {
   Ent_chinhanh,
 } = require("../models/setup.model");
 const { Op, Sequelize, fn, col, literal, where } = require("sequelize");
+var path = require("path");
 const { formatVietnameseText } = require("../utils/util");
 const { uploadFile } = require("../middleware/auth_google");
 
@@ -43,7 +44,8 @@ exports.create = async (req, res) => {
       Diachi: req.body.Diachi,
       Vido: req.body.Vido,
       Kinhdo: req.body.Kinhdo,
-      Logo: req.body.Logo || `https://drive.google.com/thumbnail?id=${fileId.id}`,
+      Logo:
+        req.body.Logo || `https://drive.google.com/thumbnail?id=${fileId.id}`,
       isDelete: 0,
     };
 
@@ -232,6 +234,37 @@ exports.update = async (req, res) => {
     const userData = req.user.data;
     const fileId = await uploadFile(req.files[0]);
 
+    const uploadedFiles = req.files.map((file) => {
+      // Lấy thư mục và tên tệp từ đường dẫn
+      const projectFolder = path.basename(path.dirname(file.path)); // Tên dự án (thư mục cha của tệp)
+      const filename = path.basename(file.filename); // Tên tệp gốc
+
+      return {
+        fieldname: file.fieldname, // Lấy fieldname từ tệp tải lên
+        fileId: { id: `${projectFolder}/${filename}` }, // Đường dẫn thư mục dự án và tên ảnh
+        filePath: file.path, // Đường dẫn vật lý của tệp
+      };
+    });
+    const isEmpty = (obj) => Object.keys(obj).length === 0;
+    console.log("uploadedFiles", uploadedFiles);
+
+    const uploadedFileIds = [];
+    uploadedFiles.forEach((file) => {
+      uploadedFileIds.push(file); // Đẩy đối tượng tệp vào mảng
+    });
+
+    console.log();
+
+    console.log("uploadedFileIds", uploadedFileIds);
+    let Anh = "";
+    if ( uploadedFileIds.length > 0) {
+      if (uploadedFileIds) {
+        Anh = uploadedFileIds[0].fileId.id;
+      } else {
+        console.log(`No matching image found for Anh: ${imageIndex}`);
+      }
+    }
+
     if (req.params.id && userData) {
       Ent_duan.update(
         {
@@ -239,7 +272,7 @@ exports.update = async (req, res) => {
           Diachi: req.body.Diachi,
           Vido: req.body.Vido,
           Kinhdo: req.body.Kinhdo,
-          Logo: req.body.Logo || `https://drive.google.com/thumbnail?id=${fileId.id}`,
+          Logo: req.body.Logo || `https://checklist.pmcweb.vn/be/upload/logo/${Anh}`,
           Ngaybatdau: req.body.Ngaybatdau,
           ID_Nhom: req.body.ID_Nhom || null,
           ID_Chinhanh: req.body.ID_Chinhanh || null,
@@ -378,7 +411,7 @@ exports.getThongtinduan = async (req, res) => {
       isDelete: 0,
     };
 
-    if (userData && userData?.ent_chucvu?.Role == 4 && duanIds.length > 0) {
+    if (userData && (userData?.ent_chucvu?.Role == 4 || userData?.ent_chucvu?.Role == 1) && duanIds.length > 0) {
       whereCondition.ID_Duan = {
         [Op.in]: duanIds,
       };
@@ -400,142 +433,159 @@ exports.getThongtinduan = async (req, res) => {
         "isDelete",
       ],
       include: [
+        // {
+        //   model: Ent_toanha,
+        //   as: "ent_toanha",
+        //   attributes: [
+        //     "ID_Toanha",
+        //     "Toanha",
+        //     "Sotang",
+        //     "ID_Duan",
+        //     "Vido",
+        //     "Kinhdo",
+        //     "isDelete",
+        //   ],
+        //   where: { isDelete: 0 },
+        //   required: false,
+        //   include: [
+        //     {
+        //       model: Ent_khuvuc,
+        //       as: "ent_khuvuc",
+        //       attributes: [
+        //         "ID_Khuvuc",
+        //         "Makhuvuc",
+        //         "MaQrCode",
+        //         "Tenkhuvuc",
+        //         "isDelete",
+        //       ],
+        //       where: { isDelete: 0 },
+        //       required: false,
+        //       include: [
+        //         {
+        //           model: Ent_hangmuc,
+        //           as: "ent_hangmuc",
+        //           attributes: [
+        //             "ID_Hangmuc",
+        //             "ID_Khuvuc",
+        //             "Hangmuc",
+        //             "MaQrCode",
+        //             "isDelete",
+        //             "Tieuchuankt",
+        //             "FileTieuChuan",
+        //           ],
+        //           where: { isDelete: 0 },
+        //           required: false,
+        //         },
+        //         {
+        //           model: Ent_khuvuc_khoicv,
+        //           attributes: ["ID_KhoiCV", "ID_Khuvuc", "ID_KV_CV"],
+        //           include: [
+        //             {
+        //               model: Ent_khoicv,
+        //               attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
+        //             },
+        //           ],
+        //         },
+        //       ],
+        //     },
+        //   ],
+        // },
         {
-          model: Ent_toanha,
-          as: "ent_toanha",
-          attributes: [
-            "ID_Toanha",
-            "Toanha",
-            "Sotang",
-            "ID_Duan",
-            "Vido",
-            "Kinhdo",
-            "isDelete",
-          ],
-          where: { isDelete: 0 },
-          required: false,
-          include: [
-            {
-              model: Ent_khuvuc,
-              as: "ent_khuvuc",
-              attributes: [
-                "ID_Khuvuc",
-                "Makhuvuc",
-                "MaQrCode",
-                "Tenkhuvuc",
-                "isDelete",
-              ],
-              where: { isDelete: 0 },
-              required: false,
-              include: [
-                {
-                  model: Ent_hangmuc,
-                  as: "ent_hangmuc",
-                  attributes: [
-                    "ID_Hangmuc",
-                    "ID_Khuvuc",
-                    "Hangmuc",
-                    "MaQrCode",
-                    "isDelete",
-                    "Tieuchuankt",
-                    "FileTieuChuan",
-                  ],
-                  where: { isDelete: 0 },
-                  required: false,
-                },
-                {
-                  model: Ent_khuvuc_khoicv,
-                  attributes: ["ID_KhoiCV", "ID_Khuvuc", "ID_KV_CV"],
-                  include: [
-                    {
-                      model: Ent_khoicv,
-                      attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
+          model: Ent_chinhanh,
+          attributes: ["Tenchinhanh", "ID_Chinhanh"],
         },
         {
           model: Ent_nhom,
           attributes: ["Tennhom", "ID_Nhom"],
         },
+        {
+          model: Ent_phanloaida,
+          as: "ent_phanloaida",
+          attributes: ["ID_Phanloai", "Phanloai"],
+        },
       ],
       where: whereCondition, // Apply the dynamic where condition
     });
 
-    const result = data.map((duan) => {
-      let totalHangmucInDuan = 0;
-      let totalKhuvucInDuan = 0;
+    // const result = data.map((duan) => {
+    //   let totalHangmucInDuan = 0;
+    //   let totalKhuvucInDuan = 0;
 
-      const toanhas = duan.ent_toanha.map((toanha) => {
-        let totalHangmucInToanha = 0;
-        const khoisSet = new Set(); // Sử dụng Set để loại bỏ trùng lặp tên khối
-        const khuvucs = toanha.ent_khuvuc.map((khuvuc) => {
-          const hangmucs = khuvuc.ent_hangmuc.map((hangmuc) => ({
-            ID_Hangmuc: hangmuc.ID_Hangmuc,
-            Hangmuc: hangmuc.Hangmuc,
-            MaQrCode: hangmuc.MaQrCode,
-            Tieuchuankt: hangmuc.Tieuchuankt,
-          }));
+    //   const toanhas = duan.ent_toanha.map((toanha) => {
+    //     let totalHangmucInToanha = 0;
+    //     const khoisSet = new Set(); // Sử dụng Set để loại bỏ trùng lặp tên khối
+    //     const khuvucs = toanha.ent_khuvuc.map((khuvuc) => {
+    //       const hangmucs = khuvuc.ent_hangmuc.map((hangmuc) => ({
+    //         ID_Hangmuc: hangmuc.ID_Hangmuc,
+    //         Hangmuc: hangmuc.Hangmuc,
+    //         MaQrCode: hangmuc.MaQrCode,
+    //         Tieuchuankt: hangmuc.Tieuchuankt,
+    //       }));
 
-          const khoicvs = khuvuc.ent_khuvuc_khoicvs.map((cv) => {
-            khoisSet.add(cv.ent_khoicv.KhoiCV); // Thêm tên khối vào Set
-            return {
-              ID_KhoiCV: cv.ID_KhoiCV,
-              ID_Khuvuc: cv.ID_Khuvuc,
-              ID_KV_CV: cv.ID_KV_CV,
-            };
-          });
+    //       const khoicvs = khuvuc.ent_khuvuc_khoicvs.map((cv) => {
+    //         khoisSet.add(cv.ent_khoicv.KhoiCV); // Thêm tên khối vào Set
+    //         return {
+    //           ID_KhoiCV: cv.ID_KhoiCV,
+    //           ID_Khuvuc: cv.ID_Khuvuc,
+    //           ID_KV_CV: cv.ID_KV_CV,
+    //         };
+    //       });
 
-          const hangMucLength = hangmucs.length;
-          totalHangmucInToanha += hangMucLength;
-          return {
-            ID_Khuvuc: khuvuc.ID_Khuvuc,
-            ID_KhoiCVs: khoicvs,
-            Makhuvuc: khuvuc.Makhuvuc,
-            MaQrCode: khuvuc.MaQrCode,
-            Tenkhuvuc: khuvuc.Tenkhuvuc,
-            hangMucLength: hangMucLength,
-            hangmuc: hangmucs,
-          };
-        });
+    //       const hangMucLength = hangmucs.length;
+    //       totalHangmucInToanha += hangMucLength;
+    //       return {
+    //         ID_Khuvuc: khuvuc.ID_Khuvuc,
+    //         ID_KhoiCVs: khoicvs,
+    //         Makhuvuc: khuvuc.Makhuvuc,
+    //         MaQrCode: khuvuc.MaQrCode,
+    //         Tenkhuvuc: khuvuc.Tenkhuvuc,
+    //         hangMucLength: hangMucLength,
+    //         hangmuc: hangmucs,
+    //       };
+    //     });
 
-        const khuvucLength = khuvucs.length;
-        totalHangmucInDuan += totalHangmucInToanha;
-        totalKhuvucInDuan += khuvucLength;
+    //     const khuvucLength = khuvucs.length;
+    //     totalHangmucInDuan += totalHangmucInToanha;
+    //     totalKhuvucInDuan += khuvucLength;
 
-        const tenKhois = Array.from(khoisSet); // Chuyển Set thành mảng tên khối
-        return {
-          ID_Toanha: toanha.ID_Toanha,
-          Toanha: toanha.Toanha,
-          Sotang: toanha.Sotang,
-          Vido: toanha.Vido,
-          Kinhdo: toanha.Kinhdo,
-          khuvucLength: khuvucLength,
-          khuvuc: khuvucs,
-          totalHangmucInToanha,
-          tenKhois, // Thêm trường danh sách tên khối
-        };
-      });
-
-      return {
-        ID_Duan: duan.ID_Duan,
-        Duan: duan.Duan,
-        Diachi: duan.Diachi,
-        Vido: duan.Vido,
-        Kinhdo: duan.Kinhdo,
-        Logo: duan.Logo,
-        toanhas: toanhas,
-        totalHangmucInDuan,
-        totalKhuvucInDuan,
-      };
-    });
+    //     const tenKhois = Array.from(khoisSet); // Chuyển Set thành mảng tên khối
+    //     return {
+    //       ID_Toanha: toanha.ID_Toanha,
+    //       Toanha: toanha.Toanha,
+    //       Sotang: toanha.Sotang,
+    //       Vido: toanha.Vido,
+    //       Kinhdo: toanha.Kinhdo,
+    //       khuvucLength: khuvucLength,
+    //       khuvuc: khuvucs,
+    //       totalHangmucInToanha,
+    //       tenKhois, // Thêm trường danh sách tên khối
+    //     };
+    //   });
+    //   // "ID_Nhom",
+    //   // "ID_Chinhanh",
+    //   // "ID_Linhvuc",
+    //   // "ID_Loaihinh",
+    //   // "ID_Phanloai",
+    //   return {
+    //     ID_Duan: duan.ID_Duan,
+    //     ID_Nhom: duan.ID_Nhom,
+    //     ID_Chinhanh: duan.ID_Chinhanh,
+    //     ID_Loaihinh: duan.ID_Loaihinh,
+    //     ID_Phanloai: duan.ID_Phanloai,
+    //     Duan: duan.Duan,
+    //     Diachi: duan.Diachi,
+    //     Vido: duan.Vido,
+    //     Kinhdo: duan.Kinhdo,
+    //     Logo: duan.Logo,
+    //     toanhas: toanhas,
+    //     totalHangmucInDuan,
+    //     totalKhuvucInDuan,
+    //   };
+    // });
 
     res.status(200).json({
       message: "Danh sách dự án với khu vực!",
-      data: result,
+      data: data,
     });
   } catch (err) {
     res.status(500).json({
@@ -609,8 +659,7 @@ exports.getThongtinduantheonhom = async (req, res) => {
   }
 };
 
-
-exports.getProjectbyName = async (req, res ) => {
+exports.getProjectbyName = async (req, res) => {
   try {
     const data = await Ent_duan.findAll({
       attributes: [
@@ -644,29 +693,29 @@ exports.getProjectbyName = async (req, res ) => {
       ],
       where: {
         isDelete: 0,
-        ID_Duan: {
-          [Op.ne]: 1,
-        },
+        // ID_Duan: {
+        //   [Op.ne]: 1,
+        // },
       },
     });
 
     const groupedDataObject = data.reduce((acc, project) => {
       const { ID_Chinhanh, ent_chinhanh } = project;
-    
+
       if (!acc[ID_Chinhanh]) {
         acc[ID_Chinhanh] = {
           Tenchinhanh: ent_chinhanh.Tenchinhanh,
           projects: [],
         };
       }
-    
+
       acc[ID_Chinhanh].projects.push(project);
       return acc;
     }, {});
-    
+
     // Convert the object into an array
     const groupedData = Object.values(groupedDataObject);
-    
+
     res.status(200).json({
       message: "Danh sách dự án với nhóm!",
       data: groupedData,
@@ -676,4 +725,4 @@ exports.getProjectbyName = async (req, res ) => {
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
-}
+};

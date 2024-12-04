@@ -89,6 +89,18 @@ exports.get = async (req, res) => {
       isDelete: 0,
       ID_Duan: userData?.ID_Duan,
     };
+
+    if (userData?.ent_chucvu.Role === 5 && userData?.arr_Duan !== null) {
+      const arrDuanArray = userData?.arr_Duan.split(",").map(Number);
+
+      // Kiểm tra ID_Duan có thuộc mảng không
+      const exists = arrDuanArray.includes(userData?.ID_Duan);
+      if (!exists) {
+        // Thêm điều kiện tham chiếu cột từ bảng liên kết
+        whereCondition["$ent_calv.ID_KhoiCV$"] = userData.ID_KhoiCV;
+      }
+    }
+
     if (userData) {
       await Ent_thietlapca.findAll({
         attributes: [
@@ -138,6 +150,7 @@ exports.get = async (req, res) => {
     });
   }
 };
+
 
 exports.getDetail = async (req, res) => {
   try {

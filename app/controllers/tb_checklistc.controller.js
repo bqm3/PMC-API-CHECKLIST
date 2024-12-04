@@ -416,10 +416,21 @@ exports.getCheckListc = async (req, res, next) => {
       if (
         userData.ID_Chucvu !== 1 &&
         userData.ID_Chucvu !== 2 &&
-        userData.ID_Chucvu !== 3
+        userData.ID_Chucvu !== 3 && userData.ID_Chucvu !== 11
       ) {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
         whereClause.ID_User = userData?.ID_User;
+      }
+
+      if (userData?.ent_chucvu.Role === 5 && userData?.arr_Duan !== null) {
+        const arrDuanArray = userData?.arr_Duan.split(",").map(Number);
+  
+        // Kiểm tra ID_Duan có thuộc mảng không
+        const exists = arrDuanArray.includes(userData?.ID_Duan);
+        if (!exists) {
+          // Thêm điều kiện tham chiếu cột từ bảng liên kết
+          whereClause.ID_KhoiCV = userData.ID_KhoiCV;
+        }
       }
 
       const page = parseInt(req.query.page) || 0;
