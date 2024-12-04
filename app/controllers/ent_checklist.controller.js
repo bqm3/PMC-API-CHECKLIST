@@ -1885,6 +1885,18 @@ exports.getListChecklistWeb = async (req, res) => {
       whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
     }
 
+    if (userData?.ent_chucvu.Role === 5 && userData?.arr_Duan !== null) {
+      const arrDuanArray = userData?.arr_Duan.split(",").map(Number);
+
+      // Kiểm tra ID_Duan có thuộc mảng không
+      const exists = arrDuanArray.includes(userData?.ID_Duan);
+      if (!exists) {
+        // Thêm điều kiện tham chiếu cột từ bảng liên kết
+        whereCondition["$ent_khuvuc.ent_khuvuc_khoicvs.ID_KhoiCV$"] = userData.ID_KhoiCV;
+        // "$ent_khuvuc_khoicvs.ID_KhoiCV$": userData.ID_KhoiCV,
+      }
+    }
+
     const data = await Ent_checklist.findAll({
       attributes: [
         "ID_Checklist",

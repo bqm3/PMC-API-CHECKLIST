@@ -63,6 +63,20 @@ exports.create = async (req, res) => {
 exports.get = async (req, res) => {
   try {
     const userData = req.user.data;
+    const andConditions = {
+      ID_Duan: userData.ID_Duan,
+      isDelete: 0
+    }
+    if (userData?.ent_chucvu.Role == 5 && userData?.arr_Duan !== null) {
+      const arrDuanArray = userData?.arr_Duan.split(",").map(Number);
+
+      // Kiểm tra ID_Duan có thuộc mảng không
+      const exists = arrDuanArray.includes(userData?.ID_Duan);
+      if (!exists) {
+        andConditions.ID_KhoiCV = userData.ID_KhoiCV;
+
+      }
+    }
     await Ent_duan_khoicv.findAll({
       attributes: [
         "ID_Duan_KhoiCV",
@@ -88,10 +102,7 @@ exports.get = async (req, res) => {
           attributes: ["KhoiCV"],
         },
       ],
-      where: {
-        isDelete: 0,
-        ID_Duan: userData.ID_Duan,
-      },
+      where: andConditions,
     })
       .then((data) => {
         res.status(200).json({

@@ -101,6 +101,18 @@ exports.get = async (req, res) => {
         "$ent_khuvuc.ent_toanha.ID_Duan$": userData?.ID_Duan,
       });
 
+      if (userData?.ent_chucvu.Role == 5 && userData?.arr_Duan !== null) {
+        const arrDuanArray = userData?.arr_Duan.split(",").map(Number);
+
+        // Kiểm tra ID_Duan có thuộc mảng không
+        const exists = arrDuanArray.includes(userData?.ID_Duan);
+        if (!exists) {
+          orConditions.push({
+            "$ent_khuvuc.ent_khuvuc_khoicvs.ID_KhoiCV$": userData.ID_KhoiCV,
+          });
+        }
+      }
+
       await Ent_hangmuc.findAll({
         attributes: [
           "ID_Hangmuc",
