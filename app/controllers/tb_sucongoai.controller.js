@@ -642,7 +642,7 @@ exports.dashboardByDuAn = async (req, res) => {
 exports.dashboardAll = async (req, res) => {
   try {
     const year = req.query.year || new Date().getFullYear();
-    const tangGiam = "desc"; // Thứ tự sắp xếp
+    const chinhanh = req.query.chinhanh || 'all';
 
     // Xây dựng điều kiện where cho truy vấn
     let whereClause = {
@@ -654,6 +654,10 @@ exports.dashboardAll = async (req, res) => {
         [Op.gte]: `${year}-01-01`,
         [Op.lte]: `${year}-12-31`,
       };
+    }
+
+    if(chinhanh !== 'all'){
+      whereClause["$ent_user.ent_duan.ID_Chinhanh$"] = chinhanh;
     }
 
     // Truy vấn cơ sở dữ liệu
@@ -688,7 +692,7 @@ exports.dashboardAll = async (req, res) => {
           attributes: ["ID_Duan", "Hoten", "UserName"],
           include: {
             model: Ent_duan,
-            attributes: ["ID_Duan", "Duan", "Diachi", "Vido", "Kinhdo", "Logo"],
+            attributes: ["ID_Duan", "Duan", "Diachi", "ID_Chinhanh","Logo"],
           },
           where: {
             ID_Duan: {
