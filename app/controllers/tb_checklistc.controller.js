@@ -416,7 +416,8 @@ exports.getCheckListc = async (req, res, next) => {
       if (
         userData.ID_Chucvu !== 1 &&
         userData.ID_Chucvu !== 2 &&
-        userData.ID_Chucvu !== 3 && userData.ID_Chucvu !== 11
+        userData.ID_Chucvu !== 3 &&
+        userData.ID_Chucvu !== 11
       ) {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
         whereClause.ID_User = userData?.ID_User;
@@ -424,7 +425,7 @@ exports.getCheckListc = async (req, res, next) => {
 
       if (userData?.ent_chucvu.Role === 5 && userData?.arr_Duan !== null) {
         const arrDuanArray = userData?.arr_Duan.split(",").map(Number);
-  
+
         // Kiểm tra ID_Duan có thuộc mảng không
         const exists = arrDuanArray.includes(userData?.ID_Duan);
         if (!exists) {
@@ -2429,16 +2430,14 @@ exports.reportLocation = async (req, res) => {
     const orConditions = [
       {
         Ngay: yesterday, // Filter by Ngay attribute between fromDate and toDate,
-        isDelete: 0
+        isDelete: 0,
       },
     ];
-    console.log('userData', userData)
 
     if (userData?.ent_chucvu.Role == 10 && userData?.ID_Duan !== null) {
       orConditions.push({ ID_Duan: userData?.ID_Duan });
     }
 
-    console.log('orConditions', orConditions)
     // Fetch checklist data with related information
     const dataChecklistC = await Tb_checklistc.findAll({
       attributes: [
@@ -2492,7 +2491,7 @@ exports.reportLocation = async (req, res) => {
           ],
         },
       ],
-      where: orConditions
+      where: orConditions,
     });
 
     const results = dataChecklistC.map((checklist) => {
@@ -2699,7 +2698,7 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
         },
         {
           model: Ent_khoicv,
-          attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
+          attributes: ["KhoiCV"],
         },
         {
           model: Ent_calv,
@@ -2791,79 +2790,119 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
         duplicateCoordinates, // Group of duplicate coordinates
       };
     });
-
     // Fetch related checklist details, including Hangmuc, Khuvuc, and Tang (Floor)
-    const relatedChecklists = await Ent_checklist.findAll({
-      attributes: ["ID_Checklist", "ID_Tang", "isDelete"],
-      include: [
-        {
-          model: Ent_hangmuc,
-          as: "ent_hangmuc",
-          attributes: ["Hangmuc"], // Fetch only the Hangmuc (category name)
-        },
-        {
-          model: Ent_khuvuc,
-          as: "ent_khuvuc",
-          attributes: ["Tenkhuvuc"], // Fetch Khuvuc (Area)
-          include: [
-            {
-              model: Ent_toanha,
-              as: "ent_toanha",
-              attributes: ["Toanha"],
-            },
-          ],
-        },
-        {
-          model: Ent_tang,
-          attributes: ["Tentang"], // Fetch Tang (Floor)
-        },
-      ],
-      where: {
-        ID_Checklist: {
-          [Op.in]: results.flatMap((result) =>
-            result.duplicateCoordinates.flatMap((entry) =>
-              entry.checklistItems.flatMap((item) => item.checklistIds)
-            )
-          ),
-        },
-        isDelete: 0,
-      },
-    });
+    function chunkArray(array, size) {
+      const chunks = [];
+      for (let i = 0; i < array.length; i += size) {
+        chunks.push(array.slice(i, i + size));
+      }
+      return chunks;
+    }
 
-    const MIN_TRAVERSAL_TIME_BETWEEN_FLOORS = 1 * 10;
-    // Merge related checklist details with duplicate coordinates
+    // Maximum number of IDs per query (adjust based on your database's capacity)
+    const MAX_IDS_PER_QUERY = 1000;
+
+    // Extract checklist IDs
+    const checklistIds = results.flatMap((result) =>
+      result.duplicateCoordinates.flatMap((entry) =>
+        entry.checklistItems.flatMap((item) => item.checklistIds)
+      )
+    );
+
+    // Chunk the IDs
+    const chunks = chunkArray(checklistIds, MAX_IDS_PER_QUERY);
+
+    // Fetch data in batches
+    let relatedChecklists = [];
+    for (const chunk of chunks) {
+      const batchResults = await Ent_checklist.findAll({
+        attributes: [
+          "ID_Checklist",
+          "ID_Tang",
+          "ID_Hangmuc",
+          "ID_Khuvuc",
+          "isDelete",
+        ],
+        include: [
+          {
+            model: Ent_hangmuc,
+            as: "ent_hangmuc",
+            attributes: ["Hangmuc"],
+          },
+          {
+            model: Ent_khuvuc,
+            as: "ent_khuvuc",
+            attributes: ["Tenkhuvuc"],
+            include: [
+              {
+                model: Ent_toanha,
+                as: "ent_toanha",
+                attributes: ["Toanha"],
+              },
+            ],
+          },
+          {
+            model: Ent_tang,
+            attributes: ["Tentang"],
+          },
+        ],
+        where: {
+          ID_Checklist: {
+            [Op.in]: chunk,
+          },
+          isDelete: 0,
+        },
+      });
+      relatedChecklists = relatedChecklists.concat(batchResults);
+    }
+
+    const MIN_TRAVERSAL_TIME_BETWEEN_FLOORS = 15; // Thời gian tối thiểu để di chuyển giữa các tầng (15 giây)
+
+    // Tạo một map để tra cứu nhanh chi tiết các checklist liên quan
+    const checklistMap = new Map(
+      relatedChecklists.map((checklist) => [
+        checklist.ID_Checklist,
+        {
+          floor: checklist.ent_tang?.Tentang || null,
+          relatedHangmuc: checklist.ent_hangmuc?.Hangmuc || null,
+          relatedArea: checklist.ent_khuvuc?.Tenkhuvuc || null,
+          building: checklist.ent_khuvuc?.ent_toanha?.Toanha || null,
+        },
+      ])
+    );
+
     const resultWithDetails = results
       .map((result) => {
+        // Xử lý từng tập hợp tọa độ trùng lặp
         const detailedCoordinates = result.duplicateCoordinates
-          .map((entry) => {
-            // Sort items by Gioht
-            const sortedItems = entry.checklistItems.sort(
-              (a, b) =>
-                moment(a.Gioht, "HH:mm:ss") - moment(b.Gioht, "HH:mm:ss")
+          .map(({ coordinates, checklistItems }) => {
+            // Sắp xếp các checklist theo thời gian Gioht
+            checklistItems.sort((a, b) =>
+              moment(a.Gioht, "HH:mm:ss").diff(moment(b.Gioht, "HH:mm:ss"))
             );
 
-            const detailedItems = sortedItems.map((item, index) => {
-              const relatedItem = relatedChecklists.find((checklist) =>
-                item.checklistIds.includes(checklist.ID_Checklist)
-              );
-              const floor = relatedItem?.ent_tang?.Tentang || null;
+            // Ánh xạ các checklist sang dữ liệu chi tiết
+            const detailedItems = checklistItems.map((item, index) => {
+              const relatedData = item.checklistIds
+                .map((id) => checklistMap.get(id))
+                .find((data) => data); // Tìm checklist đầu tiên khớp
 
+              const floor = relatedData?.floor || null;
               let isValid = true;
 
               if (index > 0) {
-                const previousItem = sortedItems[index - 1];
-                const previousFloor =
-                  relatedChecklists.find((checklist) =>
-                    previousItem.checklistIds.includes(checklist.ID_Checklist)
-                  )?.ent_tang?.Tentang || null;
+                const previousItem = checklistItems[index - 1];
+                const previousData = previousItem.checklistIds
+                  .map((id) => checklistMap.get(id))
+                  .find((data) => data); // Tìm checklist đầu tiên khớp cho item trước đó
+                const previousFloor = previousData?.floor || null;
 
-                // Calculate time difference in seconds
                 const timeDifference = moment(item.Gioht, "HH:mm:ss").diff(
                   moment(previousItem.Gioht, "HH:mm:ss"),
                   "seconds"
                 );
 
-                // If floors differ and time is too short, flag as invalid
+                // Đánh dấu không hợp lệ nếu tầng thay đổi và thời gian quá ngắn
                 if (
                   previousFloor !== floor &&
                   timeDifference < MIN_TRAVERSAL_TIME_BETWEEN_FLOORS
@@ -2875,26 +2914,20 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
               return {
                 Gioht: item.Gioht,
                 isScan: item.isScan,
-                relatedHangmuc: relatedItem
-                  ? `${relatedItem.ent_hangmuc.Hangmuc} - ${relatedItem.ent_khuvuc.Tenkhuvuc} - ${floor} - ${relatedItem.ent_khuvuc.ent_toanha.Toanha}`
+                relatedHangmuc: relatedData
+                  ? `${relatedData.relatedHangmuc} - ${relatedData.relatedArea} - ${floor} - ${relatedData.building}`
                   : null,
-                isValid, // Add validity flag
+                isValid,
               };
             });
 
-            // Check if there's any "isValid: false" in this coordinate set
-            const hasInvalid = detailedItems.some(
-              (item) => item.isValid === false
-            );
-
-            // Include this coordinate if it contains any invalid entries
-            return hasInvalid
-              ? { coordinates: entry.coordinates, detailedItems }
-              : null;
+            // Bao gồm tọa độ này nếu có mục không hợp lệ
+            const hasInvalid = detailedItems.some((item) => !item.isValid);
+            return hasInvalid ? { coordinates, detailedItems } : null;
           })
-          .filter((entry) => entry !== null); // Remove null entries for coordinates without any invalid items
+          .filter((entry) => entry !== null); // Loại bỏ các mục null
 
-        // Only return results with coordinates that have invalid items
+        // Chỉ bao gồm kết quả với các tọa độ không hợp lệ
         return detailedCoordinates.length > 0
           ? {
               id: result.id,
@@ -2912,12 +2945,11 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
             }
           : null;
       })
-      .filter((result) => result !== null); // Remove results without any invalid entries
+      .filter((result) => result !== null); // Loại bỏ các kết quả null
 
     const workbook = new ExcelJS.Workbook();
-
     // Loop through each project with errors and create a sheet
-    resultWithDetails.forEach((result) => {
+    await resultWithDetails.forEach((result) => {
       // Create a new sheet for each project with errors
       let sheet = workbook.getWorksheet(result.project);
       if (!sheet) {
@@ -2962,7 +2994,6 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
       });
     });
     const buffer = await workbook.xlsx.writeBuffer();
-
     // Set headers for file download
     res.set({
       "Content-Disposition": `attachment; filename=Bao_cao_checklist_vi_pham_${month}_${year}.xlsx`,
@@ -4899,13 +4930,12 @@ exports.reportPercentLastWeek = async (req, res) => {
         result[projectId].createdKhois[khoiName].shifts[shiftName].totalTong =
           checklistC.Tong;
 
-
         // Lưu tỷ lệ hoàn thành của từng người (nếu Tong > 0)
         if (checklistC.Tong > 0) {
           const userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
-          result[projectId].createdKhois[khoiName].shifts[shiftName].userCompletionRates.push(
-            userCompletionRate
-          );
+          result[projectId].createdKhois[khoiName].shifts[
+            shiftName
+          ].userCompletionRates.push(userCompletionRate);
         }
       });
 
@@ -4929,7 +4959,8 @@ exports.reportPercentLastWeek = async (req, res) => {
 
           // Tính phần trăm hoàn thành trung bình cho khối (nếu có shift)
           if (totalShifts > 0) {
-            const avgKhoiCompletionRatio = totalKhoiCompletionRatio / totalShifts;
+            const avgKhoiCompletionRatio =
+              totalKhoiCompletionRatio / totalShifts;
             khoi.completionRatio = Number.isInteger(avgKhoiCompletionRatio)
               ? avgKhoiCompletionRatio
               : avgKhoiCompletionRatio.toFixed(2);
@@ -4946,7 +4977,6 @@ exports.reportPercentLastWeek = async (req, res) => {
         "Khối dịch vụ": { totalCompletion: 0, projectCount: 0 },
         "Khối bảo vệ": { totalCompletion: 0, projectCount: 0 },
         "Khối F&B": { totalCompletion: 0, projectCount: 0 },
-
       };
 
       Object.values(result).forEach((project) => {
@@ -4983,36 +5013,39 @@ exports.reportPercentLastWeek = async (req, res) => {
 
     const series = [
       {
-        year: 'Tất cả',
+        year: "Tất cả",
         data: [
-          { name: 'Khối bảo vệ', data: [] },
-          { name: 'Khối làm sạch', data: [] },
-          { name: 'Khối kỹ thuật', data: [] },
-          { name: 'Khối dịch vụ', data: [] },
-          { name: 'Khối F&B', data: [] },
+          { name: "Khối bảo vệ", data: [] },
+          { name: "Khối làm sạch", data: [] },
+          { name: "Khối kỹ thuật", data: [] },
+          { name: "Khối dịch vụ", data: [] },
+          { name: "Khối F&B", data: [] },
         ],
       },
     ];
-    
+
     // Đảo ngược dữ liệu để dễ dàng ghép với ngày trong tuần (giả sử dữ liệu là ngày từ gần nhất đến xa nhất)
     reportData.reverse();
-    
+
     // Khởi tạo categories mới từ ngày trong "date"
-    const categories = reportData?.map(dayData =>
-      moment(dayData.date).format("DD-MM")
-    ) || [];
-    
+    const categories =
+      reportData?.map((dayData) => moment(dayData.date).format("DD-MM")) || [];
+
     // Đi qua từng ngày trong mảng responseData và thêm dữ liệu vào `series`
     reportData.forEach((dayData) => {
-      const dayOfWeek = dayData.date;  // Sử dụng ngày trong định dạng "YYYY-MM-DD"
-    
+      const dayOfWeek = dayData.date; // Sử dụng ngày trong định dạng "YYYY-MM-DD"
+
       // Thêm dữ liệu cho từng khối vào `series`
       Object.keys(dayData.avgCompletionRatios).forEach((blockName) => {
-        const completionRatio = parseFloat(dayData.avgCompletionRatios[blockName]);
-    
+        const completionRatio = parseFloat(
+          dayData.avgCompletionRatios[blockName]
+        );
+
         // Tìm khối tương ứng trong `series`
-        const blockIndex = series[0].data.findIndex(block => block.name === blockName);
-        
+        const blockIndex = series[0].data.findIndex(
+          (block) => block.name === blockName
+        );
+
         // Thêm tỷ lệ hoàn thành vào `data` của khối tương ứng
         if (blockIndex !== -1) {
           series[0].data[blockIndex].data.push(completionRatio);
@@ -5024,7 +5057,7 @@ exports.reportPercentLastWeek = async (req, res) => {
     res.status(200).json({
       message:
         "Trạng thái checklist của các dự án theo từng khối và ca làm việc trong 7 ngày",
-      data: {categories, series},
+      data: { categories, series },
     });
   } catch (err) {
     console.error("Error fetching checklist data: ", err);
@@ -5033,8 +5066,6 @@ exports.reportPercentLastWeek = async (req, res) => {
       .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
-
-
 
 // exports.reportPercentLast7Days = async (req, res) => {
 //   try {
