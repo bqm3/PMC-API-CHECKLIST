@@ -88,7 +88,10 @@ Ent_hangmuc.hasMany(Tb_sucongoai, { as: "ent_hangmuc", foreignKey: "ID_Hangmuc" 
 Tb_sucongoai.belongsTo(Ent_hangmuc, { foreignKey: "ID_Hangmuc" })
 
 Ent_user.hasMany(Tb_sucongoai, { as: "ent_user", foreignKey: "ID_User" });
-Tb_sucongoai.belongsTo(Ent_user, { foreignKey: "ID_User" })
+Tb_sucongoai.belongsTo(Ent_user, { as: "ent_user", foreignKey: "ID_User" });
+
+Ent_user.hasMany(Tb_sucongoai, { as: "ent_handler", foreignKey: "ID_Handler" });
+Tb_sucongoai.belongsTo(Ent_user, { as: "ent_handler", foreignKey: "ID_Handler" });
 
 // Thiet lap ca ===========================================================================
 

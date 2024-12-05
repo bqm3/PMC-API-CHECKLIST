@@ -594,10 +594,13 @@ exports.getThongKe = async (req, res, next) => {
       const orConditions = [
         {
           Ngay: { [Op.between]: [fromDate, toDate] }, // Filter by Ngay attribute between fromDate and toDate,
-          isDelete: 0
+          isDelete: 0,
         },
       ];
 
+      if (userData.ent_chucvu.Role == 3) {
+        orConditions.push({ "$tb_checklistc.ID_User$": userData?.ID_User });
+      }
       if (userData?.ID_KhoiCV !== null && userData?.ID_KhoiCV !== undefined) {
         orConditions.push({ "$tb_checklistc.ID_KhoiCV$": userData?.ID_KhoiCV });
       }
@@ -669,7 +672,7 @@ exports.getThongKe = async (req, res, next) => {
         where: orConditions,
       });
       const totalPages = Math.ceil(totalCount / pageSize);
-      console.log('totalPages', totalPages)
+      console.log("totalPages", totalPages);
       await Tb_checklistc.findAll({
         attributes: [
           "ID_ChecklistC",
@@ -1884,8 +1887,8 @@ exports.checklistCalv = async (req, res) => {
         const month = String(checklistDate.getMonth() + 1).padStart(2, "0"); // Get month
         const year = checklistDate.getFullYear();
 
-        const tableName =  `tb_checklistchitiet_${month}_${year}`;
-        const dynamicTableNameDone  = `tb_checklistchitietdone_${month}_${year}`;
+        const tableName = `tb_checklistchitiet_${month}_${year}`;
+        const dynamicTableNameDone = `tb_checklistchitietdone_${month}_${year}`;
         defineDynamicModelChiTiet(tableName, sequelize);
         const dataChecklistChiTiet = await sequelize.models[tableName].findAll({
           attributes: [
@@ -2411,7 +2414,7 @@ exports.checklistCalv = async (req, res) => {
       }
     }
   } catch (err) {
-    console.log('err', err)
+    console.log("err", err);
     res
       .status(500)
       .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
@@ -4722,9 +4725,9 @@ exports.reportPercentYesterday = async (req, res) => {
       // Lưu tỷ lệ hoàn thành của từng người (nếu Tong > 0)
       if (checklistC.Tong > 0) {
         const userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
-        result[projectId].createdKhois[khoiName].shifts[shiftName].userCompletionRates.push(
-          userCompletionRate
-        );
+        result[projectId].createdKhois[khoiName].shifts[
+          shiftName
+        ].userCompletionRates.push(userCompletionRate);
       }
     });
 
@@ -4769,7 +4772,7 @@ exports.reportPercentYesterday = async (req, res) => {
 
     Object.values(result).forEach((project) => {
       Object.keys(avgKhoiCompletion).forEach((khoiName) => {
-        console.log('khoiName', khoiName)
+        console.log("khoiName", khoiName);
         const khoi = project.createdKhois[khoiName];
         if (khoi && khoi.completionRatio !== null) {
           avgKhoiCompletion[khoiName].totalCompletion += parseFloat(
@@ -4793,7 +4796,6 @@ exports.reportPercentYesterday = async (req, res) => {
         avgCompletionRatios[khoiName] = 0;
       }
     });
-    
 
     // Trả về kết quả
     res.status(200).json({
@@ -4897,6 +4899,7 @@ exports.reportPercentLastWeek = async (req, res) => {
         result[projectId].createdKhois[khoiName].shifts[shiftName].totalTong =
           checklistC.Tong;
 
+
         // Lưu tỷ lệ hoàn thành của từng người (nếu Tong > 0)
         if (checklistC.Tong > 0) {
           const userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
@@ -4943,6 +4946,7 @@ exports.reportPercentLastWeek = async (req, res) => {
         "Khối dịch vụ": { totalCompletion: 0, projectCount: 0 },
         "Khối bảo vệ": { totalCompletion: 0, projectCount: 0 },
         "Khối F&B": { totalCompletion: 0, projectCount: 0 },
+
       };
 
       Object.values(result).forEach((project) => {
