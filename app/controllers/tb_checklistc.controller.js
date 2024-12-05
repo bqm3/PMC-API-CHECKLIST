@@ -2667,7 +2667,6 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
     const endDate = moment(`${year}-${month}-01`)
       .endOf("month")
       .format("YYYY-MM-DD");
-    const daysInMonth = moment(startDate).daysInMonth();
 
     // Fetch checklist data with related information
     const dataChecklistC = await Tb_checklistc.findAll({
@@ -2785,7 +2784,7 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
         tongC: checklist.TongC,
         tong: checklist.Tong,
         nguoi: checklist.ent_user.Hoten,
-        tk: checklist.ent_user.UserName,
+        kt: checklist.ent_user.UserName,
         cv: checklist.ent_khoicv.KhoiCV,
         duplicateCoordinates, // Group of duplicate coordinates
       };
@@ -2934,7 +2933,7 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
               project: result.project,
               ca: result.ca,
               nguoi: result.nguoi,
-              tk: result.tk,
+              kt: result.kt,
               cv: result.cv,
               giobd: result.giobd,
               giokt: result.giokt,
@@ -2947,62 +2946,110 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
       })
       .filter((result) => result !== null); // Loại bỏ các kết quả null
 
-    const workbook = new ExcelJS.Workbook();
-    // Loop through each project with errors and create a sheet
-    await resultWithDetails.forEach((result) => {
-      // Create a new sheet for each project with errors
-      let sheet = workbook.getWorksheet(result.project);
-      if (!sheet) {
-        // Only create a new sheet if it doesn't already exist
-        sheet = workbook.addWorksheet(result.project || "Dự án khác");
+      const workbook = new ExcelJS.Workbook();
 
-        // Define columns for the sheet
-        sheet.columns = [
-          { header: "Ca", key: "ca", width: 15 },
-          { header: "Họ tên", key: "nguoi", width: 20 },
-          { header: "Tài khoản", key: "kt", width: 20 },
-          { header: "Giờ Bắt Đầu", key: "giobd", width: 15 },
-          { header: "Giờ Kết Thúc", key: "giokt", width: 15 },
-          { header: "Ngày", key: "ngay", width: 15 },
-          { header: "Khối", key: "cv", width: 15 },
-          { header: "Tọa Độ", key: "coordinates", width: 30 },
-          { header: "Giờ HT", key: "gioht", width: 15 },
-          { header: "Hạng Mục", key: "relatedHangmuc", width: 50 },
-          { header: "Hợp Lệ", key: "isValid", width: 10 },
-          { header: "Quét Qr", key: "isScan", width: 10 },
-        ];
-      }
-
-      // Populate the sheet with the details
-      result.detailedCoordinates.forEach((coordinateEntry) => {
-        coordinateEntry.detailedItems.forEach((item) => {
-          sheet.addRow({
-            ca: result.ca,
-            nguoi: result.nguoi,
-            kt: result.kt,
-            giobd: result.giobd,
-            giokt: result.giokt,
-            ngay: result.ngay,
-            cv: result.cv,
-            coordinates: coordinateEntry.coordinates,
-            gioht: item.Gioht,
-            relatedHangmuc: item.relatedHangmuc,
-            isValid: item.isValid ? "" : "Cảnh báo",
-            isScan: item.isScan == 1 ? "Không quét" : "",
+      // Loop through each project with errors and create a sheet
+      await resultWithDetails.forEach((result) => {
+        // Create a new sheet for each project with errors
+        let sheet = workbook.getWorksheet(result.project);
+        if (!sheet) {
+          // Only create a new sheet if it doesn't already exist
+          sheet = workbook.addWorksheet(result.project || "Dự án khác");
+      
+          // Define columns for the sheet
+          sheet.columns = [
+            { header: "Ca", key: "ca", width: 15 },
+            { header: "Họ tên", key: "nguoi", width: 20 },
+            { header: "Tài khoản", key: "kt", width: 20 },
+            { header: "Giờ Bắt Đầu", key: "giobd", width: 15 },
+            { header: "Giờ Kết Thúc", key: "giokt", width: 15 },
+            { header: "Ngày", key: "ngay", width: 15 },
+            { header: "Khối", key: "cv", width: 15 },
+            { header: "Tọa Độ", key: "coordinates", width: 30 },
+            { header: "Giờ HT", key: "gioht", width: 15 },
+            { header: "Hạng Mục", key: "relatedHangmuc", width: 50 },
+            { header: "Hợp Lệ", key: "isValid", width: 10 },
+            { header: "Quét Qr", key: "isScan", width: 10 },
+          ];
+        }
+      
+        // Populate the sheet with the details
+        result.detailedCoordinates.forEach((coordinateEntry) => {
+          coordinateEntry.detailedItems.forEach((item) => {
+            sheet.addRow({
+              ca: result.ca,
+              nguoi: result.nguoi,
+              kt: result.kt,
+              giobd: result.giobd,
+              giokt: result.giokt,
+              ngay: result.ngay,
+              cv: result.cv,
+              coordinates: coordinateEntry.coordinates,
+              gioht: item.Gioht,
+              relatedHangmuc: item.relatedHangmuc,
+              isValid: item.isValid ? "" : "Cảnh báo",
+              isScan: item.isScan == 1 ? "Không quét" : "",
+            });
           });
         });
       });
-    });
-    const buffer = await workbook.xlsx.writeBuffer();
-    // Set headers for file download
-    res.set({
-      "Content-Disposition": `attachment; filename=Bao_cao_checklist_vi_pham_${month}_${year}.xlsx`,
-      "Content-Type":
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
+      
+      // Create the summary sheet
+      const summarySheet = workbook.addWorksheet('Tổng hợp Dự Án');
+      summarySheet.columns = [
+        { header: "Dự án", key: "project", width: 30 },
+        { header: "Ca", key: "ca", width: 15 },
+        { header: "Họ tên", key: "nguoi", width: 20 },
+        { header: "Tài khoản", key: "kt", width: 20 },
+        { header: "Giờ Bắt Đầu", key: "giobd", width: 15 },
+        { header: "Giờ Kết Thúc", key: "giokt", width: 15 },
+        { header: "Ngày", key: "ngay", width: 15 },
+        { header: "Khối", key: "cv", width: 15 },
+        { header: "Tọa Độ", key: "coordinates", width: 30 },
+        { header: "Giờ HT", key: "gioht", width: 15 },
+        { header: "Hạng Mục", key: "relatedHangmuc", width: 50 },
+        { header: "Hợp Lệ", key: "isValid", width: 10 },
+        { header: "Quét Qr", key: "isScan", width: 10 },
+      ];
+      
+      // Populate the summary sheet with data from all projects
+      resultWithDetails.forEach((result) => {
+        result.detailedCoordinates.forEach((coordinateEntry) => {
+          coordinateEntry.detailedItems.forEach((item) => {
+            summarySheet.addRow({
+              project: result.project, // Add project name to summary
+              ca: result.ca,
+              nguoi: result.nguoi,
+              kt: result.kt,
+              giobd: result.giobd,
+              giokt: result.giokt,
+              ngay: result.ngay,
+              cv: result.cv,
+              coordinates: coordinateEntry.coordinates,
+              gioht: item.Gioht,
+              relatedHangmuc: item.relatedHangmuc,
+              isValid: item.isValid ? "" : "Cảnh báo",
+              isScan: item.isScan == 1 ? "Không quét" : "",
+            });
+          });
+        });
+      });
+      
+      // Write both the project-specific and summary Excel files
+      workbook.worksheets.unshift(workbook.worksheets.pop());
 
-    // Send the buffer as the response
-    res.send(buffer);
+      const buffer = await workbook.xlsx.writeBuffer();
+      
+      // Set headers for file download
+      res.set({
+        "Content-Disposition": `attachment; filename=Bao_cao_checklist_vi_pham_${month}_${year}.xlsx`,
+        "Content-Type":
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      
+      // Send the buffer as the response
+      res.send(buffer);
+      
   } catch (err) {
     // Handle errors and send appropriate response
     res
@@ -4412,32 +4459,41 @@ exports.suCoChiTiet = async (req, res) => {
 
 exports.soSanhSuCo = async (req, res) => {
   try {
-    const weekAgo = moment().subtract(1, "week");
-    const twoWeeksAgo = moment().subtract(2, "week");
+    const currentDay = moment(); // Ngày hiện tại
 
-    // Đặt ngày bắt đầu và kết thúc cho hai tuần trước
-    const startOfLastWeek = weekAgo
+    const startOfLastWeek = currentDay
       .clone()
-      .startOf("isoWeek")
-      .format("YYYY-MM-DD HH:mm:ss");
-    const endOfLastWeek = weekAgo
-      .clone()
-      .endOf("isoWeek")
+      .subtract(7, "day")
+      .startOf("day")
       .format("YYYY-MM-DD HH:mm:ss");
 
-    const startOfTwoWeeksAgo = twoWeeksAgo
+    const endOfLastWeek = currentDay
       .clone()
-      .startOf("isoWeek")
+      .subtract(1, "day")
+      .endOf("day")
       .format("YYYY-MM-DD HH:mm:ss");
-    const endOfTwoWeeksAgo = twoWeeksAgo
+
+    const startOfTwoWeeksAgo = currentDay
       .clone()
-      .endOf("isoWeek")
+      .subtract(15, "day")
+      .startOf("day")
+      .format("YYYY-MM-DD HH:mm:ss");
+
+    const endOfTwoWeeksAgo = currentDay
+      .clone()
+      .subtract(8, "day")
+      .endOf("day")
       .format("YYYY-MM-DD HH:mm:ss");
 
     // Xây dựng điều kiện where cho truy vấn
     let whereClause = {
       isDelete: 0,
     };
+
+    console.log("startOfLastWeek", startOfLastWeek);
+    console.log("endOfLastWeek", endOfLastWeek);
+    console.log("startOfTwoWeeksAgo", startOfTwoWeeksAgo);
+    console.log("endOfTwoWeeksAgo", endOfTwoWeeksAgo);
 
     // Truy vấn số lượng sự cố cho tuần trước
     const lastWeekIncidents = await Tb_checklistc.findAll({
