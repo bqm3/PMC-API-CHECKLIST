@@ -1283,13 +1283,13 @@ exports.filterChecklists = async (req, res) => {
     });
 
     const checklistItems = await Tb_checklistchitiet.findAll({
-      attributes: ["isDelete", "ID_Checklist", "ID_ChecklistC"],
-      where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC },
+      attributes: ["isDelete", "ID_Checklist", "ID_ChecklistC", "isCheckListLai"],
+      where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC, isCheckListLai: 0  },
     });
 
     const checklistDoneItems = await Tb_checklistchitietdone.findAll({
-      attributes: ["Description", "isDelete", "ID_ChecklistC"],
-      where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC },
+      attributes: ["Description", "isDelete", "ID_ChecklistC", "isCheckListLai"],
+      where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC, isCheckListLai: 0 },
     });
 
     const arrPush = [];
