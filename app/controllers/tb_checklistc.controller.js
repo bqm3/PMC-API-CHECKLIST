@@ -1880,6 +1880,7 @@ exports.checklistCalv = async (req, res) => {
         isDelete: 0,
         ID_ChecklistC: ID_ChecklistC,
         ID_Duan: userData.ID_Duan,
+        // isCheckListLai: 0
       };
       const targetDate = new Date("2025-01-01");
       const checklistDate = new Date(dataChecklistC?.Ngay);
@@ -2270,6 +2271,7 @@ exports.checklistCalv = async (req, res) => {
               ],
             },
           ],
+          
         });
 
         // Convert fetched data to plain JavaScript objects
