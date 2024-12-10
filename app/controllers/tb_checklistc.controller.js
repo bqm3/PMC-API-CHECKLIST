@@ -2658,6 +2658,7 @@ exports.reportLocation = async (req, res) => {
 exports.getBaoCaoLocationsTimes = async (req, res) => {
   try {
     const { month, year } = req.query;
+    const { duan } = req.body;
 
     if (!month || !year) {
       return res.status(400).json({ message: "Month and year are required" });
@@ -2669,6 +2670,21 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
     const endDate = moment(`${year}-${month}-01`)
       .endOf("month")
       .format("YYYY-MM-DD");
+
+      let whereClause = {
+        Ngay: { [Op.between]: [startDate, endDate] },
+        isDelete: 0,
+    };
+    
+    if (duan == -1) {
+        whereClause.ID_Duan = { [Op.ne]: 1 }; 
+    } else if (Array.isArray(duan) && duan.length > 0) {
+        whereClause.ID_Duan = { [Op.in]: duan }; 
+    } 
+
+    console.log("duan",duan)
+    
+    console.log("whereClause",whereClause)
 
     // Fetch checklist data with related information
     const dataChecklistC = await Tb_checklistc.findAll({
@@ -2723,11 +2739,7 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
           ],
         },
       ],
-      where: {
-        Ngay: { [Op.between]: [startDate, endDate] },
-        ID_Duan: 1,
-        isDelete: 0,
-      },
+      where: whereClause
     });
 
     const results = dataChecklistC.map((checklist) => {
