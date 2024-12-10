@@ -12,10 +12,10 @@ const admin = require("firebase-admin");
 const app = express();
 
 var serviceAccount = require("./pmc-cskh-firebase-adminsdk-y7378-5122f6edc7.json");
-const {
-  danhSachDuLieu,
-  getProjectsChecklistStatus,
-} = require("./app/controllers/nlr_ai.controller");
+// const {
+//   danhSachDuLieu,
+//   getProjectsChecklistStatus,
+// } = require("./app/controllers/nlr_ai.controller");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -209,25 +209,7 @@ app.get("/", (req, res) => {
 
 // checkDriveStorage()
 
-// cron.schedule("0 5 * * *", async () => {
-//   try {
-//     console.log("Cron job started at 6 AM...");
-//     await danhSachDuLieu();
-//     console.log("Cron job finished successfully");
-//   } catch (error) {
-//     console.error("Error executing cron job:", error);
-//   }
-// });
 
-// cron.schedule("0 6 * * *", async () => {
-//   try {
-//     console.log("Cron job started at 5 AM...");
-//     await getProjectsChecklistStatus();
-//     console.log("Cron job finished successfully");
-//   } catch (error) {
-//     console.error("Error executing cron job:", error);
-//   }
-// });
 
 require("./app/routes/ent_calv.routes")(app);
 require("./app/routes/ent_user.routes")(app);
