@@ -16,6 +16,7 @@ const {
   Ent_phanloaida,
   Ent_thietlapca,
 } = require("../models/setup.model");
+const cron = require("node-cron");
 const { Op, Sequelize, fn, col, literal, where } = require("sequelize");
 const sequelize = require("../config/db.config");
 const OpenAI = require("openai");
@@ -27,12 +28,7 @@ const nrl_ai = require("../models/nlr_ai.model");
 const Ent_tile = require("../models/ent_tile.model");
 require("dotenv").config();
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  project: process.env.OPENAI_PRO_ID,
-});
-
-exports.danhSachDuLieu = async (req, res) => {
+const danhSachDuLieu = async (req, res) => {
   const t = await sequelize.transaction(); // Khởi tạo transaction
   try {
     // 1. Xác định khoảng thời gian cần lấy dữ liệu (từ ngày hôm qua đến 6h sáng hôm nay)
@@ -250,21 +246,26 @@ exports.danhSachDuLieu = async (req, res) => {
       transaction: t, // Đảm bảo chèn vào cùng transaction
     });
 
-    // Commit transaction sau khi thành công
-    await t.commit();
-
+   
     // Gửi phản hồi thành công
-    res.status(200).json({
-      message: "Danh sách checklist đã được chèn và xử lý thành công.",
-    });
+    // res.status(200).json({
+    //   message: "Danh sách checklist đã được chèn và xử lý thành công.",
+    // });
+
+     // Commit transaction sau khi thành công
+     await t.commit();
+
+
   } catch (error) {
     // Nếu có lỗi, rollback transaction
     await t.rollback();
-    res.status(500).json({ error: error.message });
+    console.error('Transaction failed:', error);
+    throw error;
+    // res.status(500).json({ error: error.message });
   }
 };
 
-exports.getProjectsChecklistStatus = async (req, res) => {
+const getProjectsChecklistStatus = async (req, res) => {
   try {
     // Kiểm tra xem các ngày đã được cung cấp hay chưa, nếu không thì sử dụng ngày hôm qua
     const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
@@ -410,14 +411,17 @@ exports.getProjectsChecklistStatus = async (req, res) => {
     // Insert dữ liệu vào bảng ent_tile
     await Ent_tile.bulkCreate(transformedRows);
 
-    res.status(200).json({
-      message:
-        "Trạng thái checklist của các dự án theo từng khối và ca làm việc",
-    });
+    // res.status(200).json({
+    //   message:
+    //     "Trạng thái checklist của các dự án theo từng khối và ca làm việc",
+    // });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    // console.log('err', err)
+    // res
+    //   .status(500)
+    //   .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    console.error('Transaction failed:', err);
+    throw err;
   }
 };
 
@@ -429,8 +433,8 @@ exports.chatMessage = async (req, res) => {
       return res.status(400).json({ error: "No message provided" });
     }
 
-    // Đảm bảo đường dẫn tới script Python là chính xác
-    const response = await axios.post('https://pmc.ai.pmcweb.vn/api/v1/process', {
+    // const response = await axios.post('https://pmc.ai.pmcweb.vn/api/v1/process', {
+      const response = await axios.post('http://localhost:5000/api/v1/process', {
       question: message
   });
 
@@ -442,3 +446,24 @@ exports.chatMessage = async (req, res) => {
     });
   }
 };
+
+
+cron.schedule("0 4 * * *", async () => {
+  try {
+    console.log("Cron job started at 5 AM...");
+    await danhSachDuLieu();
+    console.log("Cron job finished successfully");
+  } catch (error) {
+    console.error("Error executing cron job:", error);
+  }
+});
+
+cron.schedule("0 4 * * *", async () => {
+  try {
+    console.log("Cron job started at 6 AM...");
+    await getProjectsChecklistStatus();
+    console.log("Cron job finished successfully");
+  } catch (error) {
+    console.error("Error executing cron job:", error);
+  }
+});
