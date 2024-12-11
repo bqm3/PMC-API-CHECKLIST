@@ -23,11 +23,15 @@ const Ent_linhvuc = require('./ent_linhvuc.model')
 const Ent_loaihinhbds = require('./ent_loaihinhbds.model')
 const Ent_phanloaida = require('./ent_phanloaida.model')
 
+//hsse
+const Ent_Hsse_User = require('./Hsse/ent_hsse_user.model')
+
 
 //bao cao chi so
 const Ent_Loai_Chiso = require('./BaocaochisoModel/ent_loai_chiso.model')
 const Ent_Hangmuc_Chiso = require('./BaocaochisoModel/ent_hangmuc_chiso.model')
-const Ent_Baocaochiso = require('./BaocaochisoModel/ent_baocaochiso.model')
+const Ent_Baocaochiso = require('./BaocaochisoModel/ent_baocaochiso.model');
+const Ent_hsse_user = require("./Hsse/ent_hsse_user.model");
 
 Ent_Hangmuc_Chiso.belongsTo(Ent_duan, {as: "ent_duan", foreignKey: "ID_Duan"})
 Ent_Hangmuc_Chiso.belongsTo(Ent_Loai_Chiso, {as:"ent_loai_chiso", foreignKey: "ID_LoaiCS"})
@@ -59,6 +63,10 @@ Ent_Baocaochiso.hasMany(Ent_duan, {
 Ent_duan.belongsTo(Ent_Baocaochiso, {
   foreignKey: "ID_Duan",
 });
+
+//Hsse =================================================================================
+Ent_hsse_user.belongsTo(Ent_duan,{as: "ent_duan", foreignKey: "ID_Duan"})
+Ent_hsse_user.belongsTo(Ent_user,{as: "ent_user", foreignKey: "ID_User"})
 
 
 //Duan an + khoi cv  ====================================================================
@@ -289,4 +297,5 @@ module.exports = {
   Ent_Baocaochiso,
   Ent_Loai_Chiso,
   Ent_Hangmuc_Chiso,
+  Ent_Hsse_User
 };
