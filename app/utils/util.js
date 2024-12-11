@@ -158,6 +158,14 @@ const getMonthsRange = (start, end) => {
   return months;
 };
 
+const funcCreateYesterDay = () => {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const formattedYesterday = yesterday.toLocaleDateString('en-GB').split('/').join('/');
+    return formattedYesterday
+}
+
 module.exports = {
   convertDateFormat,
   checkDataExcel,
@@ -168,5 +176,6 @@ module.exports = {
   isValidNumber,
   getDynamicTableName,
   getMonthsRange,
-  formatNumber
+  formatNumber,
+  funcCreateYesterDay
 };

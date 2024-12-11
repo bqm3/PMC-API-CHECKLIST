@@ -24,6 +24,7 @@ module.exports = (app) => {
   //========================================== 
   router.get("/list-checklist-error", tb_checklistc.getChecklistsErrorFromYesterday);
   router.get("/percent-checklist-project", tb_checklistc.getProjectsChecklistStatus);
+  router.get("/percent-checklist-project-noti", tb_checklistc.getProjectsChecklistStatus_Noti);
   router.get("/quan-ly-vi-tri", tb_checklistc.getLocationsChecklist);
   router.get("/ti-le-hoan-thanh", tb_checklistc.tiLeHoanThanh);
   router.get("/ti-le-su-co", tb_checklistc.tiLeSuco);

@@ -35,6 +35,9 @@ const Ent_duan = sequelize.define(
     ID_LoaiCS: {
       type: DataTypes.CHAR,
     },
+    Percent: {
+      type: DataTypes.INTEGER,
+    },
     isDelete: {
       type: DataTypes.INTEGER,
       defaultValue: 0,

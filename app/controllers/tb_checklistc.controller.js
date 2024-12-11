@@ -8796,3 +8796,217 @@ cron.schedule("0 */2 * * *", async function () {
     console.error("Error running cron job:", error);
   }
 });
+
+exports.getProjectsChecklistStatus_Noti = async () => {
+  try {
+    const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
+    const DEFAULT_COMPLETION_PERCENT = 70;
+
+    // Parallel database queries for efficiency
+    const [dataChecklistCs, users] = await Promise.all([
+      Tb_checklistc.findAll({
+        attributes: [
+          "ID_ChecklistC",
+          "ID_Duan",
+          "ID_Calv",
+          "Ngay",
+          "TongC",
+          "Tong",
+          "ID_KhoiCV",
+          "isDelete",
+        ],
+        where: {
+          Ngay: yesterday,
+          isDelete: 0,
+          ID_Duan: { [Op.in]: [1] },
+        },
+        include: [
+          { 
+            model: Ent_duan, 
+            attributes: ["Duan", "Percent"],
+            required: true 
+          },
+          { 
+            model: Ent_khoicv, 
+            attributes: ["KhoiCV"],
+            required: true 
+          },
+          { 
+            model: Ent_calv, 
+            attributes: ["Tenca"],
+            required: true 
+          },
+        ],
+      }),
+      Ent_user.findAll({
+        attributes: [
+          "ID_User", 
+          "UserName", 
+          "Hoten", 
+          "ID_KhoiCV", 
+          "ID_Chucvu", 
+          "ID_Duan", 
+          "deviceToken"
+        ],
+        include: {
+          model: Ent_chucvu,
+          attributes: ["Chucvu", "Role"]
+        },
+        where: {
+          ID_Chucvu: { [Op.in]: [2, 3, 8, 10] },
+          ID_Duan: { [Op.in]: [1] },
+          isDelete: 0,
+        },
+      })
+    ]);
+
+  
+    if (!dataChecklistCs.length || !users.length) {
+      return [];
+    }
+
+    const usersByProject = new Map();
+    users.forEach(user => {
+      const projectUsers = usersByProject.get(user.ID_Duan) || [];
+      projectUsers.push({
+        id: user.ID_User,
+        name: user.Hoten,
+        username: user.UserName,
+        deviceToken: user.deviceToken,
+        khoiCV: user.ID_KhoiCV,
+        ent_chucvu: user.ent_chucvu
+      });
+      usersByProject.set(user.ID_Duan, projectUsers);
+    });
+
+
+    const processedProjects = new Map();
+
+    dataChecklistCs.forEach(checklistC => {
+      const projectId = checklistC.ID_Duan;
+      const khoiName = checklistC.ent_khoicv.KhoiCV;
+      const shiftName = checklistC.ent_calv.Tenca;
+
+      if (!processedProjects.has(projectId)) {
+        processedProjects.set(projectId, {
+          projectId,
+          projectName: checklistC.ent_duan.Duan,
+          percent: checklistC.ent_duan.Percent || DEFAULT_COMPLETION_PERCENT,
+          users: usersByProject.get(projectId) || [],
+          createdKhois: new Map()
+        });
+      }
+
+      const project = processedProjects.get(projectId);
+
+
+      if (!project.createdKhois.has(khoiName)) {
+        project.createdKhois.set(khoiName, {
+          ID_KhoiCV: checklistC.ID_KhoiCV,
+          TenKhoi: khoiName,
+          shifts: new Map()
+        });
+      }
+
+      const khoi = project.createdKhois.get(khoiName);
+
+
+      if (!khoi.shifts.has(shiftName)) {
+        khoi.shifts.set(shiftName, {
+          totalTongC: 0,
+          totalTong: 0,
+          userCompletionRates: []
+        });
+      }
+
+      const shift = khoi.shifts.get(shiftName);
+
+      // Calculate completion rate
+      shift.totalTongC += checklistC.TongC || 0;
+      shift.totalTong += checklistC.Tong || 0;
+
+      const userCompletionRate = checklistC.Tong > 0 
+        ? Math.min((checklistC.TongC / checklistC.Tong) * 100, 100) 
+        : 0;
+
+      shift.userCompletionRates.push(userCompletionRate);
+    });
+
+    // Final processing and filtering
+    const finalResults = [];
+
+    for (const [projectId, project] of processedProjects.entries()) {
+      const processedKhois = [];
+
+      for (const [khoiName, khoi] of project.createdKhois.entries()) {
+        let totalKhoiCompletionRatio = 0;
+        let totalShifts = 0;
+
+        // Calculate completion ratio for each shift
+        for (const shift of khoi.shifts.values()) {
+          const shiftCompletionRatio = Math.min(
+            shift.userCompletionRates.reduce((sum, rate) => sum + rate, 0),
+            100
+          );
+
+          totalKhoiCompletionRatio += shiftCompletionRatio;
+          totalShifts++;
+        }
+
+        // Calculate average completion ratio
+        const avgKhoiCompletionRatio = totalShifts > 0 
+          ? totalKhoiCompletionRatio / totalShifts 
+          : 0;
+
+        khoi.completionRatio = Number.isInteger(avgKhoiCompletionRatio)
+          ? avgKhoiCompletionRatio
+          : parseFloat(avgKhoiCompletionRatio.toFixed(2));
+
+        // Determine completion status
+        const comparisonPercent = project.percent || DEFAULT_COMPLETION_PERCENT;
+        khoi.completionStatus = khoi.completionRatio < comparisonPercent ? 1 : 0;
+
+        if (khoi.completionStatus === 1) {
+          processedKhois.push(khoi);
+        }
+      }
+
+      // Filter and process users
+      if (processedKhois.length > 0) {
+        const filteredUsers = project.users.filter(user => 
+          user.khoiCV === null || 
+          processedKhois.some(khoi => khoi.ID_KhoiCV === user.khoiCV)
+        ).map(user => {
+          // Add TenKhoi to matching users
+          const matchingKhoi = processedKhois.find(khoi => khoi.ID_KhoiCV === user.khoiCV);
+          return {
+            ...user,
+            TenKhoi: matchingKhoi ? matchingKhoi.TenKhoi : null,
+            completionRatio: matchingKhoi ? matchingKhoi.completionRatio : null
+          };
+        });
+
+        finalResults.push({
+          projectId: project.projectId,
+          projectName: project.projectName,
+          createdKhois: processedKhois,
+          users: filteredUsers
+        });
+      }
+    }
+
+    return finalResults;
+
+  } catch (err) {
+    // Comprehensive error logging
+    console.error('Error in getProjectsChecklistStatus_Noti:', err);
+    
+    // Depending on your error handling strategy
+    return {
+      error: true,
+      message: err.message || 'An unexpected error occurred',
+      details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    };
+  }
+};
+
