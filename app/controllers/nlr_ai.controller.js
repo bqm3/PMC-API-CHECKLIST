@@ -433,8 +433,8 @@ exports.chatMessage = async (req, res) => {
       return res.status(400).json({ error: "No message provided" });
     }
 
-    // const response = await axios.post('https://pmc.ai.pmcweb.vn/api/v1/process', {
-      const response = await axios.post('http://localhost:5000/api/v1/process', {
+    const response = await axios.post('https://pmc.ai.pmcweb.vn/api/v1/process', {
+      // const response = await axios.post('http://localhost:5000/api/v1/process', {
       question: message
   });
 

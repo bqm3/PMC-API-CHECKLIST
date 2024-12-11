@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: api_checklist
+    container_name: api-checklist
     ports:
       - "6868:6868"
     volumes:

@@ -50,7 +50,6 @@ exports.create = async (req, res, next) => {
 exports.get = async (req, res) => {
   try {
     const userData = req.user.data;
-    console.log('userData',userData)
 
     await Ent_tang.findAll({
       attributes: ["ID_Tang", "Tentang", "ID_Duan", "isDelete"],

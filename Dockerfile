@@ -1,20 +1,18 @@
-# Sử dụng Node.js phiên bản ổn định
 FROM node:20
+WORKDIR /app
 
-# Thiết lập thư mục làm việc trong container
-WORKDIR /usr/src/app
-
-# Copy package.json và package-lock.json
+# Copy package.json và cài đặt dependencies
 COPY package*.json ./
-
-# Cài đặt các dependencies
 RUN npm install
 
-# Copy toàn bộ mã nguồn vào container
+# Copy mã nguồn và file .env
 COPY . .
 
-# Expose port để kết nối
-EXPOSE 3000
+# Cài đặt thư viện dotenv
+RUN npm install dotenv
+
+# Expose port
+EXPOSE 6868
 
 # Command để chạy ứng dụng
 CMD ["node", "index.js"]

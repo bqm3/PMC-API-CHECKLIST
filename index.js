@@ -213,6 +213,7 @@ app.get("/", (req, res) => {
 
 require("./app/routes/ent_calv.routes")(app);
 require("./app/routes/ent_user.routes")(app);
+require("./app/routes/ent_hsse.routes")(app);
 require("./app/routes/ent_tang.routes")(app);
 require("./app/routes/ent_toanha.routes")(app);
 require("./app/routes/ent_khuvuc.routes")(app);
