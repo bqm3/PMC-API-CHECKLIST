@@ -26,118 +26,118 @@ const hsse = sequelize.define(
       type: DataTypes.DATE,
     },
     Dien_cu_dan: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     Dien_cdt: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     Nuoc_cu_dan: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     Nuoc_cdt: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     Xa_thai: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     Rac_sh: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     Muoi_dp: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     PAC: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     NaHSO3: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     NaOH: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     Mat_rd: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     Polymer_Anion: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     Chlorine_bot: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     Chlorine_vien: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     Methanol: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     Dau_may: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     Tui_rac240: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     Tui_rac120: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     Tui_rac20: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     Tui_rac10: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     Tui_rac5: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     giayvs_235: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     giaivs_120: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     giay_lau_tay: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     hoa_chat: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     nuoc_rua_tay: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     nhiet_do: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     nuoc_bu: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     clo: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     PH: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     Poolblock: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     trat_thai: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     Email: {
       type: DataTypes.STRING(255),
     },
     pHMINUS: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     axit: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     PN180: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
     modifiedBy: {
       type: DataTypes.STRING(255),
     },
     chiSoCO2: {
-      type: DataTypes.CHAR,
+      type: DataTypes.DOUBLE,
     },
    
   },
