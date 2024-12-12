@@ -14,7 +14,7 @@ const hsse = sequelize.define(
       type: DataTypes.STRING(255),
     },
     Ngay_ghi_nhan: {
-      type: DataTypes.DATE,
+      type: DataTypes.STRING(50),
     },
     Nguoi_tao: {
       type: DataTypes.STRING(255),

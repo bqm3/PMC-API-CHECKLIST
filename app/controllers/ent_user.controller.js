@@ -38,6 +38,7 @@ exports.login = async (req, res) => {
         "ID_Chucvu",
         "ID_Chinhanh",
         "ID_Duan",
+        "Hoten",
         "ID_KhoiCV",
         "Password",
         "PasswordPrivate",
