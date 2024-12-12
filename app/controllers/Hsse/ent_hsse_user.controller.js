@@ -63,7 +63,6 @@ exports.checkHSSE = async (req, res) => {
       show: true,
     });
   } catch (error) {
-    console.log("error", error);
     return res.status(500).json({
       message: error.mesage || "Có lỗi xảy ra",
     });
@@ -142,24 +141,31 @@ exports.getHSSE_User_ByDuAn = async (req, res) => {
 exports.checkSubmitHSSE = async (req, res) => {
   try {
     const userData = req.user.data;
-    const userDuAn = await Ent_Hsse_User.findOne({
-      where: {
-        ID_Duan: userData.ID_Duan,
-        ID_User: userData.ID_User,
-        isDelete: 0,
-      },
-    });
-
-    if (userDuAn) {
-      return res.status(201).json({
+    if (userData?.ent_chucvu?.Role == 1) {
+      return res.status(200).json({
         message: "Thành công",
         data: true,
       });
     } else {
-      return res.status(200).json({
-        message: "Thành công",
-        data: false,
+      const userDuAn = await Ent_Hsse_User.findOne({
+        where: {
+          ID_Duan: userData.ID_Duan,
+          ID_User: userData.ID_User,
+          isDelete: 0,
+        },
       });
+
+      if (userDuAn) {
+        return res.status(201).json({
+          message: "Thành công",
+          data: true,
+        });
+      } else {
+        return res.status(200).json({
+          message: "Thành công",
+          data: false,
+        });
+      }
     }
   } catch (error) {
     return res.status(500).json({
@@ -172,7 +178,7 @@ exports.getHSSE = async (req, res) => {
   try {
     const Ngay_ghi_nhan = moment(new Date()).format("YYYY-MM-DD");
     const Ngay_ghi_nhan_truoc_do = moment(Ngay_ghi_nhan, "YYYY-MM-DD")
-      .subtract(7, "days")
+      .subtract(6, "days")
       .format("YYYY-MM-DD");
     const userData = req.user.data;
     const resData = await hsse.findAll({
