@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes } = require("sequelize");
+const { Sequelize, DataTypes, STRING } = require("sequelize");
 const sequelize = require("../config/db.config");
 
 const hsse = sequelize.define(
@@ -11,13 +11,13 @@ const hsse = sequelize.define(
       autoIncrement: true,
     },
     Ten_du_an: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.STRING(100),
     },
     Ngay_ghi_nhan: {
-      type: DataTypes.STRING(50),
+      type: DataTypes.STRING(20),
     },
     Nguoi_tao: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.STRING(100),
     },
     createdAt: {
       type: DataTypes.DATE,
@@ -26,118 +26,118 @@ const hsse = sequelize.define(
       type: DataTypes.DATE,
     },
     Dien_cu_dan: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     Dien_cdt: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     Nuoc_cu_dan: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     Nuoc_cdt: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     Xa_thai: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     Rac_sh: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     Muoi_dp: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     PAC: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     NaHSO3: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     NaOH: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     Mat_rd: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     Polymer_Anion: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     Chlorine_bot: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     Chlorine_vien: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     Methanol: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     Dau_may: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     Tui_rac240: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     Tui_rac120: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     Tui_rac20: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     Tui_rac10: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     Tui_rac5: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     giayvs_235: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     giaivs_120: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     giay_lau_tay: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     hoa_chat: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     nuoc_rua_tay: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     nhiet_do: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     nuoc_bu: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     clo: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     PH: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     Poolblock: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     trat_thai: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     Email: {
       type: DataTypes.STRING(255),
     },
     pHMINUS: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     axit: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     PN180: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
     modifiedBy: {
       type: DataTypes.STRING(255),
     },
     chiSoCO2: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.CHAR,
     },
    
   },
@@ -150,3 +150,4 @@ const hsse = sequelize.define(
 
 
 module.exports = hsse;
+

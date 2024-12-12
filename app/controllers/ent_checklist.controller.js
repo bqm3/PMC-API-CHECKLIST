@@ -1271,16 +1271,15 @@ exports.filterChecklists = async (req, res) => {
   try {
     const userData = req.user.data;
     const ID_ChecklistC = req.params.idc;
-    const ID_Calv = req.params.id_calv;
     const ID_Hangmucs = req.body.dataHangmuc;
     const ID_KhoiCV = req.body.ID_KhoiCV;
 
-    const tbChecklist = await Tb_checklistc.findByPk(ID_ChecklistC, {
-      attributes: ["ID_Hangmucs", "isDelete"],
-      where: {
-        isDelete: 0,
-      },
-    });
+    // const tbChecklist = await Tb_checklistc.findByPk(ID_ChecklistC, {
+    //   attributes: ["ID_Hangmucs", "isDelete"],
+    //   where: {
+    //     isDelete: 0,
+    //   },
+    // });
 
     const checklistItems = await Tb_checklistchitiet.findAll({
       attributes: ["isDelete", "ID_Checklist", "ID_ChecklistC", "isCheckListLai"],
@@ -1325,7 +1324,6 @@ exports.filterChecklists = async (req, res) => {
     };
 
     whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
-    // whereCondition["$ent_hangmuc.ID_KhoiCV$"] = userData?.ID_KhoiCV;
 
     if (
       checklistIds &&
@@ -1375,7 +1373,6 @@ exports.filterChecklists = async (req, res) => {
         "Giatrinhan",
         "Tinhtrang",
         "ID_User",
-       
         "calv_1",
         "calv_2",
         "calv_3",
@@ -1394,7 +1391,7 @@ exports.filterChecklists = async (req, res) => {
           ],
           where: {
             ID_Hangmuc: {
-              [Op.in]: tbChecklist.ID_Hangmucs,
+              [Op.in]: ID_Hangmucs,
             },
           },
         },
@@ -1728,13 +1725,12 @@ exports.filterReturn = async (req, res) => {
   try {
     const userData = req.user.data;
     const ID_ChecklistC = req.params.idc;
-    const ID_ThietLapCa = req.params.id_calv;
+    const ID_Calv = req.params.id_calv;
 
     const tbChecklist = await Tb_checklistc.findByPk(ID_ChecklistC, {
-      attributes: ["ID_Hangmucs", "isDelete", "ID_ThietLapCa"],
+      attributes: ["ID_Hangmucs", "isDelete", "ID_ThietLapCa", "ID_Calv"],
       where: {
         isDelete: 0,
-        ID_ThietLapCa: ID_ThietLapCa,
       },
     });
 
