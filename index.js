@@ -19,6 +19,7 @@ const { exec } = require("child_process");
 var serviceAccount = require("./pmc-cskh-2c225dda2a4d.json");
 const sequelize = require("./app/config/db.config");
 const { Sequelize, Op } = require("sequelize");
+const { funcAutoNoti } = require("./noti");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -78,7 +79,7 @@ app.get("/", (req, res) => {
 });
 
 // backup folder
-if (process.env.BACKUP_ENV === "local") {
+if (process.env.BACKUP_ENV === "development") {
   async function exportDatabaseFromYesterday() {
     // Tính ngày hôm qua
     const yesterday = new Date();
@@ -180,7 +181,6 @@ if (process.env.BACKUP_ENV === "local") {
 }
 
 
-//  backup driver
 if(process.env.BACKUP_DRIVER === "development") {
   async function exportDatabaseFromYesterday() {
     // Tính ngày hôm qua
@@ -351,6 +351,7 @@ if(process.env.BACKUP_DRIVER === "development") {
   console.log("Backup chỉ chạy ở môi trường development. NODE_ENV hiện tại là:", process.env.NODE_ENV);
 }
 
+// funcAutoNoti();
 
 require("./app/routes/ent_calv.routes")(app);
 require("./app/routes/ent_user.routes")(app);

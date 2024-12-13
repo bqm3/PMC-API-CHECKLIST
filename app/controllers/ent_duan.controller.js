@@ -41,6 +41,7 @@ exports.create = async (req, res) => {
       ID_Linhvuc: req.body.ID_Linhvuc || null,
       ID_Loaihinh: req.body.ID_Loaihinh || null,
       ID_Phanloai: req.body.ID_Phanloai || null,
+      Percent: req.body.Percent || null,
       Diachi: req.body.Diachi,
       Vido: req.body.Vido,
       Kinhdo: req.body.Kinhdo,
@@ -84,6 +85,7 @@ exports.get = async (req, res) => {
           "ID_Loaihinh",
           "ID_Phanloai",
           "Vido",
+          "Percent",
           "Kinhdo",
           "Logo",
           "isDelete",
@@ -128,6 +130,7 @@ exports.get = async (req, res) => {
           "ID_Linhvuc",
           "ID_Loaihinh",
           "ID_Phanloai",
+          "Percent",
           "Vido",
           "Kinhdo",
           "Logo",
@@ -253,9 +256,6 @@ exports.update = async (req, res) => {
       uploadedFileIds.push(file); // Đẩy đối tượng tệp vào mảng
     });
 
-    console.log();
-
-    console.log("uploadedFileIds", uploadedFileIds);
     let Anh = "";
     if ( uploadedFileIds.length > 0) {
       if (uploadedFileIds) {
@@ -274,6 +274,7 @@ exports.update = async (req, res) => {
           Kinhdo: req.body.Kinhdo,
           Logo: req.body.Logo || `https://checklist.pmcweb.vn/be/upload/logo/${Anh}`,
           Ngaybatdau: req.body.Ngaybatdau,
+          Percent: req.body.Percent,
           ID_Nhom: req.body.ID_Nhom || null,
           ID_Chinhanh: req.body.ID_Chinhanh || null,
           ID_Linhvuc: req.body.ID_Linhvuc || null,
@@ -347,6 +348,7 @@ exports.getKhuvucByDuan = async (req, res) => {
         "ID_Linhvuc",
         "ID_Loaihinh",
         "ID_Phanloai",
+        "Percent",
         "Vido",
         "Kinhdo",
         "Logo",
@@ -427,6 +429,7 @@ exports.getThongtinduan = async (req, res) => {
         "ID_Nhom",
         "ID_Chinhanh",
         "ID_Linhvuc",
+        "Percent",
         "ID_Loaihinh",
         "ID_Phanloai",
         "Logo",
@@ -507,82 +510,6 @@ exports.getThongtinduan = async (req, res) => {
       where: whereCondition, // Apply the dynamic where condition
     });
 
-    // const result = data.map((duan) => {
-    //   let totalHangmucInDuan = 0;
-    //   let totalKhuvucInDuan = 0;
-
-    //   const toanhas = duan.ent_toanha.map((toanha) => {
-    //     let totalHangmucInToanha = 0;
-    //     const khoisSet = new Set(); // Sử dụng Set để loại bỏ trùng lặp tên khối
-    //     const khuvucs = toanha.ent_khuvuc.map((khuvuc) => {
-    //       const hangmucs = khuvuc.ent_hangmuc.map((hangmuc) => ({
-    //         ID_Hangmuc: hangmuc.ID_Hangmuc,
-    //         Hangmuc: hangmuc.Hangmuc,
-    //         MaQrCode: hangmuc.MaQrCode,
-    //         Tieuchuankt: hangmuc.Tieuchuankt,
-    //       }));
-
-    //       const khoicvs = khuvuc.ent_khuvuc_khoicvs.map((cv) => {
-    //         khoisSet.add(cv.ent_khoicv.KhoiCV); // Thêm tên khối vào Set
-    //         return {
-    //           ID_KhoiCV: cv.ID_KhoiCV,
-    //           ID_Khuvuc: cv.ID_Khuvuc,
-    //           ID_KV_CV: cv.ID_KV_CV,
-    //         };
-    //       });
-
-    //       const hangMucLength = hangmucs.length;
-    //       totalHangmucInToanha += hangMucLength;
-    //       return {
-    //         ID_Khuvuc: khuvuc.ID_Khuvuc,
-    //         ID_KhoiCVs: khoicvs,
-    //         Makhuvuc: khuvuc.Makhuvuc,
-    //         MaQrCode: khuvuc.MaQrCode,
-    //         Tenkhuvuc: khuvuc.Tenkhuvuc,
-    //         hangMucLength: hangMucLength,
-    //         hangmuc: hangmucs,
-    //       };
-    //     });
-
-    //     const khuvucLength = khuvucs.length;
-    //     totalHangmucInDuan += totalHangmucInToanha;
-    //     totalKhuvucInDuan += khuvucLength;
-
-    //     const tenKhois = Array.from(khoisSet); // Chuyển Set thành mảng tên khối
-    //     return {
-    //       ID_Toanha: toanha.ID_Toanha,
-    //       Toanha: toanha.Toanha,
-    //       Sotang: toanha.Sotang,
-    //       Vido: toanha.Vido,
-    //       Kinhdo: toanha.Kinhdo,
-    //       khuvucLength: khuvucLength,
-    //       khuvuc: khuvucs,
-    //       totalHangmucInToanha,
-    //       tenKhois, // Thêm trường danh sách tên khối
-    //     };
-    //   });
-    //   // "ID_Nhom",
-    //   // "ID_Chinhanh",
-    //   // "ID_Linhvuc",
-    //   // "ID_Loaihinh",
-    //   // "ID_Phanloai",
-    //   return {
-    //     ID_Duan: duan.ID_Duan,
-    //     ID_Nhom: duan.ID_Nhom,
-    //     ID_Chinhanh: duan.ID_Chinhanh,
-    //     ID_Loaihinh: duan.ID_Loaihinh,
-    //     ID_Phanloai: duan.ID_Phanloai,
-    //     Duan: duan.Duan,
-    //     Diachi: duan.Diachi,
-    //     Vido: duan.Vido,
-    //     Kinhdo: duan.Kinhdo,
-    //     Logo: duan.Logo,
-    //     toanhas: toanhas,
-    //     totalHangmucInDuan,
-    //     totalKhuvucInDuan,
-    //   };
-    // });
-
     res.status(200).json({
       message: "Danh sách dự án với khu vực!",
       data: data,
@@ -607,6 +534,7 @@ exports.getThongtinduantheonhom = async (req, res) => {
         "ID_Chinhanh",
         "ID_Linhvuc",
         "ID_Loaihinh",
+        "Percent",
         "ID_Phanloai",
         "Logo",
         "isDelete",
@@ -672,6 +600,7 @@ exports.getProjectbyName = async (req, res) => {
         "ID_Chinhanh",
         "ID_Linhvuc",
         "ID_Loaihinh",
+        "Percent",
         "ID_Phanloai",
         "Logo",
         "isDelete",
