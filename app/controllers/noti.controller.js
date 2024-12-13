@@ -31,3 +31,4 @@ exports.notiAll = async (req, res) => {
     data: resData,
   });
 };
+
