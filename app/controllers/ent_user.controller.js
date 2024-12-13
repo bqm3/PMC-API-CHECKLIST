@@ -828,7 +828,6 @@ exports.deviceToken = async (req, res, next) => {
     const userData = req.user.data;
     if (userData) {
       const { deviceToken } = req.body;
-      console.log('deviceToken', deviceToken)
 
       // Tìm kiếm deviceToken trong bảng Ent_user
       const existingUser = await Ent_user.findOne({
@@ -848,8 +847,6 @@ exports.deviceToken = async (req, res, next) => {
           ID_User: { [Op.ne]: userData.ID_User },
         },
       });
-      console.log('existingUser', existingUser)
-
       // Nếu tìm thấy user khác có deviceToken này, cập nhật deviceToken của họ thành null
       if (existingUser) {
         await Ent_user.update(
