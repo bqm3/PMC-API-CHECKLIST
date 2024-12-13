@@ -9,13 +9,16 @@ const mysqldump = require("mysqldump");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const admin = require("firebase-admin");
+const AdmZip = require("adm-zip");
+const archiver = require("archiver");
+const { Readable } = require('stream');
 const app = express();
+const { exec } = require("child_process");
 
-var serviceAccount = require("./pmc-cskh-firebase-adminsdk-y7378-5122f6edc7.json");
-// const {
-//   danhSachDuLieu,
-//   getProjectsChecklistStatus,
-// } = require("./app/controllers/nlr_ai.controller");
+
+var serviceAccount = require("./pmc-cskh-2c225dda2a4d.json");
+const sequelize = require("./app/config/db.config");
+const { Sequelize, Op } = require("sequelize");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -41,6 +44,7 @@ const auth = new google.auth.GoogleAuth({
   credentials: credentials,
   scopes: SCOPES,
 });
+
 const drive = google.drive({
   version: "v3",
   auth: auth,
@@ -73,142 +77,279 @@ app.get("/", (req, res) => {
   res.json("Hello World!");
 });
 
+// backup folder
+if (process.env.BACKUP_ENV === "local") {
+  async function exportDatabaseFromYesterday() {
+    // Tính ngày hôm qua
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const startOfDay = new Date(yesterday.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(yesterday.setHours(23, 59, 59, 999));
+
+    // Lấy tháng và năm hiện tại
+    const month = (yesterday.getMonth() + 1).toString().padStart(2, '0');  // Tháng hiện tại (01-12)
+    const year = yesterday.getFullYear();  // Năm hiện tại
+
+    // Tạo tên các bảng động
+    const dynamicTables = [
+      "HSSE",
+      "ent_checklist",
+      "ent_khuvuc",
+      "ent_hangmuc",
+      "tb_checklistc",
+      "tb_checklistchitietdone",
+      "tb_checklistchitiet",
+      `tb_checklistchitiet_${month}_${year}`,
+      `tb_checklistchitietdone_${month}_${year}`,
+    ];
+
+    try {
+      // Lấy dữ liệu từ các bảng
+      const backupDir = path.join(__dirname, "backup");
+      if (!fs.existsSync(backupDir)) {
+        fs.mkdirSync(backupDir);
+      }
+
+      const sqlFilePath = path.join(backupDir, `backup_yesterday_${new Date().toISOString().slice(0, 10)}.sql`);
+
+      let sqlData = '';
+
+      for (const table of dynamicTables) {
+        // Lấy dữ liệu từ mỗi bảng
+        const results = await sequelize.query(
+          `SELECT * FROM ${table} WHERE createdAt BETWEEN ? AND ?`,
+          {
+            replacements: [startOfDay, endOfDay],
+            type: Sequelize.QueryTypes.SELECT,
+          }
+        );
+
+        if (results.length > 0) {
+          sqlData += `-- Data from table: ${table}\n`;
+          results.forEach((row) => {
+            const insertSQL = `INSERT INTO ${table} (${Object.keys(row).join(", ")}) VALUES (${Object.values(row).map((value) => `'${value}'`).join(", ")});\n`;
+            sqlData += insertSQL;
+          });
+          sqlData += `\n`;
+        }
+      }
+
+      if (!sqlData) {
+        console.log("Không có dữ liệu nào trong ngày hôm qua.");
+        return;
+      }
+
+      // Tạo file SQL từ dữ liệu truy vấn
+      fs.writeFileSync(sqlFilePath, sqlData);
+      console.log(`Dữ liệu đã được xuất thành công vào file ${sqlFilePath}`);
+
+      // Nén file SQL thành file ZIP
+      const zipFilePath = sqlFilePath + ".zip";
+      const output = fs.createWriteStream(zipFilePath);
+      const archive = archiver("zip", {
+        zlib: { level: 9 } // Đặt mức độ nén
+      });
+
+      archive.pipe(output);
+      archive.file(sqlFilePath, { name: path.basename(sqlFilePath) });
+      await archive.finalize();
+
+      console.log(`Đã nén thành công file ${sqlFilePath} thành ${zipFilePath}`);
+      
+      // Xóa file SQL gốc sau khi nén
+      fs.unlinkSync(sqlFilePath);
+      
+      return zipFilePath;
+    } catch (error) {
+      console.error("Lỗi khi xuất dữ liệu:", error);
+    }
+  }
+
+  // Lên lịch chạy hàng ngày lúc 12 giờ trưa
+  cron.schedule("30 12 * * *", async () => {
+    try {
+      console.log("Đang xuất cơ sở dữ liệu...");
+      const backupFile = await exportDatabaseFromYesterday();
+      console.log(`Đã xuất thành công vào ${backupFile}`);
+    } catch (error) {
+      console.error("Lỗi khi xuất cơ sở dữ liệu:", error);
+    }
+  });
+} else {
+  console.log("Backup chỉ chạy ở môi trường local. NODE_ENV hiện tại là:", process.env.NODE_ENV);
+}
 
 
-// // Hàm upload file lên Google Drive
-// async function uploadFile(filePath) {
-//   try {
-//     // ID của thư mục trên Google Drive
-//     const folderId = "1TAMvnXHdhkTov68oKrLbB6DE0bVZezAL";
-
-//     const createFile = await drive.files.create({
-//       requestBody: {
-//         name: path.basename(filePath),
-//         mimeType: "application/sql",
-//         parents: [folderId],
-//       },
-//       media: {
-//         mimeType: "application/sql",
-//         body: fs.createReadStream(filePath),
-//       },
-//     });
-
-//     const fileId = createFile.data.id;
-//     console.log(`File uploaded with ID: ${fileId}`);
-
-//     // Đặt quyền cho file
-//     const getUrl = await setFilePublic(fileId);
-//     console.log(getUrl.data);
-//   } catch (error) {
-//     console.error(error);
-//   }
-// }
-
-// // Hàm đặt quyền công khai cho file
-// async function setFilePublic(fileId) {
-//   try {
-//     await drive.permissions.create({
-//       fileId,
-//       requestBody: {
-//         role: "reader",
-//         type: "anyone",
-//       },
-//     });
-
-//     const getUrl = await drive.files.get({
-//       fileId,
-//       fields: "webViewLink, webContentLink",
-//     });
-
-//     return getUrl;
-//   } catch (error) {
-//     console.error(error);
-//   }
-// }
-
-// // Hàm thực hiện toàn bộ quá trình
-// async function handleBackup() {
-//   try {
-//     const driveInfo = await drive.about.get({ fields: 'storageQuota' });
-//     const { limit, usage } = driveInfo.data.storageQuota;
-
-//     if (Number(usage) >= Number(limit)) {
-//       console.error('Drive quota exceeded. Skipping backup.');
-//       return;
-//     }
-
-//     const backupFilePath = await exportDatabase(); // Xuất cơ sở dữ liệu
-//     await uploadFile(backupFilePath); // Upload file lên Google Drive
-
-//     if (fs.existsSync(backupFilePath)) {
-//       fs.unlinkSync(backupFilePath); // Xóa file
-//       console.log(`Backup file deleted: ${backupFilePath}`);
-//     }
-//   } catch (error) {
-//     console.error(error);
-//   }
-// }
-
-// const lockFilePath = path.join(__dirname, "cron_backup.lock");
-// cron.schedule("11 10 * * *", async () => {
-//   console.log("Starting Cron Job at 4 AM");
-
-//   // Kiểm tra xem file khóa đã tồn tại chưa
-//   if (fs.existsSync(lockFilePath)) {
-//     console.log("Cron job is already running. Skipping this instance.");
-//     return;
-//   }
-
-//   // Tạo file khóa
-//   fs.writeFileSync(lockFilePath, "LOCKED");
-//   console.log("Lock file created.");
-
-//   try {
-//     // Thực hiện công việc của bạn
-//     await handleBackup();
-//     console.log("Cron job completed successfully.");
-//   } catch (error) {
-//     console.error("Error running cron job:", error);
-//   } finally {
-//     // Xóa file khóa
-//     if (fs.existsSync(lockFilePath)) {
-//       fs.unlinkSync(lockFilePath);
-//       console.log("Lock file removed.");
-//     }
-//   }
-// });
-
-// async function checkDriveStorage() {
-//   try {
-//     // Khởi tạo xác thực
-//     const auth = new google.auth.GoogleAuth({
-//       keyFile: credentials, // Thay bằng đường dẫn tới tệp JSON của bạn
-//       scopes: ["https://www.googleapis.com/auth/drive.metadata.readonly"],
-//     });
-
-//     const drive = google.drive({ version: "v3", auth });
-
-//     // Gọi API để lấy thông tin dung lượng
-//     const response = await drive.about.get({
-//       fields: "storageQuota",
-//     });
-
-//     const { storageQuota } = response.data;
-
-//     console.log("Dung lượng Drive:");
-//     console.log(`Tổng dung lượng: ${storageQuota.limit || "Không giới hạn"}`);
-//     console.log(`Đã sử dụng: ${storageQuota.usage}`);
-//     console.log(`Dung lượng đã sử dụng cho Drive: ${storageQuota.usageInDrive}`);
-//     console.log(
-//       `Dung lượng đã sử dụng cho các mục dùng chung: ${storageQuota.usageInDriveTrash}`
-//     );
-//   } catch (error) {
-//     console.error("Lỗi khi kiểm tra dung lượng:", error.message);
-//   }
-// }
-
-// checkDriveStorage()
-
+//  backup driver
+if(process.env.BACKUP_DRIVER === "development") {
+  async function exportDatabaseFromYesterday() {
+    // Tính ngày hôm qua
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const startOfDay = new Date(yesterday.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(yesterday.setHours(23, 59, 59, 999));
+  
+    // Lấy tháng và năm hiện tại
+    const month = (yesterday.getMonth() + 1).toString().padStart(2, '0');  // Tháng hiện tại (01-12)
+    const year = yesterday.getFullYear();  // Năm hiện tại
+  
+    // Tạo tên các bảng động
+    const dynamicTables = [
+      "HSSE",
+      "ent_checklist",
+      "ent_khuvuc",
+      "ent_hangmuc",
+      "tb_checklistc",
+      "tb_checklistchitietdone",
+      "tb_checklistchitiet",
+      `tb_checklistchitiet_${month}_${year}`,
+      `tb_checklistchitietdone_${month}_${year}`,
+    ];
+  
+    try {
+      // Lấy dữ liệu từ các bảng
+      const backupDir = path.join(__dirname, "backup");
+      if (!fs.existsSync(backupDir)) {
+        fs.mkdirSync(backupDir);
+      }
+  
+      const sqlFilePath = path.join(backupDir, `backup_yesterday_${new Date().toISOString().slice(0, 10)}.sql`);
+  
+      let sqlData = '';
+  
+      for (const table of dynamicTables) {
+        const results = await sequelize.query(
+          `SELECT * FROM ${table} WHERE createdAt BETWEEN ? AND ?`,
+          {
+            replacements: [startOfDay, endOfDay],
+            type: Sequelize.QueryTypes.SELECT,
+          }
+        );
+  
+        if (results.length > 0) {
+          sqlData += `-- Data from table: ${table}\n`;
+          results.forEach((row) => {
+            const insertSQL = `INSERT INTO ${table} (${Object.keys(row).join(", ")}) VALUES (${Object.values(row).map((value) => `'${value}'`).join(", ")});\n`;
+            sqlData += insertSQL;
+          });
+          sqlData += `\n`;
+        }
+      }
+  
+      if (!sqlData) {
+        console.log("Không có dữ liệu nào trong ngày hôm qua.");
+        return;
+      }
+  
+      // Tạo file SQL từ dữ liệu truy vấn
+      fs.writeFileSync(sqlFilePath, sqlData);
+      console.log(`Dữ liệu đã được xuất thành công vào file ${sqlFilePath}`);
+  
+      // Nén file SQL thành file ZIP
+      const zipFilePath = sqlFilePath + ".zip";
+      const output = fs.createWriteStream(zipFilePath);
+      const archive = archiver("zip", {
+        zlib: { level: 9 } // Đặt mức độ nén
+      });
+  
+      archive.pipe(output);
+      archive.file(sqlFilePath, { name: path.basename(sqlFilePath) });
+      await archive.finalize();
+  
+      console.log(`Đã nén thành công file ${sqlFilePath} thành ${zipFilePath}`);
+      
+      // Xóa file SQL gốc sau khi nén
+      fs.unlinkSync(sqlFilePath);
+      
+      return zipFilePath;
+    } catch (error) {
+      console.error("Lỗi khi xuất dữ liệu:", error);
+    }
+  }
+  
+  async function uploadFile(filePath) {
+    try {
+      const folderId = "1TAMvnXHdhkTov68oKrLbB6DE0bVZezAL"; // Thay bằng ID thư mục của bạn
+  
+      // Tạo stream từ file ZIP
+      const fileStream = fs.createReadStream(filePath);
+  
+      // Tạo file và upload lên Google Drive
+      const createFile = await drive.files.create({
+        requestBody: {
+          name: path.basename(filePath),
+          mimeType: 'application/zip',  // Đặt loại MIME cho file zip
+          parents: [folderId],
+        },
+        media: {
+          mimeType: 'application/zip',
+          body: fileStream,  // Dùng stream từ file
+        },
+      });
+  
+      const fileId = createFile.data.id;
+      console.log(`File uploaded with ID: ${fileId}`);
+  
+      // Đặt quyền công khai cho file
+      const getUrl = await setFilePublic(fileId);
+      console.log(getUrl.data);
+  
+      // Xóa file ZIP sau khi upload thành công
+      fs.unlinkSync(filePath);
+      console.log(`Đã xóa file ZIP: ${filePath}`);
+  
+    } catch (error) {
+      console.error("Error uploading file:", error);
+    }
+  }
+  
+  // Hàm đặt quyền công khai cho file trên Google Drive
+  async function setFilePublic(fileId) {
+    try {
+      await drive.permissions.create({
+        fileId,
+        requestBody: {
+          role: 'reader',
+          type: 'anyone',
+        },
+      });
+  
+      const getUrl = await drive.files.get({
+        fileId,
+        fields: 'webViewLink, webContentLink',
+      });
+  
+      return getUrl;
+    } catch (error) {
+      console.error("Error setting file permissions:", error);
+    }
+  }
+  
+  // Hàm thực hiện toàn bộ quá trình
+  async function handleBackup() {
+    try {
+      const sqlData = await exportDatabaseFromYesterday(); // Xuất cơ sở dữ liệu
+      if (sqlData) {
+        await uploadFile(sqlData); // Upload file ZIP lên Google Drive
+      }
+    } catch (error) {
+      console.error("Error during backup process:", error);
+    }
+  }
+  
+  // Lên lịch chạy hàng ngày lúc 4 AM
+  cron.schedule('57 11 * * *', async () => {
+    console.log('Running Cron Job at 4 AM');
+    try {
+      await handleBackup();
+      console.log('Cron job completed successfully');
+    } catch (error) {
+      console.error('Error running cron job:', error);
+    }
+  });
+} else {
+  console.log("Backup chỉ chạy ở môi trường development. NODE_ENV hiện tại là:", process.env.NODE_ENV);
+}
 
 
 require("./app/routes/ent_calv.routes")(app);
