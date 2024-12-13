@@ -899,7 +899,7 @@ exports.getChecklist = async (req, res) => {
         "Giatriloi",
         "Giatrinhan",
         "ID_User",
-       
+
         "calv_1",
         "calv_2",
         "calv_3",
@@ -1271,23 +1271,36 @@ exports.filterChecklists = async (req, res) => {
   try {
     const userData = req.user.data;
     const ID_ChecklistC = req.params.idc;
-    const ID_Hangmucs = req.body.dataHangmuc;
+    const ID_Hangmucs = req.body?.dataHangmuc;
     const ID_KhoiCV = req.body.ID_KhoiCV;
-
-    // const tbChecklist = await Tb_checklistc.findByPk(ID_ChecklistC, {
-    //   attributes: ["ID_Hangmucs", "isDelete"],
-    //   where: {
-    //     isDelete: 0,
-    //   },
-    // });
+    let tbChecklist;
+    if (!ID_Hangmucs) {
+      tbChecklist = await Tb_checklistc.findOne({
+        attributes: ["ID_Hangmucs", "isDelete", "ID_ChecklistC"],
+        where: {
+          isDelete: 0,
+          ID_ChecklistC,
+        },
+      });
+    }
 
     const checklistItems = await Tb_checklistchitiet.findAll({
-      attributes: ["isDelete", "ID_Checklist", "ID_ChecklistC", "isCheckListLai"],
-      where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC, isCheckListLai: 0  },
+      attributes: [
+        "isDelete",
+        "ID_Checklist",
+        "ID_ChecklistC",
+        "isCheckListLai",
+      ],
+      where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC, isCheckListLai: 0 },
     });
 
     const checklistDoneItems = await Tb_checklistchitietdone.findAll({
-      attributes: ["Description", "isDelete", "ID_ChecklistC", "isCheckListLai"],
+      attributes: [
+        "Description",
+        "isDelete",
+        "ID_ChecklistC",
+        "isCheckListLai",
+      ],
       where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC, isCheckListLai: 0 },
     });
 
@@ -1319,7 +1332,7 @@ exports.filterChecklists = async (req, res) => {
     let whereCondition = {
       isDelete: 0,
       ID_Hangmuc: {
-        [Op.in]: ID_Hangmucs,
+        [Op.in]: ID_Hangmucs || tbChecklist?.ID_Hangmucs,
       },
     };
 
@@ -1391,7 +1404,7 @@ exports.filterChecklists = async (req, res) => {
           ],
           where: {
             ID_Hangmuc: {
-              [Op.in]: ID_Hangmucs,
+              [Op.in]: ID_Hangmucs || tbChecklist.ID_Hangmucs,
             },
           },
         },
@@ -1582,7 +1595,7 @@ exports.filterChecklistWeb = async (req, res) => {
         "Giatrinhan",
         "Tinhtrang",
         "ID_User",
-       
+
         "calv_1",
         "calv_2",
         "calv_3",
@@ -1673,24 +1686,24 @@ exports.filterChecklistWeb = async (req, res) => {
     checklistData.forEach((item) => {
       const khuVucKey = item.ID_Khuvuc;
       const hangMucKey = item.ID_Hangmuc;
-  
+
       if (!khuVucMap[khuVucKey]) {
         khuVucMap[khuVucKey] = {
           ent_khuvuc: item.ent_khuvuc,
           hangmucs: {},
         };
       }
-    
+
       // Khởi tạo hạng mục nếu chưa tồn tại
       if (!khuVucMap[khuVucKey].hangmucs[hangMucKey]) {
         khuVucMap[khuVucKey].hangmucs[hangMucKey] = {
           ent_hangmuc: {
             ...item.ent_hangmuc,
-            checklists: []
+            checklists: [],
           },
         };
       }
-    
+
       // Thêm checklist vào danh sách checklists của ent_hangmuc
       khuVucMap[khuVucKey].hangmucs[hangMucKey].ent_hangmuc.checklists.push({
         ID_Checklist: item.ID_Checklist,
@@ -1701,7 +1714,6 @@ exports.filterChecklistWeb = async (req, res) => {
         ID_Hangmuc: item.ID_Hangmuc,
       });
     });
-
 
     // Chuyển dữ liệu từ object sang array
     const result = Object.values(khuVucMap).map((khuvuc) => ({
@@ -1768,7 +1780,7 @@ exports.filterReturn = async (req, res) => {
         "isImportant",
         "Tinhtrang",
         "ID_User",
-       
+
         "calv_1",
         "calv_2",
         "calv_3",
@@ -1888,7 +1900,8 @@ exports.getListChecklistWeb = async (req, res) => {
       const exists = arrDuanArray.includes(userData?.ID_Duan);
       if (!exists) {
         // Thêm điều kiện tham chiếu cột từ bảng liên kết
-        whereCondition["$ent_khuvuc.ent_khuvuc_khoicvs.ID_KhoiCV$"] = userData.ID_KhoiCV;
+        whereCondition["$ent_khuvuc.ent_khuvuc_khoicvs.ID_KhoiCV$"] =
+          userData.ID_KhoiCV;
         // "$ent_khuvuc_khoicvs.ID_KhoiCV$": userData.ID_KhoiCV,
       }
     }
@@ -1910,7 +1923,7 @@ exports.getListChecklistWeb = async (req, res) => {
         "isImportant",
         "isCheck",
         "Giatrinhan",
-       
+
         "Tinhtrang",
         "calv_1",
         "calv_2",
@@ -2034,7 +2047,7 @@ exports.getChecklistTotal = async (req, res) => {
         "isCheck",
         "Giatrinhan",
         "ID_User",
-       
+
         "calv_1",
         "calv_2",
         "calv_3",
@@ -2370,7 +2383,7 @@ exports.uploadFiles = async (req, res) => {
               "isImportant",
               "isCheck",
               "Giatrinhan",
-             
+
               "Tinhtrang",
               "calv_1",
               "calv_2",
@@ -2472,16 +2485,18 @@ exports.uploadFixFiles = async (req, res) => {
             continue;
           }
 
-          const maQrKhuVuc = generateQRCodeKV(tenToanha,
+          const maQrKhuVuc = generateQRCodeKV(
+            tenToanha,
             tenKhuvuc,
             tenTang,
-            userData.ID_Duan);
-          const maQrHangMuc = generateQRCode(tenToanha,
+            userData.ID_Duan
+          );
+          const maQrHangMuc = generateQRCode(
+            tenToanha,
             tenKhuvuc,
             tenHangmuc,
-            tenTang);
-
-          
+            tenTang
+          );
 
           const khoiCongViecList = tenKhoiCongViec
             ?.split(",")
@@ -2622,7 +2637,7 @@ exports.uploadFixFiles = async (req, res) => {
               "isImportant",
               "isCheck",
               "Giatrinhan",
-             
+
               "Tinhtrang",
               "calv_1",
               "calv_2",
@@ -2641,7 +2656,7 @@ exports.uploadFixFiles = async (req, res) => {
             transaction,
           });
 
-          console.log('existingChecklist', existingChecklist)
+          console.log("existingChecklist", existingChecklist);
 
           // Nếu checklist đã tồn tại thì bỏ qua
           if (!existingChecklist) {
@@ -2650,7 +2665,8 @@ exports.uploadFixFiles = async (req, res) => {
             await existingChecklist.update(
               {
                 Tieuchuan: tieuChuanChecklist || existingChecklist.Tieuchuan,
-                Giatridinhdanh: giaTriDanhDinh || existingChecklist.Giatridinhdanh,
+                Giatridinhdanh:
+                  giaTriDanhDinh || existingChecklist.Giatridinhdanh,
                 Giatrinhan: cacGiaTriNhan || existingChecklist.Giatrinhan,
                 Giatriloi: giaTriLoi || existingChecklist.Giatriloi,
                 Ghichu: ghiChu || existingChecklist.Ghichu,
@@ -2676,7 +2692,7 @@ exports.uploadFixFiles = async (req, res) => {
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
-}
+};
 
 function generateQRCode(toaNha, khuVuc, hangMuc, tenTang) {
   // Hàm lấy ký tự đầu tiên của mỗi từ trong chuỗi
