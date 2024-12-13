@@ -8,6 +8,13 @@ exports.createHSSE = async (req, res) => {
     const userData = req.user.data;
     const data = req.body;
     const Ngay_ghi_nhan = moment(new Date()).format("YYYY-MM-DD");
+
+    // Convert null values to 0
+    const sanitizedData = Object.keys(data).reduce((acc, key) => {
+      acc[key] = data[key] === null ? 0 : data[key];
+      return acc;
+    }, {});
+
     const dataUser = {
       Ten_du_an: userData?.ent_duan?.Duan,
       Ngay_ghi_nhan: Ngay_ghi_nhan,
@@ -16,7 +23,8 @@ exports.createHSSE = async (req, res) => {
       modifiedBy: "Checklist",
     };
 
-    const combinedData = { ...data, ...dataUser };
+    const combinedData = { ...sanitizedData, ...dataUser };
+
     const findHsse = await hsse.findOne({
       attributes: ["Ten_du_an", "Ngay_ghi_nhan"],
       where: {
@@ -39,6 +47,7 @@ exports.createHSSE = async (req, res) => {
     res.status(500).json({ message: error?.message });
   }
 };
+
 
 exports.checkHSSE = async (req, res) => {
   try {
