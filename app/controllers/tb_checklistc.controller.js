@@ -592,6 +592,8 @@ exports.getThongKe = async (req, res, next) => {
       const toDate = req.body.toDate;
       const ID_Calv = req.body.ID_Calv;
       const ID_KhoiCV = req.body.ID_KhoiCV ? req.body.ID_KhoiCV : null;
+      const arr_Duan_Array = userData?.arr_Duan?.split(',').map(item => item.trim());
+
       const orConditions = [
         {
           Ngay: { [Op.between]: [fromDate, toDate] }, // Filter by Ngay attribute between fromDate and toDate,
@@ -602,8 +604,10 @@ exports.getThongKe = async (req, res, next) => {
       if (userData.ent_chucvu.Role == 3) {
         orConditions.push({ "$tb_checklistc.ID_User$": userData?.ID_User });
       }
-      if (userData?.ID_KhoiCV !== null && userData?.ID_KhoiCV !== undefined) {
-        orConditions.push({ "$tb_checklistc.ID_KhoiCV$": userData?.ID_KhoiCV });
+      if (userData?.ID_KhoiCV !== null && userData?.ID_KhoiCV !== undefined && userData.ent_chucvu.Role == 5 && !arr_Duan_Array.includes(String(userData.ID_Duan))
+      || (userData?.ID_KhoiCV !== null && userData?.ID_KhoiCV !== undefined && userData.ent_chucvu.Role !== 5)
+      ) {
+          orConditions.push({ "$tb_checklistc.ID_KhoiCV$": userData?.ID_KhoiCV });
       }
 
       // orConditions.push({ "$tb_checklistc.ID_KhoiCV$": userData?.ID_KhoiCV });
@@ -6116,12 +6120,26 @@ exports.getProjectChecklistDays = async (req, res) => {
     const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
 
     // Lấy ID_Duan từ req.params hoặc req.query
-    const { ID_Duan } = req.user.data; // Ensure project ID is passed in the request
+    const { ID_Duan, ID_KhoiCV, arr_Duan, ent_chucvu} = req.user.data;
+    const arr_Duan_Array = arr_Duan?.split(',').map(item => item.trim());
 
     // Kiểm tra nếu không có ID_Duan được cung cấp
     if (!ID_Duan) {
       return res.status(400).json({ message: "ID_Duan is required" });
     }
+
+    const whereClause = {
+      Ngay: {
+        [Op.between]: [startDate, yesterday],
+      },
+      ID_Duan: ID_Duan,
+      isDelete: 0,
+    }
+
+    if(ID_KhoiCV != null && ID_KhoiCV != undefined && ent_chucvu.Role == 5 && !arr_Duan_Array.includes(String(ID_Duan))
+      || ID_KhoiCV != null && ID_KhoiCV != undefined && ent_chucvu.Role !== 5) {
+        whereClause.ID_KhoiCV = ID_KhoiCV;
+   }
 
     // Lấy tất cả dữ liệu checklistC cho dự án duy nhất trong vòng 7 ngày
     const dataChecklistCs = await Tb_checklistc.findAll({
@@ -6135,13 +6153,7 @@ exports.getProjectChecklistDays = async (req, res) => {
         "ID_KhoiCV",
         "isDelete",
       ],
-      where: {
-        Ngay: {
-          [Op.between]: [startDate, yesterday],
-        },
-        ID_Duan: ID_Duan,
-        isDelete: 0,
-      },
+      where: whereClause,
       include: [
         {
           model: Ent_khoicv, // Lấy tên khối
@@ -6151,6 +6163,9 @@ exports.getProjectChecklistDays = async (req, res) => {
           model: Ent_calv, // Lấy tên ca
           attributes: ["Tenca"],
         },
+      ],
+      order: [
+        ['Ngay', 'DESC'], 
       ],
     });
 
