@@ -18,7 +18,6 @@ const sequelize = require("../config/db.config");
 exports.create = async (req, res) => {
   try {
     const userData = req.user.data;
-    console.log("urun vao day");
     const { body, files } = req;
     const {
       Ngaysuco,
