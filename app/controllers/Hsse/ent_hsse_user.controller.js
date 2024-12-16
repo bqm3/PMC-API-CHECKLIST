@@ -197,6 +197,9 @@ exports.getHSSE = async (req, res) => {
           [Op.between]: [Ngay_ghi_nhan_truoc_do, Ngay_ghi_nhan],
         },
       },
+      order: [
+        ['Ngay_ghi_nhan', 'DESC'], 
+      ],
     });
     return res.status(200).json({
       message: "Danh sách HSSE",
@@ -204,7 +207,7 @@ exports.getHSSE = async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({
-      message: error.mesage || "Có lỗi xảy ra",
+      message: error.message || "Có lỗi xảy ra",
     });
   }
 };
