@@ -18,6 +18,7 @@ const sequelize = require("../config/db.config");
 exports.create = async (req, res) => {
   try {
     const userData = req.user.data;
+    console.log("urun vao day");
     const { body, files } = req;
     const {
       Ngaysuco,
@@ -26,24 +27,14 @@ exports.create = async (req, res) => {
       Noidungsuco,
       Tinhtrangxuly,
       ID_User,
+      deviceUser,
+      deviceHandler,
+      deviceNameUser,
+      deviceNameHandler,
     } = body;
+    const images = req?.files;
 
-    const images = req.files;
-
-    // const uploadedFileIds = [];
-    // if (files) {
-    //   for (const image of files) {
-    //     const fileId = await uploadFile(image);
-    //     uploadedFileIds.push({ id: fileId, name: image.originalname });
-    //   }
-    // }
-    // const ids = uploadedFileIds.map((file) => file.id.id);
-
-    // // Nối các id lại thành chuỗi, cách nhau bằng dấu phẩy
-    // const idsString = ids.join(",");
-    const isEmpty = (obj) => Object.keys(obj).length === 0;
-
-    const uploadedFiles = req.files.map((file) => {
+    const uploadedFiles = req?.files?.map((file) => {
       // Lấy thư mục và tên tệp từ đường dẫn
       const projectFolder = path.basename(path.dirname(file.path)); // Tên dự án (thư mục cha của tệp)
       const filename = path.basename(file.filename); // Tên tệp gốc
@@ -56,12 +47,12 @@ exports.create = async (req, res) => {
     });
 
     const uploadedFileIds = [];
-    uploadedFiles.forEach((file) => {
+    uploadedFiles?.forEach((file) => {
       uploadedFileIds.push(file); // Đẩy đối tượng tệp vào mảng
     });
 
     let anhs = [];
-    if (!isEmpty(images) && uploadedFileIds.length > 0) {
+    if (images && uploadedFileIds?.length > 0) {
       let imageIndex = "";
       let matchingImage = null;
       for (let i = 0; i < images.length; i++) {
@@ -76,8 +67,7 @@ exports.create = async (req, res) => {
         }
       }
     }
-
-    const idsString = anhs.length > 0 ? anhs.join(",") : null;
+    const idsString = anhs?.length > 0 ? anhs?.join(",") : null;
 
     const data = {
       Ngaysuco: Ngaysuco || null,
@@ -89,6 +79,8 @@ exports.create = async (req, res) => {
       Noidungsuco: Noidungsuco || null,
       Tinhtrangxuly: 0,
       Duongdancacanh: idsString || null,
+      deviceUser: deviceUser,
+      deviceNameUser: deviceNameUser,
       ID_User: ID_User,
     };
 
@@ -233,25 +225,24 @@ exports.updateStatus = async (req, res) => {
     const userData = req.user.data;
     const ID_Suco = req.params.id;
     const images = req.files;
-  
+
     const uploadedFileIds = [];
     let anhs = [];
     const isEmpty = (obj) => Object.keys(obj).length === 0;
 
-    if(images !== undefined){
+    if (images !== undefined) {
       const uploadedFiles = req.files.map((file) => {
         // Lấy thư mục và tên tệp từ đường dẫn
         const projectFolder = path.basename(path.dirname(file.path)); // Tên dự án (thư mục cha của tệp)
         const filename = path.basename(file.filename); // Tên tệp gốc
-  
+
         return {
           fieldname: file.fieldname, // Lấy fieldname từ tệp tải lên
           fileId: { id: `${projectFolder}/${filename}` }, // Đường dẫn thư mục dự án và tên ảnh
           filePath: file.path, // Đường dẫn vật lý của tệp
         };
       });
-  
-    
+
       uploadedFiles.forEach((file) => {
         uploadedFileIds.push(file); // Đẩy đối tượng tệp vào mảng
       });
@@ -275,28 +266,32 @@ exports.updateStatus = async (req, res) => {
 
     const idsString = anhs.length > 0 ? anhs.join(",") : null;
 
-    const { Tinhtrangxuly, ngayXuLy, Ghichu, ID_Hangmuc } = req.body;
+    const { Tinhtrangxuly, ngayXuLy, Ghichu, ID_Hangmuc, deviceUser,
+      deviceHandler,
+      deviceNameUser,
+      deviceNameHandler,
+     } = req.body;
     if (ID_Suco && userData) {
       const updateFields = {
         ID_Handler: userData.ID_User,
         Tinhtrangxuly: Tinhtrangxuly,
         Ngayxuly: ngayXuLy,
+        deviceHandler: deviceHandler,
+        deviceNameHandler: deviceNameHandler,
         Anhkiemtra: idsString,
-        Ghichu: `${Ghichu}` !== "null" && `${Ghichu}` !== "undefined" ? Ghichu : null,
+        Ghichu:
+          `${Ghichu}` !== "null" && `${Ghichu}` !== "undefined" ? Ghichu : null,
       };
 
       if (`${ID_Hangmuc}` !== "null" && `${ID_Hangmuc}` !== "undefined") {
         updateFields.ID_Hangmuc = ID_Hangmuc;
       }
 
-      Tb_sucongoai.update(
-       updateFields,
-        {
-          where: {
-            ID_Suco: ID_Suco,
-          },
-        }
-      )
+      Tb_sucongoai.update(updateFields, {
+        where: {
+          ID_Suco: ID_Suco,
+        },
+      })
         .then((data) => {
           res.status(200).json({
             message: "Cập nhật thành công!",
@@ -642,7 +637,7 @@ exports.dashboardByDuAn = async (req, res) => {
 exports.dashboardAll = async (req, res) => {
   try {
     const year = req.query.year || new Date().getFullYear();
-    const chinhanh = req.query.chinhanh || 'all';
+    const chinhanh = req.query.chinhanh || "all";
 
     // Xây dựng điều kiện where cho truy vấn
     let whereClause = {
@@ -656,7 +651,7 @@ exports.dashboardAll = async (req, res) => {
       };
     }
 
-    if(chinhanh !== 'all'){
+    if (chinhanh !== "all") {
       whereClause["$ent_user.ent_duan.ID_Chinhanh$"] = chinhanh;
     }
 
@@ -692,7 +687,7 @@ exports.dashboardAll = async (req, res) => {
           attributes: ["ID_Duan", "Hoten", "UserName"],
           include: {
             model: Ent_duan,
-            attributes: ["ID_Duan", "Duan", "Diachi", "ID_Chinhanh","Logo"],
+            attributes: ["ID_Duan", "Duan", "Diachi", "ID_Chinhanh", "Logo"],
           },
           where: {
             ID_Duan: {
@@ -1344,7 +1339,7 @@ exports.getSuCoNamChiNhanh = async (req, res) => {
         },
         {
           model: Ent_user,
-          as:"ent_user",
+          as: "ent_user",
           attributes: ["UserName", "Email", "Hoten", "ID_Duan"],
           include: [
             {
@@ -1370,7 +1365,7 @@ exports.getSuCoNamChiNhanh = async (req, res) => {
         },
         {
           model: Ent_user,
-          as:"ent_handler",
+          as: "ent_handler",
           attributes: ["UserName", "Email", "Hoten", "ID_Duan"],
           include: [
             {

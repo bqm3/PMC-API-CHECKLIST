@@ -30,7 +30,7 @@ const storageChecklist = (uploadFolderKey) =>
         return cb(new Error("Invalid upload folder key"), null);
       }
 
-      const projectName = duan.replace(
+      const projectName = duan?.replace(
         /[^a-zA-Z0-9-_]/g,
         "_"
       );
@@ -43,7 +43,7 @@ const storageChecklist = (uploadFolderKey) =>
       cb(null, projectFolder);
     },
     filename: (req, file, cb) => {
-      const userData = req.user.data;
+      const userData = req?.user?.data;
       let ID_Duan;
 
       if(userData?.ID_Duan){
@@ -53,7 +53,7 @@ const storageChecklist = (uploadFolderKey) =>
       }
 
       const filename = `${ID_Duan}_${Date.now()}${path.extname(
-        file.originalname
+        file?.originalname
       )}`;
       cb(null, filename);
     },

@@ -40,6 +40,18 @@ const Tb_sucongoai = sequelize.define("tb_sucongoai", {
    Ghichu: {
     type: DataTypes.TEXT,
    },
+   deviceUser: {
+    type: DataTypes.CHAR,
+   },
+   deviceHandler: {
+    type: DataTypes.CHAR,
+   },
+   deviceNameHandler: {
+    type: DataTypes.CHAR,
+   },
+   deviceNameUser: {
+    type: DataTypes.CHAR,
+   },
    Tinhtrangxuly: {
     type: DataTypes.INTEGER,
     defaultValue: 0

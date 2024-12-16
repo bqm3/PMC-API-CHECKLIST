@@ -16,7 +16,7 @@ const app = express();
 const { exec } = require("child_process");
 
 
-var serviceAccount = require("./pmc-cskh-2c225dda2a4d.json");
+var serviceAccount = require("./pmc-cskh-2088353edcc9.json");
 const sequelize = require("./app/config/db.config");
 const { Sequelize, Op } = require("sequelize");
 const { funcAutoNoti } = require("./noti");
@@ -36,10 +36,10 @@ const credentials = {
   token_uri: process.env.TOKEN_URI,
   auth_provider_x509_cert_url: process.env.AUTH_PROVIDER_X509_CERT_URL,
   client_x509_cert_url: process.env.CLIENT_X509_CERT_URL,
-  universe_domain: process.env.UNIVERSE_DOMAIN,
+  universe_domain: process.env.UNIVERSE_DOMAIN
 };
 
-const SCOPES = ["https://www.googleapis.com/auth/drive"];
+const SCOPES = "https://www.googleapis.com/auth/drive";
 
 const auth = new google.auth.GoogleAuth({
   credentials: credentials,
@@ -338,7 +338,7 @@ if(process.env.BACKUP_DRIVER === "development") {
   }
   
   // Lên lịch chạy hàng ngày lúc 4 AM
-  cron.schedule('57 11 * * *', async () => {
+  cron.schedule('30 12 * * *', async () => {
     console.log('Running Cron Job at 4 AM');
     try {
       await handleBackup();
