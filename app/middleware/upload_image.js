@@ -8,9 +8,13 @@ const storageChecklist = (uploadFolderKey) =>
   multer.diskStorage({
     destination: (req, file, cb) => {
       const userData = req.user.data;
+      const body = req?.body
+      let duan;
 
-      if (!userData || !userData.ent_duan || !userData.ent_duan.Duan) {
-        return cb(new Error("Tên dự án phải bắt buộc"), null);
+      if(userData?.ent_duan?.Duan){
+        duan = userData?.ent_duan?.Duan
+      } else {
+        duan = body?.Duan
       }
 
       const uploadFolderMap = {
@@ -26,7 +30,7 @@ const storageChecklist = (uploadFolderKey) =>
         return cb(new Error("Invalid upload folder key"), null);
       }
 
-      const projectName = userData.ent_duan.Duan.replace(
+      const projectName = duan.replace(
         /[^a-zA-Z0-9-_]/g,
         "_"
       );
@@ -40,12 +44,15 @@ const storageChecklist = (uploadFolderKey) =>
     },
     filename: (req, file, cb) => {
       const userData = req.user.data;
+      let ID_Duan;
 
-      if (!userData || !userData.ID_Duan) {
-        return cb(new Error("ID_Duan is required"), null);
+      if(userData?.ID_Duan){
+        ID_Duan = userData?.ID_Duan
+      } else {
+        ID_Duan = req?.params?.id
       }
 
-      const filename = `${userData.ID_Duan}_${Date.now()}${path.extname(
+      const filename = `${ID_Duan}_${Date.now()}${path.extname(
         file.originalname
       )}`;
       cb(null, filename);

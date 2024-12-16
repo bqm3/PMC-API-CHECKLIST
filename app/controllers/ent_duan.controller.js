@@ -235,8 +235,6 @@ exports.getDetail = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const userData = req.user.data;
-    const fileId = await uploadFile(req.files[0]);
-
     const uploadedFiles = req.files.map((file) => {
       // Lấy thư mục và tên tệp từ đường dẫn
       const projectFolder = path.basename(path.dirname(file.path)); // Tên dự án (thư mục cha của tệp)
