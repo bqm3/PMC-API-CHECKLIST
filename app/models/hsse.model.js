@@ -139,6 +139,9 @@ const hsse = sequelize.define(
     chiSoCO2: {
       type: DataTypes.DOUBLE,
     },
+    clorin: {
+      type: DataTypes.DOUBLE,
+    },
    
   },
   {
