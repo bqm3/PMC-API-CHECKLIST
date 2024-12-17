@@ -10,7 +10,7 @@ let expo = new Expo();
 
 exports.funcAutoNoti = async () => {
   try {
-    const yesterday = funcCreateYesterDay();
+    const yesterday = await funcCreateYesterDay();
     const projects = await getProjectsChecklistStatus_Noti();
     const notificationResults = [];
 
