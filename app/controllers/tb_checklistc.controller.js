@@ -8833,7 +8833,7 @@ exports.getProjectsChecklistStatus_Noti = async () => {
         where: {
           Ngay: yesterday,
           isDelete: 0,
-          ID_Duan: { [Op.in]: [1] },
+          // ID_Duan: { [Op.or]: [1] },
         },
         include: [
           { 
@@ -8869,7 +8869,7 @@ exports.getProjectsChecklistStatus_Noti = async () => {
         },
         where: {
           ID_Chucvu: { [Op.in]: [2, 3, 8, 10] },
-          ID_Duan: { [Op.in]: [1] },
+          // ID_Duan: { [Op.in]: [1] },
           isDelete: 0,
         },
       })

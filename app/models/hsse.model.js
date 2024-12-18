@@ -142,7 +142,9 @@ const hsse = sequelize.define(
     clorin: {
       type: DataTypes.DOUBLE,
     },
-   
+    NaOCL: {
+      type: DataTypes.DOUBLE,
+    },
   },
   {
     freezeTableName: true,
@@ -151,6 +153,4 @@ const hsse = sequelize.define(
   }
 );
 
-
 module.exports = hsse;
-

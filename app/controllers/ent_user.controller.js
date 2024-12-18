@@ -114,7 +114,7 @@ exports.login = async (req, res) => {
           httpOnly: true,
           secure: true,
           sameSite: "strict",
-          expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+          expires: new Date(Date.now() + 4 * 60 * 60 * 1000), // 7 days
         });
 
         // Return the token, user info, and projects if applicable

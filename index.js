@@ -351,8 +351,22 @@ if(process.env.BACKUP_DRIVER === "development") {
   console.log("Backup chỉ chạy ở môi trường development. NODE_ENV hiện tại là:", process.env.NODE_ENV);
 }
 
-// funcAutoNoti();
+if(process.env.BACKUP_NOTI === "development") {
+cron.schedule('30 11 * * *', async () => {
+  try {
+     await funcAutoNoti();
+    console.log('Cron job completed successfully');
+  } catch (error) {
+    console.error('Error running cron job:', error);
+  }
+});
+}else{
+  console.log("Notification chỉ chạy ở môi trường development. NODE_ENV hiện tại là:", process.env.NODE_ENV);
+}
 
+
+
+// funcAutoNoti();
 require("./app/routes/ent_calv.routes")(app);
 require("./app/routes/ent_user.routes")(app);
 require("./app/routes/ent_hsse.routes")(app);
