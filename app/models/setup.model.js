@@ -25,6 +25,8 @@ const Ent_phanloaida = require('./ent_phanloaida.model')
 
 //hsse
 const Ent_Hsse_User = require('./Hsse/ent_hsse_user.model')
+const HSSE_Log = require('./Hsse/hsse_log.model')
+const HSSE = require('./hsse.model')
 
 
 //bao cao chi so
@@ -67,6 +69,7 @@ Ent_duan.belongsTo(Ent_Baocaochiso, {
 //Hsse =================================================================================
 Ent_hsse_user.belongsTo(Ent_duan,{as: "ent_duan", foreignKey: "ID_Duan"})
 Ent_hsse_user.belongsTo(Ent_user,{as: "ent_user", foreignKey: "ID_User"})
+HSSE_Log.belongsTo(HSSE,{as: "hsse", foreignKey: "ID_HSSE"})
 
 
 //Duan an + khoi cv  ====================================================================
@@ -297,5 +300,6 @@ module.exports = {
   Ent_Baocaochiso,
   Ent_Loai_Chiso,
   Ent_Hangmuc_Chiso,
-  Ent_Hsse_User
+  Ent_Hsse_User,
+  HSSE_Log,
 };

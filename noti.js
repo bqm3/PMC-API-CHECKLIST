@@ -4,9 +4,62 @@ const {
 } = require("./app/controllers/tb_checklistc.controller");
 const { funcCreateYesterDay } = require("./app/utils/util");
 const { Json } = require("sequelize/lib/utils");
+const Ent_user = require("./app/models/ent_user.model");
+const { Op } = require("sequelize");
 
 // Tạo đối tượng Expo SDK client
 let expo = new Expo();
+
+exports.funcAllNoti = async () => {
+  // Lấy danh sách user không bị xóa và có deviceToken hợp lệ
+  const users = await Ent_user.findAll({
+    attributes: ["ID_User", "ID_Chucvu", "deviceToken"],
+    where: {
+      isDelete: 0,
+      deviceToken: { [Op.ne]: null }, 
+    },
+  });
+
+  const messages ={
+    title: "Thông báo",
+    body: "Vui lòng không cập nhật phiên bản mới IOS",
+  };
+
+  for(const user of users){
+    sendPushNotification(user.deviceToken, messages)
+  }
+};
+
+async function sendPushNotification(expoPushToken, message) {
+  const payload = {
+    to: expoPushToken,
+    sound: "default",
+    title: message.title,
+    body: message.body,
+  };
+  // console.log('payload', payload)
+
+  const response = await fetch("https://exp.host/--/api/v2/push/send", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Accept-encoding": "gzip, deflate",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Error sending push notification: ${response.status} - ${errorText}`
+    );
+  }
+
+  const data = await response.json();
+  return data;
+}
+
 
 exports.funcAutoNoti = async () => {
   try {
