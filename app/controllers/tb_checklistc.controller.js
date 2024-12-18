@@ -584,6 +584,213 @@ exports.getCheckListc = async (req, res, next) => {
   }
 };
 
+
+exports.getDayCheckListc = async (req, res, next) => {
+  try {
+    const userData = req.user.data;
+    if (userData) {
+      let whereClause = {
+        ID_Duan: userData?.ID_Duan,
+        isDelete: 0,
+      };
+
+      // Nếu quyền là 1 (ID_Chucvu === 1) thì không cần thêm điều kiện ID_KhoiCV
+      if (
+        userData.ID_Chucvu !== 1 &&
+        userData.ID_Chucvu !== 2 &&
+        userData.ID_Chucvu !== 3 &&
+        userData.ID_Chucvu !== 11
+      ) {
+        whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
+        // whereClause.ID_User = userData?.ID_User;
+      }
+
+      if (userData?.ent_chucvu.Role === 5 && userData?.arr_Duan !== null) {
+        const arrDuanArray = userData?.arr_Duan.split(",").map(Number);
+
+        // Kiểm tra ID_Duan có thuộc mảng không
+        const exists = arrDuanArray.includes(userData?.ID_Duan);
+        if (!exists) {
+          // Thêm điều kiện tham chiếu cột từ bảng liên kết
+          whereClause.ID_KhoiCV = userData.ID_KhoiCV;
+        }
+      }
+
+      const page = parseInt(req.query.page) || 0;
+      const pageSize = parseInt(req.query.limit) || 100; // Số lượng phần tử trên mỗi trang
+      const offset = page * pageSize;
+
+      const totalCount = await Tb_checklistc.count({
+        attributes: [
+          "ID_ChecklistC",
+          "ID_Hangmucs",
+          "ID_Duan",
+          "ID_KhoiCV",
+          "ID_Calv",
+          "ID_ThietLapCa",
+          "Ngay",
+          "Giobd",
+          "Giochupanh1",
+          "Anh1",
+          "Giochupanh2",
+          "Anh2",
+          "Giochupanh3",
+          "Anh3",
+          "Giochupanh4",
+          "Anh4",
+          "Giokt",
+          "Ghichu",
+          "Tinhtrang",
+          "isDelete",
+        ],
+        include: [
+          {
+            model: Ent_duan,
+            attributes: ["ID_Duan", "Duan", "Diachi", "Vido", "Kinhdo"],
+          },
+          {
+            model: Ent_khoicv,
+            attributes: ["ID_KhoiCV", "KhoiCV"],
+          },
+          {
+            model: Ent_calv,
+            attributes: ["ID_Calv", "Tenca", "Giobatdau", "Gioketthuc"],
+          },
+          {
+            model: Ent_user,
+            attributes: ["ID_User", "Hoten", "ID_Chucvu"],
+            include: [
+              {
+                model: Ent_chucvu,
+                attributes: ["Chucvu", "Role"],
+              },
+            ],
+          },
+        ],
+        where: whereClause,
+      });
+      const totalPages = Math.ceil(totalCount / pageSize);
+       await Tb_checklistc.findAll({
+        attributes: [
+          "ID_ChecklistC",
+          "ID_Hangmucs",
+          "ID_Duan",
+          "ID_KhoiCV",
+          "ID_Calv",
+          "ID_ThietLapCa",
+          "ID_User",
+          "Ngay",
+          "Tong",
+          "TongC",
+          "Giobd",
+          "Giochupanh1",
+          "Anh1",
+          "Giochupanh2",
+          "Anh2",
+          "Giochupanh3",
+          "Anh3",
+          "Giochupanh4",
+          "Anh4",
+          "Giokt",
+          "Ghichu",
+          "Tinhtrang",
+          "isDelete",
+        ],
+        include: [
+          {
+            model: Ent_duan,
+            attributes: ["ID_Duan", "Duan", "Diachi", "Vido", "Kinhdo"],
+          },
+          {
+            model: Ent_thietlapca,
+            attributes: ["Ngaythu", "isDelete"],
+          },
+          {
+            model: Ent_khoicv,
+            attributes: ["ID_KhoiCV", "KhoiCV"],
+          },
+          {
+            model: Ent_calv,
+            attributes: ["ID_Calv", "Tenca", "Giobatdau", "Gioketthuc"],
+          },
+          {
+            model: Ent_user,
+            attributes: ["ID_User", "Hoten", "ID_Chucvu"],
+            include: [
+              {
+                model: Ent_chucvu,
+                attributes: ["Chucvu", "Role"],
+              },
+            ],
+          },
+        ],
+        where: whereClause,
+        order: [
+          ["Ngay", "DESC"],
+          ["ID_ChecklistC", "DESC"],
+        ],
+        offset: offset,
+        limit: pageSize,
+      })
+        .then((data) => {
+         
+          // Aggregate the data by Ngay and ID_Calv
+          const result = data.reduce((acc, item) => {
+            const key = `${item.Ngay}-${item.ID_Calv}`;
+            if (!acc[key]) {
+              acc[key] = {
+                Key: key,
+                Ngay: item.Ngay,
+                Ca: item?.ent_calv?.Tenca, 
+                Tong: 0,
+                TongC: 0,
+                KhoiCV: item?.ent_khoicv?.KhoiCV,
+                ID_Calv: item.ID_Calv,
+                ID_Duan: item.ID_Duan,
+                ID_KhoiCV: item.ID_KhoiCV,
+              };
+            }
+            acc[key].Tong = item.Tong;
+            acc[key].TongC += item.TongC;
+            return acc;
+          }, {});
+          
+          // Convert the result object into an array
+          const aggregatedData = Object.values(result);
+          
+          if (aggregatedData) {
+            res.status(200).json({
+              message: "Danh sách checklistc!",
+              page: page,
+              pageSize: pageSize,
+              totalPages: totalPages,
+              data: aggregatedData,
+            });
+          } else {
+            res.status(400).json({
+              message: "Không có checklistc!",
+              data: [],
+            });
+          }
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    } else {
+      return res.status(401).json({
+        message: "Bạn không có quyền truy cập",
+      });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+
 exports.getThongKe = async (req, res, next) => {
   try {
     const userData = req.user.data;

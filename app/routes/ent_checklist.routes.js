@@ -35,6 +35,11 @@ module.exports = (app) => {
     isAuthenticated,
     ent_checklist.filterChecklistWeb
   );
+  router.get(
+    "/filter-mul-day/:ngay/:idc",
+    isAuthenticated,
+    ent_checklist.filterChecklistDay
+  );
 
   router.put(
     "/filter-return/:idc/:id_calv",
