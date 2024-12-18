@@ -45,7 +45,7 @@ exports.createHSSE = async (req, res) => {
         .json({ message: "Báo cáo HSSE ngày hôm nay đã được tạo" });
     } else {
       const createHSSE = await hsse.create(combinedData, { transaction: t });
-      await funcHSSE_Log(req, createHSSE.ID, t);
+      await funcHSSE_Log(sanitizedData, createHSSE.ID, t);
       await t.commit();
       return res.status(200).json({
         message: "Tạo báo cáo HSSE thành công",
@@ -240,7 +240,7 @@ exports.getDetailHSSE = async (req, res) => {
 exports.updateHSSE = async (req, res) => {
   const t = await sequelize.transaction();
   try {
-    const { Ngay } = req.body;
+    const { data, Ngay } = req.body;
     const isToday = moment(Ngay).isSame(moment(), "day");
 
     if (!isToday) {
@@ -250,7 +250,7 @@ exports.updateHSSE = async (req, res) => {
       });
     }
 
-    await funcHSSE_Log(req, req.params.id, t);
+    await funcHSSE_Log(req, data, req.params.id, t);
     await updateHSSE(req, req.params.id, t);
     await t.commit();
 
@@ -289,10 +289,9 @@ const updateHSSE = async (req, ID_HSSE, t) => {
   }
 };
 
-const funcHSSE_Log = async (req, ID_HSSE, t) => {
+const funcHSSE_Log = async (req, data, ID_HSSE, t) => {
   try {
     const userData = req.user.data;
-    const { data } = req.body;
     const Ngay_ghi_nhan = moment(new Date()).format("YYYY-MM-DD");
 
     const sanitizedData = Object.keys(data).reduce((acc, key) => {
