@@ -1,9 +1,15 @@
-const { Ent_Hsse_User, Ent_user } = require("../../models/setup.model");
+const {
+  Ent_Hsse_User,
+  Ent_user,
+  HSSE_Log,
+} = require("../../models/setup.model");
 const { Op } = require("sequelize");
 const moment = require("moment");
 const hsse = require("../../models/hsse.model");
+const sequelize = require("../../config/db.config");
 
 exports.createHSSE = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
     const userData = req.user.data;
     const data = req.body;
@@ -38,16 +44,19 @@ exports.createHSSE = async (req, res) => {
         .status(400)
         .json({ message: "Báo cáo HSSE ngày hôm nay đã được tạo" });
     } else {
-      await hsse.create(combinedData);
+      const createHSSE = await hsse.create(combinedData, { transaction: t });
+      await funcHSSE_Log(req, createHSSE.ID, t);
+      await t.commit();
       return res.status(200).json({
         message: "Tạo báo cáo HSSE thành công",
       });
     }
   } catch (error) {
+    console.log("error", error);
+    await t.rollback();
     res.status(500).json({ message: error?.message });
   }
 };
-
 
 exports.checkHSSE = async (req, res) => {
   try {
@@ -197,9 +206,7 @@ exports.getHSSE = async (req, res) => {
           [Op.between]: [Ngay_ghi_nhan_truoc_do, Ngay_ghi_nhan],
         },
       },
-      order: [
-        ['Ngay_ghi_nhan', 'DESC'], 
-      ],
+      order: [["Ngay_ghi_nhan", "DESC"]],
     });
     return res.status(200).json({
       message: "Danh sách HSSE",
@@ -227,5 +234,83 @@ exports.getDetailHSSE = async (req, res) => {
     return res.status(500).json({
       message: error.mesage || "Có lỗi xảy ra",
     });
+  }
+};
+
+exports.updateHSSE = async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const { Ngay } = req.body;
+    const isToday = moment(Ngay).isSame(moment(), "day");
+
+    if (!isToday) {
+      await t.rollback();
+      return res.status(400).json({
+        message: "Có lỗi xảy ra! Ngày không đúng dữ liệu.",
+      });
+    }
+
+    await funcHSSE_Log(req, req.params.id, t);
+    await updateHSSE(req, req.params.id, t);
+    await t.commit();
+
+    return res.status(200).json({
+      message: "Cập nhật thành công!",
+    });
+  } catch (error) {
+    await t.rollback();
+    return res.status(500).json({
+      message: error?.message || "Lỗi khi cập nhật HSSE.",
+    });
+  }
+};
+
+
+const updateHSSE = async (req, ID_HSSE, t) => {
+  try {
+    const { data } = req.body;
+    const sanitizedData = Object.keys(data).reduce((acc, key) => {
+      acc[key] = data[key] === null ? 0 : data[key];
+      return acc;
+    }, {});
+
+    const result = await hsse.update(sanitizedData, {
+      where: {
+        ID: ID_HSSE,
+      },
+      transaction: t,
+    });
+
+    if (result[0] === 0) {
+      throw new Error("Không tìm thấy dự án để cập nhật.");
+    }
+  } catch (err) {
+    throw err;
+  }
+};
+
+const funcHSSE_Log = async (req, ID_HSSE, t) => {
+  try {
+    const userData = req.user.data;
+    const { data } = req.body;
+    const Ngay_ghi_nhan = moment(new Date()).format("YYYY-MM-DD");
+
+    const sanitizedData = Object.keys(data).reduce((acc, key) => {
+      acc[key] = data[key] === null ? 0 : data[key];
+      return acc;
+    }, {});
+
+    const dataUser = {
+      ID_HSSE: ID_HSSE,
+      Ten_du_an: userData?.ent_duan?.Duan,
+      Ngay_ghi_nhan: Ngay_ghi_nhan,
+      Nguoi_sua: userData?.Hoten || userData?.UserName,
+      Email: userData?.Email,
+      modifiedBy: "Checklist",
+    };
+    const combinedData = { ...sanitizedData, ...dataUser };
+    await HSSE_Log.create(combinedData, { transaction: t });
+  } catch (error) {
+    throw error;
   }
 };
