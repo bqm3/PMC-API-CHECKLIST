@@ -45,7 +45,7 @@ exports.createHSSE = async (req, res) => {
         .json({ message: "Báo cáo HSSE ngày hôm nay đã được tạo" });
     } else {
       const createHSSE = await hsse.create(combinedData, { transaction: t });
-      await funcHSSE_Log(sanitizedData, createHSSE.ID, t);
+      await funcHSSE_Log(req, sanitizedData, createHSSE.ID, t);
       await t.commit();
       return res.status(200).json({
         message: "Tạo báo cáo HSSE thành công",
