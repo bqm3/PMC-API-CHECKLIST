@@ -52,7 +52,7 @@ exports.createHSSE = async (req, res) => {
       });
     }
   } catch (error) {
-    console.log("error",error)
+    console.log("error", error);
     await t.rollback();
     res.status(500).json({ message: error?.message });
   }
@@ -238,23 +238,37 @@ exports.getDetailHSSE = async (req, res) => {
 };
 
 exports.updateHSSE = async (req, res) => {
-  const t = await sequelize.transaction(); 
+  const t = await sequelize.transaction();
   try {
-    await funcHSSE_Log(req, req.params.id, t); 
-    await updateHSSE(req, req.params.id, t); 
+    const { Ngay } = req.body;
+    const isToday = moment(Ngay).isSame(moment(), "day");
+
+    if (!isToday) {
+      await t.rollback();
+      return res.status(400).json({
+        message: "Có lỗi xảy ra! Ngày không đúng dữ liệu.",
+      });
+    }
+
+    await funcHSSE_Log(req, req.params.id, t);
+    await updateHSSE(req, req.params.id, t);
     await t.commit();
 
-    res.status(200).json({ message: "Cập nhật thành công" });
+    return res.status(200).json({
+      message: "Cập nhật thành công!",
+    });
   } catch (error) {
     await t.rollback();
-    res.status(500).json({ message: error?.message || "Lỗi khi cập nhật HSSE" });
+    return res.status(500).json({
+      message: error?.message || "Lỗi khi cập nhật HSSE.",
+    });
   }
 };
 
 
 const updateHSSE = async (req, ID_HSSE, t) => {
   try {
-    const data = req.body;
+    const { data } = req.body;
     const sanitizedData = Object.keys(data).reduce((acc, key) => {
       acc[key] = data[key] === null ? 0 : data[key];
       return acc;
@@ -264,23 +278,21 @@ const updateHSSE = async (req, ID_HSSE, t) => {
       where: {
         ID: ID_HSSE,
       },
-      transaction: t
+      transaction: t,
     });
 
     if (result[0] === 0) {
       throw new Error("Không tìm thấy dự án để cập nhật.");
     }
-
   } catch (err) {
     throw err;
   }
 };
 
-
 const funcHSSE_Log = async (req, ID_HSSE, t) => {
   try {
     const userData = req.user.data;
-    const data = req.body;
+    const { data } = req.body;
     const Ngay_ghi_nhan = moment(new Date()).format("YYYY-MM-DD");
 
     const sanitizedData = Object.keys(data).reduce((acc, key) => {
@@ -298,7 +310,6 @@ const funcHSSE_Log = async (req, ID_HSSE, t) => {
     };
     const combinedData = { ...sanitizedData, ...dataUser };
     await HSSE_Log.create(combinedData, { transaction: t });
-
   } catch (error) {
     throw error;
   }
