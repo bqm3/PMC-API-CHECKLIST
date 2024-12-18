@@ -19,8 +19,8 @@ exports.notiAll = async (req, res) => {
       type: "WARNING",
       textTitle: "PMC Checklist",
       textBody:
-        "Phiên bản 2.1.2 đã xuất bản. Cập nhật phiên bản để có trải nghiệm tốt nhất.",
-      time: 5000,
+        "Ai dùng điện thoại IOS vui lòng KHÔNG cập nhật phiên bản mới.",
+      time: 10000,
     };
     status = "1";
   }
