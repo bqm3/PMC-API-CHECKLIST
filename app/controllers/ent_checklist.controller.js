@@ -899,7 +899,7 @@ exports.getChecklist = async (req, res) => {
         "Giatriloi",
         "Giatrinhan",
         "ID_User",
-       
+
         "calv_1",
         "calv_2",
         "calv_3",
@@ -1282,12 +1282,22 @@ exports.filterChecklists = async (req, res) => {
     // });
 
     const checklistItems = await Tb_checklistchitiet.findAll({
-      attributes: ["isDelete", "ID_Checklist", "ID_ChecklistC", "isCheckListLai"],
-      where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC, isCheckListLai: 0  },
+      attributes: [
+        "isDelete",
+        "ID_Checklist",
+        "ID_ChecklistC",
+        "isCheckListLai",
+      ],
+      where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC, isCheckListLai: 0 },
     });
 
     const checklistDoneItems = await Tb_checklistchitietdone.findAll({
-      attributes: ["Description", "isDelete", "ID_ChecklistC", "isCheckListLai"],
+      attributes: [
+        "Description",
+        "isDelete",
+        "ID_ChecklistC",
+        "isCheckListLai",
+      ],
       where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC, isCheckListLai: 0 },
     });
 
@@ -1582,7 +1592,7 @@ exports.filterChecklistWeb = async (req, res) => {
         "Giatrinhan",
         "Tinhtrang",
         "ID_User",
-       
+
         "calv_1",
         "calv_2",
         "calv_3",
@@ -1673,24 +1683,24 @@ exports.filterChecklistWeb = async (req, res) => {
     checklistData.forEach((item) => {
       const khuVucKey = item.ID_Khuvuc;
       const hangMucKey = item.ID_Hangmuc;
-  
+
       if (!khuVucMap[khuVucKey]) {
         khuVucMap[khuVucKey] = {
           ent_khuvuc: item.ent_khuvuc,
           hangmucs: {},
         };
       }
-    
+
       // Khởi tạo hạng mục nếu chưa tồn tại
       if (!khuVucMap[khuVucKey].hangmucs[hangMucKey]) {
         khuVucMap[khuVucKey].hangmucs[hangMucKey] = {
           ent_hangmuc: {
             ...item.ent_hangmuc,
-            checklists: []
+            checklists: [],
           },
         };
       }
-    
+
       // Thêm checklist vào danh sách checklists của ent_hangmuc
       khuVucMap[khuVucKey].hangmucs[hangMucKey].ent_hangmuc.checklists.push({
         ID_Checklist: item.ID_Checklist,
@@ -1702,7 +1712,6 @@ exports.filterChecklistWeb = async (req, res) => {
       });
     });
 
-
     // Chuyển dữ liệu từ object sang array
     const result = Object.values(khuVucMap).map((khuvuc) => ({
       ent_khuvuc: khuvuc.ent_khuvuc,
@@ -1710,6 +1719,215 @@ exports.filterChecklistWeb = async (req, res) => {
     }));
 
     // Trả về kết quả
+    return res.status(200).json({
+      message: "Danh sách checklist theo khu vực và hạng mục!",
+      data: result,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Có lỗi xảy ra!",
+    });
+  }
+};
+
+exports.filterChecklistDay = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    const ID_Calv = req.params.idc;
+    const Ngay = req.params.ngay;
+
+    // Truy vấn danh sách checklist chưa được thực hiện trong ngày và ca đó
+    const tbChecklist = await Tb_checklistc.findAll({
+      attributes: ["ID_ChecklistC", "ID_Hangmucs", "isDelete"],
+      where: {
+        isDelete: 0,
+        Ngay: Ngay, // Lọc theo ngày
+        ID_Calv: ID_Calv, // Lọc theo ca làm việc
+      },
+    });
+
+    // Kiểm tra nếu không có checklist nào
+    if (!tbChecklist || tbChecklist.length === 0) {
+      return res.status(200).json({
+        message: "Không có checklist chưa thực hiện cho ca làm việc này!",
+        data: [],
+      });
+    }
+
+    // Truy vấn chi tiết checklist chưa thực hiện
+    const checklistItems = await Tb_checklistchitiet.findAll({
+      attributes: ["isDelete", "ID_Checklist", "ID_ChecklistC"],
+      where: {
+        isDelete: 0,
+        ID_ChecklistC: {
+          [Op.in]: tbChecklist.map((item) => item.ID_ChecklistC),
+        },
+      },
+    });
+
+    // Truy vấn các checklist đã được thực hiện
+    const checklistDoneItems = await Tb_checklistchitietdone.findAll({
+      attributes: ["Description", "isDelete", "ID_ChecklistC"],
+      where: {
+        isDelete: 0,
+        ID_ChecklistC: {
+          [Op.in]: tbChecklist.map((item) => item.ID_ChecklistC),
+        },
+      },
+    });
+
+    const checklistDoneIdsSet = new Set();
+
+    // Process each item in checklistDoneItems
+    checklistDoneItems.forEach((item) => {
+      const idChecklists = item.Description.split(",").map(Number);
+
+      if (idChecklists.length > 0) {
+        idChecklists.forEach((it) => {
+          // Add each unique checklist ID to the Set
+          checklistDoneIdsSet.add(it);
+        });
+      }
+    });
+
+    // Lọc các checklist đã thực hiện và chưa thực hiện
+    const checklistIds =
+      checklistItems
+        .map((item) => item?.ID_Checklist)
+        .filter((id) => !isNaN(id)) || [];
+    const checklistDoneIds = Array.from(checklistDoneIdsSet).filter(
+      (id) => !isNaN(id)
+    );
+
+    let whereCondition = {
+      isDelete: 0,
+      ID_Hangmuc: {
+        [Op.in]: tbChecklist.map((item) => item.ID_Hangmucs).flat(),
+      },
+      ID_Checklist: {
+        [Op.notIn]: [...checklistIds, ...checklistDoneIds], // Lọc các checklist đã thực hiện
+      },
+    };
+
+    // Truy vấn lại để lấy thông tin về checklist chưa thực hiện
+    const checklistData = await Ent_checklist.findAll({
+      attributes: [
+        "ID_Checklist",
+        "ID_Khuvuc",
+        "ID_Hangmuc",
+        "ID_Tang",
+        "isImportant",
+        "Checklist",
+        "Ghichu",
+        "Tieuchuan",
+        "Giatridinhdanh",
+        "Giatriloi",
+        "isCheck",
+        "Giatrinhan",
+        "Tinhtrang",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_hangmuc,
+          attributes: ["Hangmuc", "ID_Hangmuc", "MaQrCode"],
+        },
+        {
+          model: Ent_khuvuc,
+          attributes: [
+            "Tenkhuvuc",
+            "MaQrCode",
+            "Makhuvuc",
+            "ID_Toanha",
+            "ID_Khuvuc",
+          ],
+          include: [
+            {
+              model: Ent_toanha,
+              attributes: ["Toanha", "ID_Toanha"],
+              include: {
+                model: Ent_duan,
+                attributes: ["ID_Duan", "Duan", "Logo"],
+              },
+            },
+            {
+              model: Ent_khuvuc_khoicv,
+              attributes: ["ID_KhoiCV", "ID_Khuvuc", "ID_KV_CV"],
+              include: [
+                {
+                  model: Ent_khoicv,
+                  attributes: ["KhoiCV"],
+                },
+              ],
+              // where: {
+              //   ID_KhoiCV: userData.ID_KhoiCV,
+              // },
+            },
+          ],
+        },
+        {
+          model: Ent_tang,
+          attributes: ["Tentang"],
+        },
+      ],
+      where: whereCondition,
+      order: [
+        ["ID_Khuvuc", "ASC"],
+        ["ID_Checklist", "ASC"],
+      ],
+    });
+
+    if (!checklistData || checklistData.length === 0) {
+      return res.status(200).json({
+        message: "Không còn checklist chưa thực hiện cho ca làm việc này!",
+        data: [],
+      });
+    }
+
+    const khuVucMap = {};
+
+    checklistData.forEach((item) => {
+      const khuVucKey = item.ID_Khuvuc; // Lấy ID khu vực
+      const hangMucKey = item.ID_Hangmuc; // Lấy ID hạng mục
+
+      // Kiểm tra xem khu vực đã có chưa, nếu chưa thì tạo mới
+      if (!khuVucMap[khuVucKey]) {
+        khuVucMap[khuVucKey] = {
+          ent_khuvuc: item.ent_khuvuc, // Thông tin khu vực
+          hangmucs: {}, // Danh sách hạng mục sẽ được thêm sau
+        };
+      }
+
+      // Kiểm tra xem hạng mục đã có chưa trong khu vực, nếu chưa thì tạo mới
+      if (!khuVucMap[khuVucKey].hangmucs[hangMucKey]) {
+        khuVucMap[khuVucKey].hangmucs[hangMucKey] = {
+          ent_hangmuc: {
+            ...item.ent_hangmuc, // Thông tin hạng mục
+            checklists: [], // Danh sách checklist của hạng mục
+          },
+        };
+      }
+
+      // Thêm checklist vào danh sách checklists của hạng mục
+      khuVucMap[khuVucKey].hangmucs[hangMucKey].ent_hangmuc.checklists.push({
+        ID_Checklist: item.ID_Checklist,
+        Checklist: item.Checklist,
+        Tinhtrang: item.Tinhtrang,
+        isImportant: item.isImportant,
+        ID_Khuvuc: item.ID_Khuvuc,
+        ID_Hangmuc: item.ID_Hangmuc,
+      });
+    });
+
+    const result = Object.values(khuVucMap).map((khuvuc) => ({
+      ent_khuvuc: khuvuc?.ent_khuvuc, // Thông tin khu vực
+      hangmucs: Object.values(khuvuc.hangmucs).map((hangmuc) => ({
+        ent_hangmuc: hangmuc.ent_hangmuc, // Thông tin hạng mục
+        checklists: hangmuc.ent_hangmuc.checklists, // Danh sách checklist chưa thực hiện
+      })),
+    }));
+
+    // Trả về kết quả cuối cùng
     return res.status(200).json({
       message: "Danh sách checklist theo khu vực và hạng mục!",
       data: result,
@@ -1768,7 +1986,7 @@ exports.filterReturn = async (req, res) => {
         "isImportant",
         "Tinhtrang",
         "ID_User",
-       
+
         "calv_1",
         "calv_2",
         "calv_3",
@@ -1888,7 +2106,8 @@ exports.getListChecklistWeb = async (req, res) => {
       const exists = arrDuanArray.includes(userData?.ID_Duan);
       if (!exists) {
         // Thêm điều kiện tham chiếu cột từ bảng liên kết
-        whereCondition["$ent_khuvuc.ent_khuvuc_khoicvs.ID_KhoiCV$"] = userData.ID_KhoiCV;
+        whereCondition["$ent_khuvuc.ent_khuvuc_khoicvs.ID_KhoiCV$"] =
+          userData.ID_KhoiCV;
         // "$ent_khuvuc_khoicvs.ID_KhoiCV$": userData.ID_KhoiCV,
       }
     }
@@ -1910,7 +2129,7 @@ exports.getListChecklistWeb = async (req, res) => {
         "isImportant",
         "isCheck",
         "Giatrinhan",
-       
+
         "Tinhtrang",
         "calv_1",
         "calv_2",
@@ -2034,7 +2253,7 @@ exports.getChecklistTotal = async (req, res) => {
         "isCheck",
         "Giatrinhan",
         "ID_User",
-       
+
         "calv_1",
         "calv_2",
         "calv_3",
@@ -2370,7 +2589,7 @@ exports.uploadFiles = async (req, res) => {
               "isImportant",
               "isCheck",
               "Giatrinhan",
-             
+
               "Tinhtrang",
               "calv_1",
               "calv_2",
@@ -2472,16 +2691,18 @@ exports.uploadFixFiles = async (req, res) => {
             continue;
           }
 
-          const maQrKhuVuc = generateQRCodeKV(tenToanha,
+          const maQrKhuVuc = generateQRCodeKV(
+            tenToanha,
             tenKhuvuc,
             tenTang,
-            userData.ID_Duan);
-          const maQrHangMuc = generateQRCode(tenToanha,
+            userData.ID_Duan
+          );
+          const maQrHangMuc = generateQRCode(
+            tenToanha,
             tenKhuvuc,
             tenHangmuc,
-            tenTang);
-
-          
+            tenTang
+          );
 
           const khoiCongViecList = tenKhoiCongViec
             ?.split(",")
@@ -2622,7 +2843,7 @@ exports.uploadFixFiles = async (req, res) => {
               "isImportant",
               "isCheck",
               "Giatrinhan",
-             
+
               "Tinhtrang",
               "calv_1",
               "calv_2",
@@ -2641,7 +2862,7 @@ exports.uploadFixFiles = async (req, res) => {
             transaction,
           });
 
-          console.log('existingChecklist', existingChecklist)
+          console.log("existingChecklist", existingChecklist);
 
           // Nếu checklist đã tồn tại thì bỏ qua
           if (!existingChecklist) {
@@ -2650,7 +2871,8 @@ exports.uploadFixFiles = async (req, res) => {
             await existingChecklist.update(
               {
                 Tieuchuan: tieuChuanChecklist || existingChecklist.Tieuchuan,
-                Giatridinhdanh: giaTriDanhDinh || existingChecklist.Giatridinhdanh,
+                Giatridinhdanh:
+                  giaTriDanhDinh || existingChecklist.Giatridinhdanh,
                 Giatrinhan: cacGiaTriNhan || existingChecklist.Giatrinhan,
                 Giatriloi: giaTriLoi || existingChecklist.Giatriloi,
                 Ghichu: ghiChu || existingChecklist.Ghichu,
@@ -2676,7 +2898,7 @@ exports.uploadFixFiles = async (req, res) => {
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
-}
+};
 
 function generateQRCode(toaNha, khuVuc, hangMuc, tenTang) {
   // Hàm lấy ký tự đầu tiên của mỗi từ trong chuỗi

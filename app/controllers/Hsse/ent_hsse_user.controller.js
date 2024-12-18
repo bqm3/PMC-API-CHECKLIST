@@ -18,7 +18,7 @@ exports.createHSSE = async (req, res) => {
     const dataUser = {
       Ten_du_an: userData?.ent_duan?.Duan,
       Ngay_ghi_nhan: Ngay_ghi_nhan,
-      Nguoi_tao: userData?.Hoten || userData?.UserName,
+      Nguoi_tao:  userData?.UserName || userData?.Hoten,
       Email: userData?.Email,
       modifiedBy: "Checklist",
     };
