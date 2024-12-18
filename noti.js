@@ -4,6 +4,8 @@ const {
 } = require("./app/controllers/tb_checklistc.controller");
 const { funcCreateYesterDay } = require("./app/utils/util");
 const { Json } = require("sequelize/lib/utils");
+const Ent_user = require("./app/models/ent_user.model");
+const { Op } = require("sequelize");
 
 // Tạo đối tượng Expo SDK client
 let expo = new Expo();
@@ -106,3 +108,50 @@ exports.funcAutoNoti = async () => {
     throw error;
   }
 };
+
+exports.funcAllNoti = async () => {
+  // Lấy danh sách user không bị xóa và có deviceToken hợp lệ
+  const users = await Ent_user.findAll({
+    attributes: ["isDelete", "deviceToken", "ID_Duan", "ID_User"],
+    where: {
+      isDelete: 0,
+      deviceToken: { [Op.ne]: null },
+      ID_Duan: 1, // Chỉ lấy user thuộc dự án của bạn
+    },
+  });
+
+  if (!users || users.length === 0) {
+    console.log("Không có user nào có deviceToken để gửi thông báo.");
+    return;
+  }
+
+  // Tạo danh sách thông báo
+  const messages = users
+    .filter((user) => Expo.isExpoPushToken(user.deviceToken)) // Chỉ lấy token hợp lệ
+    .map((user) => ({
+      to: user.deviceToken,
+      sound: "default",
+      title: "Thông báo",
+      body: "Ai dùng điện thoại IOS vui lòng KHÔNG cập nhật phiên bản mới.",
+    }));
+
+  if (messages.length === 0) {
+    console.log("Không có deviceToken hợp lệ để gửi thông báo.");
+    return;
+  }
+
+  try {
+    const chunks = expo.chunkPushNotifications(messages); // Chia nhỏ request
+    for (const chunk of chunks) {
+      try {
+        const ticketChunk = await expo.sendPushNotificationsAsync(messages[0]);
+        console.log("Chunk sent:", ticketChunk);
+      } catch (error) {
+        console.error("Lỗi khi gửi chunk:", error.message);
+      }
+    }
+  } catch (error) {
+    console.error("Lỗi khi gửi thông báo:", error.message);
+  }
+};
+

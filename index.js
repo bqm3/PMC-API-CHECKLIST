@@ -364,6 +364,8 @@ cron.schedule('30 11 * * *', async () => {
   console.log("Notification chỉ chạy ở môi trường development. NODE_ENV hiện tại là:", process.env.NODE_ENV);
 }
 
+
+
 // funcAutoNoti();
 require("./app/routes/ent_calv.routes")(app);
 require("./app/routes/ent_user.routes")(app);
