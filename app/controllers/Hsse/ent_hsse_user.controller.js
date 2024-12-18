@@ -303,7 +303,7 @@ const funcHSSE_Log = async (req, data, ID_HSSE, t) => {
       ID_HSSE: ID_HSSE,
       Ten_du_an: userData?.ent_duan?.Duan,
       Ngay_ghi_nhan: Ngay_ghi_nhan,
-      Nguoi_sua: userData?.Hoten || userData?.UserName,
+      Nguoi_sua: userData?.UserName || userData?.Hoten,
       Email: userData?.Email,
       modifiedBy: "Checklist",
     };
