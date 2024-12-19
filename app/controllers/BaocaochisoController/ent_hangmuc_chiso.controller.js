@@ -76,7 +76,6 @@ exports.getHangmucChisoById = async (req, res) => {
       .status(200)
       .json({ message: "Lấy thông tin thành công", data: hangmucChiso });
   } catch (error) {
-    console.log(error.message)
     res
       .status(500)
       .json({ message: "Lỗi khi lấy thông tin hạng mục chỉ số", error });
@@ -108,7 +107,6 @@ exports.getDetailHangmucChiso = async (req, res) => {
       .status(200)
       .json({ message: "Lấy thông tin thành công", data: hangmucChiso });
   } catch (error) {
-    console.log(error.message)
     res
       .status(500)
       .json({ message: "Lỗi khi lấy thông tin hạng mục chỉ số", error });

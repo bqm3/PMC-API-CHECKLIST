@@ -246,9 +246,6 @@ exports.update = async (req, res) => {
         filePath: file.path, // Đường dẫn vật lý của tệp
       };
     });
-    const isEmpty = (obj) => Object.keys(obj).length === 0;
-    console.log("uploadedFiles", uploadedFiles);
-
     const uploadedFileIds = [];
     uploadedFiles.forEach((file) => {
       uploadedFileIds.push(file); // Đẩy đối tượng tệp vào mảng

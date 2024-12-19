@@ -402,7 +402,7 @@ exports.getCheckListChiTiet = async (req, res, next) => {
             attributes: [
               "ID_ChecklistC",
               "Ngay",
-              "Giobd",
+              "Giobd","Gioghinhan",
               "Giokt",
               "ID_KhoiCV",
               "ID_Calv",
@@ -526,7 +526,7 @@ exports.getDetail = async (req, res) => {
         include: [
           {
             model: Tb_checklistc,
-            attributes: ["ID_ChecklistC", "Ngay", "Giobd", "Giokt"],
+            attributes: ["ID_ChecklistC", "Ngay", "Giobd","Gioghinhan", "Giokt"],
           },
           {
             model: Ent_checklist,
@@ -650,7 +650,7 @@ exports.searchChecklist = async (req, res) => {
           {
             model: Tb_checklistc,
             as: "tb_checklistc",
-            attributes: ["Ngay", "Giobd", "Giokt", "ID_KhoiCV", "ID_Calv"],
+            attributes: ["Ngay", "Giobd","Gioghinhan", "Giokt", "ID_KhoiCV", "ID_Calv"],
             where: {
               Ngay: { [Op.between]: [fromDate, toDate] }, // Filter by Ngay attribute between fromDate and toDate
             },
@@ -718,7 +718,7 @@ exports.searchChecklist = async (req, res) => {
           isDelete: 0,
           [Op.and]: [orConditions],
         },
-        order: [[{ model: Tb_checklistc }, "Ngay", "DESC"]],
+        // order: [[{ model: Tb_checklistc }, "Ngay", "DESC"]],
       });
       const totalPages = Math.ceil(totalCount / pageSize);
       await Tb_checklistchitiet.findAll({
@@ -736,7 +736,7 @@ exports.searchChecklist = async (req, res) => {
           {
             model: Tb_checklistc,
             as: "tb_checklistc",
-            attributes: ["Ngay", "Giobd", "Giokt", "ID_KhoiCV", "ID_Calv"],
+            attributes: ["Ngay", "Giobd","Gioghinhan", "Giokt", "ID_KhoiCV", "ID_Calv"],
             where: {
               Ngay: { [Op.between]: [fromDate, toDate] }, // Filter by Ngay attribute between fromDate and toDate
             },
@@ -807,10 +807,10 @@ exports.searchChecklist = async (req, res) => {
           isDelete: 0,
           [Op.and]: [orConditions],
         },
-        order: [
-          ["Ngay", "DESC"],
-          ["Gioht", "DESC"],
-        ],
+        // order: [
+        //   ["Ngay", "DESC"],
+        //   ["Gioht", "DESC"],
+        // ],
         limit: pageSize,
         offset: offset,
       })

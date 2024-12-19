@@ -52,7 +52,6 @@ exports.createHSSE = async (req, res) => {
       });
     }
   } catch (error) {
-    console.log("error", error);
     await t.rollback();
     res.status(500).json({ message: error?.message });
   }
@@ -130,7 +129,6 @@ exports.createHSSE_User = async (req, res) => {
       addedUsers: toAdd,
     });
   } catch (error) {
-    console.log("error", error);
     res.status(500).json({ message: "Có lỗi xảy ra", error });
   }
 };
@@ -151,7 +149,6 @@ exports.getHSSE_User_ByDuAn = async (req, res) => {
       });
     }
   } catch (error) {
-    console.log("error", error);
     res.status(500).json({ message: "Có lỗi xảy ra", error });
   }
 };

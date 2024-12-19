@@ -888,7 +888,6 @@ exports.deviceToken = async (req, res, next) => {
 };
 
 async function sendPushNotification(expoPushToken, message) {
-  // console.log('expoPushToken',expoPushToken)
   const payload = {
     to: expoPushToken,
     sound: "default",
@@ -896,7 +895,6 @@ async function sendPushNotification(expoPushToken, message) {
     body: message.body,
     data: message.data,
   };
-  // console.log('payload', payload)
 
   const response = await fetch("https://exp.host/--/api/v2/push/send", {
     method: "POST",
@@ -982,7 +980,6 @@ exports.uploadFileUsers = async (req, res) => {
     const worksheet = workbook.Sheets[sheetName];
     const data = xlsx.utils.sheet_to_json(worksheet);
 
-    //console.log('data', data)
     await sequelize.transaction(async (transaction) => {
       const removeSpacesFromKeys = (obj) => {
         return Object.keys(obj).reduce((acc, key) => {

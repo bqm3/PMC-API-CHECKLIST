@@ -142,7 +142,6 @@ if (process.env.BACKUP_ENV === "development") {
 
       // Tạo file SQL từ dữ liệu truy vấn
       fs.writeFileSync(sqlFilePath, sqlData);
-      console.log(`Dữ liệu đã được xuất thành công vào file ${sqlFilePath}`);
 
       // Nén file SQL thành file ZIP
       const zipFilePath = sqlFilePath + ".zip";
@@ -154,8 +153,6 @@ if (process.env.BACKUP_ENV === "development") {
       archive.pipe(output);
       archive.file(sqlFilePath, { name: path.basename(sqlFilePath) });
       await archive.finalize();
-
-      console.log(`Đã nén thành công file ${sqlFilePath} thành ${zipFilePath}`);
       
       // Xóa file SQL gốc sau khi nén
       fs.unlinkSync(sqlFilePath);
@@ -243,7 +240,6 @@ if(process.env.BACKUP_DRIVER === "development") {
   
       // Tạo file SQL từ dữ liệu truy vấn
       fs.writeFileSync(sqlFilePath, sqlData);
-      console.log(`Dữ liệu đã được xuất thành công vào file ${sqlFilePath}`);
   
       // Nén file SQL thành file ZIP
       const zipFilePath = sqlFilePath + ".zip";
@@ -255,8 +251,6 @@ if(process.env.BACKUP_DRIVER === "development") {
       archive.pipe(output);
       archive.file(sqlFilePath, { name: path.basename(sqlFilePath) });
       await archive.finalize();
-  
-      console.log(`Đã nén thành công file ${sqlFilePath} thành ${zipFilePath}`);
       
       // Xóa file SQL gốc sau khi nén
       fs.unlinkSync(sqlFilePath);
@@ -288,15 +282,12 @@ if(process.env.BACKUP_DRIVER === "development") {
       });
   
       const fileId = createFile.data.id;
-      console.log(`File uploaded with ID: ${fileId}`);
   
       // Đặt quyền công khai cho file
       const getUrl = await setFilePublic(fileId);
-      console.log(getUrl.data);
   
       // Xóa file ZIP sau khi upload thành công
       fs.unlinkSync(filePath);
-      console.log(`Đã xóa file ZIP: ${filePath}`);
   
     } catch (error) {
       console.error("Error uploading file:", error);

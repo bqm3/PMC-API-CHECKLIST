@@ -684,7 +684,6 @@ exports.uploadFiles = async (req, res) => {
           })
         );
         const validKhoiCVs = khoiCVs.filter((id) => id !== null);
-        console.log('validKhoiCVs', validKhoiCVs)
 
         let khuVuc = await Ent_khuvuc.findOne({
           attributes: [
@@ -709,8 +708,6 @@ exports.uploadFiles = async (req, res) => {
           },
           transaction,
         });
-
-        console.log('khuVuc', khuVuc)
 
         // Generate a QR code for hạng mục
         const maQrCode = generateQRCode(
@@ -766,7 +763,6 @@ exports.uploadFiles = async (req, res) => {
       data,
     });
   } catch (err) {
-    console.log("err", err);
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });

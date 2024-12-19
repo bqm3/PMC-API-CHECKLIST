@@ -40,6 +40,9 @@ const Ent_checklistc = sequelize.define(
     Giobd: {
       type: DataTypes.TIME,
     },
+    Gioghinhan: {
+      type: DataTypes.TIME,
+    },
     Giochupanh1: {
       type: DataTypes.TIME,
     },
