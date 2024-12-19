@@ -6,7 +6,6 @@ module.exports.image = {
   storage: function () {
     var storage = multer.diskStorage({
       destination: function (req, file, cb) {
-        console.log( 'file ', file)
         cb(null, path.join(__dirname, '../public/anh1'));
       },
       filename: function (req, file, cb) {

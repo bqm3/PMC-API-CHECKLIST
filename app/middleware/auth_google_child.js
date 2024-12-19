@@ -92,7 +92,6 @@ const uploadFile = async (fileObject, folderName, imageType, month, year) => {
     },
     fields: 'id, name',
   });
-  console.log('data.name', data.name)
 
   return {
     name: data.name,
@@ -104,7 +103,6 @@ const deleteFileFromGoogleDrive = async (fileId) => {
   const drive = google.drive({ version: 'v3', auth });
   try {
     await drive.files.delete({ fileId });
-    console.log('File deleted successfully');
   } catch (error) {
     console.error('Error deleting file: ', error);
   }

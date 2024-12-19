@@ -247,7 +247,6 @@ function convertExcelDateTime(excelDate) {
   const fractionalDay = excelDate - days; // Phần thập phân: thời gian trong ngày
 
   excelEpoch.setDate(excelEpoch.getDate() + days - 2); // Điều chỉnh Excel leap year bug
-  console.log("excelEpoch", excelEpoch);
 
   // Tính giờ, phút, giây từ phần thập phân
   const totalSecondsInDay = Math.round(fractionalDay * 86400); // Tổng số giây trong ngày
@@ -270,8 +269,6 @@ const convertExcelDate = (excelDate) => {
   const excelStartDate = new Date(1900, 0, 1); // Excel bắt đầu từ 01/01/1900
   const days = Math.floor(excelDate); // Phần nguyên là số ngày
   const timeFraction = excelDate - days; // Phần thập phân là giờ, phút, giây
-
-  console.log("timeFraction", timeFraction);
 
   const date = new Date(excelStartDate.getTime() + days * 86400000); // 86400000ms = 1 ngày
   const hours = Math.floor(timeFraction * 24); // Tính giờ

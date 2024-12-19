@@ -37,7 +37,6 @@ async function sendPushNotification(expoPushToken, message) {
     title: message.title,
     body: message.body,
   };
-  // console.log('payload', payload)
 
   const response = await fetch("https://exp.host/--/api/v2/push/send", {
     method: "POST",
@@ -130,7 +129,6 @@ exports.funcAutoNoti = async () => {
               ]);
 
               // Ghi log kết quả gửi thông báo thành công
-              console.log(`Notification sent to ${user.name}`, ticket);
               notificationResults.push({
                 userId: user.id,
                 userName: user.name,
@@ -196,7 +194,6 @@ exports.funcAllNoti = async () => {
     for (const chunk of chunks) {
       try {
         const ticketChunk = await expo.sendPushNotificationsAsync(messages[0]);
-        console.log("Chunk sent:", ticketChunk);
       } catch (error) {
         console.error("Lỗi khi gửi chunk:", error.message);
       }

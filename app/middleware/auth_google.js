@@ -52,7 +52,6 @@ const uploadFile = async (fileObject) => {
       id: data.id,
     }
   }catch(err){
-    console.log('err',err)
     return undefined;
   }
 };

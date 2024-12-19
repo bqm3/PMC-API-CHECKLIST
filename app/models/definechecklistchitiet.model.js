@@ -9,7 +9,6 @@ const defineDynamicModelChiTiet = (tableName, sequelize) => {
   try {
     // Kiểm tra xem model đã được định nghĩa chưa
     if (!sequelize.models[tableName]) {
-      console.log(`Defining dynamic model for table: ${tableName}`);
 
       // Định nghĩa model ChecklistDetail động
       const ChecklistDetail = sequelize.define(

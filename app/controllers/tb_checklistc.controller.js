@@ -554,7 +554,7 @@ exports.getCheckListc = async (req, res, next) => {
         ],
         where: whereClause,
         order: [
-          ["Ngay", "DESC"],
+          // ["Ngay", "DESC"],
           ["ID_ChecklistC", "DESC"],
         ],
         offset: offset,
@@ -736,7 +736,7 @@ exports.getDayCheckListc = async (req, res, next) => {
         ],
         where: whereClause,
         order: [
-          ["Ngay", "DESC"],
+          // ["Ngay", "DESC"],
           ["ID_ChecklistC", "DESC"],
         ],
         offset: offset,
@@ -901,7 +901,6 @@ exports.getThongKe = async (req, res, next) => {
         where: orConditions,
       });
       const totalPages = Math.ceil(totalCount / pageSize);
-      console.log("totalPages", totalPages);
       await Tb_checklistc.findAll({
         attributes: [
           "ID_ChecklistC",
@@ -963,7 +962,7 @@ exports.getThongKe = async (req, res, next) => {
         ],
         where: orConditions,
         order: [
-          ["Ngay", "DESC"],
+          // ["Ngay", "DESC"],
           ["ID_ChecklistC", "DESC"],
         ],
         offset: offset,
@@ -2651,7 +2650,6 @@ exports.checklistCalv = async (req, res) => {
       }
     }
   } catch (err) {
-    console.log("err", err);
     res
       .status(500)
       .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
@@ -2916,10 +2914,6 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
     } else if (Array.isArray(duan) && duan.length > 0) {
       whereClause.ID_Duan = { [Op.in]: duan };
     }
-
-    console.log("duan", duan);
-
-    console.log("whereClause", whereClause);
 
     // Fetch checklist data with related information
     const dataChecklistC = await Tb_checklistc.findAll({
@@ -3743,16 +3737,7 @@ exports.checklistCalvDate = async (req, res) => {
           "TongC",
           "Giobd",
           "Gioghinhan",
-          "Giochupanh1",
-          "Anh1",
-          "Giochupanh2",
-          "Anh2",
-          "Giochupanh3",
-          "Anh3",
-          "Giochupanh4",
-          "Anh4",
           "Giokt",
-          "Ghichu",
           "Tinhtrang",
           "isDelete",
         ],
@@ -3787,7 +3772,7 @@ exports.checklistCalvDate = async (req, res) => {
         ],
         where: whereClause,
         order: [
-          ["Ngay", "DESC"],
+          // ["Ngay", "DESC"],
           ["ID_ChecklistC", "DESC"],
         ],
         // offset: offset,
@@ -4744,11 +4729,6 @@ exports.soSanhSuCo = async (req, res) => {
       isDelete: 0,
     };
 
-    console.log("startOfLastWeek", startOfLastWeek);
-    console.log("endOfLastWeek", endOfLastWeek);
-    console.log("startOfTwoWeeksAgo", startOfTwoWeeksAgo);
-    console.log("endOfTwoWeeksAgo", endOfTwoWeeksAgo);
-
     // Truy vấn số lượng sự cố cho tuần trước
     const lastWeekIncidents = await Tb_checklistc.findAll({
       attributes: [
@@ -5113,7 +5093,6 @@ exports.reportPercentYesterday = async (req, res) => {
 
     Object.values(result).forEach((project) => {
       Object.keys(avgKhoiCompletion).forEach((khoiName) => {
-        console.log("khoiName", khoiName);
         const khoi = project.createdKhois[khoiName];
         if (khoi && khoi.completionRatio !== null) {
           avgKhoiCompletion[khoiName].totalCompletion += parseFloat(
@@ -6073,7 +6052,6 @@ LEFT JOIN ent_khoicv k ON b.ID_KhoiCV = k.ID_KhoiCV
       });
     }
   } catch (err) {
-    console.log("err", err);
     res
       .status(500)
       .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
@@ -6407,7 +6385,7 @@ exports.getProjectChecklistDays = async (req, res) => {
           attributes: ["Tenca"],
         },
       ],
-      order: [["Ngay", "DESC"]],
+      // order: [["Ngay", "DESC"]],
     });
 
     // Tạo dictionary để nhóm dữ liệu theo ngày và khối
@@ -7115,7 +7093,6 @@ exports.createExcelTongHopCa = async (req, res) => {
         const formattedPercentage = Number.isInteger(completionPercentage)
           ? completionPercentage.toString() // Convert to string if integer
           : completionPercentage.toFixed(2); // Use toFixed(2) for non-integer
-        console.log("item.KhoiCV", item.KhoiCV);
 
         const newRow = worksheet.addRow([
           index + 1, // STT
@@ -8115,7 +8092,6 @@ exports.createPreviewReports = async (req, res) => {
                   },
                 ],
               });
-              console.log("monthlyData", monthlyData);
 
               dataChecklistC = dataChecklistC.concat(monthlyData);
             } catch (error) {
@@ -8469,7 +8445,6 @@ exports.createExcelDuAn = async (req, res) => {
         result[projectId].createdKhois[khoiName].shifts[
           shiftName
         ].userCompletionRates.push(userCompletionRate);
-        console.log(`Tỷ lệ hoàn thành của ca: ${userCompletionRate}%`);
       } else {
         console.log(`Tỷ lệ hoàn thành của ca: 0% (Tong = 0)`);
       }
@@ -8948,8 +8923,6 @@ function formatDateEnd(dateStr) {
 
 cron.schedule("0 */2 * * *", async function () {
   console.log("---------------------");
-  console.log("Running Cron Job");
-
   const currentDate = new Date();
   const currentDateString = currentDate.toISOString().split("T")[0];
   const currentDateTime = moment(currentDate).format("HH:mm:ss");
@@ -8993,7 +8966,6 @@ cron.schedule("0 */2 * * *", async function () {
     });
 
     await Promise.all(yesterdayUpdates);
-    console.log("Updated all records for yesterday");
 
     // Tìm các bản ghi của ngày hôm nay
     const todayResults = await Tb_checklistc.findAll({

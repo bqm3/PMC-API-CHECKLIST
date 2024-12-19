@@ -410,16 +410,7 @@ const getProjectsChecklistStatus = async (req, res) => {
 
     // Insert dữ liệu vào bảng ent_tile
     await Ent_tile.bulkCreate(transformedRows);
-
-    // res.status(200).json({
-    //   message:
-    //     "Trạng thái checklist của các dự án theo từng khối và ca làm việc",
-    // });
   } catch (err) {
-    // console.log('err', err)
-    // res
-    //   .status(500)
-    //   .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
     console.error('Transaction failed:', err);
     throw err;
   }

@@ -94,8 +94,6 @@ exports.create = async (req, res) => {
       let anhs = [];
       if (!isEmpty(images) && uploadedFileIds.length > 0) {
         let imageIndex = "";
-
-        console.log("uploadedFileIds", uploadedFileIds);
         let matchingImage = null;
 
         imageIndex = `Image_${i}`;
@@ -239,7 +237,6 @@ exports.getbyDuAn = async (req, res) => {
       });
     }
   } catch (err) {
-    console.log("err.message", err);
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });

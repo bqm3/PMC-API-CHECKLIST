@@ -2862,8 +2862,6 @@ exports.uploadFixFiles = async (req, res) => {
             transaction,
           });
 
-          console.log("existingChecklist", existingChecklist);
-
           // Nếu checklist đã tồn tại thì bỏ qua
           if (!existingChecklist) {
             await Ent_checklist.create(data, { transaction });

@@ -42,7 +42,6 @@ async function uploadFileToOneDrive(image) {
 
     const uploadResult = await client.api(uploadPath).put(media.body);
 
-    console.log("File uploaded successfully, ID:", uploadResult.id);
     return uploadResult.id;
   } catch (error) {
     console.error("Error uploading file to OneDrive:", error);
@@ -78,7 +77,6 @@ const oneDriveAuth = async (imageByte) => {
         },
         function (er, re, bo) {
           const result = JSON.parse(bo);
-          console.log(result.webUrl); // it will gives URL for file, which can used as you requires, can be saved in database etc
         }
       );
     }

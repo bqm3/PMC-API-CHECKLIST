@@ -172,7 +172,6 @@ exports.main = async (req, res) => {
           html: `<div>${projectIncidents}</div>`,
         });
 
-        console.log(`Email sent to project ID ${projectId}: ${info.messageId}`);
       }
     }
 

@@ -338,7 +338,6 @@ exports.update = async (req, res) => {
       message: "Cập nhật tòa nhà thành công!!!",
     });
   } catch (error) {
-    console.log("error", error);
     res.status(500).json({
       message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });

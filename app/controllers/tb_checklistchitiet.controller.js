@@ -718,7 +718,7 @@ exports.searchChecklist = async (req, res) => {
           isDelete: 0,
           [Op.and]: [orConditions],
         },
-        order: [[{ model: Tb_checklistc }, "Ngay", "DESC"]],
+        // order: [[{ model: Tb_checklistc }, "Ngay", "DESC"]],
       });
       const totalPages = Math.ceil(totalCount / pageSize);
       await Tb_checklistchitiet.findAll({
@@ -807,10 +807,10 @@ exports.searchChecklist = async (req, res) => {
           isDelete: 0,
           [Op.and]: [orConditions],
         },
-        order: [
-          ["Ngay", "DESC"],
-          ["Gioht", "DESC"],
-        ],
+        // order: [
+        //   ["Ngay", "DESC"],
+        //   ["Gioht", "DESC"],
+        // ],
         limit: pageSize,
         offset: offset,
       })
