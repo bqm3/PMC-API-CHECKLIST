@@ -82,6 +82,8 @@ exports.createFirstChecklist = async (req, res, next) => {
       return;
     }
 
+    let Giogn = Giobd;
+
     const calvData = await Ent_calv.findOne({
       where: { ID_Calv: ID_Calv, isDelete: 0, ID_KhoiCV: ID_KhoiCV },
       attributes: ["Giobatdau", "Gioketthuc", "isDelete", "ID_KhoiCV", "Tenca"],
@@ -95,11 +97,9 @@ exports.createFirstChecklist = async (req, res, next) => {
     const formattedDateNow = moment(khoiData.Ngaybatdau)
       .startOf("day")
       .format("DD-MM-YYYY");
-    const nowFormattedDate = moment(Ngay).startOf("day").format("YYYY-MM-DD");
-    const yesterday = moment(Ngay)
-      .subtract(1, "day")
-      .startOf("day")
-      .format("YYYY-MM-DD");
+
+    let nowFormattedDate = moment(Ngay).startOf("day").format("YYYY-MM-DD");
+
     const formattedDatePrev = moment(Ngay)
       .add(1, "days") // Thêm 1 ngày vào ngày hiện tại
       .startOf("day")
@@ -113,11 +113,20 @@ exports.createFirstChecklist = async (req, res, next) => {
       moment(formattedDate),
       "days"
     );
+    const { Giobatdau, Gioketthuc } = calvData;
 
     if (daysDifference <= 0) {
       return res.status(400).json({
         message: `Chưa đến ngày tạo ca, ngày thực hiện sẽ là ngày ${formattedDateNow}!`,
       });
+    }
+
+    if (Giobatdau >= Gioketthuc && Giobd < Gioketthuc && Giobatdau > Giobd) {
+      nowFormattedDate = moment(Ngay)
+        .subtract(1, "days")
+        .startOf("day")
+        .format("YYYY-MM-DD");
+      Giogn = Giobatdau;
     }
 
     let ngayCheck = 0;
@@ -128,7 +137,6 @@ exports.createFirstChecklist = async (req, res, next) => {
         message: "Ca làm việc không tồn tại!",
       });
     }
-    const { Giobatdau, Gioketthuc } = calvData;
 
     if (
       (Giobd <= Giobatdau || Giobd >= Gioketthuc) &&
@@ -148,8 +156,6 @@ exports.createFirstChecklist = async (req, res, next) => {
     if (Giobatdau >= Gioketthuc && Giobd <= Giobatdau) {
       ngayCheck = ngayCheck - 1 == 0 ? khoiData.Chuky : ngayCheck - 1;
     }
-
-    // console.log('ngayCheck', ngayCheck)
 
     const thietlapcaData = await Ent_thietlapca.findOne({
       attributes: [
@@ -315,7 +321,8 @@ exports.createFirstChecklist = async (req, res, next) => {
             ID_Duan: userData.ID_Duan,
             ID_KhoiCV: userData.ID_KhoiCV,
             ID_ThietLapCa: thietlapcaData.ID_ThietLapCa,
-            Giobd: convertTimeFormat(Giobd),
+            Giobd: convertTimeFormat(Giogn),
+            Gioghinhan: convertTimeFormat(Giobd),
             Ngay: nowFormattedDate,
             TongC: 0,
             Tong: checklistData.count || 0,
@@ -448,6 +455,7 @@ exports.getCheckListc = async (req, res, next) => {
           "ID_ThietLapCa",
           "Ngay",
           "Giobd",
+          "Gioghinhan",
           "Giochupanh1",
           "Anh1",
           "Giochupanh2",
@@ -501,6 +509,7 @@ exports.getCheckListc = async (req, res, next) => {
           "Tong",
           "TongC",
           "Giobd",
+          "Gioghinhan",
           "Giochupanh1",
           "Anh1",
           "Giochupanh2",
@@ -584,7 +593,6 @@ exports.getCheckListc = async (req, res, next) => {
   }
 };
 
-
 exports.getDayCheckListc = async (req, res, next) => {
   try {
     const userData = req.user.data;
@@ -630,6 +638,7 @@ exports.getDayCheckListc = async (req, res, next) => {
           "ID_ThietLapCa",
           "Ngay",
           "Giobd",
+          "Gioghinhan",
           "Giochupanh1",
           "Anh1",
           "Giochupanh2",
@@ -670,7 +679,7 @@ exports.getDayCheckListc = async (req, res, next) => {
         where: whereClause,
       });
       const totalPages = Math.ceil(totalCount / pageSize);
-       await Tb_checklistc.findAll({
+      await Tb_checklistc.findAll({
         attributes: [
           "ID_ChecklistC",
           "ID_Hangmucs",
@@ -683,6 +692,7 @@ exports.getDayCheckListc = async (req, res, next) => {
           "Tong",
           "TongC",
           "Giobd",
+          "Gioghinhan",
           "Giochupanh1",
           "Anh1",
           "Giochupanh2",
@@ -733,7 +743,6 @@ exports.getDayCheckListc = async (req, res, next) => {
         limit: pageSize,
       })
         .then((data) => {
-         
           // Aggregate the data by Ngay and ID_Calv
           const result = data.reduce((acc, item) => {
             const key = `${item.Ngay}-${item.ID_Calv}`;
@@ -741,7 +750,7 @@ exports.getDayCheckListc = async (req, res, next) => {
               acc[key] = {
                 Key: key,
                 Ngay: item.Ngay,
-                Ca: item?.ent_calv?.Tenca, 
+                Ca: item?.ent_calv?.Tenca,
                 Tong: 0,
                 TongC: 0,
                 KhoiCV: item?.ent_khoicv?.KhoiCV,
@@ -754,10 +763,10 @@ exports.getDayCheckListc = async (req, res, next) => {
             acc[key].TongC += item.TongC;
             return acc;
           }, {});
-          
+
           // Convert the result object into an array
           const aggregatedData = Object.values(result);
-          
+
           if (aggregatedData) {
             res.status(200).json({
               message: "Danh sách checklistc!",
@@ -790,7 +799,6 @@ exports.getDayCheckListc = async (req, res, next) => {
   }
 };
 
-
 exports.getThongKe = async (req, res, next) => {
   try {
     const userData = req.user.data;
@@ -799,7 +807,9 @@ exports.getThongKe = async (req, res, next) => {
       const toDate = req.body.toDate;
       const ID_Calv = req.body.ID_Calv;
       const ID_KhoiCV = req.body.ID_KhoiCV ? req.body.ID_KhoiCV : null;
-      const arr_Duan_Array = userData?.arr_Duan?.split(',').map(item => item.trim());
+      const arr_Duan_Array = userData?.arr_Duan
+        ?.split(",")
+        .map((item) => item.trim());
 
       const orConditions = [
         {
@@ -811,10 +821,16 @@ exports.getThongKe = async (req, res, next) => {
       if (userData.ent_chucvu.Role == 3) {
         orConditions.push({ "$tb_checklistc.ID_User$": userData?.ID_User });
       }
-      if (userData?.ID_KhoiCV !== null && userData?.ID_KhoiCV !== undefined && userData.ent_chucvu.Role == 5 && !arr_Duan_Array.includes(String(userData.ID_Duan))
-      || (userData?.ID_KhoiCV !== null && userData?.ID_KhoiCV !== undefined && userData.ent_chucvu.Role !== 5)
+      if (
+        (userData?.ID_KhoiCV !== null &&
+          userData?.ID_KhoiCV !== undefined &&
+          userData.ent_chucvu.Role == 5 &&
+          !arr_Duan_Array.includes(String(userData.ID_Duan))) ||
+        (userData?.ID_KhoiCV !== null &&
+          userData?.ID_KhoiCV !== undefined &&
+          userData.ent_chucvu.Role !== 5)
       ) {
-          orConditions.push({ "$tb_checklistc.ID_KhoiCV$": userData?.ID_KhoiCV });
+        orConditions.push({ "$tb_checklistc.ID_KhoiCV$": userData?.ID_KhoiCV });
       }
 
       // orConditions.push({ "$tb_checklistc.ID_KhoiCV$": userData?.ID_KhoiCV });
@@ -844,6 +860,7 @@ exports.getThongKe = async (req, res, next) => {
           "ID_ThietLapCa",
           "Ngay",
           "Giobd",
+          "Gioghinhan",
           "Giochupanh1",
           "Anh1",
           "Giochupanh2",
@@ -898,6 +915,7 @@ exports.getThongKe = async (req, res, next) => {
           "Tong",
           "TongC",
           "Giobd",
+          "Gioghinhan",
           "Giochupanh1",
           "Anh1",
           "Giochupanh2",
@@ -1103,6 +1121,7 @@ exports.getThongKeHangMucQuanTrong = async (req, res, next) => {
                   "ID_Duan",
                   "ID_KhoiCV",
                   "Giobd",
+                  "Gioghinhan",
                   "Giokt",
                   "Tinhtrang",
                   "Ghichu",
@@ -1730,6 +1749,7 @@ exports.getDetail = async (req, res) => {
           "ID_User",
           "Ngay",
           "Giobd",
+          "Gioghinhan",
           "Giochupanh1",
           "Anh1",
           "Giochupanh2",
@@ -1847,6 +1867,7 @@ exports.open = async (req, res) => {
           "ID_ThietLapCa",
           "Ngay",
           "Giobd",
+          "Gioghinhan",
           "Giochupanh1",
           "Anh1",
           "Giochupanh2",
@@ -2062,6 +2083,7 @@ exports.checklistCalv = async (req, res) => {
           "Tinhtrang",
           "ID_Hangmucs",
           "Giobd",
+          "Gioghinhan",
           "Giokt",
           "ID_User",
           "ID_Calv",
@@ -2124,6 +2146,7 @@ exports.checklistCalv = async (req, res) => {
                 "ID_ChecklistC",
                 "Ngay",
                 "Giobd",
+                "Gioghinhan",
                 "Giokt",
                 "ID_KhoiCV",
                 "ID_Calv",
@@ -2411,6 +2434,7 @@ exports.checklistCalv = async (req, res) => {
                 "ID_ChecklistC",
                 "Ngay",
                 "Giobd",
+                "Gioghinhan",
                 "Giokt",
                 "ID_KhoiCV",
                 "ID_Calv",
@@ -2482,7 +2506,6 @@ exports.checklistCalv = async (req, res) => {
               ],
             },
           ],
-          
         });
 
         // Convert fetched data to plain JavaScript objects
@@ -2661,6 +2684,7 @@ exports.reportLocation = async (req, res) => {
         "ID_Duan",
         "Tinhtrang",
         "Giobd",
+        "Gioghinhan",
         "Giokt",
         "ID_User",
         "ID_Calv",
@@ -2882,20 +2906,20 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
       .endOf("month")
       .format("YYYY-MM-DD");
 
-      let whereClause = {
-        Ngay: { [Op.between]: [startDate, endDate] },
-        isDelete: 0,
+    let whereClause = {
+      Ngay: { [Op.between]: [startDate, endDate] },
+      isDelete: 0,
     };
-    
-    if (duan == -1) {
-        whereClause.ID_Duan = { [Op.ne]: 1 }; 
-    } else if (Array.isArray(duan) && duan.length > 0) {
-        whereClause.ID_Duan = { [Op.in]: duan }; 
-    } 
 
-    console.log("duan",duan)
-    
-    console.log("whereClause",whereClause)
+    if (duan == -1) {
+      whereClause.ID_Duan = { [Op.ne]: 1 };
+    } else if (Array.isArray(duan) && duan.length > 0) {
+      whereClause.ID_Duan = { [Op.in]: duan };
+    }
+
+    console.log("duan", duan);
+
+    console.log("whereClause", whereClause);
 
     // Fetch checklist data with related information
     const dataChecklistC = await Tb_checklistc.findAll({
@@ -2908,6 +2932,7 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
         "ID_Duan",
         "Tinhtrang",
         "Giobd",
+        "Gioghinhan",
         "Giokt",
         "Tong",
         "TongC",
@@ -2950,7 +2975,7 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
           ],
         },
       ],
-      where: whereClause
+      where: whereClause,
     });
 
     const results = dataChecklistC.map((checklist) => {
@@ -3184,7 +3209,7 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
           { header: "Ca", key: "ca", width: 15 },
           { header: "Họ tên", key: "nguoi", width: 20 },
           { header: "Tài khoản", key: "kt", width: 20 },
-          { header: "Giờ Bắt Đầu", key: "giobd", width: 15 },
+          { header: "Giờ Bắt Đầu", key: "Giobd", width: 15 },
           { header: "Giờ Kết Thúc", key: "giokt", width: 15 },
           { header: "Ngày", key: "ngay", width: 15 },
           { header: "Khối", key: "cv", width: 15 },
@@ -3218,63 +3243,63 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
     });
 
     // Create the summary sheet
-    const summarySheet = workbook.addWorksheet('Tổng hợp Dự Án');
-summarySheet.columns = [
-  { header: "Dự án", key: "project", width: 30 },
-  { header: "Ca", key: "ca", width: 15 },
-  { header: "Họ tên", key: "nguoi", width: 20 },
-  { header: "Tài khoản", key: "kt", width: 20 },
-  { header: "Khối", key: "cv", width: 15 },
-];
+    const summarySheet = workbook.addWorksheet("Tổng hợp Dự Án");
+    summarySheet.columns = [
+      { header: "Dự án", key: "project", width: 30 },
+      { header: "Ca", key: "ca", width: 15 },
+      { header: "Họ tên", key: "nguoi", width: 20 },
+      { header: "Tài khoản", key: "kt", width: 20 },
+      { header: "Khối", key: "cv", width: 15 },
+    ];
 
-// Create a Set to store unique entries (to avoid duplicate rows)
-const uniqueEntries = new Set();
+    // Create a Set to store unique entries (to avoid duplicate rows)
+    const uniqueEntries = new Set();
 
-// Collect rows to be sorted
-const rows = [];
+    // Collect rows to be sorted
+    const rows = [];
 
-// Populate the summary data
-resultWithDetails.forEach((result) => {
-  result.detailedCoordinates.forEach((coordinateEntry) => {
-    coordinateEntry.detailedItems.forEach((item) => {
-      // Generate a unique key for each entry based on the project, person, account, and block
-      const uniqueKey = `${result.project}-${result.nguoi}-${result.kt}-${result.cv}`;
+    // Populate the summary data
+    resultWithDetails.forEach((result) => {
+      result.detailedCoordinates.forEach((coordinateEntry) => {
+        coordinateEntry.detailedItems.forEach((item) => {
+          // Generate a unique key for each entry based on the project, person, account, and block
+          const uniqueKey = `${result.project}-${result.nguoi}-${result.kt}-${result.cv}`;
 
-      // Only add the entry if it's not already in the Set
-      if (!uniqueEntries.has(uniqueKey)) {
-        uniqueEntries.add(uniqueKey);
-        rows.push({
-          project: result.project,  // Project name
-          ca: result.ca,
-          nguoi: result.nguoi,     // Person's name
-          kt: result.kt,           // Account
-          cv: result.cv,           // Block
+          // Only add the entry if it's not already in the Set
+          if (!uniqueEntries.has(uniqueKey)) {
+            uniqueEntries.add(uniqueKey);
+            rows.push({
+              project: result.project, // Project name
+              ca: result.ca,
+              nguoi: result.nguoi, // Person's name
+              kt: result.kt, // Account
+              cv: result.cv, // Block
+            });
+          }
         });
-      }
+      });
     });
-  });
-});
 
-// Sort rows by the 'project' key (Dự án)
-rows.sort((a, b) => a.project.localeCompare(b.project));
+    // Sort rows by the 'project' key (Dự án)
+    rows.sort((a, b) => a.project.localeCompare(b.project));
 
-// Add the sorted rows to the sheet
-rows.forEach((row) => {
-  summarySheet.addRow(row);
-});
+    // Add the sorted rows to the sheet
+    rows.forEach((row) => {
+      summarySheet.addRow(row);
+    });
 
-// Write the Excel file
-const buffer = await workbook.xlsx.writeBuffer();
+    // Write the Excel file
+    const buffer = await workbook.xlsx.writeBuffer();
 
-// Set headers for file download
-res.set({
-  "Content-Disposition": `attachment; filename=Bao_cao_checklist_vi_pham_tong_hop_${month}_${year}.xlsx`,
-  "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-});
+    // Set headers for file download
+    res.set({
+      "Content-Disposition": `attachment; filename=Bao_cao_checklist_vi_pham_tong_hop_${month}_${year}.xlsx`,
+      "Content-Type":
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
 
-// Send the buffer as the response
-res.send(buffer);
-
+    // Send the buffer as the response
+    res.send(buffer);
   } catch (err) {
     // Handle errors and send appropriate response
     res
@@ -3312,6 +3337,7 @@ exports.checklistCalvDinhKy = async (req, res) => {
               "ID_ChecklistC",
               "Ngay",
               "Giobd",
+              "Gioghinhan",
               "Giokt",
               "ID_KhoiCV",
               "ID_Calv",
@@ -3565,6 +3591,7 @@ exports.checklistCalvDinhKy = async (req, res) => {
           "ID_Duan",
           "Tinhtrang",
           "Giobd",
+          "Gioghinhan",
           "Giokt",
           "ID_User",
           "ID_Calv",
@@ -3661,6 +3688,7 @@ exports.checklistCalvDate = async (req, res) => {
           "ID_ThietLapCa",
           "Ngay",
           "Giobd",
+          "Gioghinhan",
           "Giochupanh1",
           "Anh1",
           "Giochupanh2",
@@ -3714,6 +3742,7 @@ exports.checklistCalvDate = async (req, res) => {
           "Tong",
           "TongC",
           "Giobd",
+          "Gioghinhan",
           "Giochupanh1",
           "Anh1",
           "Giochupanh2",
@@ -5585,6 +5614,7 @@ exports.getChecklistsErrorFromYesterday = async (req, res) => {
             "Tong",
             "TongC",
             "Giobd",
+            "Gioghinhan",
             "Giochupanh1",
             "Anh1",
             "Giochupanh2",
@@ -5892,6 +5922,7 @@ LEFT JOIN ent_khoicv k ON b.ID_KhoiCV = k.ID_KhoiCV
               "Tong",
               "TongC",
               "Giobd",
+              "Gioghinhan",
               "Giochupanh1",
               "Anh1",
               "Giochupanh2",
@@ -6327,8 +6358,8 @@ exports.getProjectChecklistDays = async (req, res) => {
     const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
 
     // Lấy ID_Duan từ req.params hoặc req.query
-    const { ID_Duan, ID_KhoiCV, arr_Duan, ent_chucvu} = req.user.data;
-    const arr_Duan_Array = arr_Duan?.split(',').map(item => item.trim());
+    const { ID_Duan, ID_KhoiCV, arr_Duan, ent_chucvu } = req.user.data;
+    const arr_Duan_Array = arr_Duan?.split(",").map((item) => item.trim());
 
     // Kiểm tra nếu không có ID_Duan được cung cấp
     if (!ID_Duan) {
@@ -6341,12 +6372,17 @@ exports.getProjectChecklistDays = async (req, res) => {
       },
       ID_Duan: ID_Duan,
       isDelete: 0,
-    }
+    };
 
-    if(ID_KhoiCV != null && ID_KhoiCV != undefined && ent_chucvu.Role == 5 && !arr_Duan_Array.includes(String(ID_Duan))
-      || ID_KhoiCV != null && ID_KhoiCV != undefined && ent_chucvu.Role !== 5) {
-        whereClause.ID_KhoiCV = ID_KhoiCV;
-   }
+    if (
+      (ID_KhoiCV != null &&
+        ID_KhoiCV != undefined &&
+        ent_chucvu.Role == 5 &&
+        !arr_Duan_Array.includes(String(ID_Duan))) ||
+      (ID_KhoiCV != null && ID_KhoiCV != undefined && ent_chucvu.Role !== 5)
+    ) {
+      whereClause.ID_KhoiCV = ID_KhoiCV;
+    }
 
     // Lấy tất cả dữ liệu checklistC cho dự án duy nhất trong vòng 7 ngày
     const dataChecklistCs = await Tb_checklistc.findAll({
@@ -6371,9 +6407,7 @@ exports.getProjectChecklistDays = async (req, res) => {
           attributes: ["Tenca"],
         },
       ],
-      order: [
-        ['Ngay', 'DESC'], 
-      ],
+      order: [["Ngay", "DESC"]],
     });
 
     // Tạo dictionary để nhóm dữ liệu theo ngày và khối
@@ -6663,6 +6697,7 @@ exports.createExcelFile = async (req, res) => {
             "Tong",
             "TongC",
             "Giobd",
+            "Gioghinhan",
             "Giochupanh1",
             "Anh1",
             "Giochupanh2",
@@ -7320,6 +7355,7 @@ exports.createExcelTongHopCa = async (req, res) => {
                       "ID_Duan",
                       "ID_KhoiCV",
                       "Giobd",
+                      "Gioghinhan",
                       "Giokt",
                       "Tinhtrang",
                       "Ghichu",
@@ -7407,6 +7443,7 @@ exports.createExcelTongHopCa = async (req, res) => {
                   "Tong",
                   "TongC",
                   "Giobd",
+                  "Gioghinhan",
                   "Giokt",
                   "Ghichu",
                   "Tinhtrang",
@@ -8029,6 +8066,7 @@ exports.createPreviewReports = async (req, res) => {
                       "ID_Duan",
                       "ID_KhoiCV",
                       "Giobd",
+                      "Gioghinhan",
                       "Giokt",
                       "Tinhtrang",
                       "Ghichu",
@@ -8117,6 +8155,7 @@ exports.createPreviewReports = async (req, res) => {
                   "Tong",
                   "TongC",
                   "Giobd",
+                  "Gioghinhan",
                   "Giokt",
                   "Ghichu",
                   "Tinhtrang",
@@ -8933,6 +8972,7 @@ cron.schedule("0 */2 * * *", async function () {
         "Tong",
         "TongC",
         "Giobd",
+        "Gioghinhan",
         "Giokt",
         "Tinhtrang",
         "isDelete",
@@ -8967,6 +9007,7 @@ cron.schedule("0 */2 * * *", async function () {
         "Tong",
         "TongC",
         "Giobd",
+        "Gioghinhan",
         "Giokt",
         "Tinhtrang",
         "isDelete",
@@ -9043,52 +9084,51 @@ exports.getProjectsChecklistStatus_Noti = async () => {
           // ID_Duan: { [Op.or]: [1] },
         },
         include: [
-          { 
-            model: Ent_duan, 
+          {
+            model: Ent_duan,
             attributes: ["Duan", "Percent"],
-            required: true 
+            required: true,
           },
-          { 
-            model: Ent_khoicv, 
+          {
+            model: Ent_khoicv,
             attributes: ["KhoiCV"],
-            required: true 
+            required: true,
           },
-          { 
-            model: Ent_calv, 
+          {
+            model: Ent_calv,
             attributes: ["Tenca"],
-            required: true 
+            required: true,
           },
         ],
       }),
       Ent_user.findAll({
         attributes: [
-          "ID_User", 
-          "UserName", 
-          "Hoten", 
-          "ID_KhoiCV", 
-          "ID_Chucvu", 
-          "ID_Duan", 
-          "deviceToken"
+          "ID_User",
+          "UserName",
+          "Hoten",
+          "ID_KhoiCV",
+          "ID_Chucvu",
+          "ID_Duan",
+          "deviceToken",
         ],
         include: {
           model: Ent_chucvu,
-          attributes: ["Chucvu", "Role"]
+          attributes: ["Chucvu", "Role"],
         },
         where: {
           ID_Chucvu: { [Op.in]: [2, 3, 8, 10] },
           // ID_Duan: { [Op.in]: [1] },
           isDelete: 0,
         },
-      })
+      }),
     ]);
 
-  
     if (!dataChecklistCs.length || !users.length) {
       return [];
     }
 
     const usersByProject = new Map();
-    users.forEach(user => {
+    users.forEach((user) => {
       const projectUsers = usersByProject.get(user.ID_Duan) || [];
       projectUsers.push({
         id: user.ID_User,
@@ -9096,15 +9136,14 @@ exports.getProjectsChecklistStatus_Noti = async () => {
         username: user.UserName,
         deviceToken: user.deviceToken,
         khoiCV: user.ID_KhoiCV,
-        ent_chucvu: user.ent_chucvu
+        ent_chucvu: user.ent_chucvu,
       });
       usersByProject.set(user.ID_Duan, projectUsers);
     });
 
-
     const processedProjects = new Map();
 
-    dataChecklistCs.forEach(checklistC => {
+    dataChecklistCs.forEach((checklistC) => {
       const projectId = checklistC.ID_Duan;
       const khoiName = checklistC.ent_khoicv.KhoiCV;
       const shiftName = checklistC.ent_calv.Tenca;
@@ -9115,29 +9154,27 @@ exports.getProjectsChecklistStatus_Noti = async () => {
           projectName: checklistC.ent_duan.Duan,
           percent: checklistC.ent_duan.Percent || DEFAULT_COMPLETION_PERCENT,
           users: usersByProject.get(projectId) || [],
-          createdKhois: new Map()
+          createdKhois: new Map(),
         });
       }
 
       const project = processedProjects.get(projectId);
 
-
       if (!project.createdKhois.has(khoiName)) {
         project.createdKhois.set(khoiName, {
           ID_KhoiCV: checklistC.ID_KhoiCV,
           TenKhoi: khoiName,
-          shifts: new Map()
+          shifts: new Map(),
         });
       }
 
       const khoi = project.createdKhois.get(khoiName);
 
-
       if (!khoi.shifts.has(shiftName)) {
         khoi.shifts.set(shiftName, {
           totalTongC: 0,
           totalTong: 0,
-          userCompletionRates: []
+          userCompletionRates: [],
         });
       }
 
@@ -9147,9 +9184,10 @@ exports.getProjectsChecklistStatus_Noti = async () => {
       shift.totalTongC += checklistC.TongC || 0;
       shift.totalTong += checklistC.Tong || 0;
 
-      const userCompletionRate = checklistC.Tong > 0 
-        ? Math.min((checklistC.TongC / checklistC.Tong) * 100, 100) 
-        : 0;
+      const userCompletionRate =
+        checklistC.Tong > 0
+          ? Math.min((checklistC.TongC / checklistC.Tong) * 100, 100)
+          : 0;
 
       shift.userCompletionRates.push(userCompletionRate);
     });
@@ -9176,9 +9214,8 @@ exports.getProjectsChecklistStatus_Noti = async () => {
         }
 
         // Calculate average completion ratio
-        const avgKhoiCompletionRatio = totalShifts > 0 
-          ? totalKhoiCompletionRatio / totalShifts 
-          : 0;
+        const avgKhoiCompletionRatio =
+          totalShifts > 0 ? totalKhoiCompletionRatio / totalShifts : 0;
 
         khoi.completionRatio = Number.isInteger(avgKhoiCompletionRatio)
           ? avgKhoiCompletionRatio
@@ -9186,7 +9223,8 @@ exports.getProjectsChecklistStatus_Noti = async () => {
 
         // Determine completion status
         const comparisonPercent = project.percent || DEFAULT_COMPLETION_PERCENT;
-        khoi.completionStatus = khoi.completionRatio < comparisonPercent ? 1 : 0;
+        khoi.completionStatus =
+          khoi.completionRatio < comparisonPercent ? 1 : 0;
 
         if (khoi.completionStatus === 1) {
           processedKhois.push(khoi);
@@ -9195,40 +9233,45 @@ exports.getProjectsChecklistStatus_Noti = async () => {
 
       // Filter and process users
       if (processedKhois.length > 0) {
-        const filteredUsers = project.users.filter(user => 
-          user.khoiCV === null || 
-          processedKhois.some(khoi => khoi.ID_KhoiCV === user.khoiCV)
-        ).map(user => {
-          // Add TenKhoi to matching users
-          const matchingKhoi = processedKhois.find(khoi => khoi.ID_KhoiCV === user.khoiCV);
-          return {
-            ...user,
-            TenKhoi: matchingKhoi ? matchingKhoi.TenKhoi : null,
-            completionRatio: matchingKhoi ? matchingKhoi.completionRatio : null
-          };
-        });
+        const filteredUsers = project.users
+          .filter(
+            (user) =>
+              user.khoiCV === null ||
+              processedKhois.some((khoi) => khoi.ID_KhoiCV === user.khoiCV)
+          )
+          .map((user) => {
+            // Add TenKhoi to matching users
+            const matchingKhoi = processedKhois.find(
+              (khoi) => khoi.ID_KhoiCV === user.khoiCV
+            );
+            return {
+              ...user,
+              TenKhoi: matchingKhoi ? matchingKhoi.TenKhoi : null,
+              completionRatio: matchingKhoi
+                ? matchingKhoi.completionRatio
+                : null,
+            };
+          });
 
         finalResults.push({
           projectId: project.projectId,
           projectName: project.projectName,
           createdKhois: processedKhois,
-          users: filteredUsers
+          users: filteredUsers,
         });
       }
     }
 
     return finalResults;
-
   } catch (err) {
     // Comprehensive error logging
-    console.error('Error in getProjectsChecklistStatus_Noti:', err);
-    
+    console.error("Error in getProjectsChecklistStatus_Noti:", err);
+
     // Depending on your error handling strategy
     return {
       error: true,
-      message: err.message || 'An unexpected error occurred',
-      details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      message: err.message || "An unexpected error occurred",
+      details: process.env.NODE_ENV === "development" ? err.stack : undefined,
     };
   }
 };
-

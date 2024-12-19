@@ -74,7 +74,7 @@ const danhSachDuLieu = async (req, res) => {
           "ID_ThietLapCa",
           "ID_Duan",
           "Tinhtrang",
-          "Giobd",
+          "Giobd","Gioghinhan",
           "Giokt",
           "ID_User",
           "ID_Calv",
