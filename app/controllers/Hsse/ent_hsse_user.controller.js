@@ -216,6 +216,26 @@ exports.getHSSE = async (req, res) => {
   }
 };
 
+exports.getHSSEAll = async (req, res)=> {
+  try {
+    const Ngay_ghi_nhan = moment(new Date()).format("YYYY-MM-DD");
+     
+    const resData = await hsse.findAll({
+      where: {
+        Ngay_ghi_nhan: Ngay_ghi_nhan,
+      },
+    });
+    return res.status(200).json({
+      message: "Danh sách HSSE",
+      data: resData || [],
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message || "Có lỗi xảy ra",
+    });
+  }
+}
+
 exports.getDetailHSSE = async (req, res) => {
   try {
     const findHsse = await hsse.findOne({

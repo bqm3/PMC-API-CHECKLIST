@@ -554,7 +554,7 @@ exports.getCheckListc = async (req, res, next) => {
         ],
         where: whereClause,
         order: [
-          // ["Ngay", "DESC"],
+          ["Ngay", "DESC"],
           ["ID_ChecklistC", "DESC"],
         ],
         offset: offset,
@@ -736,7 +736,7 @@ exports.getDayCheckListc = async (req, res, next) => {
         ],
         where: whereClause,
         order: [
-          // ["Ngay", "DESC"],
+          ["Ngay", "DESC"],
           ["ID_ChecklistC", "DESC"],
         ],
         offset: offset,
@@ -801,6 +801,7 @@ exports.getDayCheckListc = async (req, res, next) => {
 
 exports.getThongKe = async (req, res, next) => {
   try {
+    console.log('============================================')
     const userData = req.user.data;
     if (userData) {
       const fromDate = req.body.fromDate;
@@ -810,6 +811,7 @@ exports.getThongKe = async (req, res, next) => {
       const arr_Duan_Array = userData?.arr_Duan
         ?.split(",")
         .map((item) => item.trim());
+        console.log('fromDate, toDate', fromDate, toDate)
 
       const orConditions = [
         {
@@ -901,6 +903,7 @@ exports.getThongKe = async (req, res, next) => {
         where: orConditions,
       });
       const totalPages = Math.ceil(totalCount / pageSize);
+      console.log('totalPages', totalPages,pageSize, offset)
       await Tb_checklistc.findAll({
         attributes: [
           "ID_ChecklistC",
@@ -915,14 +918,6 @@ exports.getThongKe = async (req, res, next) => {
           "TongC",
           "Giobd",
           "Gioghinhan",
-          "Giochupanh1",
-          "Anh1",
-          "Giochupanh2",
-          "Anh2",
-          "Giochupanh3",
-          "Anh3",
-          "Giochupanh4",
-          "Anh4",
           "Giokt",
           "Ghichu",
           "Tinhtrang",
@@ -962,7 +957,7 @@ exports.getThongKe = async (req, res, next) => {
         ],
         where: orConditions,
         order: [
-          // ["Ngay", "DESC"],
+          ["Ngay", "DESC"],
           ["ID_ChecklistC", "DESC"],
         ],
         offset: offset,
@@ -3772,7 +3767,7 @@ exports.checklistCalvDate = async (req, res) => {
         ],
         where: whereClause,
         order: [
-          // ["Ngay", "DESC"],
+          ["Ngay", "DESC"],
           ["ID_ChecklistC", "DESC"],
         ],
         // offset: offset,
@@ -6385,7 +6380,7 @@ exports.getProjectChecklistDays = async (req, res) => {
           attributes: ["Tenca"],
         },
       ],
-      // order: [["Ngay", "DESC"]],
+      order: [["Ngay", "DESC"]],
     });
 
     // Tạo dictionary để nhóm dữ liệu theo ngày và khối
