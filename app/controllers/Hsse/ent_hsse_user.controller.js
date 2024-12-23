@@ -8,12 +8,56 @@ const moment = require("moment");
 const hsse = require("../../models/hsse.model");
 const sequelize = require("../../config/db.config");
 
+const HSSE = [
+  { id: 0, title: "Điện cư dân", key: "Dien_cu_dan" },
+  { id: 1, title: "Điện chủ đầu tư", key: "Dien_cdt" },
+  { id: 2, title: "Nước cư dân", key: "Nuoc_cu_dan" },
+  { id: 3, title: "Nước chủ đầu tư", key: "Nuoc_cdt" },
+  { id: 4, title: "Nước xả thải", key: "Xa_thai" },
+  { id: 5, title: "Rác sinh hoạt", key: "Rac_sh" },
+  { id: 6, title: "Muối điện phân", key: "Muoi_dp" },
+  { id: 7, title: "PAC", key: "PAC" },
+  { id: 8, title: "NaHSO3", key: "NaHSO3" },
+  { id: 9, title: "NaOH", key: "NaOH" },
+  { id: 10, title: "Mật rỉ đường", key: "Mat_rd" },
+  { id: 11, title: "Polymer Anion", key: "Polymer_Anion" },
+  { id: 12, title: "Chlorine bột", key: "Chlorine_bot" },
+  { id: 13, title: "Chlorine viên", key: "Chlorine_vien" },
+  { id: 14, title: "Methanol", key: "Methanol" },
+  { id: 15, title: "Dầu máy phát", key: "Dau_may" },
+  { id: 16, title: "Túi rác 240L", key: "Tui_rac240" },
+  { id: 17, title: "Túi rác 120L", key: "Tui_rac120" },
+  { id: 18, title: "Túi rác 20L", key: "Tui_rac20" },
+  { id: 19, title: "Túi rác 10L", key: "Tui_rac10" },
+  { id: 20, title: "Túi rác 5L", key: "Tui_rac5" },
+  { id: 21, title: "Giấy vệ sinh 235mm", key: "giayvs_235" },
+  { id: 22, title: "Giấy vệ sinh 120mm", key: "giaivs_120" },
+  { id: 23, title: "Giấy lau tay", key: "giay_lau_tay" },
+  { id: 24, title: "Hóa chất làm sạch", key: "hoa_chat" },
+  { id: 25, title: "Nước rửa tay", key: "nuoc_rua_tay" },
+  { id: 26, title: "Nhiệt độ", key: "nhiet_do" },
+  { id: 27, title: "Nước bù bể", key: "nuoc_bu" },
+  { id: 28, title: "Clo", key: "clo" },
+  { id: 29, title: "Nồng độ PH", key: "PH" },
+  { id: 30, title: "Poolblock", key: "Poolblock" },
+  { id: 31, title: "Trạt thải", key: "trat_thai" },
+  { id: 32, title: "pH Minus", key: "pHMINUS" },
+  { id: 33, title: "Axit", key: "axit" },
+  { id: 34, title: "PN180", key: "PN180" },
+  { id: 35, title: "Chỉ số CO2", key: "chiSoCO2" },
+  { id: 36, title: "Clorin", key: "clorin" },
+  { id: 37, title: "NaOCL", key: "NaOCL" },
+];
+
 exports.createHSSE = async (req, res) => {
   const t = await sequelize.transaction();
   try {
     const userData = req.user.data;
     const data = req.body;
     const Ngay_ghi_nhan = moment(new Date()).format("YYYY-MM-DD");
+    const yesterday = moment(Ngay_ghi_nhan)
+      .subtract(1, "days")
+      .format("YYYY-MM-DD");
 
     // Convert null values to 0
     const sanitizedData = Object.keys(data).reduce((acc, key) => {
@@ -24,7 +68,7 @@ exports.createHSSE = async (req, res) => {
     const dataUser = {
       Ten_du_an: userData?.ent_duan?.Duan,
       Ngay_ghi_nhan: Ngay_ghi_nhan,
-      Nguoi_tao:  userData?.UserName || userData?.Hoten,
+      Nguoi_tao: userData?.UserName || userData?.Hoten,
       Email: userData?.Email,
       modifiedBy: "Checklist",
     };
@@ -44,11 +88,13 @@ exports.createHSSE = async (req, res) => {
         .status(400)
         .json({ message: "Báo cáo HSSE ngày hôm nay đã được tạo" });
     } else {
+      const htmlResponse = await funcYesterday(userData, data, yesterday, t, "Tạo báo cáo HSSE thành công.");
       const createHSSE = await hsse.create(combinedData, { transaction: t });
       await funcHSSE_Log(req, sanitizedData, createHSSE.ID, t);
       await t.commit();
       return res.status(200).json({
         message: "Tạo báo cáo HSSE thành công",
+        htmlResponse: htmlResponse,
       });
     }
   } catch (error) {
@@ -257,8 +303,14 @@ exports.getDetailHSSE = async (req, res) => {
 exports.updateHSSE = async (req, res) => {
   const t = await sequelize.transaction();
   try {
+    const userData = req.user.data;
     const { data, Ngay } = req.body;
     const isToday = moment(Ngay).isSame(moment(), "day");
+    const yesterday = moment(Ngay)
+    .subtract(1, "days")
+    .format("YYYY-MM-DD");
+
+    console.log("yesterday",yesterday)
 
     if (!isToday) {
       await t.rollback();
@@ -267,12 +319,14 @@ exports.updateHSSE = async (req, res) => {
       });
     }
 
+    const htmlResponse = await funcYesterday(userData, data, yesterday, t, "Cập nhật thành công !")
     await funcHSSE_Log(req, data, req.params.id, t);
     await updateHSSE(req, req.params.id, t);
     await t.commit();
 
     return res.status(200).json({
       message: "Cập nhật thành công!",
+      htmlResponse: htmlResponse
     });
   } catch (error) {
     await t.rollback();
@@ -281,7 +335,6 @@ exports.updateHSSE = async (req, res) => {
     });
   }
 };
-
 
 const updateHSSE = async (req, ID_HSSE, t) => {
   try {
@@ -326,6 +379,52 @@ const funcHSSE_Log = async (req, data, ID_HSSE, t) => {
     };
     const combinedData = { ...sanitizedData, ...dataUser };
     await HSSE_Log.create(combinedData, { transaction: t });
+  } catch (error) {
+    throw error;
+  }
+};
+
+const funcYesterday = async (userData, data, yesterday, t, message) => {
+  try {
+    let warning = "";
+    let htmlResponse = "";
+    const yesterdayHSSE = await hsse.findOne({
+      where: {
+        Ten_du_an: userData?.ent_duan?.Duan,
+        Ngay_ghi_nhan: yesterday,
+      },
+      transaction: t,
+    });
+
+    if (yesterdayHSSE) {
+      Object.keys(data).forEach((key) => {
+        const currentValue = data[key];
+        const yesterdayValue = yesterdayHSSE[key];
+        const plus = currentValue - yesterdayValue;
+
+        let percentIncrease;
+        if (yesterdayValue == 0 && currentValue != 0) {
+          percentIncrease = 100;
+        } else {
+          percentIncrease = (plus / yesterdayValue) * 100;
+        }
+
+        if (percentIncrease > 15) {
+          const hsseItem = HSSE.find((item) => item.key === key);
+          warning += `<span><strong>${hsseItem.title}</strong> lớn hơn so với ${percentIncrease}% ngày hôm trước</span></br>`;
+        }
+      });
+    }
+    if (warning != "") {
+      htmlResponse = `
+    <div>
+      ${`<h2>Cảnh báo:</h2>${warning}`}
+      <p>${message}</p>
+    </div>
+`;
+    }
+
+    return htmlResponse;
   } catch (error) {
     throw error;
   }

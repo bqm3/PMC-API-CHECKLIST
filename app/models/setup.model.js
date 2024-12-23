@@ -28,6 +28,10 @@ const Ent_Hsse_User = require('./Hsse/ent_hsse_user.model')
 const HSSE_Log = require('./Hsse/hsse_log.model')
 const HSSE = require('./hsse.model')
 
+//P0
+const P0 = require('./P0.model')
+const P0_Log = require('./P0_Log.model')
+
 
 //bao cao chi so
 const Ent_Loai_Chiso = require('./BaocaochisoModel/ent_loai_chiso.model')
@@ -70,6 +74,16 @@ Ent_duan.belongsTo(Ent_Baocaochiso, {
 Ent_hsse_user.belongsTo(Ent_duan,{as: "ent_duan", foreignKey: "ID_Duan"})
 Ent_hsse_user.belongsTo(Ent_user,{as: "ent_user", foreignKey: "ID_User"})
 HSSE_Log.belongsTo(HSSE,{as: "hsse", foreignKey: "ID_HSSE"})
+
+//P0   ==================================================================================
+P0.belongsTo(Ent_duan, {as: "ent_duan", foreignKey: "ID_Duan"})
+P0.belongsTo(Ent_user, {as: "ent_user_AN", foreignKey: "ID_User_AN"})
+P0.belongsTo(Ent_user, {as: "ent_user_KT", foreignKey: "ID_User_KT"})
+
+P0_Log.belongsTo(P0, {as: "P0", foreignKey: "ID_P0"})
+P0_Log.belongsTo(Ent_duan, {as: "ent_duan", foreignKey: "ID_Duan"})
+P0_Log.belongsTo(Ent_user, {as: "ent_user_AN", foreignKey: "ID_User_AN"})
+P0_Log.belongsTo(Ent_user, {as: "ent_user_KT", foreignKey: "ID_User_KT"})
 
 
 //Duan an + khoi cv  ====================================================================
@@ -302,4 +316,6 @@ module.exports = {
   Ent_Hangmuc_Chiso,
   Ent_Hsse_User,
   HSSE_Log,
+  P0,
+  P0_Log,
 };

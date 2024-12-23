@@ -596,9 +596,17 @@ exports.getCheckListc = async (req, res, next) => {
 exports.getDayCheckListc = async (req, res, next) => {
   try {
     const userData = req.user.data;
+    const khoi = req.query.khoi || "all";
+    const ca = req.query.ca || "all";
+    const fromDate = req.query.fromDate || moment().startOf('month').format('YYYY-MM-DD');
+    const toDate = req.query.toDate || moment(new Date()).format("YYYY-MM-DD");
+
     if (userData) {
       let whereClause = {
         ID_Duan: userData?.ID_Duan,
+        Ngay: {
+          [Op.between]: [fromDate, toDate],
+        },
         isDelete: 0,
       };
 
@@ -611,6 +619,14 @@ exports.getDayCheckListc = async (req, res, next) => {
       ) {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
         // whereClause.ID_User = userData?.ID_User;
+      }
+
+      if(khoi != "all" && khoi != "null"){
+        whereClause.ID_KhoiCV = khoi;
+      }
+
+      if(ca != "all" && ca != "null"){
+        whereClause.ID_Calv = ca;
       }
 
       if (userData?.ent_chucvu.Role === 5 && userData?.arr_Duan !== null) {
@@ -793,6 +809,7 @@ exports.getDayCheckListc = async (req, res, next) => {
       });
     }
   } catch (err) {
+    console.log(err.message)
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
