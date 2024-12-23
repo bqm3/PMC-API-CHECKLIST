@@ -29,6 +29,7 @@ const HSSE_Log = require('./Hsse/hsse_log.model')
 const HSSE = require('./hsse.model')
 
 //P0
+const P0_User = require('./P0_User.model')
 const P0 = require('./P0.model')
 const P0_Log = require('./P0_Log.model')
 
@@ -76,6 +77,9 @@ Ent_hsse_user.belongsTo(Ent_user,{as: "ent_user", foreignKey: "ID_User"})
 HSSE_Log.belongsTo(HSSE,{as: "hsse", foreignKey: "ID_HSSE"})
 
 //P0   ==================================================================================
+P0_User.belongsTo(Ent_duan,{as: "ent_duan", foreignKey: "ID_Duan"})
+P0_User.belongsTo(Ent_user,{as: "ent_user", foreignKey: "ID_User"})
+
 P0.belongsTo(Ent_duan, {as: "ent_duan", foreignKey: "ID_Duan"})
 P0.belongsTo(Ent_user, {as: "ent_user_AN", foreignKey: "ID_User_AN"})
 P0.belongsTo(Ent_user, {as: "ent_user_KT", foreignKey: "ID_User_KT"})
@@ -318,4 +322,5 @@ module.exports = {
   HSSE_Log,
   P0,
   P0_Log,
+  P0_User,
 };
