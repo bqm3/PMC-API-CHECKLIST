@@ -91,15 +91,14 @@ const Ent_checklistc = sequelize.define(
     freezeTableName: true,
     timestamps: true,
     tableName: "tb_checklistc",
-  },
-  {
     indexes: [
       {
         unique: false,
-        fields: ["ID_ChecklistC"],
+        fields: ["isDelete","Tinhtrang"],
       },
     ],
-  }
+  },
+  
 );
 
 module.exports = Ent_checklistc;

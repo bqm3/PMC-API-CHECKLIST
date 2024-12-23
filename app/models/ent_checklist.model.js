@@ -76,6 +76,7 @@ const Ent_checklist = sequelize.define(
     ID_User: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      
     },
     isDelete: {
       type: DataTypes.INTEGER,
@@ -86,7 +87,15 @@ const Ent_checklist = sequelize.define(
     freezeTableName: true,
     timestamps: true,
     tableName: "ent_checklist",
-  }
+    indexes: [
+    
+      {
+        unique: false,
+        fields: ["isDelete"],
+      },
+    ],
+  },
+ 
 );
 
 module.exports = Ent_checklist;
