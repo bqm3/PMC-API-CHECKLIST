@@ -58,15 +58,14 @@ const Tb_checklistchitiet = sequelize.define(
     freezeTableName: true,
     timestamps: true,
     tableName: "tb_checklistchitiet",
-  },
-  {
     indexes: [
       {
         unique: false,  
-        fields: ['isDelete',"ID_Checklistchitiet","ID_ChecklistC","ID_Checklist"], 
+        fields: ['isDelete',,"ID_ChecklistC","ID_Checklist", "isScan"], 
       },
     ],
-  }
+  },
+ 
 );
 
 module.exports = Tb_checklistchitiet;
