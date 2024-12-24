@@ -1,4 +1,4 @@
-const { P0, P0_Log, P0_User, Ent_user, Ent_chucvu } = require("../models/setup.model");
+const { P0, P0_Log, P0_User, Ent_user, Ent_chucvu, Ent_duan } = require("../models/setup.model");
 const { Op } = require("sequelize");
 const moment = require("moment");
 const sequelize = require("../config/db.config");
@@ -71,6 +71,54 @@ exports.getP0_User_ByDuAn = async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ message: "Có lỗi xảy ra", error });
+  }
+};
+
+exports.getDetailP0 = async (req, res) => {
+  try {
+    const findP0 = await P0.findOne({
+      where: {
+        ID_P0: req.params.id,
+        isDelete: 0
+      },
+    });
+
+    return res.status(200).json({
+      message: "Báo cáo P0",
+      data: findP0,
+      include: [
+        {
+          model: Ent_user,
+          as: "ent_user_AN",
+          attributes: ["ID_User", "Hoten", "ID_Chucvu"],
+          include: [
+            {
+              model: Ent_chucvu,
+              attributes: ["Chucvu", "Role"],
+            },
+          ],
+        },
+        {
+          model: Ent_user,
+          as: "ent_user_KT",
+          attributes: ["ID_User", "Hoten", "ID_Chucvu"],
+          include: [
+            {
+              model: Ent_chucvu,
+              attributes: ["Chucvu", "Role"],
+            },
+          ],
+        },
+        {
+          model: Ent_duan,
+          as: "ent_duan",
+        }
+      ],
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.mesage || "Có lỗi xảy ra",
+    });
   }
 };
 
@@ -210,6 +258,10 @@ exports.getAll_ByID_Duan = async (req, res) => {
             },
           ],
         },
+        {
+          model: Ent_duan,
+          as: "ent_duan",
+        }
       ],
       order: [["Ngaybc", "DESC"]],
       offset: offset,
