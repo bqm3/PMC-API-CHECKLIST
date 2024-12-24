@@ -66,6 +66,15 @@ const P0 = sequelize.define(
     Doanhthu: {
       type: DataTypes.DOUBLE,
     },
+    QuansoTT: {
+      type: DataTypes.INTEGER,
+    },
+    QuansoDB: {
+      type: DataTypes.INTEGER,
+    },
+    Slsucokhac: {
+      type: DataTypes.INTEGER,
+    },
     iTrangthai: {
       type: DataTypes.TINYINT,
       defaultValue: 0,
