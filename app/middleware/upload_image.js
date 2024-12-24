@@ -83,8 +83,8 @@ const resizeImage = (req, res, next) => {
       const originalPath = file.path;
 
       return sharp(originalPath)
-        .resize(900, 700, { fit: sharp.fit.inside, withoutEnlargement: true }) // Resize ảnh
-        .jpeg({ quality: 100 }) // Giảm chất lượng ảnh
+        .resize(800, 650, { fit: sharp.fit.inside, withoutEnlargement: true }) // Resize ảnh
+        .jpeg({ quality: 90 }) // Giảm chất lượng ảnh
         .toBuffer() // Trả về buffer thay vì tạo tệp tạm
         .then((data) => {
           fs.writeFileSync(originalPath, data); // Ghi đè dữ liệu đã resize vào tệp gốc
