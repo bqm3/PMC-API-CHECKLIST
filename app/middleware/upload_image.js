@@ -4,18 +4,17 @@ const fs = require("fs");
 const sharp = require("sharp");
 const { removeVietnameseTones } = require("../utils/util");
 
-
 const storageChecklist = (uploadFolderKey) =>
   multer.diskStorage({
     destination: (req, file, cb) => {
       const userData = req.user.data;
-      const body = req?.body
+      const body = req?.body;
       let duan;
 
-      if(userData?.ent_duan?.Duan){
-        duan = userData?.ent_duan?.Duan
+      if (userData?.ent_duan?.Duan) {
+        duan = userData?.ent_duan?.Duan;
       } else {
-        duan = body?.Duan
+        duan = body?.Duan;
       }
 
       const uploadFolderMap = {
@@ -35,7 +34,7 @@ const storageChecklist = (uploadFolderKey) =>
         /[^a-zA-Z0-9-_]/g,
         "_"
       );
-      
+
       const projectFolder = path.join(uploadFolder, projectName);
 
       if (!fs.existsSync(projectFolder)) {
@@ -48,10 +47,10 @@ const storageChecklist = (uploadFolderKey) =>
       const userData = req?.user?.data;
       let ID_Duan;
 
-      if(userData?.ID_Duan){
-        ID_Duan = userData?.ID_Duan
+      if (userData?.ID_Duan) {
+        ID_Duan = userData?.ID_Duan;
       } else {
-        ID_Duan = req?.params?.id
+        ID_Duan = req?.params?.id;
       }
 
       const filename = `${ID_Duan}_${Date.now()}${path.extname(
@@ -84,8 +83,8 @@ const resizeImage = (req, res, next) => {
       const originalPath = file.path;
 
       return sharp(originalPath)
-        .resize(800, 600, { fit: sharp.fit.inside, withoutEnlargement: true }) // Resize ảnh
-        .jpeg({ quality: 80 }) // Giảm chất lượng ảnh
+        .resize(900, 700, { fit: sharp.fit.inside, withoutEnlargement: true }) // Resize ảnh
+        .jpeg({ quality: 100 }) // Giảm chất lượng ảnh
         .toBuffer() // Trả về buffer thay vì tạo tệp tạm
         .then((data) => {
           fs.writeFileSync(originalPath, data); // Ghi đè dữ liệu đã resize vào tệp gốc
@@ -107,11 +106,10 @@ const resizeImage = (req, res, next) => {
   }
 };
 
-
 module.exports = {
   uploadChecklist,
   uploadSuCongNgoai,
   uploadBaoCaoChiSo,
   resizeImage,
-  uploadLogo
+  uploadLogo,
 };
