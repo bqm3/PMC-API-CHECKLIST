@@ -830,7 +830,7 @@ exports.createExcelDuAn = async (req, res) => {
         if (khoiName === "Khối làm sạch") {
           rowValues.lamsach = "X";
         }
-        if (khoiName === "Khối bảo vệ") {
+        if (khoiName === "Khối an ninh") {
           rowValues.anninh = "X";
         }
         if (khoiName === "Khối dịch vụ") {
@@ -1175,7 +1175,7 @@ exports.reportPercentYesterday = async (req, res) => {
       "Khối kỹ thuật": { totalCompletion: 0, projectCount: 0 },
       "Khối làm sạch": { totalCompletion: 0, projectCount: 0 },
       "Khối dịch vụ": { totalCompletion: 0, projectCount: 0 },
-      "Khối bảo vệ": { totalCompletion: 0, projectCount: 0 },
+      "Khối an ninh": { totalCompletion: 0, projectCount: 0 },
       "Khối F&B": { totalCompletion: 0, projectCount: 0 },
     };
 

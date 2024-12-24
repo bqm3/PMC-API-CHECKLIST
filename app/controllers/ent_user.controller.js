@@ -105,7 +105,7 @@ exports.login = async (req, res) => {
           process.env.JWT_SECRET,
           {
             algorithm: "HS256",
-            expiresIn: "7d",
+            expiresIn: "6h", // 6 hours
           }
         );
 
@@ -114,7 +114,7 @@ exports.login = async (req, res) => {
           httpOnly: true,
           secure: true,
           sameSite: "strict",
-          expires: new Date(Date.now() + 4 * 60 * 60 * 1000), // 7 days
+          expires: new Date(Date.now() + 6 * 60 * 60 * 1000), // 6 hours
         });
 
         // Return the token, user info, and projects if applicable
@@ -827,30 +827,26 @@ exports.deviceToken = async (req, res, next) => {
   try {
     const userData = req.user.data;
     if (userData) {
-      const { deviceToken } = req.body;
+      const { deviceToken, deviceName } = req.body;
 
       // Tìm kiếm deviceToken trong bảng Ent_user
       const existingUser = await Ent_user.findOne({
         attributes: [
           "ID_User",
-          "UserName",
-          "Email",
-          "PasswordPrivate",
-          "arr_Duan",
-          "ID_Duan",
-          "ID_KhoiCV",
           "deviceToken",
-          "ID_Chucvu",
+          "deviceName",
+          "isDelete"
         ],
         where: {
           deviceToken: deviceToken,
           ID_User: { [Op.ne]: userData.ID_User },
+          isDelete: 0
         },
       });
       // Nếu tìm thấy user khác có deviceToken này, cập nhật deviceToken của họ thành null
       if (existingUser) {
         await Ent_user.update(
-          { deviceToken: null },
+          { deviceToken: null, deviceName: null },
           {
             where: {
               ID_User: existingUser.ID_User,
@@ -860,7 +856,7 @@ exports.deviceToken = async (req, res, next) => {
       }
       // Cập nhật deviceToken cho user hiện tại
       await Ent_user.update(
-        { deviceToken: deviceToken },
+        { deviceToken: deviceToken,deviceName: deviceName || null },
         {
           where: {
             ID_User: userData.ID_User,

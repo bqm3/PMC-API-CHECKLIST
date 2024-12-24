@@ -2,6 +2,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const sharp = require("sharp");
+const { removeVietnameseTones } = require("../utils/util");
 
 
 const storageChecklist = (uploadFolderKey) =>
@@ -30,10 +31,11 @@ const storageChecklist = (uploadFolderKey) =>
         return cb(new Error("Invalid upload folder key"), null);
       }
 
-      const projectName = duan?.replace(
+      const projectName = removeVietnameseTones(duan)?.replace(
         /[^a-zA-Z0-9-_]/g,
         "_"
       );
+      
       const projectFolder = path.join(uploadFolder, projectName);
 
       if (!fs.existsSync(projectFolder)) {

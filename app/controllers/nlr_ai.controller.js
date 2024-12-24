@@ -398,7 +398,7 @@ const getProjectsChecklistStatus = async (req, res) => {
     // Chuyển đổi dữ liệu theo dạng của bảng ent_tile
     const transformedRows = resultArray.map((project) => ({
       Tenduan: project.projectName,
-      Khoibaove: project.createdKhois["Khối bảo vệ"]?.completionRatio || null,
+      Khoibaove: project.createdKhois["Khối an ninh"]?.completionRatio || null,
       Khoilamsach:
         project.createdKhois["Khối làm sạch"]?.completionRatio || null,
       Khoidichvu: project.createdKhois["Khối dịch vụ"]?.completionRatio || null,

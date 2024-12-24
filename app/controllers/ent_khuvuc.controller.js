@@ -563,7 +563,7 @@ exports.getKhuvucTotal = async (req, res) => {
     const khoiCVData = [
       { ID_Khoi: 1, KhoiCV: "Khối làm sạch" },
       { ID_Khoi: 2, KhoiCV: "Khối kỹ thuật" },
-      { ID_Khoi: 3, KhoiCV: "Khối bảo vệ" },
+      { ID_Khoi: 3, KhoiCV: "Khối an ninh" },
       { ID_Khoi: 4, KhoiCV: "Khối dịch vụ" },
       { ID_Khoi: 5, KhoiCV: "Khối F&B" },
     ];
