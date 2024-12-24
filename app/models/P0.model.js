@@ -81,6 +81,7 @@ const P0 = sequelize.define(
     },
     Ghichu: {
       type: DataTypes.STRING(200),
+      allowNull: true
     },
     ID_User_KT: {
       type: DataTypes.INTEGER,

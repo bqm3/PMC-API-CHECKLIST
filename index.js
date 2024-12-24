@@ -16,10 +16,10 @@ const app = express();
 const { exec } = require("child_process");
 
 
-var serviceAccount = require("./pmc-cskh-2088353edcc9.json");
+var serviceAccount = require("./pmc-cskh-firebase-adminsdk-y7378-5122f6edc7.json");
 const sequelize = require("./app/config/db.config");
 const { Sequelize, Op } = require("sequelize");
-const { funcAutoNoti } = require("./noti");
+const { funcAutoNoti, funcAllNoti } = require("./noti");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -357,7 +357,8 @@ cron.schedule('30 11 * * *', async () => {
 
 
 
-// funcAutoNoti();
+// funcAllNoti();
+
 require("./app/routes/ent_calv.routes")(app);
 require("./app/routes/ent_user.routes")(app);
 require("./app/routes/ent_hsse.routes")(app);

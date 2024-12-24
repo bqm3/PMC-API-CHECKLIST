@@ -180,8 +180,9 @@ exports.funcAllNoti = async () => {
     .map((user) => ({
       to: user.deviceToken,
       sound: "default",
-      title: "Thông báo",
-      body: "Ai dùng điện thoại IOS vui lòng KHÔNG cập nhật phiên bản mới.",
+      title: "Phòng Số Hóa",
+      body: "Hãy thoát ra và đăng nhập lại với các dự án nhập HSSE ở trên website",
+      projectId: user.ID_Duan, // Thêm projectId vào thông báo để phân biệt các dự án
     }));
 
   if (messages.length === 0) {
@@ -190,16 +191,37 @@ exports.funcAllNoti = async () => {
   }
 
   try {
-    const chunks = expo.chunkPushNotifications(messages); // Chia nhỏ request
-    for (const chunk of chunks) {
+    console.log('messages:', messages);
+    
+    // Nhóm messages theo projectId (ID_Duan)
+    const groupedMessages = messages.reduce((acc, message) => {
+      const { projectId } = message;
+      if (!acc[projectId]) {
+        acc[projectId] = [];
+      }
+      acc[projectId].push(message);
+      return acc;
+    }, {});
+
+    // Gửi thông báo cho từng nhóm
+    for (const projectId in groupedMessages) {
+      const chunk = groupedMessages[projectId];
+      console.log(`Sending notifications for project ${projectId}:`, chunk);
+      
       try {
-        const ticketChunk = await expo.sendPushNotificationsAsync(messages[0]);
+        // Gửi đúng chunk thay vì toàn bộ messages
+        const ticketChunk = await expo.sendPushNotificationsAsync(chunk);
+        console.log('ticketChunk:', ticketChunk);
       } catch (error) {
-        console.error("Lỗi khi gửi chunk:", error.message);
+        console.error('Lỗi khi gửi chunk:', error.message);
       }
     }
+
   } catch (error) {
-    console.error("Lỗi khi gửi thông báo:", error.message);
+    console.error('Lỗi khi gửi thông báo:', error.message);
   }
 };
+
+
+
 

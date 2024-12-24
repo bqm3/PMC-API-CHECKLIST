@@ -36,6 +36,9 @@ const Ent_user = sequelize.define(
     deviceToken: {
       type: DataTypes.CHAR,
     },
+    deviceName: {
+      type: DataTypes.CHAR,
+    },
     Email: {
       type: DataTypes.CHAR,
     },
