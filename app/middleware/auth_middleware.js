@@ -13,7 +13,7 @@ const isAuthenticated = asyncHandler((req, res, next) => {
   const bearerToken = tokenFromClient.split(" ")[1];
   jsonwebtoken.verify(bearerToken, process.env.JWT_SECRET, (err, user) => {
     if (err) {
-      return res.status(403).json({ message: `Token không hợp lệ ${err}` });
+      return res.status(403).json({ message: `Hết phiên đăng nhập. Vui lòng thoát ra đăng nhập lại` });
     }
 
     req.user = user;
