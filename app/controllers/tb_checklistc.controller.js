@@ -362,7 +362,7 @@ exports.createFirstChecklist = async (req, res, next) => {
                 ID_Duan: userData.ID_Duan,
                 ID_KhoiCV: userData.ID_KhoiCV,
                 Giobd: convertTimeFormat(Giobd),
-                Gioghinhan: convertTimeFormat(Giogn),
+                Gioghinhan: Giogn && convertTimeFormat(Giogn),
                 ID_ThietLapCa: thietlapcaData.ID_ThietLapCa,
                 Ngay: nowFormattedDate,
                 TongC: 0,
