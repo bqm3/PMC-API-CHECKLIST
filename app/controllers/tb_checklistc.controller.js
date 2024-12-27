@@ -32,7 +32,7 @@ const defineDynamicModelChiTiet = require("../models/definechecklistchitiet.mode
 const { getMonthsRange } = require("../utils/util");
 
 function convertTimeFormat(timeStr) {
-  if (!timeStr.includes("AM") && !timeStr.includes("PM")) {
+  if (!timeStr?.includes("AM") && !timeStr?.includes("PM")) {
     return timeStr;
   }
 
@@ -322,7 +322,7 @@ exports.createFirstChecklist = async (req, res, next) => {
             ID_KhoiCV: userData.ID_KhoiCV,
             ID_ThietLapCa: thietlapcaData.ID_ThietLapCa,
             Giobd: convertTimeFormat(Giobd),
-            Gioghinhan: convertTimeFormat(Giogn),
+            Gioghinhan: Giogn && convertTimeFormat(Giogn),
             Ngay: nowFormattedDate,
             TongC: 0,
             Tong: checklistData.count || 0,
