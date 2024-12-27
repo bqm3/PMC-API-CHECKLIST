@@ -225,7 +225,7 @@ exports.createFirstChecklist = async (req, res, next) => {
           ],
           where: {
             ID_Hangmuc: {
-              [Op.in]: thietlapcaData.ID_Hangmucs,
+              [Op.in]: thietlapcaData?.ID_Hangmucs,
             },
             isDelete: 0,
           },
@@ -435,7 +435,7 @@ exports.getCheckListc = async (req, res, next) => {
         const arrDuanArray = userData?.arr_Duan.split(",").map(Number);
 
         // Kiểm tra ID_Duan có thuộc mảng không
-        const exists = arrDuanArray.includes(userData?.ID_Duan);
+        const exists = arrDuanArray?.includes(userData?.ID_Duan);
         if (!exists) {
           // Thêm điều kiện tham chiếu cột từ bảng liên kết
           whereClause.ID_KhoiCV = userData.ID_KhoiCV;
@@ -634,7 +634,7 @@ exports.getDayCheckListc = async (req, res, next) => {
         const arrDuanArray = userData?.arr_Duan.split(",").map(Number);
 
         // Kiểm tra ID_Duan có thuộc mảng không
-        const exists = arrDuanArray.includes(userData?.ID_Duan);
+        const exists = arrDuanArray?.includes(userData?.ID_Duan);
         if (!exists) {
           // Thêm điều kiện tham chiếu cột từ bảng liên kết
           whereClause.ID_KhoiCV = userData.ID_KhoiCV;
@@ -845,7 +845,7 @@ exports.getThongKe = async (req, res, next) => {
         (userData?.ID_KhoiCV !== null &&
           userData?.ID_KhoiCV !== undefined &&
           userData.ent_chucvu.Role == 5 &&
-          !arr_Duan_Array.includes(String(userData.ID_Duan))) ||
+          !arr_Duan_Array?.includes(String(userData.ID_Duan))) ||
         (userData?.ID_KhoiCV !== null &&
           userData?.ID_KhoiCV !== undefined &&
           userData.ent_chucvu.Role !== 5)
@@ -2861,7 +2861,7 @@ exports.reportLocation = async (req, res) => {
             const detailedItems = entry.checklistItems.map((item) => {
               // Get the first related Hangmuc, Khuvuc, and Tentang from the checklist
               const relatedItem = relatedChecklists.find((checklist) =>
-                item.checklistIds.includes(checklist.ID_Checklist)
+                item.checklistIds?.includes(checklist.ID_Checklist)
               );
               return {
                 Gioht: item.Gioht,
@@ -6369,7 +6369,7 @@ exports.getProjectChecklistDays = async (req, res) => {
       (ID_KhoiCV != null &&
         ID_KhoiCV != undefined &&
         ent_chucvu.Role == 5 &&
-        !arr_Duan_Array.includes(String(ID_Duan))) ||
+        !arr_Duan_Array?.includes(String(ID_Duan))) ||
       (ID_KhoiCV != null && ID_KhoiCV != undefined && ent_chucvu.Role !== 5)
     ) {
       whereClause.ID_KhoiCV = ID_KhoiCV;
