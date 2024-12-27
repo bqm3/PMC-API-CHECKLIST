@@ -230,6 +230,13 @@ exports.getAll_ByID_Duan = async (req, res) => {
     const pageSize = parseInt(req.query.limit) || 7;
     const offset = page * pageSize;
 
+    const count = await P0.count({
+      where: {
+        ID_Duan: userData?.ID_Duan,
+        isDelete: 0,
+      },
+    })
+
     const findAll = await P0.findAll({
       where: {
         ID_Duan: userData?.ID_Duan,
@@ -271,6 +278,7 @@ exports.getAll_ByID_Duan = async (req, res) => {
     return res.status(200).json({
       message: "Lấy dữ liệu P0 thành công",
       data: findAll,
+      count: count
     });
   } catch (error) {
     console.log("error",error.message)
