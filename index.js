@@ -14,8 +14,6 @@ const archiver = require("archiver");
 const { Readable } = require('stream');
 const app = express();
 const { exec } = require("child_process");
-
-
 var serviceAccount = require("./pmc-cskh-firebase-adminsdk-y7378-5122f6edc7.json");
 const sequelize = require("./app/config/db.config");
 const { Sequelize, Op } = require("sequelize");
@@ -69,8 +67,13 @@ app.use(cors(corsOptions));
 
 app.use(cookieParser());
 app.use(express.json());
-app.use(bodyParser.json({ limit: "500mb" }));
-app.use(bodyParser.urlencoded({ limit: "500mb", extended: true }));
+
+app.use(express.json({ limit: '500mb' }));
+app.use(express.urlencoded({ extended: true, limit: '500mb' }));
+
+// Nếu dùng body-parser
+app.use(bodyParser.json({limit: '500mb'}));
+app.use(bodyParser.urlencoded({limit: '500mb', extended: true}));
 app.use(express.urlencoded({ extended: true }));
 app.use("/upload", express.static("app/public"));
 
@@ -355,9 +358,6 @@ cron.schedule('30 11 * * *', async () => {
   console.log("Notification chỉ chạy ở môi trường development. NODE_ENV hiện tại là:", process.env.NODE_ENV);
 }
 
-
-
-// funcAllNoti();
 
 require("./app/routes/ent_calv.routes")(app);
 require("./app/routes/ent_user.routes")(app);
