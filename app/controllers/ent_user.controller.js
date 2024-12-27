@@ -333,22 +333,27 @@ exports.updateUser = async (req, res) => {
     } = req.body;
 
     const now = new Date();
-      const utcNow = now.getTime() + now.getTimezoneOffset() * 60000;
-      const vietnamTime = new Date(utcNow + 7 * 60 * 60000);
+    const utcNow = now.getTime() + now.getTimezoneOffset() * 60000;
+    const vietnamTime = new Date(utcNow + 7 * 60 * 60000);
 
-      const year = vietnamTime.getFullYear();
-      const month = String(vietnamTime.getMonth() + 1).padStart(2, "0");
-      const day = String(vietnamTime.getDate()).padStart(2, "0");
-      const hours = String(vietnamTime.getHours()).padStart(2, "0");
-      const minutes = String(vietnamTime.getMinutes()).padStart(2, "0");
-      const seconds = String(vietnamTime.getSeconds()).padStart(2, "0");
+    const year = vietnamTime.getFullYear();
+    const month = String(vietnamTime.getMonth() + 1).padStart(2, "0");
+    const day = String(vietnamTime.getDate()).padStart(2, "0");
+    const hours = String(vietnamTime.getHours()).padStart(2, "0");
+    const minutes = String(vietnamTime.getMinutes()).padStart(2, "0");
+    const seconds = String(vietnamTime.getSeconds()).padStart(2, "0");
 
-      const formattedVietnamTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    const formattedVietnamTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     // Kiểm tra xem có dữ liệu mật khẩu được gửi không
     let updateData = {
-      ID_Duan: ID_Duan !== ''? ID_Duan: null,
+      ID_Duan: ID_Duan !== "" ? ID_Duan : null,
       ID_Chucvu,
-      ID_KhoiCV: ID_KhoiCV == '' ? null : ( ID_Chucvu == 1 || ID_Chucvu == 2 ? null : ID_KhoiCV),
+      ID_KhoiCV:
+        ID_KhoiCV == ""
+          ? null
+          : ID_Chucvu == 1 || ID_Chucvu == 2
+          ? null
+          : ID_KhoiCV,
       UserName,
       Hoten,
       Sodienthoai,
@@ -424,10 +429,9 @@ exports.getUserOnline = async (req, res, next) => {
     };
 
     if (
-      (userData.ent_chucvu.Role !== 10 &&
-      userData.ID_Duan !== null) || (userData.ent_chucvu.Role !== 0 &&
-        userData.ID_Duan !== null) || (userData.ent_chucvu.Role !== 4 &&
-          userData.ID_Duan !== null)
+      (userData.ent_chucvu.Role !== 10 && userData.ID_Duan !== null) ||
+      (userData.ent_chucvu.Role !== 0 && userData.ID_Duan !== null) ||
+      (userData.ent_chucvu.Role !== 4 && userData.ID_Duan !== null)
     ) {
       whereClause.ID_Duan = userData.ID_Duan;
     }
@@ -496,10 +500,9 @@ exports.getUserRoleOnline = async (req, res, next) => {
     };
 
     if (
-      (userData.ent_chucvu.Role !== 10 &&
-      userData.ID_Duan !== null) || (userData.ent_chucvu.Role !== 0 &&
-        userData.ID_Duan !== null) || (userData.ent_chucvu.Role !== 4 &&
-          userData.ID_Duan !== null)
+      (userData.ent_chucvu.Role !== 10 && userData.ID_Duan !== null) ||
+      (userData.ent_chucvu.Role !== 0 && userData.ID_Duan !== null) ||
+      (userData.ent_chucvu.Role !== 4 && userData.ID_Duan !== null)
     ) {
       whereClause.ID_Duan = userData.ID_Duan;
     }
@@ -831,16 +834,11 @@ exports.deviceToken = async (req, res, next) => {
 
       // Tìm kiếm deviceToken trong bảng Ent_user
       const existingUser = await Ent_user.findOne({
-        attributes: [
-          "ID_User",
-          "deviceToken",
-          "deviceName",
-          "isDelete"
-        ],
+        attributes: ["ID_User", "deviceToken", "deviceName", "isDelete"],
         where: {
           deviceToken: deviceToken,
           ID_User: { [Op.ne]: userData.ID_User },
-          isDelete: 0
+          isDelete: 0,
         },
       });
       // Nếu tìm thấy user khác có deviceToken này, cập nhật deviceToken của họ thành null
@@ -856,7 +854,7 @@ exports.deviceToken = async (req, res, next) => {
       }
       // Cập nhật deviceToken cho user hiện tại
       await Ent_user.update(
-        { deviceToken: deviceToken,deviceName: deviceName || null },
+        { deviceToken: deviceToken, deviceName: deviceName || null },
         {
           where: {
             ID_User: userData.ID_User,
@@ -883,86 +881,87 @@ exports.deviceToken = async (req, res, next) => {
   }
 };
 
-async function sendPushNotification(expoPushToken, message) {
-  const payload = {
-    to: expoPushToken,
-    sound: "default",
-    title: message.title,
-    body: message.body,
-    data: message.data,
-  };
+// async function sendPushNotification(expoPushToken, message) {
+//   const payload = {
+//     to: expoPushToken,
+//     sound: "default",
+//     title: message.title,
+//     body: message.body,
+//     data: message.data,
+//   };
+//   return true;
 
-  const response = await fetch("https://exp.host/--/api/v2/push/send", {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Accept-encoding": "gzip, deflate",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+// const response = await fetch("https://exp.host/--/api/v2/push/send", {
+//   method: "POST",
+//   headers: {
+//     Accept: "application/json",
+//     "Accept-encoding": "gzip, deflate",
+//     "Content-Type": "application/json",
+//   },
+//   body: JSON.stringify(payload),
+// });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Error sending push notification: ${response.status} - ${errorText}`
-    );
-  }
+// if (!response.ok) {
+//   const errorText = await response.text();
+//   throw new Error(
+//     `Error sending push notification: ${response.status} - ${errorText}`
+//   );
+// }
 
-  const data = await response.json();
-  return data;
-}
+// const data = await response.json();
+// return data;
+// }
 
-exports.notiPush = async (message) => {
-  try {
-    const users = await Ent_user.findAll({
-      attributes: [
-        "deviceToken",
-        "ID_User",
-        "UserName",
-        "Email",
-        "ID_Duan",
-        "ID_KhoiCV",
-        "ID_Chucvu",
-        "isDelete",
-      ],
-      where: { isDelete: 0 },
-    });
-    const tokens = users
-      .filter(
-        (user) =>
-          user.deviceToken &&
-          user.ID_Duan === message.data.userData.ID_Duan &&
-          user.ID_KhoiCV == message.data.userData.ID_KhoiCV &&
-          user.ID_User !== message.data.userData.ID_User
-      )
-      .map((user) => user.deviceToken);
+// exports.notiPush = async (message) => {
+//   try {
+//     const users = await Ent_user.findAll({
+//       attributes: [
+//         "deviceToken",
+//         "ID_User",
+//         "UserName",
+//         "Email",
+//         "ID_Duan",
+//         "ID_KhoiCV",
+//         "ID_Chucvu",
+//         "isDelete",
+//       ],
+//       where: { isDelete: 0 },
+//     });
+//     const tokens = users
+//       .filter(
+//         (user) =>
+//           user.deviceToken &&
+//           user.ID_Duan === message.data.userData.ID_Duan &&
+//           user.ID_KhoiCV == message.data.userData.ID_KhoiCV &&
+//           user.ID_User !== message.data.userData.ID_User
+//       )
+//       .map((user) => user.deviceToken);
 
-    const new_message = {
-      title: message.title,
-      body: message.body,
-      data: {
-        Ketqua: message.data.Ketqua[0],
-        Gioht: message.data.Gioht[0],
-        Ghichu: message.data.Ghichu[0],
-      },
-    };
-    const notificationPromises = tokens.map((token) =>
-      sendPushNotification(token, new_message)
-    );
+//     const new_message = {
+//       title: message.title,
+//       body: message.body,
+//       data: {
+//         Ketqua: message.data.Ketqua[0],
+//         Gioht: message.data.Gioht[0],
+//         Ghichu: message.data.Ghichu[0],
+//       },
+//     };
+//     // const notificationPromises = tokens.map((token) =>
+//     //   sendPushNotification(token, new_message)
+//     // );
 
-    const results = await Promise.all(notificationPromises);
+//     // const results = await Promise.all(notificationPromises);
 
-    return {
-      success: true,
-      message: "Notifications sent to all users",
-      results,
-    };
-  } catch (error) {
-    console.error("Error sending notifications:", error);
-    return res.status(500).json({ success: false, error: error.message });
-  }
-};
+//     return {
+//       success: true,
+//       message: "Notifications sent to all users",
+//       // results,
+//     };
+//   } catch (error) {
+//     console.error("Error sending notifications:", error);
+//     return res.status(500).json({ success: false, error: error.message });
+//   }
+// };
 
 exports.uploadFileUsers = async (req, res) => {
   try {
@@ -1286,15 +1285,15 @@ exports.getPhone = async (req, res) => {
 
     // Tìm danh sách người dùng theo điều kiện
     const users = await Ent_user.findAll({
-      attributes: ["ID_Chucvu", "Hoten","Sodienthoai"],
+      attributes: ["ID_Chucvu", "Hoten", "Sodienthoai"],
       where: {
-        ID_Duan: userData.ID_Duan, 
-        isDelete: 0, 
+        ID_Duan: userData.ID_Duan,
+        isDelete: 0,
       },
       include: [
         {
           model: Ent_chucvu,
-          attributes: ["ID_Chucvu","Chucvu", "Role", "isDelete"],
+          attributes: ["ID_Chucvu", "Chucvu", "Role", "isDelete"],
           where: {
             Role: { [Op.in]: [1, 2] },
             isDelete: 0,
@@ -1306,7 +1305,7 @@ exports.getPhone = async (req, res) => {
     if (!users || users.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Không tìm thấy người dùng nào phù hợp.',
+        message: "Không tìm thấy người dùng nào phù hợp.",
       });
     }
 
@@ -1317,7 +1316,7 @@ exports.getPhone = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Đã xảy ra lỗi trong khi lấy dữ liệu.',
+      message: "Đã xảy ra lỗi trong khi lấy dữ liệu.",
       error: error.message,
     });
   }

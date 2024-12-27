@@ -18,7 +18,7 @@ const { Op, where, Sequelize } = require("sequelize");
 const ExcelJS = require("exceljs");
 const cron = require("node-cron");
 var path = require("path");
-const { notiPush } = require("./ent_user.controller");
+// const { notiPush } = require("./ent_user.controller");
 const { removeVietnameseTones } = require("../utils/util");
 const { uploadFileToOneDrive } = require("../middleware/microsoft_azure");
 
