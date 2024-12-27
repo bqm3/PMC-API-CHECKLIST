@@ -90,14 +90,14 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     });
 
     // Mảng lưu trữ thông tin ảnh đã tải lên
-    const uploadedFileIds = uploadedFiles.map((file) => file);
+    const uploadedFileIds = uploadedFiles?.map((file) => file);
 
     // Tạo tên bảng động theo tháng và năm
     const dynamicTableName = `tb_checklistchitiet_${String(new Date().getMonth() + 1).padStart(2, "0")}_${new Date().getFullYear()}`;
 
     // Xử lý các bản ghi chi tiết checklist
     const newRecords = await Promise.all(
-      records.ID_Checklist.map(async (ID_Checklist, index) => {
+      records.ID_Checklist?.map(async (ID_Checklist, index) => {
         const Vido = records.Vido[index] === "null" ? null : records.Vido[index] || null;
         const Kinhdo = records.Kinhdo[index] === "null" ? null : records.Kinhdo[index] || null;
         const Docao = records.Docao[index] === "null" ? null : records.Docao[index] || null;
@@ -113,7 +113,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
         if (!Key_Image) {
           // Tìm ảnh phù hợp
           const imageIndex = `Images_${index}`;
-          const matchingImage = uploadedFileIds.find((file) => file.fieldname === imageIndex);
+          const matchingImage = uploadedFileIds?.find((file) => file.fieldname === imageIndex);
           if (matchingImage) {
             Anh = matchingImage.filename;
           } else {
