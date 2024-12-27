@@ -82,7 +82,7 @@ exports.createFirstChecklist = async (req, res, next) => {
       return;
     }
 
-    let Giogn = Giobd;
+    let Giogn = null;
 
     const calvData = await Ent_calv.findOne({
       where: { ID_Calv: ID_Calv, isDelete: 0, ID_KhoiCV: ID_KhoiCV },
@@ -321,8 +321,8 @@ exports.createFirstChecklist = async (req, res, next) => {
             ID_Duan: userData.ID_Duan,
             ID_KhoiCV: userData.ID_KhoiCV,
             ID_ThietLapCa: thietlapcaData.ID_ThietLapCa,
-            Giobd: convertTimeFormat(Giogn),
-            Gioghinhan: convertTimeFormat(Giobd),
+            Giobd: convertTimeFormat(Giobd),
+            Gioghinhan: convertTimeFormat(Giogn),
             Ngay: nowFormattedDate,
             TongC: 0,
             Tong: checklistData.count || 0,
@@ -362,6 +362,7 @@ exports.createFirstChecklist = async (req, res, next) => {
                 ID_Duan: userData.ID_Duan,
                 ID_KhoiCV: userData.ID_KhoiCV,
                 Giobd: convertTimeFormat(Giobd),
+                Gioghinhan: convertTimeFormat(Giogn),
                 ID_ThietLapCa: thietlapcaData.ID_ThietLapCa,
                 Ngay: nowFormattedDate,
                 TongC: 0,
