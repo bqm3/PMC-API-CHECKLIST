@@ -288,10 +288,10 @@ const processChecklist = async (record, transaction) => {
   if (checklistRecord) {
     // Kiểm tra điều kiện cập nhật Tinhtrang
     const shouldUpdateTinhtrang =
-      removeVietnameseTones(record.Ketqua) ===
+      removeVietnameseTones(record?.Ketqua) ===
         removeVietnameseTones(checklistRecord?.Giatriloi) ||
       ((record?.Anh || record?.GhiChu) &&
-        removeVietnameseTones(record.Ketqua) !==
+        removeVietnameseTones(record?.Ketqua) !==
           removeVietnameseTones(checklistRecord?.Giatridinhdanh));
 
     // Cập nhật Tinhtrang
