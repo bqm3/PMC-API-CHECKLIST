@@ -22,7 +22,7 @@ var path = require("path");
 const { removeVietnameseTones } = require("../utils/util");
 const { uploadFileToOneDrive } = require("../middleware/microsoft_azure");
 
-const BATCH_SIZE = 10;  // Adjust the batch size based on your data size and performance
+const BATCH_SIZE = 20;  // Adjust the batch size based on your data size and performance
 const ensureArray = (data) => {
   if (!Array.isArray(data)) {
     return [data];
@@ -31,16 +31,17 @@ const ensureArray = (data) => {
 };
 // Function to insert records in batches
 const insertInBatches = async (records, transaction) => {
-  for (let i = 0; i < records.length; i += BATCH_SIZE) {
-    const batch = records.slice(i, i + BATCH_SIZE);
+  for (let i = 0; i < records?.length; i += BATCH_SIZE) {
+    const batch = records?.slice(i, i + BATCH_SIZE);
     await Tb_checklistchitiet.bulkCreate(batch, { transaction });
   }
 };
+
 const processImageUpload = async (index, ID_Checklist, uploadedFileIds, images) => {
   let anhs = [];
-  for (let i = 0; i < images.length; i++) {
+  for (let i = 0; i < images?.length; i++) {
     const imageIndex = `Images_${index}_${ID_Checklist}_${i}`;
-    const matchingImage = uploadedFileIds.find(
+    const matchingImage = uploadedFileIds?.find(
       (file) => file.fieldname === imageIndex
     );
     if (matchingImage) {
@@ -52,10 +53,11 @@ const processImageUpload = async (index, ID_Checklist, uploadedFileIds, images) 
   return anhs;
 };
 
+
 exports.createCheckListChiTiet = async (req, res, next) => {
   try {
     const records = req.body;
-    const images = req.files;
+    const images = req.files || [];
 
     // Chuyển các trường về dạng mảng
     records.ID_ChecklistC = ensureArray(records.ID_ChecklistC);
@@ -77,67 +79,56 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       });
     }
 
+    let uploadedFiles = [];
     // Xử lý tải lên ảnh
-    const uploadedFiles = req.files.map((file) => {
-      const projectFolder = path.basename(path.dirname(file.path));
-      const filename = path.basename(file.filename);
+    if (req.files && req.files.length > 0) {
+      uploadedFiles = req.files.map((file) => {
+        const projectFolder = path.basename(path.dirname(file.path));
+        const filename = path.basename(file.filename);
 
-      return {
-        fieldname: file.fieldname,
-        fileId: { id: `${projectFolder}/${filename}` },
-        filePath: file.path,
-      };
-    });
+        return {
+          fieldname: file.fieldname,
+          fileId: { id: `${projectFolder}/${filename}` },
+          filePath: file.path,
+        };
+      });
+    }
+
 
     // Mảng lưu trữ thông tin ảnh đã tải lên
-    const uploadedFileIds = uploadedFiles?.map((file) => file);
+    const uploadedFileIds = await uploadedFiles?.map((file) => file);
 
     // Tạo tên bảng động theo tháng và năm
     const dynamicTableName = `tb_checklistchitiet_${String(new Date().getMonth() + 1).padStart(2, "0")}_${new Date().getFullYear()}`;
-
+    const processValue = (data) => {
+      if (data === 'null') {
+        return null; // Giá trị 'null' trả về null
+      } else if (data === '') {
+        return 1; // Giá trị rỗng trả về 1
+      } else if (data === '1' || data === '0') {
+        return data; // Giá trị '1' hoặc '0' giữ nguyên
+      } else {
+        return null; // Các trường hợp khác trả về null
+      }
+    };
     // Xử lý các bản ghi chi tiết checklist
     const newRecords = await Promise.all(
-      records.ID_Checklist?.map(async (ID_Checklist, index) => {
-        const Vido = records.Vido[index] === "null" ? null : records.Vido[index] || null;
-        const Kinhdo = records.Kinhdo[index] === "null" ? null : records.Kinhdo[index] || null;
-        const Docao = records.Docao[index] === "null" ? null : records.Docao[index] || null;
-        const Ketqua = records.Ketqua[index] || null;
-        const Gioht = records.Gioht[index];
-        const Ghichu = records.Ghichu[index];
-        const Key_Image = records.Key_Image[index];
-        const isScan = records.isScan[index] === "null" ? null : records.isScan[index] || null;
-        const isCheckListLai = records.isCheckListLai[index] || 0;
-        const formattedDate = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`;
-
-        let Anh = "";
-        if (!Key_Image) {
-          // Tìm ảnh phù hợp
-          const imageIndex = `Images_${index}`;
-          const matchingImage = uploadedFileIds?.find((file) => file.fieldname === imageIndex);
-          if (matchingImage) {
-            Anh = matchingImage.filename;
-          } else {
-            console.log(`No matching image found for Anh: ${imageIndex}`);
-          }
-        } else {
-          // Nếu có nhiều ảnh, xử lý đồng thời việc tìm và lấy ảnh
-          const anhs = await processImageUpload(index, ID_Checklist, uploadedFileIds, images);
-          Anh = anhs.length > 0 ? anhs.join(",") : null;
-        }
+      records.ID_Checklist.map(async (ID_Checklist, index) => {
+        const anhs = await processImageUpload(index, ID_Checklist, uploadedFileIds, images);
 
         return {
           ID_ChecklistC: records.ID_ChecklistC[0],
           ID_Checklist,
-          Vido,
-          Kinhdo,
-          Docao,
-          Ketqua,
-          Gioht,
-          Ghichu,
-          isScan,
-          Anh,
-          Ngay: formattedDate,
-          isCheckListLai,
+          Vido: records.Vido[index] || null,
+          Kinhdo: records.Kinhdo[index] || null,
+          Docao: records.Docao[index] || null,
+          Ketqua: records.Ketqua[index] || null,
+          Gioht: records.Gioht[index],
+          Ghichu: records.Ghichu[index],
+          isScan: processValue(records.isScan[index]),
+          Anh: anhs.length > 0 ? anhs?.join(",") : null,
+          Ngay: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`,
+          isCheckListLai: records.isCheckListLai[index] || 0,
         };
       })
     );
@@ -146,9 +137,8 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     const transaction = await sequelize.transaction();
 
     try {
-      // Thực hiện các tác vụ đồng thời với Promise.all
       await Promise.all([
-        insertInBatches(newRecords, transaction ),
+        insertInBatches(newRecords, transaction),
         createDynamicTable(dynamicTableName),
         insertIntoDynamicTable(dynamicTableName, newRecords, transaction),
       ]);
@@ -156,25 +146,26 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       const checklistC = await Tb_checklistc.findOne({
         attributes: ["ID_ChecklistC", "Tong", "TongC", "isDelete"],
         where: { ID_ChecklistC: records.ID_ChecklistC[0], isDelete: 0 },
+
         transaction,
       });
 
       await updateTongC(checklistC, newRecords, transaction);
 
-      // Xử lý các checklist đồng thời
+      // Xử lý từng checklist chi tiết
       await Promise.all(newRecords.map((record) => processChecklist(record, transaction)));
 
       // Commit transaction
       await transaction.commit();
       res.status(200).json({ message: "Records created and updated successfully" });
     } catch (error) {
-      // Rollback transaction nếu có lỗi
       await transaction.rollback();
       console.error("Error during transaction:", error);
       res.status(500).json({
         error: "Failed to create checklist details, transaction rolled back",
       });
     }
+
   } catch (error) {
     console.error("Internal server error:", error);
     res.status(500).json({ message: error.message, error: error.message });
@@ -255,7 +246,7 @@ const updateTongC = async (checklistC, newRecords, transaction) => {
 const checklistCache = new Map();
 
 const getChecklist = async (id, transaction) => {
-  
+
   if (checklistCache.has(id)) {
     return checklistCache.get(id); // Lấy từ bộ nhớ đệm nếu đã có
   }
@@ -289,10 +280,10 @@ const processChecklist = async (record, transaction) => {
     // Kiểm tra điều kiện cập nhật Tinhtrang
     const shouldUpdateTinhtrang =
       removeVietnameseTones(record?.Ketqua) ===
-        removeVietnameseTones(checklistRecord?.Giatriloi) ||
+      removeVietnameseTones(checklistRecord?.Giatriloi) ||
       ((record?.Anh || record?.GhiChu) &&
         removeVietnameseTones(record?.Ketqua) !==
-          removeVietnameseTones(checklistRecord?.Giatridinhdanh));
+        removeVietnameseTones(checklistRecord?.Giatridinhdanh));
 
     // Cập nhật Tinhtrang
     const updateData = { Tinhtrang: shouldUpdateTinhtrang ? 1 : 0 };
@@ -330,7 +321,7 @@ exports.getCheckListChiTiet = async (req, res, next) => {
             attributes: [
               "ID_ChecklistC",
               "Ngay",
-              "Giobd","Gioghinhan",
+              "Giobd", "Gioghinhan",
               "Giokt",
               "ID_KhoiCV",
               "ID_Calv",
@@ -390,13 +381,7 @@ exports.getCheckListChiTiet = async (req, res, next) => {
                   },
                 ],
               },
-              {
-                model: Ent_tang,
-                attributes: ["Tentang", "Sotang"],
-                where: {
-                  ID_Tang: { [Op.or]: [req.body.ID_Tang, null] }, // Kiểm tra nếu ID_Tang là giá trị mong muốn hoặc null
-                },
-              },
+
               {
                 model: Ent_user,
                 attributes: ["UserName", "Hoten", "Sodienthoai", "Email"],
@@ -454,7 +439,7 @@ exports.getDetail = async (req, res) => {
         include: [
           {
             model: Tb_checklistc,
-            attributes: ["ID_ChecklistC", "Ngay", "Giobd","Gioghinhan", "Giokt"],
+            attributes: ["ID_ChecklistC", "Ngay", "Giobd", "Gioghinhan", "Giokt"],
           },
           {
             model: Ent_checklist,
@@ -480,17 +465,9 @@ exports.getDetail = async (req, res) => {
                   "Sothutu",
                   "ID_Khuvuc",
                 ],
-                include: [
-                  {
-                    model: Ent_duan,
-                    attributes: ["Duan"],
-                  },
-                ],
+
               },
-              {
-                model: Ent_tang,
-                attributes: ["Tentang", "Sotang"],
-              },
+
               {
                 model: Ent_user,
                 attributes: ["UserName", "Hoten", "Sodienthoai", "Email"],
@@ -578,7 +555,7 @@ exports.searchChecklist = async (req, res) => {
           {
             model: Tb_checklistc,
             as: "tb_checklistc",
-            attributes: ["Ngay", "Giobd","Gioghinhan", "Giokt", "ID_KhoiCV", "ID_Calv"],
+            attributes: ["Ngay", "Giobd", "Gioghinhan", "Giokt", "ID_KhoiCV", "ID_Calv"],
             where: {
               Ngay: { [Op.between]: [fromDate, toDate] }, // Filter by Ngay attribute between fromDate and toDate
             },
@@ -635,10 +612,7 @@ exports.searchChecklist = async (req, res) => {
                   },
                 ],
               },
-              {
-                model: Ent_tang,
-                attributes: ["Tentang"],
-              },
+
             ],
           },
         ],
@@ -664,7 +638,7 @@ exports.searchChecklist = async (req, res) => {
           {
             model: Tb_checklistc,
             as: "tb_checklistc",
-            attributes: ["Ngay", "Giobd","Gioghinhan", "Giokt", "ID_KhoiCV", "ID_Calv"],
+            attributes: ["Ngay", "Giobd", "Gioghinhan", "Giokt", "ID_KhoiCV", "ID_Calv"],
             where: {
               Ngay: { [Op.between]: [fromDate, toDate] }, // Filter by Ngay attribute between fromDate and toDate
             },
@@ -724,10 +698,7 @@ exports.searchChecklist = async (req, res) => {
                   },
                 ],
               },
-              {
-                model: Ent_tang,
-                attributes: ["Tentang"],
-              },
+
             ],
           },
         ],

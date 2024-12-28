@@ -2,20 +2,16 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const sharp = require("sharp");
+const mime = require("mime-types");
 const { removeVietnameseTones } = require("../utils/util");
 
+// Tạo storage cho từng loại upload
 const storageChecklist = (uploadFolderKey) =>
   multer.diskStorage({
     destination: (req, file, cb) => {
-      const userData = req.user.data;
-      const body = req?.body;
-      let duan;
-
-      if (userData?.ent_duan?.Duan) {
-        duan = userData?.ent_duan?.Duan;
-      } else {
-        duan = body?.Duan;
-      }
+      const userData = req.user?.data || {};
+      const body = req?.body || {};
+      let duan = userData?.ent_duan?.Duan || body?.Duan || "default";
 
       const uploadFolderMap = {
         checklist: path.join(__dirname, "..", "public", "checklist"),
@@ -25,16 +21,11 @@ const storageChecklist = (uploadFolderKey) =>
       };
 
       const uploadFolder = uploadFolderMap[uploadFolderKey];
-
       if (!uploadFolder) {
         return cb(new Error("Invalid upload folder key"), null);
       }
 
-      const projectName = removeVietnameseTones(duan)?.replace(
-        /[^a-zA-Z0-9-_]/g,
-        "_"
-      );
-
+      const projectName = removeVietnameseTones(duan).replace(/[^a-zA-Z0-9-_]/g, "_");
       const projectFolder = path.join(uploadFolder, projectName);
 
       if (!fs.existsSync(projectFolder)) {
@@ -44,18 +35,10 @@ const storageChecklist = (uploadFolderKey) =>
       cb(null, projectFolder);
     },
     filename: (req, file, cb) => {
-      const userData = req?.user?.data;
-      let ID_Duan;
+      const userData = req?.user?.data || {};
+      const ID_Duan = userData?.ID_Duan || req?.params?.id || "unknown";
 
-      if (userData?.ID_Duan) {
-        ID_Duan = userData?.ID_Duan;
-      } else {
-        ID_Duan = req?.params?.id;
-      }
-
-      const filename = `${ID_Duan}_${Date.now()}${path.extname(
-        file?.originalname
-      )}`;
+      const filename = `${ID_Duan}_${Date.now()}${path.extname(file.originalname)}`;
       cb(null, filename);
     },
   });
@@ -76,33 +59,78 @@ const uploadLogo = multer({
   storage: storageChecklist("logo"),
 });
 
+// Kiểm tra tính hợp lệ của file ảnh
+const validateImage = (filePath) => {
+  const mimeType = mime.lookup(filePath);
+  const allowedTypes = ["image/png", "image/jpeg", "image/gif"];
+
+  if (!allowedTypes.includes(mimeType)) {
+    throw new Error(`Invalid file type: ${mimeType}`);
+  }
+
+  const stats = fs.statSync(filePath);
+  if (stats.size === 0) {
+    throw new Error("File is empty");
+  }
+};
+
 // Hàm xử lý resize ảnh
-const resizeImage = (req, res, next) => {
-  if (req.files && req.files.length > 0) {
-    const resizePromises = req.files.map((file) => {
-      const originalPath = file.path;
+const resizeImage = async (req, res, next) => {
+  try {
+    if (req.files && req.files.length > 0) {
+      const resizeResults = await Promise.allSettled(
+        req.files.map(async (file) => {
+          const originalPath = file.path;
+          try {
+            // Kiểm tra file ảnh hợp lệ
+            validateImage(originalPath);
 
-      return sharp(originalPath)
-        .resize(800, 650, { fit: sharp.fit.inside, withoutEnlargement: true }) // Resize ảnh
-        .jpeg({ quality: 90 }) // Giảm chất lượng ảnh
-        .toBuffer() // Trả về buffer thay vì tạo tệp tạm
-        .then((data) => {
-          fs.writeFileSync(originalPath, data); // Ghi đè dữ liệu đã resize vào tệp gốc
+            // Resize và lưu ảnh
+            const buffer = await sharp(originalPath)
+              .resize(800, 650, { fit: sharp.fit.inside, withoutEnlargement: true })
+              .jpeg({ quality: 90 }) // Chuyển sang JPEG để tối ưu
+              .toBuffer();
+
+            fs.writeFileSync(originalPath, buffer); // Ghi đè file gốc
+            console.log(`Resized image: ${originalPath}`);
+          } catch (err) {
+            console.error(`Error resizing image ${originalPath}:`, err.message);
+            throw err;
+          }
         })
-        .catch((err) => {
-          console.error("Error resizing image:", err);
-          throw err;
-        });
-    });
+      );
 
-    Promise.all(resizePromises)
-      .then(() => next()) // Tiếp tục xử lý
-      .catch((err) => {
-        console.error("Error resizing images:", err);
-        res.status(500).send("Error resizing images.");
-      });
-  } else {
-    next(); // Không có ảnh, tiếp tục
+      // Kiểm tra kết quả xử lý
+      const failed = resizeResults.filter((result) => result.status === "rejected");
+      if (failed.length > 0) {
+        console.error("Some images failed to resize:", failed);
+        return res.status(500).json({ error: "Some images failed to resize." });
+      }
+    }
+
+    // Tất cả ảnh đã xử lý xong
+    next();
+  } catch (err) {
+    console.error("Error during image processing:", err.message);
+    res.status(500).json({ error: "An unexpected error occurred during image processing." });
+  }
+};
+
+const processImage = async (filePath) => {
+  try {
+    validateImage(filePath);
+
+    // Resize ảnh
+    const buffer = await sharp(filePath)
+      .resize(800, 600, { fit: sharp.fit.inside, withoutEnlargement: true })
+      .jpeg({ quality: 90 })
+      .toBuffer();
+
+    fs.writeFileSync(filePath, buffer);
+    console.log(`Resized image successfully: ${filePath}`);
+  } catch (err) {
+    console.error(`Error processing image ${filePath}:`, err.message);
+    throw err;
   }
 };
 
@@ -112,4 +140,5 @@ module.exports = {
   uploadBaoCaoChiSo,
   resizeImage,
   uploadLogo,
+  processImage,
 };
