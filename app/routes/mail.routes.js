@@ -8,6 +8,7 @@ module.exports = (app) => {
     var router = require("express").Router();
   
     router.post("/upload", mail.main);
+    router.post("/resetPassword", mail.ressetPassword);
   
     app.use("/api/v2/mail", router);
   };

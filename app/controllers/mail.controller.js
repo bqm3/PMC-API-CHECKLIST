@@ -11,6 +11,9 @@ const {
 } = require("../models/setup.model");
 const { Op } = require("sequelize");
 
+const bcrypt = require("bcrypt");
+const jsonwebtoken = require("jsonwebtoken");
+
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
@@ -171,7 +174,6 @@ exports.main = async (req, res) => {
           subject: `Báo cáo sự cố ngoài cho dự án`,
           html: `<div>${projectIncidents}</div>`,
         });
-
       }
     }
 
@@ -183,5 +185,162 @@ exports.main = async (req, res) => {
   } catch (error) {
     console.error("Error while sending emails:", error);
     res.status(500).json({ message: "Lỗi trong quá trình gửi email", error });
+  }
+};
+
+exports.ressetPassword = async (req, res) => {
+  try {
+    const { Email, UserName } = req.body;
+
+    // Tìm thông tin người dùng
+    const userDetail = await Ent_user.findOne({
+      where: {
+        UserName: UserName.trim(),
+        isDelete: 0,
+      },
+      attributes: [
+        "ID_User",
+        "UserName",
+        "Email",
+        "Password",
+        "isDelete",
+      ],
+    });
+
+    if (!userDetail) {
+      return res
+        .status(400)
+        .json({ message: "Tài khoản không tồn tại hoặc email không đúng." });
+    }
+
+    // Tạo mật khẩu 6 chữ số ngẫu nhiên
+    const randomPassword = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Mã hóa mật khẩu bằng bcrypt
+    const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+    // Cập nhật mật khẩu vào cơ sở dữ liệu
+    await Ent_user.update(
+      { Password: hashedPassword },
+      {
+        where: { ID_User: userDetail.ID_User },
+      }
+    );
+   
+    const mailOptions = {
+      from: process.env.EMAIL_USERNAME,
+      to: Email,
+      subject: "Reset mật khẩu của bạn",
+      html: `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Mật khẩu mới</title>
+      <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 50px auto;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      border: 1px solid #e0e0e0;
+    }
+    .email-header {
+      background-color: #007bff;
+      color: #ffffff;
+      text-align: center;
+      padding: 20px;
+    }
+    .email-header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    .email-body {
+      padding: 20px;
+      color: #333333;
+    }
+    .email-body p {
+      line-height: 1.6;
+      margin: 10px 0;
+    }
+    .password {
+      font-size: 20px;
+      font-weight: bold;
+      color: #007bff;
+      background-color: #f0f8ff;
+      padding: 10px;
+      border-radius: 5px;
+      display: inline-block;
+      margin: 10px 0;
+    }
+    .email-footer {
+      background-color: #f4f4f4;
+      text-align: center;
+      padding: 10px;
+      font-size: 12px;
+      color: #666666;
+      border-top: 1px solid #e0e0e0;
+    }
+  </style>
+    </head>
+    <body>
+      <div class="email-container">
+        <div class="email-header">
+          <h1>Thông báo mật khẩu mới</h1>
+        </div>
+        <div class="email-body">
+          <p style="font-size: 18px; font-weight: 600;">Phòng Số Hóa xin chào,</p>
+
+          <p>Mật khẩu mới của bạn là:</p>
+          <div class="password">${randomPassword}</div>
+          <p>Mật khẩu này có hiệu lực trong <strong>30 phút</strong>. Vui lòng sử dụng nó để đăng nhập ngay bây giờ.</p>
+          <p>Nếu bạn không yêu cầu reset mật khẩu, vui lòng bỏ qua email này.</p>
+        </div>
+        <div class="email-footer">
+          &copy; Phòng Số Hóa - PMC
+        </div>
+      </div>
+    </body>
+    </html>
+  `,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    // Đặt lịch xóa mật khẩu sau 30 phút nếu không đăng nhập
+    setTimeout(async () => {
+      const user = await Ent_user.findOne({
+        where: {
+          ID_User: userDetail.ID_User,
+          updatedAt: { [Op.gte]: new Date(Date.now() - 30 * 60 * 1000) }, 
+        },
+      });
+
+      if (user) {
+        await Ent_user.update(
+          { Password: null },
+          { where: { ID_User: userDetail.ID_User } }
+        );
+        console.log("Password reset timeout. Password cleared.");
+      }
+    }, 30 * 60 * 1000); 
+
+    return res
+      .status(200)
+      .json({ message: "Mật khẩu mới đã được gửi qua email của bạn." });
+  } catch (error) {
+    console.error("Error resetting password:", error);
+    return res
+      .status(500)
+      .json({ message: "Có lỗi xảy ra khi reset mật khẩu." });
   }
 };
