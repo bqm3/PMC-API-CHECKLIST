@@ -18,9 +18,8 @@ const { Op, where, Sequelize } = require("sequelize");
 const ExcelJS = require("exceljs");
 const cron = require("node-cron");
 var path = require("path");
-// const { notiPush } = require("./ent_user.controller");
 const { removeVietnameseTones } = require("../utils/util");
-const { uploadFileToOneDrive } = require("../middleware/microsoft_azure");
+const {sendToQueue} = require('../queue/producer.checklist')
 
 const BATCH_SIZE = 20;  // Adjust the batch size based on your data size and performance
 const ensureArray = (data) => {
@@ -94,7 +93,6 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       });
     }
 
-
     // Mảng lưu trữ thông tin ảnh đã tải lên
     const uploadedFileIds = await uploadedFiles?.map((file) => file);
 
@@ -102,15 +100,16 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     const dynamicTableName = `tb_checklistchitiet_${String(new Date().getMonth() + 1).padStart(2, "0")}_${new Date().getFullYear()}`;
     const processValue = (data) => {
       if (data === 'null') {
-        return null; // Giá trị 'null' trả về null
+        return null;
       } else if (data === '') {
-        return 1; // Giá trị rỗng trả về 1
+        return 1; 
       } else if (data === '1' || data === '0') {
-        return data; // Giá trị '1' hoặc '0' giữ nguyên
+        return data; 
       } else {
-        return null; // Các trường hợp khác trả về null
+        return null; 
       }
     };
+
     // Xử lý các bản ghi chi tiết checklist
     const newRecords = await Promise.all(
       records.ID_Checklist.map(async (ID_Checklist, index) => {
@@ -143,21 +142,17 @@ exports.createCheckListChiTiet = async (req, res, next) => {
         insertIntoDynamicTable(dynamicTableName, newRecords, transaction),
       ]);
 
-      const checklistC = await Tb_checklistc.findOne({
-        attributes: ["ID_ChecklistC", "Tong", "TongC", "isDelete"],
-        where: { ID_ChecklistC: records.ID_ChecklistC[0], isDelete: 0 },
-
-        transaction,
-      });
-
-      await updateTongC(checklistC, newRecords, transaction);
-
-      // Xử lý từng checklist chi tiết
-      await Promise.all(newRecords.map((record) => processChecklist(record, transaction)));
-
-      // Commit transaction
       await transaction.commit();
       res.status(200).json({ message: "Records created and updated successfully" });
+
+      const backgroundTask = {
+        records: newRecords,
+        dynamicTableName,
+      };
+      await sendToQueue(backgroundTask);
+
+      // Commit transaction
+     
     } catch (error) {
       await transaction.rollback();
       console.error("Error during transaction:", error);
@@ -220,82 +215,82 @@ const insertIntoDynamicTable = async (tableName, records, transaction) => {
   });
 };
 
-const updateTongC = async (checklistC, newRecords, transaction) => {
+// const updateTongC = async (checklistC, newRecords, transaction) => {
 
-  if (checklistC) {
-    const currentTongC = checklistC.TongC;
-    const totalTong = checklistC.Tong;
+//   if (checklistC) {
+//     const currentTongC = checklistC.TongC;
+//     const totalTong = checklistC.Tong;
 
-    if (currentTongC < totalTong) {
-      const hasIsCheckListLaiZero = newRecords.filter(
-        (item) => item.isCheckListLai === 0
-      );
-      await Tb_checklistc.update(
-        {
-          TongC: Sequelize.literal(`TongC + ${hasIsCheckListLaiZero.length}`),
-        },
-        {
-          where: { ID_ChecklistC: checklistC.ID_ChecklistC },
-          transaction,
-        }
-      );
-    }
-  }
-};
+//     if (currentTongC < totalTong) {
+//       const hasIsCheckListLaiZero = newRecords.filter(
+//         (item) => item.isCheckListLai === 0
+//       );
+//       await Tb_checklistc.update(
+//         {
+//           TongC: Sequelize.literal(`TongC + ${hasIsCheckListLaiZero.length}`),
+//         },
+//         {
+//           where: { ID_ChecklistC: checklistC.ID_ChecklistC },
+//           transaction,
+//         }
+//       );
+//     }
+//   }
+// };
 
-const checklistCache = new Map();
+// const checklistCache = new Map();
 
-const getChecklist = async (id, transaction) => {
+// const getChecklist = async (id, transaction) => {
 
-  if (checklistCache.has(id)) {
-    return checklistCache.get(id); // Lấy từ bộ nhớ đệm nếu đã có
-  }
+//   if (checklistCache.has(id)) {
+//     return checklistCache.get(id); // Lấy từ bộ nhớ đệm nếu đã có
+//   }
 
-  // Truy vấn cơ sở dữ liệu nếu chưa có trong bộ nhớ đệm
-  const checklistRecord = await Ent_checklist.findOne({
-    where: { ID_Checklist: id, isDelete: 0 },
-    attributes: [
-      "Checklist",
-      "ID_Checklist",
-      "Giatriloi",
-      "Giatridinhdanh",
-      "isDelete",
-    ],
-    transaction,
-  });
+//   // Truy vấn cơ sở dữ liệu nếu chưa có trong bộ nhớ đệm
+//   const checklistRecord = await Ent_checklist.findOne({
+//     where: { ID_Checklist: id, isDelete: 0 },
+//     attributes: [
+//       "Checklist",
+//       "ID_Checklist",
+//       "Giatriloi",
+//       "Giatridinhdanh",
+//       "isDelete",
+//     ],
+//     transaction,
+//   });
 
-  // Lưu vào bộ nhớ đệm
-  if (checklistRecord) {
-    checklistCache.set(id, checklistRecord);
-  }
+//   // Lưu vào bộ nhớ đệm
+//   if (checklistRecord) {
+//     checklistCache.set(id, checklistRecord);
+//   }
 
-  return checklistRecord;
-};
+//   return checklistRecord;
+// };
 
-const processChecklist = async (record, transaction) => {
-  // Sử dụng getChecklist để lấy dữ liệu
-  const checklistRecord = await getChecklist(record.ID_Checklist, transaction);
+// const processChecklist = async (record, transaction) => {
+//   // Sử dụng getChecklist để lấy dữ liệu
+//   const checklistRecord = await getChecklist(record.ID_Checklist, transaction);
 
-  if (checklistRecord) {
-    // Kiểm tra điều kiện cập nhật Tinhtrang
-    const shouldUpdateTinhtrang =
-      removeVietnameseTones(record?.Ketqua) ===
-      removeVietnameseTones(checklistRecord?.Giatriloi) ||
-      ((record?.Anh || record?.GhiChu) &&
-        removeVietnameseTones(record?.Ketqua) !==
-        removeVietnameseTones(checklistRecord?.Giatridinhdanh));
+//   if (checklistRecord) {
+//     // Kiểm tra điều kiện cập nhật Tinhtrang
+//     const shouldUpdateTinhtrang =
+//       removeVietnameseTones(record?.Ketqua) ===
+//       removeVietnameseTones(checklistRecord?.Giatriloi) ||
+//       ((record?.Anh || record?.GhiChu) &&
+//         removeVietnameseTones(record?.Ketqua) !==
+//         removeVietnameseTones(checklistRecord?.Giatridinhdanh));
 
-    // Cập nhật Tinhtrang
-    const updateData = { Tinhtrang: shouldUpdateTinhtrang ? 1 : 0 };
-    await Ent_checklist.update(updateData, {
-      where: {
-        ID_Checklist: record.ID_Checklist,
-        isDelete: 0,
-      },
-      transaction,
-    });
-  }
-};
+//     // Cập nhật Tinhtrang
+//     const updateData = { Tinhtrang: shouldUpdateTinhtrang ? 1 : 0 };
+//     await Ent_checklist.update(updateData, {
+//       where: {
+//         ID_Checklist: record.ID_Checklist,
+//         isDelete: 0,
+//       },
+//       transaction,
+//     });
+//   }
+// };
 
 
 
