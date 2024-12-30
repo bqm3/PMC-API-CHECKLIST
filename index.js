@@ -18,6 +18,19 @@ var serviceAccount = require("./pmc-cskh-firebase-adminsdk-y7378-5122f6edc7.json
 const sequelize = require("./app/config/db.config");
 const { Sequelize, Op } = require("sequelize");
 const { funcAutoNoti, funcAllNoti } = require("./noti");
+const { processBackgroundTask } = require("./app/queue/consumer.checklist");
+const { initRabbitMQ } = require("./app/queue/producer.checklist");
+
+
+(async () => {
+  try {
+    await initRabbitMQ(); // Khởi tạo kết nối RabbitMQ
+    processBackgroundTask(); // Bắt đầu lắng nghe các tác vụ từ queue
+    console.log("Queue is ready.");
+  } catch (error) {
+    console.error("Failed to initialize RabbitMQ:", error);
+  }
+})();
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -357,6 +370,8 @@ cron.schedule('30 11 * * *', async () => {
 }else{
   console.log("Notification chỉ chạy ở môi trường development. NODE_ENV hiện tại là:", process.env.NODE_ENV);
 }
+
+// funcAllNoti()
 
 
 require("./app/routes/ent_calv.routes")(app);
