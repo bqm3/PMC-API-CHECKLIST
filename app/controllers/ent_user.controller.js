@@ -508,7 +508,7 @@ exports.getUserRoleOnline = async (req, res, next) => {
     }
 
     if (userData.ent_chucvu.Role === 10 && userData.ID_Duan === null) {
-      whereClause["$ent_chucvu.Role$"] = { [Op.notIn]: [2, 3] };
+      // whereClause["$ent_chucvu.Role$"] = { [Op.notIn]: [2, 3] };
     }
 
     await Ent_user.findAll({

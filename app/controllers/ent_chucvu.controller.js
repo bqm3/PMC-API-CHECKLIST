@@ -54,6 +54,14 @@ exports.get = async (req, res) => {
       whereCondition.ID_Chucvu = { [Op.notIn]: [1] };
     }
 
+    if (userData && userData.ent_chucvu.Role == 2 || userData.ent_chucvu.Role == 1) {
+      whereCondition.ID_Chucvu = { [Op.in]: [2,3,4] };
+    }
+
+    if (userData && userData.ent_chucvu.Role == 3 ) {
+      whereCondition.ID_Chucvu = { [Op.in]: [4,9] };
+    }
+
     if (userData) {
       await Ent_chucvu.findAll({
         attributes: ["ID_Chucvu", "Chucvu", "isDelete"],
