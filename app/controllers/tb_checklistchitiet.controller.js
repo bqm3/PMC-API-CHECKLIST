@@ -19,9 +19,9 @@ const ExcelJS = require("exceljs");
 const cron = require("node-cron");
 var path = require("path");
 const { removeVietnameseTones } = require("../utils/util");
-const {sendToQueue} = require('../queue/producer.checklist')
+const { sendToQueue } = require("../queue/producer.checklist");
 
-const BATCH_SIZE = 20;  // Adjust the batch size based on your data size and performance
+const BATCH_SIZE = 20; // Adjust the batch size based on your data size and performance
 const ensureArray = (data) => {
   if (!Array.isArray(data)) {
     return [data];
@@ -36,7 +36,12 @@ const insertInBatches = async (records, transaction) => {
   }
 };
 
-const processImageUpload = async (index, ID_Checklist, uploadedFileIds, images) => {
+const processImageUpload = async (
+  index,
+  ID_Checklist,
+  uploadedFileIds,
+  images
+) => {
   let anhs = [];
   for (let i = 0; i < images?.length; i++) {
     const imageIndex = `Images_${index}_${ID_Checklist}_${i}`;
@@ -51,7 +56,6 @@ const processImageUpload = async (index, ID_Checklist, uploadedFileIds, images) 
   }
   return anhs;
 };
-
 
 exports.createCheckListChiTiet = async (req, res, next) => {
   try {
@@ -97,36 +101,46 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     const uploadedFileIds = await uploadedFiles?.map((file) => file);
 
     // Tạo tên bảng động theo tháng và năm
-    const dynamicTableName = `tb_checklistchitiet_${String(new Date().getMonth() + 1).padStart(2, "0")}_${new Date().getFullYear()}`;
+    const dynamicTableName = `tb_checklistchitiet_${String(
+      new Date().getMonth() + 1
+    ).padStart(2, "0")}_${new Date().getFullYear()}`;
     const processValue = (data) => {
-      if (data === 'null') {
-        return null;
-      } else if (data === '') {
-        return 1; 
-      } else if (data === '1' || data === '0') {
-        return data; 
+      if (
+        data !== "null" &&
+        data !== undefined &&
+        data !== "undefined" &&
+        data !== ""
+      ) {
+        return data;
       } else {
-        return null; 
+        return null;
       }
     };
 
     // Xử lý các bản ghi chi tiết checklist
     const newRecords = await Promise.all(
       records.ID_Checklist.map(async (ID_Checklist, index) => {
-        const anhs = await processImageUpload(index, ID_Checklist, uploadedFileIds, images);
+        const anhs = await processImageUpload(
+          index,
+          ID_Checklist,
+          uploadedFileIds,
+          images
+        );
 
         return {
           ID_ChecklistC: records.ID_ChecklistC[0],
           ID_Checklist,
-          Vido: records.Vido[index] || null,
-          Kinhdo: records.Kinhdo[index] || null,
-          Docao: records.Docao[index] || null,
-          Ketqua: records.Ketqua[index] || null,
-          Gioht: records.Gioht[index],
-          Ghichu: records.Ghichu[index],
+          Vido: processValue(records.Vido[index]) || null,
+          Kinhdo: processValue(records.Kinhdo[index]) || null,
+          Docao: processValue(records.Docao[index]) || null,
+          Ketqua: processValue(records.Ketqua[index]) || null,
+          Gioht: processValue(records.Gioht[index]),
+          Ghichu: processValue(records.Ghichu[index]),
           isScan: processValue(records.isScan[index]),
           Anh: anhs.length > 0 ? anhs?.join(",") : null,
-          Ngay: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`,
+          Ngay: `${new Date().getFullYear()}-${String(
+            new Date().getMonth() + 1
+          ).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`,
           isCheckListLai: records.isCheckListLai[index] || 0,
         };
       })
@@ -143,7 +157,9 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       ]);
 
       await transaction.commit();
-      res.status(200).json({ message: "Records created and updated successfully" });
+      res
+        .status(200)
+        .json({ message: "Records created and updated successfully" });
 
       const backgroundTask = {
         records: newRecords,
@@ -152,7 +168,6 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       await sendToQueue(backgroundTask);
 
       // Commit transaction
-     
     } catch (error) {
       await transaction.rollback();
       console.error("Error during transaction:", error);
@@ -160,7 +175,6 @@ exports.createCheckListChiTiet = async (req, res, next) => {
         error: "Failed to create checklist details, transaction rolled back",
       });
     }
-
   } catch (error) {
     console.error("Internal server error:", error);
     res.status(500).json({ message: error.message, error: error.message });
@@ -292,8 +306,6 @@ const insertIntoDynamicTable = async (tableName, records, transaction) => {
 //   }
 // };
 
-
-
 exports.getCheckListChiTiet = async (req, res, next) => {
   try {
     const userData = req.user.data;
@@ -316,7 +328,8 @@ exports.getCheckListChiTiet = async (req, res, next) => {
             attributes: [
               "ID_ChecklistC",
               "Ngay",
-              "Giobd", "Gioghinhan",
+              "Giobd",
+              "Gioghinhan",
               "Giokt",
               "ID_KhoiCV",
               "ID_Calv",
@@ -434,7 +447,13 @@ exports.getDetail = async (req, res) => {
         include: [
           {
             model: Tb_checklistc,
-            attributes: ["ID_ChecklistC", "Ngay", "Giobd", "Gioghinhan", "Giokt"],
+            attributes: [
+              "ID_ChecklistC",
+              "Ngay",
+              "Giobd",
+              "Gioghinhan",
+              "Giokt",
+            ],
           },
           {
             model: Ent_checklist,
@@ -460,7 +479,6 @@ exports.getDetail = async (req, res) => {
                   "Sothutu",
                   "ID_Khuvuc",
                 ],
-
               },
 
               {
@@ -550,7 +568,14 @@ exports.searchChecklist = async (req, res) => {
           {
             model: Tb_checklistc,
             as: "tb_checklistc",
-            attributes: ["Ngay", "Giobd", "Gioghinhan", "Giokt", "ID_KhoiCV", "ID_Calv"],
+            attributes: [
+              "Ngay",
+              "Giobd",
+              "Gioghinhan",
+              "Giokt",
+              "ID_KhoiCV",
+              "ID_Calv",
+            ],
             where: {
               Ngay: { [Op.between]: [fromDate, toDate] }, // Filter by Ngay attribute between fromDate and toDate
             },
@@ -607,7 +632,6 @@ exports.searchChecklist = async (req, res) => {
                   },
                 ],
               },
-
             ],
           },
         ],
@@ -633,7 +657,14 @@ exports.searchChecklist = async (req, res) => {
           {
             model: Tb_checklistc,
             as: "tb_checklistc",
-            attributes: ["Ngay", "Giobd", "Gioghinhan", "Giokt", "ID_KhoiCV", "ID_Calv"],
+            attributes: [
+              "Ngay",
+              "Giobd",
+              "Gioghinhan",
+              "Giokt",
+              "ID_KhoiCV",
+              "ID_Calv",
+            ],
             where: {
               Ngay: { [Op.between]: [fromDate, toDate] }, // Filter by Ngay attribute between fromDate and toDate
             },
@@ -693,7 +724,6 @@ exports.searchChecklist = async (req, res) => {
                   },
                 ],
               },
-
             ],
           },
         ],
