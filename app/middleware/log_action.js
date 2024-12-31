@@ -9,14 +9,19 @@ const getIpAddress = (req) => {
 const logAction = async (req, res, next) => {
   try {
     const userId = req.user?.data?.ID_User || null; // Lấy ID người dùng nếu có
-    const ipAddress = getIpAddress(req);
-    const action = req.method; // GET, POST, PUT, DELETE,...
+    const ipAddress = getIpAddress(req); // Lấy IP từ request
+    const userAgent = req.headers['user-agent']; // Lấy User-Agent
+    const action = req.method; // Hành động API (GET, POST, PUT,...)
     const endpoint = req.originalUrl; // Endpoint được gọi
     const requestBody = JSON.stringify(req.body); // Nội dung request
+
+    // Phân tích User-Agent để lấy thông tin thiết bị
+    const deviceInfo = userAgent;
 
     const logData = {
       userId,
       ipAddress,
+      deviceInfo, // Thêm thông tin thiết bị
       action,
       endpoint,
       requestBody,
@@ -25,13 +30,14 @@ const logAction = async (req, res, next) => {
     // Lưu vào cơ sở dữ liệu
     await sequelize.query(
       `
-      INSERT INTO api_logs (user_id, ip_address, action, endpoint, request_body)
-      VALUES (:userId, :ipAddress, :action, :endpoint, :requestBody)
+      INSERT INTO api_logs (user_id, ip_address, device_info, action, endpoint, request_body)
+      VALUES (:userId, :ipAddress, :deviceInfo, :action, :endpoint, :requestBody)
       `,
       {
         replacements: {
           userId: logData.userId,
           ipAddress: logData.ipAddress,
+          deviceInfo: logData.deviceInfo,
           action: logData.action,
           endpoint: logData.endpoint,
           requestBody: logData.requestBody,
@@ -39,12 +45,12 @@ const logAction = async (req, res, next) => {
       }
     );
 
-
     next(); // Tiếp tục đến handler tiếp theo
   } catch (error) {
     console.error('Error saving log:', error);
     next();
   }
+
 };
 
 module.exports = logAction;
