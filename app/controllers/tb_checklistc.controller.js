@@ -2124,10 +2124,10 @@ exports.checklistCalv = async (req, res) => {
       let whereClause = {
         isDelete: 0,
         ID_ChecklistC: ID_ChecklistC,
-        ID_Duan: userData.ID_Duan,
+        // ID_Duan: userData.ID_Duan,
         // isCheckListLai: 0
       };
-      const targetDate = new Date("2025-01-01");
+      const targetDate = new Date("2024-12-31");
       const checklistDate = new Date(dataChecklistC?.Ngay);
 
       if (checklistDate >= targetDate) {
@@ -2136,8 +2136,12 @@ exports.checklistCalv = async (req, res) => {
 
         const tableName = `tb_checklistchitiet_${month}_${year}`;
         const dynamicTableNameDone = `tb_checklistchitietdone_${month}_${year}`;
+        console.log('tableName',tableName)
+        console.log('dynamicTableNameDone',dynamicTableNameDone)
+        console.log('sequelize.models[tableName]',sequelize.models[tableName])
 
         defineDynamicModelChiTiet(tableName, sequelize);
+
         const dataChecklistChiTiet = await sequelize.models[tableName].findAll({
           attributes: [
             "ID_Checklistchitiet",
@@ -2226,75 +2230,12 @@ exports.checklistCalv = async (req, res) => {
               ],
             },
           ],
+          where: whereClause,
         });
-        // Define the raw SQL query
-        //         const query = `
-        //   SELECT
-        //     tb_checklistchitiet.ID_Checklistchitiet,
-        //     tb_checklistchitiet.ID_ChecklistC,
-        //     tb_checklistchitiet.ID_Checklist,
-        //     tb_checklistchitiet.Ketqua,
-        //     tb_checklistchitiet.Anh,
-        //     tb_checklistchitiet.Gioht,
-        //     tb_checklistchitiet.Ghichu,
-        //     tb_checklistchitiet.isScan,
-        //     tb_checklistchitiet.isCheckListLai,
-        //     tb_checklistchitiet.isDelete,
-        //     tb_checklistc.ID_ChecklistC,
-        //     tb_checklistc.Ngay,
-        //     tb_checklistc.Giobd,
-        //     tb_checklistc.Giokt,
-        //     tb_checklistc.ID_KhoiCV,
-        //     tb_checklistc.ID_Calv,
-        //     tb_checklistc.ID_Duan,
-        //     ent_checklist.ID_Checklist,
-        //     ent_checklist.ID_Hangmuc,
-        //     ent_checklist.ID_Tang,
-        //     ent_checklist.Sothutu,
-        //     ent_checklist.Maso,
-        //     ent_checklist.MaQrCode,
-        //     ent_checklist.Checklist,
-        //     ent_checklist.Giatridinhdanh,
-        //     ent_checklist.Giatriloi,
-        //     ent_checklist.isCheck,
-        //     ent_checklist.Tinhtrang,
-        //     ent_checklist.Giatrinhan
-        //   FROM ${dynamicTableName} AS tb_checklistchitiet
-        //   LEFT JOIN tb_checklistc AS tb_checklistc ON tb_checklistc.ID_ChecklistC = tb_checklistchitiet.ID_ChecklistC
-        //   LEFT JOIN ent_checklist AS ent_checklist ON ent_checklist.ID_Checklist = tb_checklistchitiet.ID_Checklist
-        //   LEFT JOIN ent_khoicv AS ent_khoicv ON ent_khoicv.ID_KhoiCV = tb_checklistc.ID_KhoiCV
-        //   LEFT JOIN ent_calv AS ent_calv ON ent_calv.ID_Calv = tb_checklistc.ID_Calv
-        //   LEFT JOIN ent_hangmuc AS ent_hangmuc ON ent_hangmuc.ID_Hangmuc = ent_checklist.ID_Hangmuc
-        //   LEFT JOIN ent_khuvuc AS ent_khuvuc ON ent_khuvuc.ID_Khuvuc = ent_hangmuc.ID_Khuvuc
-        //   LEFT JOIN ent_toanha AS ent_toanha ON ent_toanha.ID_Toanha = ent_khuvuc.ID_Khuvuc
-        //   LEFT JOIN ent_tang AS ent_tang ON ent_tang.ID_Tang = ent_checklist.ID_Tang
-        //   LEFT JOIN ent_user AS ent_user ON ent_user.ID_User = ent_checklist.ID_User
-        //   WHERE
-        //     tb_checklistc.isDelete = :isDelete
-        //     AND tb_checklistc.ID_ChecklistC = :ID_ChecklistC
-        //     AND tb_checklistc.ID_Duan = :ID_Duan;
-        // `;
-        //         const dataChecklistChiTiet = [];
-        // Execute the query
-        // try {
-        //   dataChecklistChiTiet = await sequelize.query(query, {
-        //     replacements: {
-        //       isDelete: whereClause.isDelete,
-        //       ID_ChecklistC: whereClause.ID_ChecklistC,
-        //       ID_Duan: whereClause.ID_Duan,
-        //     }, // Bind the dynamic values
-        //     type: sequelize.QueryTypes.SELECT,
-        //   });
-        // } catch (error) {
-        //   return res
-        //     .status(500)
-        //     .json({ message: "L��i! Vui lòng thử lại sau." });
-        // }
 
-        // Convert fetched data to plain JavaScript objects
-        const plainChecklistChiTiet = dataChecklistChiTiet.map((item) => ({
-          ...item,
-        }));
+        // const plainChecklistChiTiet = dataChecklistChiTiet.map((item) => ({
+        //   ...item,
+        // }));
 
         // Fetch checklist done items from the dynamic "done" table
         const checklistDoneItems = await sequelize.query(
@@ -2303,8 +2244,9 @@ exports.checklistCalv = async (req, res) => {
             replacements: [ID_ChecklistC],
             type: sequelize.QueryTypes.SELECT,
           }
+          
         );
-
+       
         // Convert done items to plain objects
         const plainChecklistDoneItems = checklistDoneItems.map((item) => ({
           ...item,
@@ -2315,7 +2257,7 @@ exports.checklistCalv = async (req, res) => {
         const itemDoneList = [];
 
         // Populate arrPush and collect checklist IDs
-        plainChecklistChiTiet.forEach((item) => {
+        dataChecklistChiTiet.forEach((item) => {
           item.status = 0;
           if (item.isScan === 1) {
             item.ent_checklist.ent_hangmuc = {
@@ -2324,7 +2266,10 @@ exports.checklistCalv = async (req, res) => {
             };
           }
           arrPush.push(item);
+          console.log('item', item.ID_Checklist)
+          checklistIds.push(item.ID_Checklist);
         });
+        console.log('======================================================123', checklistIds, arrPush)
 
         // Process done items for checklist ID mapping
         plainChecklistDoneItems.forEach((item) => {
