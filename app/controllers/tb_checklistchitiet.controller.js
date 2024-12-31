@@ -103,8 +103,9 @@ exports.createCheckListChiTiet = async (req, res, next) => {
 
     // Tạo tên bảng động theo tháng và năm
     const dynamicTableName = `tb_checklistchitiet_${
-      new Date().getMonth() + 1
+      (new Date().getMonth() + 1).toString().padStart(2, '0')
     }_${new Date().getFullYear()}`;
+    // const dynamicTableName = "tb_checklistchitiet_01_2025"
     
     const processValue = (data) => {
       if (

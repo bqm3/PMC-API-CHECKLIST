@@ -82,6 +82,7 @@ exports.create = async (req, res) => {
     const dynamicTableName = `tb_checklistchitietdone_${
       (new Date().getMonth() + 1).toString().padStart(2, '0')
     }_${new Date().getFullYear()}`;
+    // const dynamicTableName = "tb_checklistchitietdone_01_2025"
 
     if (currentDate.isAfter(cutoffDate)) {
       // Nếu ngày hiện tại > 31/12/2024, chỉ chèn vào Dynamic Table
