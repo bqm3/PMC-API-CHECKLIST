@@ -18,6 +18,7 @@ const { Op, where, Sequelize } = require("sequelize");
 const ExcelJS = require("exceljs");
 const cron = require("node-cron");
 var path = require("path");
+const moment = require('moment');
 const { removeVietnameseTones } = require("../utils/util");
 const { sendToQueue } = require("../queue/producer.checklist");
 
@@ -149,12 +150,19 @@ exports.createCheckListChiTiet = async (req, res, next) => {
 
     // Tạo transaction để xử lý đồng thời và đảm bảo tính toàn vẹn
     const transaction = await sequelize.transaction();
-
+    const currentDate = moment();
+    const cutoffDate = moment('2024-12-31', 'YYYY-MM-DD');
     try {
-      await Promise.all([
-        insertInBatches(newRecords, transaction),
-        insertIntoDynamicTable(dynamicTableName, newRecords, transaction),
-      ]);
+      if (currentDate.isAfter(cutoffDate)) {
+        // Nếu ngày hiện tại > 31/12/2024, chỉ chèn vào Dynamic Table
+        await insertIntoDynamicTable(dynamicTableName, newRecords, transaction);
+      } else {
+        // Nếu ngày hiện tại <= 31/12/2024, chèn cả hai
+        await Promise.all([
+          insertInBatches(newRecords, transaction),
+          insertIntoDynamicTable(dynamicTableName, newRecords, transaction),
+        ]);
+      }
 
       await transaction.commit();
       res

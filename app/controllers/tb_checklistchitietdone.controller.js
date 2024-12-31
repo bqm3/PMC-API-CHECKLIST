@@ -6,6 +6,7 @@ const {
 const sequelize = require("../config/db.config");
 const { Op, Sequelize } = require("sequelize");
 const { sendToQueueDone } = require("../queue/producer.checklist");
+const moment = require('moment');
 
 const insertIntoDynamicTable = async (tableName, data, transaction) => {
   await sequelize.query(
@@ -24,7 +25,7 @@ const insertIntoDynamicTable = async (tableName, data, transaction) => {
         data.Docao,
         data.isScan,
         data.isCheckListLai,
-        0
+        0,
       ],
       transaction,
     }
@@ -74,15 +75,24 @@ exports.create = async (req, res) => {
       isCheckListLai: isCheckListLai === 1 ? 1 : 0,
       isDelete: 0,
     };
-
+    const currentDate = moment();
+    const cutoffDate = moment("2024-12-31", "YYYY-MM-DD");
     // Tạo bảng động nếu chưa tồn tại
-    const dynamicTableName = `tb_checklistchitietdone_${new Date().getMonth() + 1}_${new Date().getFullYear()}`;
-    await insertIntoDynamicTable(dynamicTableName, data, transaction);
-    await Tb_checklistchitietdone.create(data, {
-      transaction,
-    });
+    const dynamicTableName = `tb_checklistchitietdone_${
+      new Date().getMonth() + 1
+    }_${new Date().getFullYear()}`;
 
-    
+    if (currentDate.isAfter(cutoffDate)) {
+      // Nếu ngày hiện tại > 31/12/2024, chỉ chèn vào Dynamic Table
+      await insertIntoDynamicTable(dynamicTableName, data, transaction);
+    } else {
+      // Nếu ngày hiện tại <= 31/12/2024, chèn cả hai
+      await insertIntoDynamicTable(dynamicTableName, data, transaction);
+      await Tb_checklistchitietdone.create(data, {
+        transaction,
+      });
+    }
+
     // Commit giao dịch
     await transaction.commit();
 
@@ -92,12 +102,14 @@ exports.create = async (req, res) => {
 
     const backgroundTask = {
       records: {
-        ...data, checklistLength, ID_Checklists
+        ...data,
+        checklistLength,
+        ID_Checklists,
       },
       dynamicTableName,
     };
     await sendToQueueDone(backgroundTask);
-   
+
     // // Cập nhật `TongC` trong `Tb_checklistc`
     // if (ID_ChecklistC) {
     //   const checklistC = await Tb_checklistc.findOne({
@@ -124,7 +136,6 @@ exports.create = async (req, res) => {
     //     { where: { ID_Checklist: { [Op.in]: ID_Checklists } }, transaction }
     //   );
     // }
-
   } catch (error) {
     // Rollback giao dịch nếu có lỗi
     await transaction.rollback();

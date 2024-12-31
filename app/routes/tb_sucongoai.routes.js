@@ -21,7 +21,7 @@ module.exports = (app) => {
   router.get("/su-co-ngoai", tb_sucongoai.getSucoNam);
   router.get("/report-incident-percent-week", tb_sucongoai.getSucoNam);
   router.get("/report-external-incident-percent-week", tb_sucongoai.getSuCoBenNgoai);
-  router.post("/report-uploads", [isAuthenticated, upload.single("file")],  tb_sucongoai.uploadReports)
+  router.post("/report-uploads", [isAuthenticated, upload.single("files")],  tb_sucongoai.uploadReports)
 
   // ===================================
   router.get("/chi-nhanh-report-external-incident-percent-week",[isAuthenticated, isAdmin], tb_sucongoai.getSuCoBenNgoaiChiNhanh);
