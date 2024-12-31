@@ -2135,6 +2135,7 @@ exports.checklistCalv = async (req, res) => {
         const year = checklistDate.getFullYear();
 
         const tableName = `tb_checklistchitiet_${month}_${year}`;
+        const dynamicTableNameDone = `tb_checklistchitietdone_${month}_${year}`;
 
         defineDynamicModelChiTiet(tableName, sequelize);
         const dataChecklistChiTiet = await sequelize.models[tableName].findAll({
