@@ -30,6 +30,9 @@ exports.create = async (req, res) => {
       deviceHandler,
       deviceNameUser,
       deviceNameHandler,
+      TenHangmuc,
+      Bienphapxuly,
+      Ghichu,
     } = body;
     const images = req?.files;
 
@@ -81,6 +84,10 @@ exports.create = async (req, res) => {
       deviceUser: deviceUser,
       deviceNameUser: deviceNameUser,
       ID_User: ID_User,
+      TenHangmuc: TenHangmuc,
+      Bienphapxuly: Bienphapxuly || null,
+      Tinhtrangxuly: Tinhtrangxuly || 0,
+      Ghichu: Ghichu || null
     };
 
     Tb_sucongoai.create(data)
@@ -125,6 +132,8 @@ exports.get = async (req, res) => {
         "Ghichu",
         "Ngayxuly",
         "isDelete",
+        "TenHangmuc",
+        "Bienphapxuly"
       ],
       include: [
         {
@@ -250,7 +259,7 @@ exports.updateStatus = async (req, res) => {
         let imageIndex = "";
         let matchingImage = null;
         for (let i = 0; i < images.length; i++) {
-          imageIndex = `Images`;
+          imageIndex = `Images_${i}`;
           matchingImage = uploadedFileIds.find(
             (file) => file.fieldname === imageIndex
           );
@@ -269,6 +278,7 @@ exports.updateStatus = async (req, res) => {
       deviceHandler,
       deviceNameUser,
       deviceNameHandler,
+      Bienphapxuly
      } = req.body;
     if (ID_Suco && userData) {
       const updateFields = {
@@ -280,6 +290,7 @@ exports.updateStatus = async (req, res) => {
         Anhkiemtra: idsString,
         Ghichu:
           `${Ghichu}` !== "null" && `${Ghichu}` !== "undefined" ? Ghichu : null,
+        Bienphapxuly: Bienphapxuly || null
       };
 
       if (`${ID_Hangmuc}` !== "null" && `${ID_Hangmuc}` !== "undefined") {
@@ -335,6 +346,8 @@ exports.getDetail = async (req, res) => {
         "Ghichu",
         "Ngayxuly",
         "isDelete",
+        "TenHangmuc",
+        "Bienphapxuly"
       ],
       include: [
         {
@@ -482,6 +495,8 @@ exports.dashboardByDuAn = async (req, res) => {
         "Tinhtrangxuly",
         "Ngayxuly",
         "isDelete",
+        "TenHangmuc",
+        "Bienphapxuly"
       ],
       include: [
         {
@@ -667,6 +682,8 @@ exports.dashboardAll = async (req, res) => {
         "Tinhtrangxuly",
         "Ngayxuly",
         "isDelete",
+        "TenHangmuc",
+        "Bienphapxuly",
       ],
       where: whereClause,
       include: [
@@ -779,6 +796,8 @@ exports.getSucoNam = async (req, res) => {
         "Ghichu",
         "Ngayxuly",
         "isDelete",
+        "TenHangmuc",
+        "Bienphapxuly",
       ],
       include: [
         {
@@ -998,6 +1017,8 @@ exports.getSuCoBenNgoai = async (req, res) => {
         "Ghichu",
         "Ngayxuly",
         "isDelete",
+        "TenHangmuc",
+        "Bienphapxuly",
       ],
       include: [
         {
@@ -1186,6 +1207,8 @@ exports.getSuCoBenNgoaiChiNhanh = async (req, res) => {
         "Ghichu",
         "Ngayxuly",
         "isDelete",
+        "TenHangmuc",
+        "Bienphapxuly"
       ],
       include: [
         {
@@ -1322,6 +1345,8 @@ exports.getSuCoNamChiNhanh = async (req, res) => {
         "Ghichu",
         "Ngayxuly",
         "isDelete",
+        "TenHangmuc",
+        "Bienphapxuly"
       ],
       include: [
         {
@@ -1451,6 +1476,8 @@ exports.dashboardAllChiNhanh = async (req, res) => {
         "Tinhtrangxuly",
         "Ngayxuly",
         "isDelete",
+        "TenHangmuc",
+        "Bienphapxuly"
       ],
       where: whereClause,
       include: [
