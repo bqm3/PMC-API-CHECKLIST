@@ -1,3 +1,5 @@
+const logAction = require("../middleware/log_action.js");
+
 module.exports = (app) => {
   const p0 = require("../controllers/p0.controller.js");
   const {
@@ -8,7 +10,7 @@ module.exports = (app) => {
 
   router.get("/", [isAuthenticated], p0.getP0_User_ByDuAn);
   router.get("/check", [isAuthenticated], p0.checkRole);
-  router.post("/create", [isAuthenticated], p0.createP0);
+  router.post("/create", [isAuthenticated, logAction], p0.createP0);
   router.post("/create-role", [isAuthenticated], p0.createP0_User)
   router.get("/all-duan", [isAuthenticated], p0.getAll_ByID_Duan);
   router.get("/:id", [isAuthenticated], p0.getDetailP0);

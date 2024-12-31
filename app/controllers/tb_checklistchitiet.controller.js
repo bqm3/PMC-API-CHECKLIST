@@ -101,9 +101,10 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     const uploadedFileIds = await uploadedFiles?.map((file) => file);
 
     // Tạo tên bảng động theo tháng và năm
-    const dynamicTableName = `tb_checklistchitiet_${String(
+    const dynamicTableName = `tb_checklistchitiet_${
       new Date().getMonth() + 1
-    ).padStart(2, "0")}_${new Date().getFullYear()}`;
+    }_${new Date().getFullYear()}`;
+    
     const processValue = (data) => {
       if (
         data !== "null" &&
@@ -152,7 +153,6 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     try {
       await Promise.all([
         insertInBatches(newRecords, transaction),
-        createDynamicTable(dynamicTableName),
         insertIntoDynamicTable(dynamicTableName, newRecords, transaction),
       ]);
 
@@ -181,25 +181,6 @@ exports.createCheckListChiTiet = async (req, res, next) => {
   }
 };
 
-const createDynamicTable = async (tableName) => {
-  const query = `
-    CREATE TABLE IF NOT EXISTS ${tableName} (
-      ID_ChecklistC INT,
-      ID_Checklist INT,
-      Vido VARCHAR(50) DEFAULT NULL,
-      Kinhdo VARCHAR(50) DEFAULT NULL,
-      Docao VARCHAR(50) DEFAULT NULL,
-      Ketqua VARCHAR(255) DEFAULT NULL,
-      Gioht DATETIME,
-      Ghichu TEXT DEFAULT NULL,
-      isScan INT DEFAULT NULL,
-      Anh TEXT DEFAULT NULL,
-      Ngay DATE,
-      isCheckListLai INT DEFAULT 0
-    );
-  `;
-  await sequelize.query(query);
-};
 
 const insertIntoDynamicTable = async (tableName, records, transaction) => {
   const query = `

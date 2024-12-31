@@ -18,14 +18,16 @@ var serviceAccount = require("./pmc-cskh-firebase-adminsdk-y7378-5122f6edc7.json
 const sequelize = require("./app/config/db.config");
 const { Sequelize, Op } = require("sequelize");
 const { funcAutoNoti, funcAllNoti } = require("./noti");
-const { processBackgroundTask } = require("./app/queue/consumer.checklist");
+const { processBackgroundTask , processBackgroundTaskDone} = require("./app/queue/consumer.checklist");
 const { initRabbitMQ } = require("./app/queue/producer.checklist");
+const { createDynamicTableDone, createDynamicTableChiTiet } = require("./app/utils/util");
 
 
 (async () => {
   try {
     await initRabbitMQ(); // Khởi tạo kết nối RabbitMQ
     processBackgroundTask(); // Bắt đầu lắng nghe các tác vụ từ queue
+    processBackgroundTaskDone()
     console.log("Queue is ready.");
   } catch (error) {
     console.error("Failed to initialize RabbitMQ:", error);
@@ -370,6 +372,13 @@ cron.schedule('30 11 * * *', async () => {
 }else{
   console.log("Notification chỉ chạy ở môi trường development. NODE_ENV hiện tại là:", process.env.NODE_ENV);
 }
+
+cron.schedule("0 0 20 * *", async () => {
+  const month = new Date().getMonth() + 1; 
+  const year = new Date().getFullYear();
+  await createDynamicTableDone(`tb_checklistchitietdone_${month}_${year}`);
+  await createDynamicTableChiTiet(`tb_checklistchitiet_${month}_${year}`);
+});
 
 // funcAllNoti()
 

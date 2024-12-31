@@ -1553,3 +1553,154 @@ exports.dashboardAllChiNhanh = async (req, res) => {
     });
   }
 };
+
+exports.uploadReports = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).send("No file uploaded.");
+    }
+    const userData = req.user.data;
+
+    const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const data = xlsx.utils.sheet_to_json(worksheet);
+
+    await sequelize.transaction(async (transaction) => {
+      const removeSpacesFromKeys = (obj) => {
+        return Object.keys(obj).reduce((acc, key) => {
+          const newKey = key?.replace(/\s+/g, "")?.toUpperCase();
+          acc[newKey] = obj[key];
+          return acc;
+        }, {});
+      };
+
+      for (const item of data) {
+        const transformedItem = removeSpacesFromKeys(item);
+
+        const tenKhoiCongViec = transformedItem["KHỐICÔNGVIỆC"];
+        const duAn = transformedItem["DỰÁN"];
+        const hoTen = formatVietnameseText(transformedItem["HỌTÊN"]);
+        const gioiTinh = transformedItem["GIỚITÍNH"];
+        const soDienThoai = transformedItem["SỐĐIỆNTHOẠI"];
+        const namSinh = convertDateFormat(transformedItem["NGÀYSINH"]);
+        const chucVu = transformedItem["CHỨCVỤ"];
+        const gmail = transformedItem["GMAIL"];
+        const taiKhoan = transformedItem["TÀIKHOẢN"];
+        const matKhau = transformedItem["MẬTKHẨU"];
+
+        const sanitizedTenToanha = duAn?.replace(/\t/g, ""); // Loại bỏ tất cả các ký tự tab
+
+        const dataChucvu = await Ent_chucvu.findOne({
+          attributes: ["ID_Chucvu", "Chucvu", "isDelete"],
+          where: {
+            isDelete: 0,
+            Chucvu: sequelize.where(
+              sequelize.fn(
+                "UPPER",
+                sequelize.fn("TRIM", sequelize.col("Chucvu"))
+              ),
+              "LIKE",
+              chucVu.trim().toUpperCase()
+            ),
+          },
+        });
+
+        if (!dataChucvu) {
+          return res.status(500).json({
+            message: "Không tìm chức vụ phù hợp",
+          });
+        }
+
+        let dataKhoiCV;
+        if (tenKhoiCongViec !== undefined) {
+          dataKhoiCV = await Ent_khoicv.findOne({
+            attributes: ["ID_KhoiCV", "KhoiCV", "isDelete"],
+
+            where: {
+              KhoiCV: sequelize.where(
+                sequelize.fn(
+                  "UPPER",
+                  sequelize.fn("TRIM", sequelize.col("KhoiCV"))
+                ),
+                "LIKE",
+                tenKhoiCongViec.trim().toUpperCase()
+              ),
+              isDelete: 0,
+            },
+          });
+          if (!dataKhoiCV) {
+            return res.status(500).json({
+              message: "Không tìm khối công việc phù hợp",
+            });
+          }
+        }
+
+        const dataUser = await Ent_user.findOne({
+          attributes: [
+            "ID_User",
+            "ID_Duan",
+            "ID_Chucvu",
+            "ID_KhoiCV",
+            "isDelete",
+            "Hoten",
+            "UserName",
+            "Email",
+          ],
+          where: {
+            UserName: sequelize.where(
+              sequelize.fn(
+                "UPPER",
+                sequelize.fn("TRIM", sequelize.col("UserName"))
+              ),
+              "LIKE",
+              taiKhoan.trim().toUpperCase()
+            ),
+            ID_Duan: userData.ID_Duan,
+            isDelete: 0,
+          },
+          transaction,
+        });
+
+        if (dataUser) {
+          console.log(`User đã tồn tại, bỏ qua`);
+          continue; // Skip the current iteration and move to the next item
+        }
+        const salt = genSaltSync(10);
+        if (!matKhau) {
+          return res.status(400).json({
+            message: "Mật khẩu không được để trống",
+          });
+        }
+
+        const mk = hashSync(`${matKhau}`, salt);
+        const dataInsert = {
+          ID_Duan: userData.ID_Duan,
+          ID_Chucvu: dataChucvu.ID_Chucvu || null,
+          ID_KhoiCV: dataKhoiCV?.ID_KhoiCV || null,
+          Password: mk,
+          Email: gmail || null,
+          UserName: taiKhoan,
+          Hoten: hoTen,
+          Gioitinh: gioiTinh,
+          Sodienthoai: soDienThoai,
+          Ngaysinh: namSinh || null,
+          isDelete: 0,
+        };
+
+        await Ent_user.create(dataInsert, {
+          transaction,
+        });
+      }
+    });
+
+    res.send({
+      message: "File uploaded and data processed successfully",
+      data,
+    });
+  }catch(error){
+    return res.status(500).json({
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    })
+  }
+}

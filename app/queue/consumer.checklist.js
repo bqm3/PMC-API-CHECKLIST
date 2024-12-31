@@ -1,12 +1,14 @@
 const amqp = require("amqplib");
 const sequelize = require("../config/db.config");
 const { Tb_checklistc, Ent_checklist } = require("../models/setup.model");
-const { Sequelize } = require("sequelize");
+const { Sequelize, Op } = require("sequelize");
 const { removeVietnameseTones } = require("../utils/util");
 
 const RABBITMQ_URL = process.env.URL_RABBITMQ;
 const QUEUE_NAME = "queue_update_checklist";
+const QUEUE_NAME_DONE = "queue_update_checklist_done";
 
+// =======================================
 async function processBackgroundTask() {
   try {
     const connection = await amqp.connect(RABBITMQ_URL);
@@ -58,8 +60,6 @@ async function processBackgroundTask() {
     console.error("Error in background task processor:", error);
   }
 }
-
-module.exports = { processBackgroundTask };
 
 const updateTongC = async (checklistC, newRecords, transaction) => {
   if (checklistC) {
@@ -135,3 +135,73 @@ const processChecklist = async (record, transaction) => {
     });
   }
 };
+
+
+// ======================================
+async function processBackgroundTaskDone() {
+  try {
+    const connection = await amqp.connect(RABBITMQ_URL);
+    const channel = await connection.createChannel();
+    await channel.assertQueue(QUEUE_NAME_DONE, { durable: true });
+
+    console.log("Waiting for tasks in queue...");
+
+    channel.consume(
+      QUEUE_NAME_DONE,
+      async (msg) => {
+        if (msg !== null) {
+          const task = JSON.parse(msg.content.toString());
+
+          const transaction = await sequelize.transaction();
+          try {
+            // Cập nhật `TongC` trong `Tb_checklistc`
+            if (task) {
+              const checklistC = await Tb_checklistc.findOne({
+                attributes: ["ID_ChecklistC", "TongC", "Tong"],
+                where: {ID_ChecklistC:  task.records.ID_ChecklistC },
+                transaction,
+              });
+
+              if (checklistC) {
+                const { TongC, Tong } = checklistC;
+                if (TongC < Tong && task.records.isCheckListLai === 0) {
+                  await Tb_checklistc.update(
+                    { TongC: Sequelize.literal(`TongC + ${task.records.checklistLength}`) },
+                    { where: { ID_ChecklistC: task.records.ID_ChecklistC }, transaction }
+                  );
+                }
+              }
+            }
+
+            // Cập nhật `Tinhtrang` trong `Ent_checklist`
+            if (task.records.ID_Checklists && task.records.ID_Checklists?.length > 0) {
+              await Ent_checklist.update(
+                { Tinhtrang: 0 },
+                {
+                  where: { ID_Checklist: { [Op.in]: task.records.ID_Checklists } },
+                  transaction,
+                }
+              );
+            }
+
+            await transaction.commit();
+          } catch (error) {
+            await transaction.rollback();
+            console.error("Error processing background task:", error);
+          }
+
+          // Xác nhận task đã được xử lý
+          channel.ack(msg);
+        }
+      },
+      { noAck: false } // Đảm bảo task chỉ được xóa khỏi queue sau khi xử lý thành công
+    );
+  } catch (error) {
+    console.error("Error in background task processor:", error);
+  }
+}
+ 
+
+
+
+module.exports = { processBackgroundTask, processBackgroundTaskDone };

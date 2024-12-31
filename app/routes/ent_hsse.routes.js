@@ -1,3 +1,5 @@
+const logAction = require("../middleware/log_action.js");
+
 module.exports = (app) => {
   const ent_hsse_user = require("../controllers/Hsse/ent_hsse_user.controller.js");
   const {
@@ -7,7 +9,7 @@ module.exports = (app) => {
   var router = require("express").Router();
 
   router.get("/", [isAuthenticated], ent_hsse_user.getHSSE_User_ByDuAn);
-  router.post("/create", [isAuthenticated], ent_hsse_user.createHSSE);
+  router.post("/create", [isAuthenticated, logAction], ent_hsse_user.createHSSE);
   router.post("/create-role", [isAuthenticated], ent_hsse_user.createHSSE_User)
   router.post("/check", [isAuthenticated], ent_hsse_user.checkSubmitHSSE);
   router.get("/find", [isAuthenticated], ent_hsse_user.checkHSSE);

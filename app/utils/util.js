@@ -1,3 +1,6 @@
+
+const sequelize = require("../config/db.config");
+
 //check tầng data import excel
 function checkDataExcel(data, index, key) {
   try {
@@ -166,6 +169,53 @@ const funcCreateYesterDay = () => {
     return formattedYesterday
 }
 
+const createDynamicTableChiTiet = async (tableName) => {
+  const query = `
+    CREATE TABLE IF NOT EXISTS ${tableName} (
+      ID_Checklistchitiet INT AUTO_INCREMENT PRIMARY KEY,
+      ID_ChecklistC INT,
+      ID_Checklist INT,
+      Vido VARCHAR(50) DEFAULT NULL,
+      Kinhdo VARCHAR(50) DEFAULT NULL,
+      Docao VARCHAR(50) DEFAULT NULL,
+      Ketqua VARCHAR(255) DEFAULT NULL,
+      Gioht DATETIME,
+      Ghichu TEXT DEFAULT NULL,
+      isScan INT DEFAULT NULL,
+      Anh TEXT DEFAULT NULL,
+      Ngay DATE,
+      isCheckListLai INT DEFAULT 0,
+      isDelete INT DEFAULT 0,
+      createdAt TIMESTAMP,
+      updatedAt TIMESTAMP,
+      FOREIGN KEY (ID_ChecklistC) REFERENCES tb_checklistc(ID_ChecklistC),
+      FOREIGN KEY (ID_Checklist) REFERENCES ent_checklist(ID_Checklist)
+    );
+  `;
+  await sequelize.query(query);
+};
+
+const createDynamicTableDone = async (tableName) => {
+  const query = `
+  CREATE TABLE IF NOT EXISTS ${tableName} (
+    ID_Checklistchitietdone INT AUTO_INCREMENT PRIMARY KEY,
+    ID_ChecklistC INT,
+    Description TEXT,
+    Gioht TIME,
+    Vido VARCHAR(50),
+    Kinhdo VARCHAR(50),
+    Docao VARCHAR(50),
+    isScan INT DEFAULT NULL,
+    isCheckListLai INT DEFAULT 0,
+    isDelete INT DEFAULT 0,
+    createdAt TIMESTAMP,
+    updatedAt TIMESTAMP,
+    FOREIGN KEY (ID_ChecklistC) REFERENCES tb_checklistc(ID_ChecklistC)
+  )
+`;
+  await sequelize.query(query);
+};
+
 module.exports = {
   convertDateFormat,
   checkDataExcel,
@@ -177,5 +227,7 @@ module.exports = {
   getDynamicTableName,
   getMonthsRange,
   formatNumber,
-  funcCreateYesterDay
+  funcCreateYesterDay,
+  createDynamicTableDone,
+  createDynamicTableChiTiet
 };

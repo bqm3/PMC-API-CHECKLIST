@@ -5,6 +5,31 @@ const {
 } = require("../models/setup.model");
 const sequelize = require("../config/db.config");
 const { Op, Sequelize } = require("sequelize");
+const { sendToQueueDone } = require("../queue/producer.checklist");
+
+const insertIntoDynamicTable = async (tableName, data, transaction) => {
+  await sequelize.query(
+    `
+    INSERT INTO ${tableName} 
+      (ID_ChecklistC, Description, Gioht, Vido, Kinhdo, Docao, isScan, isCheckListLai, isDelete)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `,
+    {
+      replacements: [
+        data.ID_ChecklistC,
+        data.Description,
+        data.Gioht,
+        data.Vido,
+        data.Kinhdo,
+        data.Docao,
+        data.isScan,
+        data.isCheckListLai,
+        0
+      ],
+      transaction,
+    }
+  );
+};
 
 exports.create = async (req, res) => {
   const transaction = await sequelize.transaction(); // Mở giao dịch
@@ -51,87 +76,55 @@ exports.create = async (req, res) => {
     };
 
     // Tạo bảng động nếu chưa tồn tại
-    const d = new Date();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const year = d.getFullYear();
-    const dynamicTableName = `tb_checklistchitietdone_${month}_${year}`;
-    await sequelize.query(
-      `
-      CREATE TABLE IF NOT EXISTS ${dynamicTableName} (
-        ID_ChecklistC INT,
-        Description TEXT,
-        Gioht TIME,
-        Vido VARCHAR(50),
-        Kinhdo VARCHAR(50),
-        Docao VARCHAR(50),
-        isScan INT,
-        isCheckListLai INT DEFAULT 0
-      )
-    `,
-      { transaction }
-    );
-
-    // Chèn dữ liệu vào bảng động
-    await sequelize.query(
-      `
-      INSERT INTO ${dynamicTableName} 
-        (ID_ChecklistC, Description, Gioht, Vido, Kinhdo, Docao, isScan, isCheckListLai)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `,
-      {
-        replacements: [
-          data.ID_ChecklistC,
-          data.Description,
-          data.Gioht,
-          data.Vido,
-          data.Kinhdo,
-          data.Docao,
-          data.isScan,
-          data.isCheckListLai,
-        ],
-        transaction,
-      }
-    );
-
-    // Lưu vào bảng chính `Tb_checklistchitietdone`
-    const createdData = await Tb_checklistchitietdone.create(data, {
+    const dynamicTableName = `tb_checklistchitietdone_${new Date().getMonth() + 1}_${new Date().getFullYear()}`;
+    await insertIntoDynamicTable(dynamicTableName, data, transaction);
+    await Tb_checklistchitietdone.create(data, {
       transaction,
     });
 
-    // Cập nhật `TongC` trong `Tb_checklistc`
-    if (ID_ChecklistC) {
-      const checklistC = await Tb_checklistc.findOne({
-        attributes: ["ID_ChecklistC", "TongC", "Tong"],
-        where: { ID_ChecklistC },
-        transaction,
-      });
-
-      if (checklistC) {
-        const { TongC, Tong } = checklistC;
-        if (TongC < Tong && data.isCheckListLai === 0) {
-          await Tb_checklistc.update(
-            { TongC: Sequelize.literal(`TongC + ${checklistLength}`) },
-            { where: { ID_ChecklistC }, transaction }
-          );
-        }
-      }
-    }
-
-    // Cập nhật `Tinhtrang` trong `Ent_checklist`
-    if (ID_Checklists && ID_Checklists.length > 0) {
-      await Ent_checklist.update(
-        { Tinhtrang: 0 },
-        { where: { ID_Checklist: { [Op.in]: ID_Checklists } }, transaction }
-      );
-    }
-
+    
     // Commit giao dịch
     await transaction.commit();
 
-    return res.status(200).json({
+    res.status(200).json({
       message: "Checklist thành công!",
-      data: createdData,
     });
+
+    const backgroundTask = {
+      records: {
+        ...data, checklistLength, ID_Checklists
+      },
+      dynamicTableName,
+    };
+    await sendToQueueDone(backgroundTask);
+   
+    // // Cập nhật `TongC` trong `Tb_checklistc`
+    // if (ID_ChecklistC) {
+    //   const checklistC = await Tb_checklistc.findOne({
+    //     attributes: ["ID_ChecklistC", "TongC", "Tong"],
+    //     where: { ID_ChecklistC },
+    //     transaction,
+    //   });
+
+    //   if (checklistC) {
+    //     const { TongC, Tong } = checklistC;
+    //     if (TongC < Tong && data.isCheckListLai === 0) {
+    //       await Tb_checklistc.update(
+    //         { TongC: Sequelize.literal(`TongC + ${checklistLength}`) },
+    //         { where: { ID_ChecklistC }, transaction }
+    //       );
+    //     }
+    //   }
+    // }
+
+    // // Cập nhật `Tinhtrang` trong `Ent_checklist`
+    // if (ID_Checklists && ID_Checklists.length > 0) {
+    //   await Ent_checklist.update(
+    //     { Tinhtrang: 0 },
+    //     { where: { ID_Checklist: { [Op.in]: ID_Checklists } }, transaction }
+    //   );
+    // }
+
   } catch (error) {
     // Rollback giao dịch nếu có lỗi
     await transaction.rollback();

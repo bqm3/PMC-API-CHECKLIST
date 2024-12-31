@@ -1,4 +1,5 @@
 const multer = require("multer");
+const logAction = require("../middleware/log_action.js");
 const upload = multer();
 
 module.exports = (app) => {
@@ -71,7 +72,7 @@ module.exports = (app) => {
   router.put("/delete/:id", [isAuthenticated], tb_checklistc.delete);
   router.post(
     "/create",
-    [isAuthenticated],
+    [isAuthenticated, logAction],
     tb_checklistc.createFirstChecklist
   );
 

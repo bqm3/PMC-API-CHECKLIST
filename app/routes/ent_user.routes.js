@@ -1,4 +1,5 @@
 const multer = require("multer");
+const logAction = require("../middleware/log_action.js");
 const upload = multer();
 
 module.exports = (app) => {
@@ -10,7 +11,7 @@ module.exports = (app) => {
 
   var router = require("express").Router();
 
-  router.post("/login", ent_user.login);
+  router.post("/login", [logAction], ent_user.login);
   router.get("/get-online", [isAuthenticated], ent_user.getUserOnline);
   router.get(
     "/get-role",
@@ -20,7 +21,7 @@ module.exports = (app) => {
   router.get("/gs", [isAuthenticated], ent_user.getGiamSat);
   router.get("/getPhone", [isAuthenticated], ent_user.getPhone);
   router.get("/:id", [isAuthenticated], ent_user.getDetail);
-  router.post("/check-auth", [isAuthenticated], ent_user.checkAuth);
+  router.post("/check-auth", [isAuthenticated, logAction], ent_user.checkAuth);
   router.put("/duan/update/:id", [isAuthenticated], ent_user.updateDuanByRole);
   router.put("/duan/clear", [isAuthenticated], ent_user.clearDuanByRole);
   router.post("/device-token", [isAuthenticated], ent_user.deviceToken);
