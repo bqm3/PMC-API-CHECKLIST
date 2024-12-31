@@ -14,6 +14,8 @@ const {
 var path = require("path");
 const { Op, fn, col } = require("sequelize");
 const sequelize = require("../config/db.config");
+const xlsx = require("xlsx");
+const moment = require("moment");
 
 exports.create = async (req, res) => {
   try {
@@ -87,7 +89,7 @@ exports.create = async (req, res) => {
       TenHangmuc: TenHangmuc,
       Bienphapxuly: Bienphapxuly || null,
       Tinhtrangxuly: Tinhtrangxuly || 0,
-      Ghichu: Ghichu || null
+      Ghichu: Ghichu || null,
     };
 
     Tb_sucongoai.create(data)
@@ -133,7 +135,7 @@ exports.get = async (req, res) => {
         "Ngayxuly",
         "isDelete",
         "TenHangmuc",
-        "Bienphapxuly"
+        "Bienphapxuly",
       ],
       include: [
         {
@@ -274,12 +276,17 @@ exports.updateStatus = async (req, res) => {
 
     const idsString = anhs.length > 0 ? anhs.join(",") : null;
 
-    const { Tinhtrangxuly, ngayXuLy, Ghichu, ID_Hangmuc, deviceUser,
+    const {
+      Tinhtrangxuly,
+      ngayXuLy,
+      Ghichu,
+      ID_Hangmuc,
+      deviceUser,
       deviceHandler,
       deviceNameUser,
       deviceNameHandler,
-      Bienphapxuly
-     } = req.body;
+      Bienphapxuly,
+    } = req.body;
     if (ID_Suco && userData) {
       const updateFields = {
         ID_Handler: userData.ID_User,
@@ -290,7 +297,7 @@ exports.updateStatus = async (req, res) => {
         Anhkiemtra: idsString,
         Ghichu:
           `${Ghichu}` !== "null" && `${Ghichu}` !== "undefined" ? Ghichu : null,
-        Bienphapxuly: Bienphapxuly || null
+        Bienphapxuly: Bienphapxuly || null,
       };
 
       if (`${ID_Hangmuc}` !== "null" && `${ID_Hangmuc}` !== "undefined") {
@@ -347,7 +354,7 @@ exports.getDetail = async (req, res) => {
         "Ngayxuly",
         "isDelete",
         "TenHangmuc",
-        "Bienphapxuly"
+        "Bienphapxuly",
       ],
       include: [
         {
@@ -496,7 +503,7 @@ exports.dashboardByDuAn = async (req, res) => {
         "Ngayxuly",
         "isDelete",
         "TenHangmuc",
-        "Bienphapxuly"
+        "Bienphapxuly",
       ],
       include: [
         {
@@ -1208,7 +1215,7 @@ exports.getSuCoBenNgoaiChiNhanh = async (req, res) => {
         "Ngayxuly",
         "isDelete",
         "TenHangmuc",
-        "Bienphapxuly"
+        "Bienphapxuly",
       ],
       include: [
         {
@@ -1346,7 +1353,7 @@ exports.getSuCoNamChiNhanh = async (req, res) => {
         "Ngayxuly",
         "isDelete",
         "TenHangmuc",
-        "Bienphapxuly"
+        "Bienphapxuly",
       ],
       include: [
         {
@@ -1477,7 +1484,7 @@ exports.dashboardAllChiNhanh = async (req, res) => {
         "Ngayxuly",
         "isDelete",
         "TenHangmuc",
-        "Bienphapxuly"
+        "Bienphapxuly",
       ],
       where: whereClause,
       include: [
@@ -1583,151 +1590,69 @@ exports.dashboardAllChiNhanh = async (req, res) => {
 
 exports.uploadReports = async (req, res) => {
   try {
+    const userData = req.user.data; // Thông tin user gửi từ middleware
     if (!req.file) {
       return res.status(400).send("No file uploaded.");
     }
-    const userData = req.user.data;
 
+    // Đọc file Excel
     const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
-    const data = xlsx.utils.sheet_to_json(worksheet);
 
-    await sequelize.transaction(async (transaction) => {
-      const removeSpacesFromKeys = (obj) => {
-        return Object.keys(obj).reduce((acc, key) => {
-          const newKey = key?.replace(/\s+/g, "")?.toUpperCase();
-          acc[newKey] = obj[key];
-          return acc;
-        }, {});
-      };
+    // Chuyển dữ liệu từ Excel sang JSON
+    const data = xlsx.utils.sheet_to_json(worksheet, { defval: null });
 
-      for (const item of data) {
-        const transformedItem = removeSpacesFromKeys(item);
+    // Bỏ dòng tiêu đề đầu tiên
+    const rawData = data.slice(1);
 
-        const tenKhoiCongViec = transformedItem["KHỐICÔNGVIỆC"];
-        const duAn = transformedItem["DỰÁN"];
-        const hoTen = formatVietnameseText(transformedItem["HỌTÊN"]);
-        const gioiTinh = transformedItem["GIỚITÍNH"];
-        const soDienThoai = transformedItem["SỐĐIỆNTHOẠI"];
-        const namSinh = convertDateFormat(transformedItem["NGÀYSINH"]);
-        const chucVu = transformedItem["CHỨCVỤ"];
-        const gmail = transformedItem["GMAIL"];
-        const taiKhoan = transformedItem["TÀIKHOẢN"];
-        const matKhau = transformedItem["MẬTKHẨU"];
-
-        const sanitizedTenToanha = duAn?.replace(/\t/g, ""); // Loại bỏ tất cả các ký tự tab
-
-        const dataChucvu = await Ent_chucvu.findOne({
-          attributes: ["ID_Chucvu", "Chucvu", "isDelete"],
-          where: {
-            isDelete: 0,
-            Chucvu: sequelize.where(
-              sequelize.fn(
-                "UPPER",
-                sequelize.fn("TRIM", sequelize.col("Chucvu"))
-              ),
-              "LIKE",
-              chucVu.trim().toUpperCase()
-            ),
-          },
-        });
-
-        if (!dataChucvu) {
-          return res.status(500).json({
-            message: "Không tìm chức vụ phù hợp",
-          });
+    let currentSystem = null; // Lưu giá trị "Hệ thống" gần nhất
+    const cleanedData = rawData
+      .map((row) => {
+        // Điền giá trị thiếu trong cột "Hệ thống"
+        if (row["Hệ thống"]) {
+          currentSystem = row["Hệ thống"];
+        } else {
+          row["Hệ thống"] = currentSystem;
         }
 
-        let dataKhoiCV;
-        if (tenKhoiCongViec !== undefined) {
-          dataKhoiCV = await Ent_khoicv.findOne({
-            attributes: ["ID_KhoiCV", "KhoiCV", "isDelete"],
-
-            where: {
-              KhoiCV: sequelize.where(
-                sequelize.fn(
-                  "UPPER",
-                  sequelize.fn("TRIM", sequelize.col("KhoiCV"))
-                ),
-                "LIKE",
-                tenKhoiCongViec.trim().toUpperCase()
-              ),
-              isDelete: 0,
-            },
-          });
-          if (!dataKhoiCV) {
-            return res.status(500).json({
-              message: "Không tìm khối công việc phù hợp",
-            });
+        // Chuyển đổi cột "Thời gian"
+        if (row["Thời gian"]) {
+          if (!isNaN(row["Thời gian"])) {
+            // Dạng số: chuyển đổi từ Excel date
+            const date = moment("1900-01-01").add(row["Thời gian"] - 2, "days");
+            row["Thời gian"] = date.format("YYYY-MM-DD");
+          } else if (moment(row["Thời gian"], "DD/MM/YYYY", true).isValid()) {
+            // Dạng chuỗi ngày tháng: chuyển đổi về chuẩn
+            row["Thời gian"] = moment(row["Thời gian"], "DD/MM/YYYY").format(
+              "YYYY-MM-DD"
+            );
+          } else {
+            // Không hợp lệ
+            row["Thời gian"] = null;
           }
         }
 
-        const dataUser = await Ent_user.findOne({
-          attributes: [
-            "ID_User",
-            "ID_Duan",
-            "ID_Chucvu",
-            "ID_KhoiCV",
-            "isDelete",
-            "Hoten",
-            "UserName",
-            "Email",
-          ],
-          where: {
-            UserName: sequelize.where(
-              sequelize.fn(
-                "UPPER",
-                sequelize.fn("TRIM", sequelize.col("UserName"))
-              ),
-              "LIKE",
-              taiKhoan.trim().toUpperCase()
-            ),
-            ID_Duan: userData.ID_Duan,
-            isDelete: 0,
-          },
-          transaction,
-        });
-
-        if (dataUser) {
-          console.log(`User đã tồn tại, bỏ qua`);
-          continue; // Skip the current iteration and move to the next item
-        }
-        const salt = genSaltSync(10);
-        if (!matKhau) {
-          return res.status(400).json({
-            message: "Mật khẩu không được để trống",
-          });
-        }
-
-        const mk = hashSync(`${matKhau}`, salt);
-        const dataInsert = {
-          ID_Duan: userData.ID_Duan,
-          ID_Chucvu: dataChucvu.ID_Chucvu || null,
-          ID_KhoiCV: dataKhoiCV?.ID_KhoiCV || null,
-          Password: mk,
-          Email: gmail || null,
-          UserName: taiKhoan,
-          Hoten: hoTen,
-          Gioitinh: gioiTinh,
-          Sodienthoai: soDienThoai,
-          Ngaysinh: namSinh || null,
-          isDelete: 0,
+        return {
+          TenHangmuc: row["Hệ thống"],
+          Ngaysuco: row["Thời gian"],
+          Noidungsuco: row["Nội dung/ Mô tả sự cố"],
+          Bienphapxuly: row["Biện pháp xử lý"],
+          Ghichu: row["Ghi chú"],
+          ID_User: userData.ID_User,
+          Tinhtrangxuly: row["Biện pháp xử lý"] ? 2 : 0, // Gán giá trị dựa vào Biện pháp xử lý
         };
+      })
+      .filter((row) => row.Ngaysuco && row.Noidungsuco); // Loại bỏ hàng không hợp lệ
 
-        await Ent_user.create(dataInsert, {
-          transaction,
-        });
-      }
-    });
+    await Tb_sucongoai.bulkCreate(cleanedData);
 
-    res.send({
-      message: "File uploaded and data processed successfully",
-      data,
-    });
-  }catch(error){
+    return res.status(200).send("Import dữ liệu thành công");
+  } catch (error) {
+    console.error("Error processing file:", error);
     return res.status(500).json({
       message: error.message || "Lỗi! Vui lòng thử lại sau.",
-    })
+    });
   }
-}
+};
+

@@ -1,5 +1,6 @@
 const multer = require("multer");
 const upload = multer();
+
 const { uploadSuCongNgoai, resizeImage } = require("../middleware/upload_image.js");
 const logAction = require("../middleware/log_action.js");
 
@@ -20,7 +21,7 @@ module.exports = (app) => {
   router.get("/su-co-ngoai", tb_sucongoai.getSucoNam);
   router.get("/report-incident-percent-week", tb_sucongoai.getSucoNam);
   router.get("/report-external-incident-percent-week", tb_sucongoai.getSuCoBenNgoai);
-  router.post("/report-uploads", [isAuthenticated, logAction],  tb_sucongoai.uploadReports)
+  router.post("/report-uploads", [isAuthenticated, upload.single("file")],  tb_sucongoai.uploadReports)
 
   // ===================================
   router.get("/chi-nhanh-report-external-incident-percent-week",[isAuthenticated, isAdmin], tb_sucongoai.getSuCoBenNgoaiChiNhanh);
