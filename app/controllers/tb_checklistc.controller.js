@@ -2135,7 +2135,7 @@ exports.checklistCalv = async (req, res) => {
         const year = checklistDate.getFullYear();
 
         const tableName = `tb_checklistchitiet_${month}_${year}`;
-        const dynamicTableNameDone = `tb_checklistchitietdone_${month}_${year}`;
+
         defineDynamicModelChiTiet(tableName, sequelize);
         const dataChecklistChiTiet = await sequelize.models[tableName].findAll({
           attributes: [
@@ -4435,7 +4435,7 @@ exports.tiLeHoanThanh = async (req, res) => {
 exports.tiLeSuco = async (req, res) => {
   try {
     const year = req.query.year || new Date().getFullYear(); // Lấy năm
-    const month = req.query.month || new Date().getMonth() + 1; // Lấy tháng
+    const month = req.query.month || (new Date().getMonth() + 1).toString().padStart(2, '0'); // Lấy tháng
     const khoi = req.query.khoi;
     const nhom = req.query.nhom;
     const tangGiam = req.query.tangGiam || "desc"; // Thứ tự tăng giảm

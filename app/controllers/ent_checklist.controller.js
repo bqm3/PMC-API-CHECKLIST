@@ -22,6 +22,7 @@ const {
   formatVietnameseText,
   removeVietnameseTones,
 } = require("../utils/util");
+const defineDynamicModelChiTiet = require("../models/definechecklistchitiet.model");
 
 exports.create = async (req, res) => {
   try {
@@ -1281,25 +1282,134 @@ exports.filterChecklists = async (req, res) => {
     //   },
     // });
 
-    const checklistItems = await Tb_checklistchitiet.findAll({
-      attributes: [
-        "isDelete",
-        "ID_Checklist",
-        "ID_ChecklistC",
-        "isCheckListLai",
-      ],
-      where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC, isCheckListLai: 0 },
-    });
+    // const checklistItems = await Tb_checklistchitiet.findAll({
+    //   attributes: [
+    //     "isDelete",
+    //     "ID_Checklist",
+    //     "ID_ChecklistC",
+    //     "isCheckListLai",
+    //   ],
+    //   where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC, isCheckListLai: 0 },
+    // });
 
-    const checklistDoneItems = await Tb_checklistchitietdone.findAll({
+    // const checklistDoneItems = await Tb_checklistchitietdone.findAll({
+    //   attributes: [
+    //     "Description",
+    //     "isDelete",
+    //     "ID_ChecklistC",
+    //     "isCheckListLai",
+    //   ],
+    //   where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC, isCheckListLai: 0 },
+    // });
+
+    const targetDate = new Date();
+
+    const month = String(targetDate.getMonth() + 1).padStart(2, "0");
+    const year = targetDate.getFullYear();
+
+    const tableName = `tb_checklistchitiet_${month}_${year}`;
+    const dynamicTableNameDone = `tb_checklistchitietdone_${month}_${year}`;
+    
+    defineDynamicModelChiTiet(tableName, sequelize);
+    const checklistItems = await sequelize.models[tableName].findAll({
       attributes: [
-        "Description",
-        "isDelete",
+        "ID_Checklistchitiet",
         "ID_ChecklistC",
+        "ID_Checklist",
+        "Ketqua",
+        "Anh",
+        "Gioht",
+        "Ghichu",
+        "isScan",
         "isCheckListLai",
+        "isDelete",
       ],
+      // include: [
+      //   {
+      //     model: Tb_checklistc,
+      //     as: "tb_checklistc",
+      //     attributes: [
+      //       "ID_ChecklistC",
+      //       "Ngay",
+      //       "Giobd",
+      //       "Gioghinhan",
+      //       "Giokt",
+      //       "ID_KhoiCV",
+      //       "ID_Calv",
+      //       "ID_Duan",
+      //     ],
+      //     where: whereClause,
+      //     include: [
+      //       {
+      //         model: Ent_khoicv,
+      //         attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
+      //       },
+      //       {
+      //         model: Ent_calv,
+      //         attributes: ["Tenca", "Giobatdau", "Gioketthuc"],
+      //       },
+      //     ],
+      //   },
+      //   {
+      //     model: Ent_checklist,
+      //     as: "ent_checklist",
+      //     attributes: [
+      //       "ID_Checklist",
+      //       "ID_Hangmuc",
+      //       "ID_Tang",
+      //       "Sothutu",
+      //       "Maso",
+      //       "MaQrCode",
+      //       "Checklist",
+      //       "Giatridinhdanh",
+      //       "Giatriloi",
+      //       "isCheck",
+      //       "Tinhtrang",
+      //       "Giatrinhan",
+      //     ],
+      //     include: [
+      //       {
+      //         model: Ent_hangmuc,
+      //         as: "ent_hangmuc",
+      //         attributes: [
+      //           "Hangmuc",
+      //           "ID_Khuvuc",
+      //           "MaQrCode",
+      //           "Tieuchuankt",
+      //         ],
+      //       },
+      //       {
+      //         model: Ent_khuvuc,
+      //         attributes: ["Tenkhuvuc", "MaQrCode", "ID_Khuvuc"],
+      //         include: [
+      //           {
+      //             model: Ent_toanha,
+      //             attributes: ["Toanha", "ID_Toanha"],
+      //           },
+      //         ],
+      //       },
+      //       {
+      //         model: Ent_tang,
+      //         attributes: ["Tentang"],
+      //       },
+      //       {
+      //         model: Ent_user,
+      //         attributes: ["UserName", "Hoten", "Sodienthoai"],
+      //       },
+      //     ],
+      //   },
+      // ],
       where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC, isCheckListLai: 0 },
     });
+    // defineDynamicModelChiTiet
+    // Fetch checklist done items from the dynamic "done" table
+    const checklistDoneItems = await sequelize.query(
+      `SELECT * FROM ${dynamicTableNameDone} WHERE ID_ChecklistC = ? AND isDelete = 0`,
+      {
+        replacements: [ID_ChecklistC],
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
 
     const arrPush = [];
     checklistDoneItems.forEach((item) => {

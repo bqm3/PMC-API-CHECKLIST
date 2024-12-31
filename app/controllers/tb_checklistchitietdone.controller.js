@@ -8,6 +8,7 @@ const { Op, Sequelize } = require("sequelize");
 const { sendToQueueDone } = require("../queue/producer.checklist");
 const moment = require('moment');
 
+
 const insertIntoDynamicTable = async (tableName, data, transaction) => {
   await sequelize.query(
     `
@@ -79,7 +80,7 @@ exports.create = async (req, res) => {
     const cutoffDate = moment("2024-12-31", "YYYY-MM-DD");
     // Tạo bảng động nếu chưa tồn tại
     const dynamicTableName = `tb_checklistchitietdone_${
-      new Date().getMonth() + 1
+      (new Date().getMonth() + 1).toString().padStart(2, '0')
     }_${new Date().getFullYear()}`;
 
     if (currentDate.isAfter(cutoffDate)) {
