@@ -16,6 +16,9 @@ const Tb_sucongoai = sequelize.define("tb_sucongoai", {
    ID_Hangmuc: {
     type: DataTypes.INTEGER,
    },
+   TenHangmuc: {
+    type: DataTypes.TEXT,
+   },
    ID_User: {
     type: DataTypes.INTEGER,
    },
@@ -35,6 +38,9 @@ const Tb_sucongoai = sequelize.define("tb_sucongoai", {
     type: DataTypes.TEXT,
    },
    Anhkiemtra: {
+    type: DataTypes.TEXT,
+   },
+   Bienphapxuly: {
     type: DataTypes.TEXT,
    },
    Ghichu: {

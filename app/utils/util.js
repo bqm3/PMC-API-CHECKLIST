@@ -55,6 +55,10 @@ function checkDataExcel(data, index, key) {
 //format ngày
 function convertDateFormat(inputDate) {
   // Kiểm tra xem inputDate có phải là chuỗi không
+  if(inputDate == undefined){
+    return
+  }
+  
   if (typeof inputDate !== "string") {
     throw new Error("Sai địng dạng ngày DD/MM/YYYY.");
   }
