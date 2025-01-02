@@ -1589,6 +1589,7 @@ exports.dashboardAllChiNhanh = async (req, res) => {
 };
 
 exports.uploadReports = async (req, res) => {
+  const transaction = await sequelize.transaction(); // Bắt đầu giao dịch
   try {
     const userData = req.user.data; // Thông tin user gửi từ middleware
     if (!req.file) {
@@ -1645,10 +1646,29 @@ exports.uploadReports = async (req, res) => {
       })
       .filter((row) => row.Ngaysuco && row.Noidungsuco); // Loại bỏ hàng không hợp lệ
 
-    await Tb_sucongoai.bulkCreate(cleanedData);
+    // Kiểm tra dữ liệu trùng lặp
+    for (const row of cleanedData) {
+      const existing = await Tb_sucongoai.findOne({
+        where: {
+          TenHangmuc: row.TenHangmuc,
+          Ngaysuco: row.Ngaysuco,
+          Noidungsuco: row.Noidungsuco,
+        },
+      });
+      if (existing) {
+        throw new Error(
+          `Sự cố với Hệ thống "${row.TenHangmuc}", Ngày "${row.Ngaysuco}", và Nội dung "${row.Noidungsuco}" đã tồn tại.`
+        );
+      }
+    }
 
+    // Chèn dữ liệu nếu không có trùng lặp
+    await Tb_sucongoai.bulkCreate(cleanedData, { transaction });
+
+    await transaction.commit(); // Xác nhận giao dịch
     return res.status(200).send("Import dữ liệu thành công");
   } catch (error) {
+    await transaction.rollback(); // Hoàn tác giao dịch nếu có lỗi
     console.error("Error processing file:", error);
     return res.status(500).json({
       message: error.message || "Lỗi! Vui lòng thử lại sau.",
