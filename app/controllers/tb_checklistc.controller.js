@@ -429,6 +429,8 @@ exports.getCheckListc = async (req, res, next) => {
       ) {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
         whereClause.ID_User = userData?.ID_User;
+      } else if (userData?.ent_chucvu.Role == 2) {
+        whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
       }
 
       if (userData?.ent_chucvu.Role === 5 && userData?.arr_Duan !== null) {
@@ -619,7 +621,9 @@ exports.getDayCheckListc = async (req, res, next) => {
         userData.ID_Chucvu !== 11
       ) {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
-        // whereClause.ID_User = userData?.ID_User;
+        whereClause.ID_User = userData?.ID_User;
+      } else if ( userData?.ent_chucvu.Role == 2) {
+        whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
       }
 
       if(khoi != "all" && khoi != "null"){
