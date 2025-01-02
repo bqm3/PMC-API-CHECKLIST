@@ -319,11 +319,21 @@ exports.updateP0 = async (req, res) => {
 
 const updateP0 = async (req, ID_P0, t) => {
   try {
+    const userData = req.user.data;
     const { data } = req.body;
     const sanitizedData = Object.keys(data).reduce((acc, key) => {
       acc[key] = data[key] === null ? 0 : data[key];
       return acc;
     }, {});
+
+    if (userData.ID_KhoiCV == 3) {
+      sanitizedData.ID_User_AN = userData.ID_User;
+    } else if (userData.ID_KhoiCV == 4) {
+      sanitizedData.ID_User_KT = userData.ID_User;
+    } else {
+      sanitizedData.ID_User_AN = userData.ID_User;
+      sanitizedData.ID_User_KT = userData.ID_User;
+    }
 
     const result = await P0.update(sanitizedData, {
       where: {
