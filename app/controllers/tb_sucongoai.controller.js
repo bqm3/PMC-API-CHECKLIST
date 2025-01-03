@@ -1604,11 +1604,21 @@ exports.uploadReports = async (req, res) => {
     // Chuyển dữ liệu từ Excel sang JSON
     const data = xlsx.utils.sheet_to_json(worksheet, { defval: null });
 
+    const uniqueData = data.filter((value, index, self) => 
+      index === self.findIndex((t) => (
+        t['Hệ thống'] === value['Hệ thống'] &&
+        t['Thời gian'] === value['Thời gian'] &&
+        t['Nội dung/ Mô tả sự cố'] === value['Nội dung/ Mô tả sự cố'] &&
+        t['Biện pháp xử lý'] === value['Biện pháp xử lý'] &&
+        t['Ghi chú'] === value['Ghi chú']
+      ))
+    );
+
     // Bỏ dòng tiêu đề đầu tiên
     // const rawData = data.slice(1);
 
     let currentSystem = null; // Lưu giá trị "Hệ thống" gần nhất
-    const cleanedData = data
+    const cleanedData = uniqueData
       .map((row) => {
         // Điền giá trị thiếu trong cột "Hệ thống"
         if (row["Hệ thống"]) {
