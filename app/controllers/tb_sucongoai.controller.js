@@ -15,6 +15,7 @@ var path = require("path");
 const { Op, fn, col } = require("sequelize");
 const sequelize = require("../config/db.config");
 const xlsx = require("xlsx");
+const ExcelJS = require("exceljs");
 const moment = require("moment");
 
 exports.create = async (req, res) => {
@@ -1604,14 +1605,17 @@ exports.uploadReports = async (req, res) => {
     // Chuyển dữ liệu từ Excel sang JSON
     const data = xlsx.utils.sheet_to_json(worksheet, { defval: null });
 
-    const uniqueData = data.filter((value, index, self) => 
-      index === self.findIndex((t) => (
-        t['Hệ thống'] === value['Hệ thống'] &&
-        t['Thời gian'] === value['Thời gian'] &&
-        t['Nội dung/ Mô tả sự cố'] === value['Nội dung/ Mô tả sự cố'] &&
-        t['Biện pháp xử lý'] === value['Biện pháp xử lý'] &&
-        t['Ghi chú'] === value['Ghi chú']
-      ))
+    const uniqueData = data.filter(
+      (value, index, self) =>
+        index ===
+        self.findIndex(
+          (t) =>
+            t["Hệ thống"] === value["Hệ thống"] &&
+            t["Thời gian"] === value["Thời gian"] &&
+            t["Nội dung/ Mô tả sự cố"] === value["Nội dung/ Mô tả sự cố"] &&
+            t["Biện pháp xử lý"] === value["Biện pháp xử lý"] &&
+            t["Ghi chú"] === value["Ghi chú"]
+        )
     );
 
     // Bỏ dòng tiêu đề đầu tiên
@@ -1686,3 +1690,137 @@ exports.uploadReports = async (req, res) => {
   }
 };
 
+exports.getDuanUploadSCN = async (req, res) => {
+  try {
+    // let { fromDate, toDate } = req.query;
+    
+    // // Kiểm tra nếu từ ngày và đến ngày là null, thì sử dụng tháng hiện tại
+    // if (!fromDate || !toDate) {
+    //   const currentMonthStart = moment().startOf('month').format('YYYY-MM-DD');
+    //   const currentMonthEnd = moment().endOf('month').format('YYYY-MM-DD');
+      
+    //   fromDate = currentMonthStart;
+    //   toDate = currentMonthEnd;
+    // }
+    
+    // Lấy các ID_User trong khoảng thời gian từ fromDate đến toDate
+    const arrUsers = await Tb_sucongoai.findAll({
+      attributes: ["ID_User"],
+      group: ["ID_User"],
+    });
+    
+    const userIds = arrUsers.map(user => user.ID_User);
+    
+    // Lấy các dự án (ID_Duan) của các người dùng này
+    const arrDuans = await Ent_user.findAll({
+      where: {
+        ID_User: {
+          [Op.in]: userIds,
+        },
+      },
+      attributes: ["ID_Duan"],
+    });
+    
+    const duanIds = arrDuans.map(duan => duan.ID_Duan);
+    
+    // Lấy dữ liệu của các dự án theo ID_Duan
+    const data = await Ent_duan.findAll({
+      where: {
+        ID_Duan: {
+          [Op.in]: duanIds,
+        },
+      },
+    });
+    // Tạo workbook mới
+    if(`${req.query?.format}` == `excel`){
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Sheet1');
+  
+      // Thêm tiêu đề lớn "DANH SÁCH DỰ ÁN UPLOAD SỰ CỐ NGOÀI"
+      const headerCell = worksheet.getCell('A1');
+      headerCell.value = 'DANH SÁCH DỰ ÁN UPLOAD SỰ CỐ NGOÀI';
+      headerCell.font = {
+        bold: true,
+        size: 14
+      };
+      headerCell.alignment = {
+        horizontal: 'center',
+        vertical: 'center',
+      };
+      worksheet.mergeCells('A1:B1');
+  
+      worksheet.getCell('A2').value = 'STT';
+      worksheet.getCell('A2').font = {
+        bold: true,
+        size: 11
+      };
+      worksheet.getCell('A2').alignment = {
+        horizontal: 'center'
+      };
+      worksheet.getCell('B2').value = 'Tên Dự Án';
+      worksheet.getCell('B2').font = {
+        bold: true,
+        size: 11
+      };
+      worksheet.getCell('B2').alignment = {
+        horizontal: 'center'
+      };
+  
+      // Thêm border cho các ô tiêu đề
+      ['A1:B1', 'A2','B2'].forEach(range => {
+        worksheet.getCell(range).border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+      });
+  
+      // Bắt đầu thêm dữ liệu từ hàng 3
+      let rowIndex = 3;
+      data.forEach((duan, index) => {
+        // Thêm STT vào cột đầu tiên
+        worksheet.getCell(`A${rowIndex}`).value = index + 1;
+        // Thêm tên dự án vào cột thứ hai
+        worksheet.getCell(`B${rowIndex}`).value = duan.Duan;
+  
+        // Thêm border cho cả hai ô
+        ['A', 'B'].forEach(col => {
+          worksheet.getCell(`${col}${rowIndex}`).border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+          };
+        });
+  
+        rowIndex++;
+      });
+  
+      // Điều chỉnh độ rộng cột
+      worksheet.getColumn('A').width = 5; 
+      worksheet.getColumn('B').width = 50; 
+      worksheet.getColumn('B').alignment = {
+        horizontal: 'center'
+      };
+  
+      // Điều chỉnh chiều cao hàng tiêu đề
+      worksheet.getRow(1).height = 40;
+  
+      // Thiết lập response headers
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=DuanUploadSCN.xlsx');
+      
+      // Ghi file và gửi response
+      await workbook.xlsx.write(res);
+      res.end();
+    } else {
+      res.json(data);
+    }
+    
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};

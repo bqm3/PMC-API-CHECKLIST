@@ -65,5 +65,7 @@ module.exports = (app) => {
     tb_sucongoai.dashboardAllChiNhanh
   );
 
+  router.get("/duan-upload", tb_sucongoai.getDuanUploadSCN)
+
   app.use("/api/v2/tb_sucongoai", router);
 };
