@@ -1661,7 +1661,7 @@ exports.uploadReports = async (req, res) => {
       const existing = await Tb_sucongoai.findOne({
         where: {
           TenHangmuc: row.TenHangmuc,
-          Ngaysuco: row.Ngaysuco,
+          Ngaysuco: new Date(row.Ngaysuco),
           Noidungsuco: row.Noidungsuco,
         },
       });
