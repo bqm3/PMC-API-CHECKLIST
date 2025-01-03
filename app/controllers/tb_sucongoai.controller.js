@@ -198,7 +198,7 @@ exports.get = async (req, res) => {
           ],
         },
       ],
-      limit: 30,
+      // limit: 360,
       where: {
         isDelete: 0,
         // Tinhtrangxuly: {
@@ -1605,10 +1605,10 @@ exports.uploadReports = async (req, res) => {
     const data = xlsx.utils.sheet_to_json(worksheet, { defval: null });
 
     // Bỏ dòng tiêu đề đầu tiên
-    const rawData = data.slice(1);
+    // const rawData = data.slice(1);
 
     let currentSystem = null; // Lưu giá trị "Hệ thống" gần nhất
-    const cleanedData = rawData
+    const cleanedData = data
       .map((row) => {
         // Điền giá trị thiếu trong cột "Hệ thống"
         if (row["Hệ thống"]) {
