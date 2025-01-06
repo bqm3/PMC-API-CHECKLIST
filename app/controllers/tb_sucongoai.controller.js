@@ -10,6 +10,7 @@ const {
   Ent_khuvuc,
   Ent_toanha,
   Ent_khuvuc_khoicv,
+  Ent_chinhanh,
 } = require("../models/setup.model");
 var path = require("path");
 const { Op, fn, col } = require("sequelize");
@@ -17,6 +18,7 @@ const sequelize = require("../config/db.config");
 const xlsx = require("xlsx");
 const ExcelJS = require("exceljs");
 const moment = require("moment");
+const moment2 = require("moment-timezone");
 
 exports.create = async (req, res) => {
   try {
@@ -657,10 +659,136 @@ exports.dashboardByDuAn = async (req, res) => {
   }
 };
 
+// exports.dashboardAll = async (req, res) => {
+//   try {
+//     const year = req.query.year || new Date().getFullYear();
+//     const chinhanh = req.query.chinhanh || "all";
+
+//     // Xây dựng điều kiện where cho truy vấn
+//     let whereClause = {
+//       isDelete: 0,
+//     };
+
+//     if (year) {
+//       whereClause.Ngaysuco = {
+//         [Op.gte]: `${year}-01-01`,
+//         [Op.lte]: `${year}-12-31`,
+//       };
+//     }
+
+//     if (chinhanh !== "all") {
+//       whereClause["$ent_user.ent_duan.ID_Chinhanh$"] = chinhanh;
+//     }
+
+//     // Truy vấn cơ sở dữ liệu
+//     const relatedSucos = await Tb_sucongoai.findAll({
+//       attributes: [
+//         "ID_Hangmuc",
+//         "ID_User",
+//         "Ngaysuco",
+//         "Giosuco",
+//         "Noidungsuco",
+//         "ID_User",
+//         "ID_Handler",
+//         "Tinhtrangxuly",
+//         "Ngayxuly",
+//         "isDelete",
+//         "TenHangmuc",
+//         "Bienphapxuly",
+//       ],
+//       where: whereClause,
+//       include: [
+//         {
+//           model: Ent_hangmuc,
+//           attributes: [
+//             "Hangmuc",
+//             "Tieuchuankt",
+//             "ID_Khuvuc",
+//             "MaQrCode",
+//             "FileTieuChuan",
+//           ],
+//         },
+//         {
+//           model: Ent_user,
+//           as: "ent_user",
+//           attributes: ["ID_Duan", "Hoten", "UserName"],
+//           include: {
+//             model: Ent_duan,
+//             attributes: ["ID_Duan", "Duan", "Diachi", "ID_Chinhanh", "Logo"],
+//           },
+//           where: {
+//             ID_Duan: {
+//               [Op.ne]: 1,
+//             },
+//           },
+//         },
+//         {
+//           model: Ent_user,
+//           as: "ent_handler",
+//           attributes: ["ID_Duan", "Hoten", "UserName"],
+//           include: {
+//             model: Ent_duan,
+//             attributes: ["ID_Duan", "Duan", "Diachi", "Vido", "Kinhdo", "Logo"],
+//           },
+//         },
+//       ],
+//     });
+
+//     // Tạo đối tượng để lưu số lượng sự cố theo dự án theo năm
+//     const projectIncidentCountByYear = {};
+
+//     // Xử lý dữ liệu để đếm số lượng sự cố theo dự án và năm
+//     relatedSucos.forEach((suco) => {
+//       const projectName = suco?.ent_user?.ent_duan?.Duan;
+//       const incidentYear = new Date(suco?.Ngaysuco)?.getFullYear();
+
+//       if (!projectIncidentCountByYear[incidentYear]) {
+//         projectIncidentCountByYear[incidentYear] = {};
+//       }
+
+//       if (!projectIncidentCountByYear[incidentYear][projectName]) {
+//         projectIncidentCountByYear[incidentYear][projectName] = 0;
+//       }
+
+//       projectIncidentCountByYear[incidentYear][projectName] += 1;
+//     });
+
+//     // Lấy danh sách tất cả các dự án
+//     const allProjects = Object?.values(relatedSucos)?.map(
+//       (suco) => suco?.ent_user?.ent_duan?.Duan
+//     );
+
+//     const uniqueProjects = [...new Set(allProjects)];
+
+//     // Chuyển đổi dữ liệu thành định dạng mong muốn
+//     const seriesData = Object?.entries(projectIncidentCountByYear)?.map(
+//       ([year, projectCount]) => ({
+//         name: year,
+//         data: uniqueProjects?.map((project) => projectCount[project] || 0),
+//       })
+//     );
+
+//     // Trả về kết quả
+//     res.status(200).json({
+//       message: "Số lượng sự cố theo dự án",
+//       // data: relatedSucos
+//       data: {
+//         categories: uniqueProjects,
+//         series: seriesData,
+//       },
+//     });
+//   } catch (err) {
+//     res.status(500).json({
+//       message: err.message || "Lỗi! Vui lòng thử lại sau.",
+//     });
+//   }
+// };
+
 exports.dashboardAll = async (req, res) => {
   try {
     const year = req.query.year || new Date().getFullYear();
     const chinhanh = req.query.chinhanh || "all";
+    const top = parseInt(req.query.top) || 20; // Lấy giá trị 'top' từ query, mặc định là 20
 
     // Xây dựng điều kiện where cho truy vấn
     let whereClause = {
@@ -758,20 +886,36 @@ exports.dashboardAll = async (req, res) => {
 
     const uniqueProjects = [...new Set(allProjects)];
 
-    // Chuyển đổi dữ liệu thành định dạng mong muốn
+    // Tính tổng số sự cố cho mỗi dự án
+    const projectTotalIncidents = uniqueProjects.map((project) => {
+      let totalIncidents = 0;
+      Object.keys(projectIncidentCountByYear).forEach((year) => {
+        totalIncidents += projectIncidentCountByYear[year][project] || 0;
+      });
+      return { project, totalIncidents };
+    });
+
+    // Sắp xếp các dự án theo tổng số sự cố giảm dần và lấy 'top' dự án có số lượng sự cố cao nhất
+    const topProjects = projectTotalIncidents
+      .sort((a, b) => b.totalIncidents - a.totalIncidents)
+      .slice(0, top);
+
+    // Tạo danh sách các tên dự án cho 'top' dự án
+    const topProjectNames = topProjects.map((item) => item.project);
+
+    // Chuyển đổi dữ liệu thành định dạng mong muốn cho series
     const seriesData = Object?.entries(projectIncidentCountByYear)?.map(
       ([year, projectCount]) => ({
         name: year,
-        data: uniqueProjects?.map((project) => projectCount[project] || 0),
+        data: topProjectNames?.map((project) => projectCount[project] || 0),
       })
     );
 
     // Trả về kết quả
     res.status(200).json({
       message: "Số lượng sự cố theo dự án",
-      // data: relatedSucos
       data: {
-        categories: uniqueProjects,
+        categories: topProjectNames,
         series: seriesData,
       },
     });
@@ -1674,7 +1818,7 @@ exports.uploadReports = async (req, res) => {
           ],
         });
 
-        if (existing && userData.ID_Duan == existing.ent_user.ID_Duan) {
+        if (existing && userData.ID_Duan == existing?.ID_Duan) {
           errors.push(
             `Sự cố với Hệ thống "${row.TenHangmuc}", Ngày "${row.Ngaysuco}", và Nội dung "${row.Noidungsuco}" đã tồn tại.`
           );
@@ -1712,135 +1856,148 @@ exports.uploadReports = async (req, res) => {
 
 exports.getDuanUploadSCN = async (req, res) => {
   try {
-    // let { fromDate, toDate } = req.query;
-    
-    // // Kiểm tra nếu từ ngày và đến ngày là null, thì sử dụng tháng hiện tại
-    // if (!fromDate || !toDate) {
-    //   const currentMonthStart = moment().startOf('month').format('YYYY-MM-DD');
-    //   const currentMonthEnd = moment().endOf('month').format('YYYY-MM-DD');
-      
-    //   fromDate = currentMonthStart;
-    //   toDate = currentMonthEnd;
-    // }
-    
-    // Lấy các ID_User trong khoảng thời gian từ fromDate đến toDate
+    let { fromDate, toDate, format } = req.query;
+
+    let whereCondition = {};
+
+    const adjustedFromDate = moment2.tz(fromDate, "YYYY-MM-DD").startOf("day").utc().toDate();
+    const adjustedToDate = moment2.tz(toDate, "YYYY-MM-DD").endOf("day").utc().toDate();
+    whereCondition = {
+      createdAt: {
+        [Op.between]: [adjustedFromDate, adjustedToDate],
+      },
+    };
+
+    console.log("whereCondition", whereCondition);
+
+    // Lấy danh sách user ID
     const arrUsers = await Tb_sucongoai.findAll({
       attributes: ["ID_User"],
+      where: whereCondition,
       group: ["ID_User"],
     });
-    
-    const userIds = arrUsers.map(user => user.ID_User);
-    
-    // Lấy các dự án (ID_Duan) của các người dùng này
+
+    const userIds = arrUsers.map((user) => user.ID_User);
+
+    // Lấy danh sách dự án
     const arrDuans = await Ent_user.findAll({
-      where: {
-        ID_User: {
-          [Op.in]: userIds,
-        },
-      },
+      where: { ID_User: { [Op.in]: userIds } },
       attributes: ["ID_Duan"],
     });
-    
-    const duanIds = arrDuans.map(duan => duan.ID_Duan);
-    
-    // Lấy dữ liệu của các dự án theo ID_Duan
+
+    const duanIds = arrDuans.map((duan) => duan.ID_Duan);
+
+    // Lấy thông tin dự án
     const data = await Ent_duan.findAll({
-      where: {
-        ID_Duan: {
-          [Op.in]: duanIds,
+      where: { ID_Duan: { [Op.in]: duanIds } },
+      include: [
+        {
+          model: Ent_chinhanh,
+          attributes: ["Tenchinhanh", "ID_Chinhanh"],
         },
-      },
+      ],
     });
-    // Tạo workbook mới
-    if(`${req.query?.format}` == `excel`){
-      const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet('Sheet1');
-  
-      // Thêm tiêu đề lớn "DANH SÁCH DỰ ÁN UPLOAD SỰ CỐ NGOÀI"
-      const headerCell = worksheet.getCell('A1');
-      headerCell.value = 'DANH SÁCH DỰ ÁN UPLOAD SỰ CỐ NGOÀI';
-      headerCell.font = {
-        bold: true,
-        size: 14
-      };
-      headerCell.alignment = {
-        horizontal: 'center',
-        vertical: 'center',
-      };
-      worksheet.mergeCells('A1:B1');
-  
-      worksheet.getCell('A2').value = 'STT';
-      worksheet.getCell('A2').font = {
-        bold: true,
-        size: 11
-      };
-      worksheet.getCell('A2').alignment = {
-        horizontal: 'center'
-      };
-      worksheet.getCell('B2').value = 'Tên Dự Án';
-      worksheet.getCell('B2').font = {
-        bold: true,
-        size: 11
-      };
-      worksheet.getCell('B2').alignment = {
-        horizontal: 'center'
-      };
-  
-      // Thêm border cho các ô tiêu đề
-      ['A1:B1', 'A2','B2'].forEach(range => {
-        worksheet.getCell(range).border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' }
-        };
-      });
-  
-      // Bắt đầu thêm dữ liệu từ hàng 3
-      let rowIndex = 3;
-      data.forEach((duan, index) => {
-        // Thêm STT vào cột đầu tiên
-        worksheet.getCell(`A${rowIndex}`).value = index + 1;
-        // Thêm tên dự án vào cột thứ hai
-        worksheet.getCell(`B${rowIndex}`).value = duan.Duan;
-  
-        // Thêm border cho cả hai ô
-        ['A', 'B'].forEach(col => {
-          worksheet.getCell(`${col}${rowIndex}`).border = {
-            top: { style: 'thin' },
-            left: { style: 'thin' },
-            bottom: { style: 'thin' },
-            right: { style: 'thin' }
-          };
-        });
-  
-        rowIndex++;
-      });
-  
-      // Điều chỉnh độ rộng cột
-      worksheet.getColumn('A').width = 5; 
-      worksheet.getColumn('B').width = 50; 
-      worksheet.getColumn('B').alignment = {
-        horizontal: 'center'
-      };
-  
-      // Điều chỉnh chiều cao hàng tiêu đề
-      worksheet.getRow(1).height = 40;
-  
-      // Thiết lập response headers
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.setHeader('Content-Disposition', 'attachment; filename=DuanUploadSCN.xlsx');
-      
-      // Ghi file và gửi response
-      await workbook.xlsx.write(res);
-      res.end();
+
+    const groupedData = groupData(data);
+
+    if (format === "excel") {
+      return createExcelWorkbook(groupedData, res);
     } else {
-      res.json(data);
+      const formattedData = Object.entries(groupedData).map(
+        ([branchName, projects]) => ({
+          chinhanh: branchName,
+          duans: projects.sort((a, b) => a.Duan.localeCompare(b.Duan)),
+        })
+      );
+      res.json(formattedData);
     }
-    
   } catch (err) {
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
+};
+
+const groupData = (data) => {
+  return data.reduce((acc, item) => {
+    const branchName = item.ent_chinhanh.Tenchinhanh;
+    if (!acc[branchName]) {
+      acc[branchName] = [];
+    }
+    acc[branchName].push(item);
+    return acc;
+  }, {});
+};
+
+const createExcelWorkbook = (groupedData, res) => {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Sheet1");
+
+  // Tiêu đề
+  worksheet.mergeCells("A1:C1");
+  worksheet.getCell("A1").value = "DANH SÁCH DỰ ÁN UPLOAD SỰ CỐ NGOÀI";
+  worksheet.getCell("A1").font = { bold: true, size: 14 };
+  worksheet.getCell("A1").alignment = {
+    horizontal: "center",
+    vertical: "center",
+  };
+
+  // Header
+  const headers = ["STT", "Chi nhánh", "Tên dự án"];
+  headers.forEach((header, index) => {
+    const cell = worksheet.getCell(2, index + 1);
+    cell.value = header;
+    cell.font = { bold: true, size: 11 };
+    cell.alignment = { horizontal: "center" };
+    cell.border = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "thin" },
+      right: { style: "thin" },
+    };
+  });
+
+  // Dữ liệu
+  let rowIndex = 3;
+  let stt = 1;
+  for (const [branchName, projects] of Object.entries(groupedData)) {
+    projects.sort((a, b) => a.Duan.localeCompare(b.Duan)); // Sắp xếp dự án
+    for (const project of projects) {
+      worksheet.getCell(rowIndex, 1).value = stt++;
+      worksheet.getCell(rowIndex, 2).value = branchName;
+      worksheet.getCell(rowIndex, 3).value = project.Duan;
+
+      ["A", "B", "C"].forEach((col) => {
+        worksheet.getCell(`${col}${rowIndex}`).border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
+
+      rowIndex++;
+    }
+  }
+
+  // Cài đặt độ rộng cột
+  worksheet.getColumn("A").width = 5;
+  worksheet.getColumn("B").width = 50;
+  worksheet.getColumn("C").width = 50;
+
+  ["B", "C"].forEach((col) => {
+    worksheet.getColumn(col).alignment = { horizontal: "left", indent: 5 };
+  });
+
+  // Ghi workbook và gửi phản hồi
+  res.setHeader(
+    "Content-Type",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  );
+  res.setHeader(
+    "Content-Disposition",
+    "attachment; filename=DuanUploadSCN.xlsx"
+  );
+
+  return workbook.xlsx.write(res).then(() => res.end());
 };
