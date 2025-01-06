@@ -601,7 +601,8 @@ exports.getDayCheckListc = async (req, res, next) => {
     const userData = req.user.data;
     const khoi = req.query.khoi || "all";
     const ca = req.query.ca || "all";
-    const fromDate = req.query.fromDate || moment().startOf('month').format('YYYY-MM-DD');
+    const fromDate =
+      req.query.fromDate || moment().startOf("month").format("YYYY-MM-DD");
     const toDate = req.query.toDate || moment(new Date()).format("YYYY-MM-DD");
 
     if (userData) {
@@ -622,15 +623,15 @@ exports.getDayCheckListc = async (req, res, next) => {
       ) {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
         whereClause.ID_User = userData?.ID_User;
-      } else if ( userData?.ent_chucvu.Role == 2) {
+      } else if (userData?.ent_chucvu.Role == 2) {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
       }
 
-      if(khoi != "all" && khoi != "null"){
+      if (khoi != "all" && khoi != "null") {
         whereClause.ID_KhoiCV = khoi;
       }
 
-      if(ca != "all" && ca != "null"){
+      if (ca != "all" && ca != "null") {
         whereClause.ID_Calv = ca;
       }
 
@@ -814,7 +815,7 @@ exports.getDayCheckListc = async (req, res, next) => {
       });
     }
   } catch (err) {
-    console.log(err.message)
+    console.log(err.message);
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
@@ -823,7 +824,7 @@ exports.getDayCheckListc = async (req, res, next) => {
 
 exports.getThongKe = async (req, res, next) => {
   try {
-    console.log('============================================')
+    console.log("============================================");
     const userData = req.user.data;
     if (userData) {
       const fromDate = req.body.fromDate;
@@ -833,7 +834,7 @@ exports.getThongKe = async (req, res, next) => {
       const arr_Duan_Array = userData?.arr_Duan
         ?.split(",")
         .map((item) => item.trim());
-        console.log('fromDate, toDate', fromDate, toDate)
+      console.log("fromDate, toDate", fromDate, toDate);
 
       const orConditions = [
         {
@@ -925,7 +926,7 @@ exports.getThongKe = async (req, res, next) => {
         where: orConditions,
       });
       const totalPages = Math.ceil(totalCount / pageSize);
-      console.log('totalPages', totalPages,pageSize, offset)
+      console.log("totalPages", totalPages, pageSize, offset);
       await Tb_checklistc.findAll({
         attributes: [
           "ID_ChecklistC",
@@ -1540,7 +1541,7 @@ exports.getPreviewThongKeHangMucQuanTrong = async (req, res, next) => {
   }
 };
 
-exports.getBaoCaoChecklistMonths = async (req, res, next) => {
+exports.getBaoCaoChecklistYear = async (req, res, next) => {
   try {
     const { month, year } = req.query;
 
@@ -1747,6 +1748,125 @@ exports.getBaoCaoChecklistMonths = async (req, res, next) => {
     res
       .status(500)
       .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+  }
+};
+
+exports.getBaoCaoChecklistMonths = async (req, res, next) => {
+  try {
+    const { month, year, khoicv, ID_Duan } = req.query;
+    const startOfMonth = moment(`${year}-${month}-01`)
+      .startOf("month")
+      .format("YYYY-MM-DD");
+    const endOfMonth = moment(`${year}-${month}-01`)
+      .endOf("month")
+      .format("YYYY-MM-DD");
+
+    const dataChecklistMonth = await Tb_checklistc.findAll({
+      attributes: [
+        "ID_ChecklistC",
+        "ID_Calv",
+        "ID_Thietlapca",
+        "ID_KhoiCV",
+        "ID_Duan",
+        "ID_User",
+        "ID_Hangmucs",
+        "Ngay",
+        "isDelete",
+      ],
+      where: {
+        ID_Duan: ID_Duan,
+        isDelete: 0,
+        Ngay: {
+          [Op.between]: [startOfMonth, endOfMonth], // Lọc theo phạm vi tháng
+        },
+        ...(khoicv ? { ID_KhoiCV: khoicv } : {}), // Thêm điều kiện khoicv nếu có
+      },
+    });
+
+    const dataCalv = await Ent_calv.findAll({
+      attributes: ["ID_Calv", "ID_KhoiCV", "ID_Duan", "Tenca", "isDelete"],
+      include: [
+        {
+          model: Ent_khoicv,
+          attributes: ["KhoiCV", "ID_KhoiCV"],
+        },
+      ],
+      where: {
+        ID_Duan: ID_Duan,
+        ID_KhoiCV: khoicv,
+        isDelete: 0,
+      },
+    });
+
+    const dataChecklistAll = await Ent_checklist.findAll({
+      attributes: [
+        "ID_Khuvuc",
+        "ID_Hangmuc",
+        "ID_Tang",
+        "Checklist",
+        "Giatridinhdanh",
+        "Giatrinhan",
+        "Giatriloi",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_hangmuc,
+          attributes: ["Hangmuc", "ID_Hangmuc", "ID_Khuvuc", "isDelete"],
+          where: {
+            isDelete: 0,
+          },
+        },
+        {
+          model: Ent_khuvuc,
+          attributes: ["Tenkhuvuc", "ID_Toanha", "ID_Khuvuc", "isDelete"],
+          include: [
+            {
+              model: Ent_toanha,
+              attributes: ["Toanha", "ID_Toanha"],
+              include: {
+                model: Ent_duan,
+                attributes: ["ID_Duan"],
+                where: {
+                  ID_Duan: ID_Duan,
+                },
+              },
+            },
+            {
+              model: Ent_khuvuc_khoicv,
+              attributes: ["ID_KhoiCV", "ID_Khuvuc", "ID_KV_CV"],
+
+              include: [
+                {
+                  model: Ent_khoicv,
+                  attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
+                },
+              ],
+              where: {
+                ID_KhoiCV: khoicv,
+              },
+            },
+          ],
+
+          where: {
+            isDelete: 0,
+          },
+        },
+      ],
+      where: {
+        isDelete: 0,
+      },
+    });
+
+    return res.status(200).json({
+      dataCalv,
+      dataChecklistMonth: dataChecklistMonth,
+      dataChecklistAll: dataChecklistAll,
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: err.message || "L��i! Vui lòng thử lại sau." });
   }
 };
 
@@ -2140,9 +2260,6 @@ exports.checklistCalv = async (req, res) => {
 
         const tableName = `tb_checklistchitiet_${month}_${year}`;
         const dynamicTableNameDone = `tb_checklistchitietdone_${month}_${year}`;
-        console.log('tableName',tableName)
-        console.log('dynamicTableNameDone',dynamicTableNameDone)
-        console.log('sequelize.models[tableName]',sequelize.models[tableName])
 
         defineDynamicModelChiTiet(tableName, sequelize);
 
@@ -2248,9 +2365,8 @@ exports.checklistCalv = async (req, res) => {
             replacements: [ID_ChecklistC],
             type: sequelize.QueryTypes.SELECT,
           }
-          
         );
-       
+
         // Convert done items to plain objects
         const plainChecklistDoneItems = checklistDoneItems.map((item) => ({
           ...item,
@@ -2270,10 +2386,14 @@ exports.checklistCalv = async (req, res) => {
             };
           }
           arrPush.push(item);
-          console.log('item', item.ID_Checklist)
+          console.log("item", item.ID_Checklist);
           checklistIds.push(item.ID_Checklist);
         });
-        console.log('======================================================123', checklistIds, arrPush)
+        console.log(
+          "======================================================123",
+          checklistIds,
+          arrPush
+        );
 
         // Process done items for checklist ID mapping
         plainChecklistDoneItems.forEach((item) => {
@@ -4385,7 +4505,9 @@ exports.tiLeHoanThanh = async (req, res) => {
 exports.tiLeSuco = async (req, res) => {
   try {
     const year = req.query.year || new Date().getFullYear(); // Lấy năm
-    const month = req.query.month || (new Date().getMonth() + 1).toString().padStart(2, '0'); // Lấy tháng
+    const month =
+      req.query.month ||
+      (new Date().getMonth() + 1).toString().padStart(2, "0"); // Lấy tháng
     const khoi = req.query.khoi;
     const nhom = req.query.nhom;
     const tangGiam = req.query.tangGiam || "desc"; // Thứ tự tăng giảm
