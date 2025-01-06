@@ -13,6 +13,9 @@ const Tb_sucongoai = sequelize.define("tb_sucongoai", {
    ID_KV_CV: {
     type: DataTypes.INTEGER,
    },
+   ID_Duan: {
+    type: DataTypes.INTEGER,
+   },
    ID_Hangmuc: {
     type: DataTypes.INTEGER,
    },
