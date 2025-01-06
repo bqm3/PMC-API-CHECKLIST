@@ -41,6 +41,11 @@ const defineDynamicModelChiTietDone = (tableName, sequelize) => {
         foreignKey: "ID_ChecklistC",
         as: "tb_checklistc",
       });
+
+      Tb_checklistc.hasMany(ChecklistDetailDone, {
+        foreignKey: 'ID_ChecklistC',
+        as: tableName 
+      });
     }
   }
 };

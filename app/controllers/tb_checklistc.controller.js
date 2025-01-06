@@ -30,6 +30,7 @@ const path = require("path");
 const axios = require("axios");
 const defineDynamicModelChiTiet = require("../models/definechecklistchitiet.model");
 const { getMonthsRange } = require("../utils/util");
+const defineDynamicModelChiTietDone = require("../models/definechecklistchitietdone.model");
 
 function convertTimeFormat(timeStr) {
   if (!timeStr?.includes("AM") && !timeStr?.includes("PM")) {
@@ -2624,6 +2625,13 @@ exports.reportLocation = async (req, res) => {
     const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
     const userData = req.user.data;
 
+    const yesterdayDate = new Date(yesterday);
+    const month = (yesterdayDate.getMonth() + 1).toString().padStart(2, '0');
+    const year = yesterdayDate.getFullYear();
+
+    const tableName = `tb_checklistchitietdone_${month}_${year}`;
+    defineDynamicModelChiTietDone(tableName, sequelize)
+
     const orConditions = [
       {
         Ngay: yesterday, // Filter by Ngay attribute between fromDate and toDate,
@@ -2677,8 +2685,10 @@ exports.reportLocation = async (req, res) => {
           attributes: ["UserName", "Email", "Hoten"],
         },
         {
-          model: Tb_checklistchitietdone,
-          as: "tb_checklistchitietdones",
+          // model: Tb_checklistchitietdone,
+          // as: "tb_checklistchitietdones",
+          model: sequelize.models[tableName],
+          as: tableName,
           attributes: [
             "Description",
             "isDelete",
@@ -2693,7 +2703,7 @@ exports.reportLocation = async (req, res) => {
     });
 
     const results = dataChecklistC.map((checklist) => {
-      const tbChecklistChiTiet = checklist.tb_checklistchitietdones;
+      const tbChecklistChiTiet = checklist[tableName];
 
       // Create a Map to group checklist items by Vido and Kinhdo
       const coordinatesMap = new Map();
@@ -2816,7 +2826,7 @@ exports.reportLocation = async (req, res) => {
               return {
                 Gioht: item.Gioht,
                 relatedHangmuc: relatedItem
-                  ? `${relatedItem.ent_hangmuc.Hangmuc} - ${relatedItem.ent_khuvuc.Tenkhuvuc} - ${relatedItem.ent_tang.Tentang} - ${relatedItem.ent_khuvuc.ent_toanha.Toanha}`
+                  ? `${relatedItem.ent_hangmuc.Hangmuc} - ${relatedItem.ent_khuvuc.Tenkhuvuc} - ${relatedItem.ent_tang?.Tentang} - ${relatedItem.ent_khuvuc.ent_toanha.Toanha}`
                   : null, // Show Hangmuc, Khuvuc (Area), and Tentang (Floor)
               };
             });
@@ -2858,6 +2868,20 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
 
     if (!month || !year) {
       return res.status(400).json({ message: "Month and year are required" });
+    }
+
+    const month1 = month.toString().padStart(2, '0');
+    const tableName = `tb_checklistchitietdone_${month1}_${year}`;
+    defineDynamicModelChiTietDone(tableName, sequelize)
+    let model ;
+    let as ;
+
+    if(year <= 2024 && month <= 11){
+      model = Tb_checklistchitietdone;
+      as = "tb_checklistchitietdones";
+    } else {
+      model = sequelize.models[tableName];
+      as = tableName;
     }
 
     const startDate = moment(`${year}-${month}-01`)
@@ -2919,8 +2943,8 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
           attributes: ["UserName", "Email", "Hoten"],
         },
         {
-          model: Tb_checklistchitietdone,
-          as: "tb_checklistchitietdones",
+          model: model,
+          as: as,
           attributes: [
             "Description",
             "isDelete",
@@ -2936,8 +2960,7 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
     });
 
     const results = dataChecklistC.map((checklist) => {
-      const tbChecklistChiTiet = checklist.tb_checklistchitietdones;
-
+      const tbChecklistChiTiet = (year <= 2024 && month <= 11) ? checklist.tb_checklistchitietdones : checklist[tableName];
       // Create a Map to group checklist items by Vido and Kinhdo
       const coordinatesMap = new Map();
 
@@ -4385,7 +4408,8 @@ exports.tiLeHoanThanh = async (req, res) => {
 exports.tiLeSuco = async (req, res) => {
   try {
     const year = req.query.year || new Date().getFullYear(); // Lấy năm
-    const month = req.query.month || (new Date().getMonth() + 1).toString().padStart(2, '0'); // Lấy tháng
+    // const month = req.query.month || (new Date().getMonth() + 1).toString().padStart(2, '0'); // Lấy tháng
+    const month = (new Date().getMonth() + 1).toString().padStart(2, '0'); // Lấy tháng
     const khoi = req.query.khoi;
     const nhom = req.query.nhom;
     const tangGiam = req.query.tangGiam || "desc"; // Thứ tự tăng giảm
@@ -4411,6 +4435,7 @@ exports.tiLeSuco = async (req, res) => {
     // Tạo tên bảng động dựa trên tháng và năm
     const tableName = `tb_checklistchitiet_${month}_${year}`;
 
+    defineDynamicModelChiTiet(tableName, sequelize);
     // Truy vấn cơ sở dữ liệu
     const relatedChecklists = await Tb_checklistc.findAll({
       attributes: [
@@ -4438,10 +4463,8 @@ exports.tiLeSuco = async (req, res) => {
           attributes: ["Tenca"], // Tên ca
         },
         {
-          model:
-            defineDynamicModelChiTiet(tableName, sequelize) ||
-            Tb_checklistchitiet, // Sử dụng tên bảng động ở đây
-          as: "tb_checklistchitiets",
+          model: sequelize.models[tableName],
+          as: tableName,
           attributes: [
             "ID_Checklistchitiet",
             "ID_ChecklistC",
@@ -4456,6 +4479,7 @@ exports.tiLeSuco = async (req, res) => {
           include: [
             {
               model: Ent_checklist,
+              as: "ent_checklist",
               attributes: [
                 "ID_Checklist",
                 "ID_Hangmuc",
@@ -4488,8 +4512,8 @@ exports.tiLeSuco = async (req, res) => {
 
       // Kiểm tra nếu có dữ liệu trong tb_checklistchitiets và Tinhtrang của ent_checklist = 1
       if (
-        checklistC["tb_checklistchitiets.ID_Checklistchitiet"] &&
-        checklistC["tb_checklistchitiets.ent_checklist.Tinhtrang"] === 1
+        checklistC[`${tableName}.ID_Checklistchitiet`] &&
+        checklistC[`${tableName}.ent_checklist.Tinhtrang`] === 1
       ) {
         // Khởi tạo nếu dự án chưa có trong đối tượng
         if (!projectIncidentCount[projectName]) {
@@ -4552,6 +4576,13 @@ exports.suCoChiTiet = async (req, res) => {
   const name = req.query.name;
   const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
 
+  const yesterdayDate = new Date(yesterday);
+  const month = (yesterdayDate.getMonth() + 1).toString().padStart(2, '0');
+  const year = yesterdayDate.getFullYear();
+
+  const tableName = `tb_checklistchitiet_${month}_${year}`;
+  defineDynamicModelChiTiet(tableName, sequelize);
+
   let whereClause = {
     isDelete: 0,
     ID_Duan: {
@@ -4591,8 +4622,10 @@ exports.suCoChiTiet = async (req, res) => {
         attributes: ["Tenca"],
       },
       {
-        model: Tb_checklistchitiet,
-        as: "tb_checklistchitiets",
+        // model: Tb_checklistchitiet,
+        // as: "tb_checklistchitiets",
+        model: sequelize.models[tableName],
+        as: tableName,
         attributes: [
           "ID_Checklistchitiet",
           "ID_ChecklistC",
@@ -4607,6 +4640,7 @@ exports.suCoChiTiet = async (req, res) => {
         include: [
           {
             model: Ent_checklist,
+            as: "ent_checklist",
             attributes: [
               "ID_Checklist",
               "ID_Hangmuc",
@@ -4640,14 +4674,14 @@ exports.suCoChiTiet = async (req, res) => {
 
   // Gom tất cả các tb_checklistchitiets từ tất cả các dự án
   const allChecklistDetails = relatedChecklists.reduce((acc, checklist) => {
-    // Kiểm tra nếu có tb_checklistchitiets và trùng tên dự án (name)
+    // Kiểm tra nếu có bảng động và trùng tên dự án (name)
     if (
-      checklist.tb_checklistchitiets &&
-      checklist.tb_checklistchitiets.length > 0 &&
-      checklist.ent_duan.Duan.toLowerCase() === name.toLowerCase() // So sánh không phân biệt hoa thường
+      checklist[tableName] &&
+      checklist[tableName].length > 0 && // Kiểm tra bảng động có phần tử
+      checklist.ent_duan.Duan.toLowerCase() === name.toLowerCase() // So sánh tên dự án không phân biệt hoa thường
     ) {
-      // Gom mảng tb_checklistchitiets
-      acc.push(...checklist.tb_checklistchitiets);
+      // Gom mảng bảng động
+      acc.push(...checklist[tableName]);
     }
     return acc;
   }, []);
