@@ -87,6 +87,7 @@ exports.create = async (req, res) => {
       deviceUser: deviceUser,
       deviceNameUser: deviceNameUser,
       ID_User: ID_User,
+      ID_Duan: userData?.ID_Duan,
       TenHangmuc: TenHangmuc,
       Bienphapxuly: Bienphapxuly || null,
       Tinhtrangxuly: Tinhtrangxuly || 0,
@@ -123,6 +124,7 @@ exports.get = async (req, res) => {
     const data = await Tb_sucongoai.findAll({
       attributes: [
         "ID_Suco",
+        "ID_Duan",
         "ID_Hangmuc",
         "Ngaysuco",
         "Giosuco",
@@ -172,9 +174,7 @@ exports.get = async (req, res) => {
               attributes: ["Chucvu", "Role"],
             },
           ],
-          where: {
-            ID_Duan: userData.ID_Duan,
-          },
+         
         },
         {
           model: Ent_user,
@@ -202,6 +202,7 @@ exports.get = async (req, res) => {
       // limit: 360,
       where: {
         isDelete: 0,
+        ID_Duan: userData.ID_Duan,
         // Tinhtrangxuly: {
         //   [Op.or]: [0, 1],
         // },
@@ -1618,32 +1619,24 @@ exports.uploadReports = async (req, res) => {
         )
     );
 
-    // Bỏ dòng tiêu đề đầu tiên
-    // const rawData = data.slice(1);
-
     let currentSystem = null; // Lưu giá trị "Hệ thống" gần nhất
     const cleanedData = uniqueData
       .map((row) => {
-        // Điền giá trị thiếu trong cột "Hệ thống"
         if (row["Hệ thống"]) {
           currentSystem = row["Hệ thống"];
         } else {
           row["Hệ thống"] = currentSystem;
         }
 
-        // Chuyển đổi cột "Thời gian"
         if (row["Thời gian"]) {
           if (!isNaN(row["Thời gian"])) {
-            // Dạng số: chuyển đổi từ Excel date
             const date = moment("1900-01-01").add(row["Thời gian"] - 2, "days");
             row["Thời gian"] = date.format("YYYY-MM-DD");
           } else if (moment(row["Thời gian"], "DD/MM/YYYY", true).isValid()) {
-            // Dạng chuỗi ngày tháng: chuyển đổi về chuẩn
             row["Thời gian"] = moment(row["Thời gian"], "DD/MM/YYYY").format(
               "YYYY-MM-DD"
             );
           } else {
-            // Không hợp lệ
             row["Thời gian"] = null;
           }
         }
@@ -1655,32 +1648,58 @@ exports.uploadReports = async (req, res) => {
           Bienphapxuly: row["Biện pháp xử lý"],
           Ghichu: row["Ghi chú"],
           ID_User: userData.ID_User,
-          Tinhtrangxuly: row["Biện pháp xử lý"] ? 2 : 0, // Gán giá trị dựa vào Biện pháp xử lý
+          ID_Duan: userData.ID_Duan,
+          Tinhtrangxuly: row["Biện pháp xử lý"] ? 2 : 0,
         };
       })
-      .filter((row) => row.Ngaysuco && row.Noidungsuco); // Loại bỏ hàng không hợp lệ
+      .filter((row) => row.Ngaysuco && row.Noidungsuco);
 
-    // Kiểm tra dữ liệu trùng lặp
+    const errors = []; // Lưu lỗi từng bản ghi
+    const successRecords = []; // Lưu các bản ghi thành công
+
     for (const row of cleanedData) {
-      const existing = await Tb_sucongoai.findOne({
-        where: {
-          TenHangmuc: row.TenHangmuc,
-          Ngaysuco: new Date(row.Ngaysuco),
-          Noidungsuco: row.Noidungsuco,
-        },
-      });
-      if (existing) {
-        throw new Error(
-          `Sự cố với Hệ thống "${row.TenHangmuc}", Ngày "${row.Ngaysuco}", và Nội dung "${row.Noidungsuco}" đã tồn tại.`
-        );
+      try {
+        const existing = await Tb_sucongoai.findOne({
+          where: {
+            TenHangmuc: row.TenHangmuc,
+            Ngaysuco: new Date(row.Ngaysuco),
+            Noidungsuco: row.Noidungsuco,
+          },
+          include: [
+            {
+              model: Ent_user,
+              as: "ent_user",
+              attributes: ["ID_Duan", "Hoten", "UserName"],
+            },
+          ],
+        });
+
+        if (existing && userData.ID_Duan == existing.ent_user.ID_Duan) {
+          errors.push(
+            `Sự cố với Hệ thống "${row.TenHangmuc}", Ngày "${row.Ngaysuco}", và Nội dung "${row.Noidungsuco}" đã tồn tại.`
+          );
+          continue; // Bỏ qua bản ghi trùng lặp
+        }
+
+        // Thêm bản ghi vào danh sách thành công
+        successRecords.push(row);
+      } catch (error) {
+        errors.push(`Lỗi xử lý bản ghi: ${error.message}`);
       }
     }
 
-    // Chèn dữ liệu nếu không có trùng lặp
-    await Tb_sucongoai.bulkCreate(cleanedData, { transaction });
+    // Chèn tất cả bản ghi thành công
+    if (successRecords.length > 0) {
+      await Tb_sucongoai.bulkCreate(successRecords, { transaction });
+    }
 
     await transaction.commit(); // Xác nhận giao dịch
-    return res.status(200).send("Import dữ liệu thành công");
+
+    return res.status(200).json({
+      message: "Import dữ liệu hoàn tất.",
+      success: successRecords.length,
+      errors,
+    });
   } catch (error) {
     await transaction.rollback(); // Hoàn tác giao dịch nếu có lỗi
     console.error("Error processing file:", error);
@@ -1689,6 +1708,7 @@ exports.uploadReports = async (req, res) => {
     });
   }
 };
+
 
 exports.getDuanUploadSCN = async (req, res) => {
   try {
