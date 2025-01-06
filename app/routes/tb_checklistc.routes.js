@@ -72,7 +72,7 @@ module.exports = (app) => {
   router.put("/delete/:id", [isAuthenticated], tb_checklistc.delete);
   router.post(
     "/create",
-    [isAuthenticated, logAction],
+    [isAuthenticated],
     tb_checklistc.createFirstChecklist
   );
 

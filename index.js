@@ -374,7 +374,7 @@ cron.schedule('30 11 * * *', async () => {
 }
 
 cron.schedule("0 0 20 * *", async () => {
-  const month = new Date().getMonth() + 1; 
+  const month = (new Date().getMonth() + 1).toString().padStart(2, '0'); 
   const year = new Date().getFullYear();
   await createDynamicTableDone(`tb_checklistchitietdone_${month}_${year}`);
   await createDynamicTableChiTiet(`tb_checklistchitiet_${month}_${year}`);

@@ -21,7 +21,7 @@ module.exports = (app) => {
   router.get("/gs", [isAuthenticated], ent_user.getGiamSat);
   router.get("/getPhone", [isAuthenticated], ent_user.getPhone);
   router.get("/:id", [isAuthenticated], ent_user.getDetail);
-  router.post("/check-auth", [isAuthenticated, logAction], ent_user.checkAuth);
+  router.post("/check-auth", [isAuthenticated], ent_user.checkAuth);
   router.put("/duan/update/:id", [isAuthenticated], ent_user.updateDuanByRole);
   router.put("/duan/clear", [isAuthenticated], ent_user.clearDuanByRole);
   router.post("/device-token", [isAuthenticated], ent_user.deviceToken);
