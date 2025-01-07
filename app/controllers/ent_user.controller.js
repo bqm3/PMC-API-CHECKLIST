@@ -16,6 +16,7 @@ const fetch = require("node-fetch");
 const sequelize = require("../config/db.config");
 const xlsx = require("xlsx");
 const { convertDateFormat, formatVietnameseText } = require("../utils/util");
+const zxcvbn = require("zxcvbn");
 
 // Login User
 exports.login = async (req, res) => {
@@ -26,6 +27,7 @@ exports.login = async (req, res) => {
         message: "Sai tài khoản hoặc mật khẩu. Vui lòng thử lại!!",
       });
     }
+    const passwordStrength = zxcvbn(req.body.Password.trim());
     // Find user by username
     const user = await Ent_user.findOne({
       where: {
@@ -122,6 +124,7 @@ exports.login = async (req, res) => {
           token: token,
           user: user,
           projects: projects.length > 0 ? projects : "Không có dự án nào",
+          passwordCore: passwordStrength.score
         });
       } else {
         // Incorrect password
@@ -286,7 +289,7 @@ exports.changePassword = async (req, res, next) => {
       )
         .then((data) => {
           res.status(200).json({
-            message: "Cập nhật mật khẩu thành công!",
+            message: "Mật khẩu của bạn đã được cập nhật thành công. Vui lòng đăng xuất và đăng nhập lại để tiếp tục sử dụng ứng dụng một cách an toàn.",
           });
         })
         .catch((err) => {
