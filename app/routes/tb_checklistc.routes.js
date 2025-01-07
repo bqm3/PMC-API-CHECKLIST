@@ -10,6 +10,9 @@ module.exports = (app) => {
 
   var router = require("express").Router();
 
+  
+  router.get("/first-checklist", tb_checklistc.firstChecklist)
+
   // Xuất báo cáo
   //==================================
   router.post("/reports/:id", [isAuthenticated], tb_checklistc.createExcelTongHopCa);
@@ -18,7 +21,8 @@ module.exports = (app) => {
   router.post("/thong-ke", [isAuthenticated], tb_checklistc.getThongKe);
   router.post("/report-article-important", [isAuthenticated], tb_checklistc.getThongKeHangMucQuanTrong);
   router.post("/preview-report-article-important", [isAuthenticated], tb_checklistc.getPreviewThongKeHangMucQuanTrong);
-  router.post("/report-checklist-years", tb_checklistc.getBaoCaoChecklistMonths)
+  router.post("/report-checklist-years", tb_checklistc.getBaoCaoChecklistYear)
+  router.get("/report-checklist-month", tb_checklistc.getBaoCaoChecklistMonths)
   router.post("/report-location-times", tb_checklistc.getBaoCaoLocationsTimes);
   
   // Role: VIP
@@ -91,6 +95,7 @@ module.exports = (app) => {
     [isAuthenticated, upload.any()],
     tb_checklistc.checklistImages
   );
+
 
   app.use("/api/v2/tb_checklistc", router);
 };
