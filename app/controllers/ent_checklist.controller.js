@@ -23,6 +23,7 @@ const {
   removeVietnameseTones,
 } = require("../utils/util");
 const defineDynamicModelChiTiet = require("../models/definechecklistchitiet.model");
+const defineDynamicModelChiTietDone = require("../models/definechecklistchitietdone.model");
 
 exports.create = async (req, res) => {
   try {
@@ -1604,18 +1605,39 @@ exports.filterChecklistWeb = async (req, res) => {
     const ID_KhoiCV = req.body.ID_KhoiCV;
 
     const tbChecklist = await Tb_checklistc.findByPk(ID_ChecklistC, {
-      attributes: ["ID_Hangmucs", "isDelete"],
+      attributes: ["ID_Hangmucs", "Ngay", "isDelete"],
       where: {
         isDelete: 0,
       },
     });
 
-    const checklistItems = await Tb_checklistchitiet.findAll({
+    const date = new Date(tbChecklist.Ngay);
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+
+  
+    const table_chitiet = `tb_checklistchitiet_${month}_${year}`;
+    const table_done = `tb_checklistchitietdone_${month}_${year}`;
+
+    let tb_checklistchitiet;
+    let tb_checklistchitietdone;
+
+    if(year <= 2024 && month <= 11  ){
+      Tb_checklistchitiet = Tb_checklistchitiet;
+      Tb_checklistchitietdone = Tb_checklistchitietdone;
+    } else {
+      defineDynamicModelChiTiet(table_chitiet, sequelize);
+      defineDynamicModelChiTietDone(table_done, sequelize);
+      tb_checklistchitiet = sequelize.models[table_chitiet]
+      tb_checklistchitietdone = sequelize.models[table_done]
+    }
+
+    const checklistItems = await tb_checklistchitiet.findAll({
       attributes: ["isDelete", "ID_Checklist", "ID_ChecklistC"],
       where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC },
     });
 
-    const checklistDoneItems = await Tb_checklistchitietdone.findAll({
+    const checklistDoneItems = await tb_checklistchitietdone.findAll({
       attributes: ["Description", "isDelete", "ID_ChecklistC"],
       where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC },
     });
@@ -1846,6 +1868,27 @@ exports.filterChecklistDay = async (req, res) => {
     const ID_Calv = req.params.idc;
     const Ngay = req.params.ngay;
 
+    const date = new Date(Ngay);
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+
+  
+    const table_chitiet = `tb_checklistchitiet_${month}_${year}`;
+    const table_done = `tb_checklistchitietdone_${month}_${year}`;
+
+    let tb_checklistchitiet;
+    let tb_checklistchitietdone;
+
+    if(year <= 2024 && month <= 11  ){
+      Tb_checklistchitiet = Tb_checklistchitiet;
+      Tb_checklistchitietdone = Tb_checklistchitietdone;
+    } else {
+      defineDynamicModelChiTiet(table_chitiet, sequelize);
+      defineDynamicModelChiTietDone(table_done, sequelize);
+      tb_checklistchitiet = sequelize.models[table_chitiet]
+      tb_checklistchitietdone = sequelize.models[table_done]
+    }
+
     // Truy vấn danh sách checklist chưa được thực hiện trong ngày và ca đó
     const tbChecklist = await Tb_checklistc.findAll({
       attributes: ["ID_ChecklistC", "ID_Hangmucs", "isDelete"],
@@ -1865,7 +1908,7 @@ exports.filterChecklistDay = async (req, res) => {
     }
 
     // Truy vấn chi tiết checklist chưa thực hiện
-    const checklistItems = await Tb_checklistchitiet.findAll({
+    const checklistItems = await tb_checklistchitiet.findAll({
       attributes: ["isDelete", "ID_Checklist", "ID_ChecklistC"],
       where: {
         isDelete: 0,
@@ -1876,7 +1919,7 @@ exports.filterChecklistDay = async (req, res) => {
     });
 
     // Truy vấn các checklist đã được thực hiện
-    const checklistDoneItems = await Tb_checklistchitietdone.findAll({
+    const checklistDoneItems = await tb_checklistchitietdone.findAll({
       attributes: ["Description", "isDelete", "ID_ChecklistC"],
       where: {
         isDelete: 0,
