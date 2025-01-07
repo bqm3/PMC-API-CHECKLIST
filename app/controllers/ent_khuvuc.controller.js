@@ -721,7 +721,7 @@ exports.uploadFiles = async (req, res) => {
                 ID_Toanha: toaNha.ID_Toanha,
                 Sothutu: 1,
                 Makhuvuc: "",
-                MaQrCode: generateQRCode(
+                MaQrCode: generateQRCodeKV(
                   tenToanha,
                   tenKhuvuc,
                   tenTang,
@@ -766,7 +766,7 @@ exports.uploadFiles = async (req, res) => {
             attributes: ["ID_Khuvuc", "ID_KhoiCVs", "Tenkhuvuc", "MaQrCode"],
             where: {
               Tenkhuvuc: tenKhuvuc,
-              MaQrCode: generateQRCode(
+              MaQrCode: generateQRCodeKV(
                 tenToanha,
                 tenKhuvuc,
                 tenTang,
@@ -788,7 +788,7 @@ exports.uploadFiles = async (req, res) => {
                 ID_Toanha: toaNha.ID_Toanha,
                 Sothutu: 1,
                 Makhuvuc: "",
-                MaQrCode: generateQRCode(
+                MaQrCode: generateQRCodeKV(
                   tenToanha,
                   tenKhuvuc,
                   tenTang,
@@ -919,7 +919,7 @@ exports.updateQrCodes = async (req, res) => {
             ],
             where: {
               Tenkhuvuc: tenKhuvuc,
-              MaQrCode: generateQRCode(
+              MaQrCode: generateQRCodeKV(
                 tenToanha,
                 tenKhuvuc,
                 tenTang,
@@ -938,7 +938,7 @@ exports.updateQrCodes = async (req, res) => {
                 ID_Toanha: toaNha.ID_Toanha,
                 Sothutu: 1,
                 Makhuvuc: "",
-                MaQrCode: generateQRCode(
+                MaQrCode: generateQRCodeKV(
                   tenToanha,
                   tenKhuvuc,
                   tenTang,
@@ -983,7 +983,7 @@ exports.updateQrCodes = async (req, res) => {
             attributes: ["ID_Khuvuc", "ID_KhoiCVs", "Tenkhuvuc", "MaQrCode"],
             where: {
               Tenkhuvuc: tenKhuvuc,
-              MaQrCode: generateQRCode(
+              MaQrCode: generateQRCodeKV(
                 tenToanha,
                 tenKhuvuc,
                 tenTang,
@@ -1005,7 +1005,7 @@ exports.updateQrCodes = async (req, res) => {
                 ID_Toanha: toaNha.ID_Toanha,
                 Sothutu: 1,
                 Makhuvuc: "",
-                MaQrCode: generateQRCode(
+                MaQrCode: generateQRCodeKV(
                   tenToanha,
                   tenKhuvuc,
                   tenTang,
