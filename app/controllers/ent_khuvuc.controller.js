@@ -702,7 +702,7 @@ exports.uploadFiles = async (req, res) => {
             ],
             where: {
               Tenkhuvuc: tenKhuvuc,
-              MaQrCode: generateQRCode(
+              MaQrCode: generateQRCodeKV(
                 tenToanha,
                 tenKhuvuc,
                 tenTang,
@@ -1136,7 +1136,7 @@ exports.downloadQrCodes = async (req, res) => {
   }
 };
 
-function generateQRCode(tenToa, khuVuc, tenTang, ID) {
+function generateQRCodeKV(tenToa, khuVuc, tenTang, ID) {
   // Hàm lấy ký tự đầu tiên của mỗi từ trong chuỗi
   function getInitials(string) {
     return string

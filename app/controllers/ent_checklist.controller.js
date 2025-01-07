@@ -2669,7 +2669,7 @@ exports.uploadFiles = async (req, res) => {
               },
             ],
             where: {
-              MaQrCode: generateQRCode(
+              MaQrCode: generateQRCodeHM(
                 tenToanha,
                 tenKhuvuc,
                 tenHangmuc,
@@ -2850,7 +2850,7 @@ exports.uploadFixFiles = async (req, res) => {
             tenTang,
             userData.ID_Duan
           );
-          const maQrHangMuc = generateQRCode(
+          const maQrHangMuc = generateQRCodeHM(
             tenToanha,
             tenKhuvuc,
             tenHangmuc,
@@ -2919,7 +2919,7 @@ exports.uploadFixFiles = async (req, res) => {
               },
             ],
             where: {
-              MaQrCode: generateQRCode(
+              MaQrCode: generateQRCodeHM(
                 tenToanha,
                 tenKhuvuc,
                 tenHangmuc,
@@ -3051,12 +3051,19 @@ exports.uploadFixFiles = async (req, res) => {
   }
 };
 
-function generateQRCode(toaNha, khuVuc, hangMuc, tenTang) {
+function generateQRCodeHM(toaNha, khuVuc, hangMuc, tenTang) {
   // Hàm lấy ký tự đầu tiên của mỗi từ trong chuỗi
   function getInitials(string) {
     return string
       .split(" ") // Tách chuỗi thành mảng các từ
-      .map((word) => word.charAt(0).toUpperCase()) // Lấy ký tự đầu tiên của mỗi từ và viết hoa
+      .map((word) => {
+        // Nếu từ có số, giữ nguyên từ đó
+        if (/\d/.test(word)) {
+          return word;
+        }
+        // Nếu không có số, lấy ký tự đầu tiên và viết hoa
+        return word.charAt(0).toUpperCase();
+      })
       .join(""); // Nối lại thành chuỗi
   }
 
