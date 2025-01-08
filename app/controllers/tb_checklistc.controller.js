@@ -3463,7 +3463,7 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
           { header: "Ca", key: "ca", width: 15 },
           { header: "Họ tên", key: "nguoi", width: 20 },
           { header: "Tài khoản", key: "kt", width: 20 },
-          { header: "Giờ Bắt Đầu", key: "Giobd", width: 15 },
+          { header: "Giờ Bắt Đầu", key: "giobd", width: 15 },
           { header: "Giờ Kết Thúc", key: "giokt", width: 15 },
           { header: "Ngày", key: "ngay", width: 15 },
           { header: "Khối", key: "cv", width: 15 },

@@ -13,18 +13,21 @@ const logAction = async (req, res, next) => {
     const userAgent = req.headers['user-agent']; // Lấy User-Agent
     const action = req.method; // Hành động API (GET, POST, PUT,...)
     const endpoint = req.originalUrl; // Endpoint được gọi
-    const requestBody = JSON.stringify(req.body); // Nội dung request
+
+    const { deviceInfo, infoIP, ...filteredBody } = req.body;
+    const deviceInfoApp = JSON.stringify(deviceInfo);
+    const infoIpApp = JSON.stringify(infoIP);
 
     // Phân tích User-Agent để lấy thông tin thiết bị
-    const deviceInfo = userAgent;
+    // const deviceInfo = userAgent;
 
     const logData = {
       userId,
       ipAddress,
-      deviceInfo, // Thêm thông tin thiết bị
+      deviceInfo: userAgent, // Có thể thay đổi theo cách bạn muốn phân tích User-Agent
       action,
       endpoint,
-      requestBody,
+      requestBody: JSON.stringify(filteredBody),
     };
 
     // Lưu vào cơ sở dữ liệu
@@ -36,8 +39,8 @@ const logAction = async (req, res, next) => {
       {
         replacements: {
           userId: logData.userId,
-          ipAddress: logData.ipAddress,
-          deviceInfo: logData.deviceInfo,
+          ipAddress: infoIpApp ? infoIpApp : logData.ipAddress,
+          deviceInfo: deviceInfoApp ? deviceInfoApp : logData.deviceInfo,
           action: logData.action,
           endpoint: logData.endpoint,
           requestBody: logData.requestBody,
