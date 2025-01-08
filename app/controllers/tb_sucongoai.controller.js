@@ -90,10 +90,10 @@ exports.create = async (req, res) => {
       deviceNameUser: deviceNameUser,
       ID_User: ID_User,
       ID_Duan: userData?.ID_Duan,
-      TenHangmuc: TenHangmuc,
-      Bienphapxuly: Bienphapxuly || null,
+      TenHangmuc: `${TenHangmuc}` !== "null" && `${TenHangmuc}` !== "undefined" ? TenHangmuc : null,
+      Bienphapxuly: `${Bienphapxuly}` !== "null" && `${Bienphapxuly}` !== "undefined" ? Bienphapxuly : null,
       Tinhtrangxuly: Tinhtrangxuly || 0,
-      Ghichu: Ghichu || null,
+      Ghichu: `${Ghichu}` !== "null" && `${Ghichu}` !== "undefined" ? Ghichu : null,
     };
 
     Tb_sucongoai.create(data)
@@ -301,7 +301,7 @@ exports.updateStatus = async (req, res) => {
         Anhkiemtra: idsString,
         Ghichu:
           `${Ghichu}` !== "null" && `${Ghichu}` !== "undefined" ? Ghichu : null,
-        Bienphapxuly: Bienphapxuly || null,
+        Bienphapxuly: `${Bienphapxuly}` !== "null" && `${Bienphapxuly}` !== "undefined" ? Bienphapxuly : null,
       };
 
       if (`${ID_Hangmuc}` !== "null" && `${ID_Hangmuc}` !== "undefined") {

@@ -25,6 +25,7 @@ module.exports = (app) => {
   router.post("/preview-report-article-important", [isAuthenticated], tb_checklistc.getPreviewThongKeHangMucQuanTrong);
   router.post("/report-checklist-years", tb_checklistc.getBaoCaoChecklistYear)
   router.post("/report-location-times", tb_checklistc.getBaoCaoLocationsTimes);
+  router.post("/report-checklist-month", tb_checklistc.testExcel);
   
   // Role: VIP
   //========================================== 

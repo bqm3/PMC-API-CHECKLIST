@@ -7,7 +7,7 @@ module.exports = (app) => {
     const ketoan = require("../controllers/ketoan.controller.js");
     var router = require("express").Router();
   
-    router.get("/test", sql.testExcel);
+    // router.get("/test", sql.testExcel);
     router.get("/checklist",sql.checklist)
     router.post("/sql", sql.query);
     router.post("/uploads", [upload.single('files')], ketoan.uploadFiles)
