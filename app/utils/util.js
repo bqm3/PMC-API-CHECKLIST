@@ -15,7 +15,7 @@ function checkDataExcel(data, index, key) {
     const tenTang = data["Tên tầng"]?.toLowerCase().normalize("NFC").trim();
 
     const normalizeTang = (tang) => {
-      const match = tang.match(/tầng\s*(\d+)/);
+      const match = tang?.match(/tầng\s*(\d+)/);
       if (match) {
         const number = parseInt(match[1], 10);
         if (number >= 1 && number <= 9) {
