@@ -1754,534 +1754,50 @@ exports.getBaoCaoChecklistYear = async (req, res, next) => {
   }
 };
 
-const XLSX = require("xlsx");
-
-exports.getBaoCaoChecklistMonths = async (req, res, next) => {
-  try {
-    const { month, year, ID_KhoiCV, ID_Duan } = req.query;
-    const date = new Date("2024-12-25"); // Replace with dynamic date if needed
-
-    const table_chitiet = `tb_checklistchitiet_${month}_${year}`;
-    const table_done = `tb_checklistchitietdone_${month}_${year}`;
-
-    const startDate = new Date(year, month - 1, 1); // Ngày đầu tháng
-    const endDate = new Date(year, month, 0); // Ngày cuối tháng
-
-    let tb_checklistchitiet;
-    let tb_checklistchitietdone;
-
-    const whereCondition = {
-      isDelete: 0,
-    };
-
-    whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = ID_Duan;
-    whereCondition["$ent_khuvuc.ent_khuvuc_khoicvs.ID_KhoiCV$"] = ID_KhoiCV;
-
-    const dataCalv = await Ent_calv.findAll({
-      attributes: ["ID_Calv", "ID_KhoiCV", "ID_Duan", "Tenca", "isDelete"],
-      include: [
-        {
-          model: Ent_khoicv,
-          attributes: ["KhoiCV", "ID_KhoiCV"],
-        },
-      ],
-      where: {
-        ID_Duan: ID_Duan,
-        ID_KhoiCV: ID_KhoiCV,
-        isDelete: 0,
-      },
-    });
-
-    const dataChecklistAll = await Ent_checklist.findAll({
-      attributes: [
-        "ID_Checklist",
-        "ID_Khuvuc",
-        "ID_Tang",
-        "ID_Hangmuc",
-        "Checklist",
-        "Giatridinhdanh",
-        "Giatriloi",
-        "isCheck",
-        "Giatrinhan",
-        "isDelete",
-      ],
-      include: [
-        {
-          model: Ent_hangmuc,
-          attributes: ["Hangmuc", "isDelete"],
-          where: {
-            isDelete: 0,
-          },
-        },
-        {
-          model: Ent_khuvuc,
-          attributes: ["Tenkhuvuc", "isDelete"],
-          where: {
-            isDelete: 0,
-          },
-          include: [
-            {
-              model: Ent_toanha,
-              attributes: ["Toanha", "ID_Toanha", "ID_Duan"],
-            },
-            {
-              model: Ent_khuvuc_khoicv,
-              attributes: ["ID_KV_CV", "ID_Khuvuc", "ID_KhoiCV"],
-              include: [
-                {
-                  model: Ent_khoicv,
-                  attributes: ["KhoiCV"],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-      where: whereCondition,
-    });
-
-    // Determine whether to use static or dynamic tables
-    if (year <= 2024 && month <= 12) {
-      tb_checklistchitiet = Tb_checklistchitiet;
-      tb_checklistchitietdone = Tb_checklistchitietdone;
-    } else {
-      defineDynamicModelChiTiet(table_chitiet, sequelize);
-      defineDynamicModelChiTietDone(table_done, sequelize);
-      tb_checklistchitiet = sequelize.models[table_chitiet];
-      tb_checklistchitietdone = sequelize.models[table_done];
-    }
-
-    let result = {}; // Initialize the result object to store data by day and shift
-
-    for (
-      let currentDate = new Date("2024-12-01");
-      currentDate <= endDate;
-      currentDate.setDate(currentDate.getDate() + 1)
-    ) {
-      const formattedDate = currentDate.toISOString().split('T')[0]; // Format date as YYYY-MM-DD
-    
-      // Loop through each shift (e.g. "Ca Sáng", "Ca Chiều")
-      for (let shift of dataCalv) {
-        const shiftName = shift?.Tenca || '';
-        console.log('====', shiftName, formattedDate)
-
-        // Initialize the result object for the current shift if not already initialized
-        if (!result[formattedDate][shiftName]) {
-          result[formattedDate][shiftName] = [];
-        }
-      
-        // Loop through checklist items and structure the data
-        dataChecklistAll.forEach((checklist) => {
-          const khuVuc = checklist.ent_khuvuc.Tenkhuvuc;
-
-          let khuVucObj = result[formattedDate][shiftName].find(
-            (item) => item.Khuvuc === khuVuc
-          );
-          if (!khuVucObj) {
-            khuVucObj = {
-              Khuvuc: khuVuc,
-              HangsMuc: [],
-            };
-            result[formattedDate][shiftName].push(khuVucObj);
-          }
-
-          let hangMucObj = khuVucObj.HangsMuc.find(
-            (item) => item.Hangmuc === checklist.ent_hangmuc.Hangmuc
-          );
-          if (!hangMucObj) {
-            hangMucObj = {
-              Hangmuc: checklist.ent_hangmuc.Hangmuc,
-              Checklists: [],
-            };
-            khuVucObj.HangsMuc.push(hangMucObj);
-          }
-
-          // Create checklist object and push it to the list
-          const checklistObj = {
-            ID_Checklist: checklist.ID_Checklist,
-            Checklist: checklist.Checklist,
-            Giatridinhdanh: checklist.Giatridinhdanh,
-            Giatriloi: checklist.Giatriloi,
-            isCheck: false,
-            isError: false,
-          };
-
-          hangMucObj.Checklists.push(checklistObj);
-        });
-      }
-    }
-
-    return res.status(200).json({
-      message: "Dữ liệu đã được xử lý thành công!",
-      data: result,
-    });
-  } catch (err) {
-    res.status(500).json({
-      message: err.message || "Lỗi! Vui lòng thử lại sau.",
-    });
-  }
-};
-
-exports.filterChecklistMonth = async (req, res) => {
-  try {
-    const { ID_KhoiCV,ID_Duan, month, year } = req.query;
-
-    const daysInMonth = new Date(year, month, 0).getDate();
-
-    let result = [];
-    const whereCondition = {
-      isDelete: 0,
-    };
-
-    whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = ID_Duan;
-    whereCondition["$ent_khuvuc.ent_khuvuc_khoicvs.ID_KhoiCV$"] = ID_KhoiCV;
-
-    const dataChecklistAll = await Ent_checklist.findAll({
-      attributes: [
-        "ID_Checklist",
-        "ID_Khuvuc",
-        "ID_Tang",
-        "ID_Hangmuc",
-        "Checklist",
-        "Giatridinhdanh",
-        "Giatriloi",
-        "isCheck",
-        "Giatrinhan",
-        "isDelete",
-      ],
-      include: [
-        {
-          model: Ent_hangmuc,
-          attributes: ["Hangmuc", "isDelete"],
-          where: {
-            isDelete: 0,
-          },
-        },
-        {
-          model: Ent_khuvuc,
-          attributes: ["Tenkhuvuc", "isDelete"],
-          where: {
-            isDelete: 0,
-          },
-          include: [
-            {
-              model: Ent_toanha,
-              attributes: ["Toanha", "ID_Toanha", "ID_Duan"],
-            },
-            {
-              model: Ent_khuvuc_khoicv,
-              attributes: ["ID_KV_CV", "ID_Khuvuc", "ID_KhoiCV"],
-              include: [
-                {
-                  model: Ent_khoicv,
-                  attributes: ["KhoiCV"],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-      where: whereCondition,
-    });
-
-    const dataCalv = await Ent_calv.findAll({
-      attributes: ["ID_Calv", "ID_KhoiCV", "ID_Duan", "Tenca", "isDelete"],
-      include: [
-        {
-          model: Ent_khoicv,
-          attributes: ["KhoiCV", "ID_KhoiCV"],
-        },
-      ],
-      where: {
-        ID_Duan: ID_Duan,
-        ID_KhoiCV: ID_KhoiCV,
-        isDelete: 0,
-      },
-    });
-
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      const Ngay = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-      const table_chitiet = `tb_checklistchitiet_${month}_${year}`;
-      const table_done = `tb_checklistchitietdone_${month}_${year}`;
-
-      defineDynamicModelChiTiet(table_chitiet, sequelize);
-      const tbChecklistC = await Tb_checklistc.findAll({
-        attributes: ["ID_ChecklistC", "Ngay", "Giobd", "Gioghinhan", "Giokt", "ID_KhoiCV", "ID_Calv", "ID_Duan"],
-        where: { Ngay: Ngay, ID_KhoiCV: ID_KhoiCV, isDelete: 0, ID_Duan },
-        include: [
-          {
-            model: Ent_khoicv,
-            attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
-          },
-          {
-            model: Ent_calv,
-            attributes: ["Tenca", "Giobatdau", "Gioketthuc"],
-          },
-        ],
-      })
-
-      if(tbChecklistC.length ==0){
-        continue;
-      }
-
-      const dataChecklistChiTiet = await sequelize.models[table_chitiet].findAll({
-        attributes: [
-          "ID_Checklistchitiet",
-          "ID_ChecklistC",
-          "ID_Checklist",
-          "Ketqua",
-          "Gioht",
-          "isScan",
-          "isCheckListLai",
-          "isDelete",
-          "createdAt"
-        ],
-        include: [
-          {
-            model: Tb_checklistc,
-            as: "tb_checklistc",
-            attributes: [
-              "ID_ChecklistC",
-              "Ngay",
-              "Giobd",
-              "Gioghinhan",
-              "Giokt",
-              "ID_KhoiCV",
-              "ID_Calv",
-              "ID_Duan",
-            ],
-            where: { ID_ChecklistC: {
-              [Op.in]: tbChecklistC.map((item)=> item.ID_ChecklistC)
-            } },
-            include: [
-              {
-                model: Ent_khoicv,
-                attributes: ["KhoiCV", ],
-              },
-              {
-                model: Ent_calv,
-                attributes: ["Tenca",],
-              },
-            ],
-          },
-          {
-            model: Ent_checklist,
-            as: "ent_checklist",
-            attributes: [
-              "ID_Checklist",
-              "ID_Hangmuc",
-              "ID_Tang",
-              "Checklist",
-              "Giatridinhdanh",
-              "Giatriloi",
-              "isCheck",
-              "Tinhtrang",
-              "Giatrinhan",
-            ],
-            include: [
-              {
-                model: Ent_hangmuc,
-                as: "ent_hangmuc",
-                attributes: [
-                  "Hangmuc",
-                  "ID_Khuvuc",
-                ],
-              },
-              {
-                model: Ent_khuvuc,
-                attributes: ["Tenkhuvuc", "ID_Khuvuc"],
-                include: [
-                  {
-                    model: Ent_toanha,
-                    attributes: ["Toanha", "ID_Toanha"],
-                  },
-                ],
-              },
-              
-            ],
-          },
-        ],
-      });
-
-
-      const checklistDoneItems = await sequelize.query(
-        `SELECT * FROM ${table_done} WHERE ID_ChecklistC IN (?) AND isDelete = 0`,
-        {
-          replacements: [tbChecklistC.map((item) => item.ID_ChecklistC)],
-          type: sequelize.QueryTypes.SELECT,
-        }
-      );
-
-      const plainChecklistDoneItems = checklistDoneItems.map((item) => ({
-        ...item,
-      }));
-
-      const arrPush = [];
-      let checklistIds = [];
-      const itemDoneList = [];
-
-      dataChecklistChiTiet.forEach((item) => {
-        item.status = 0;
-        item.ID_Calv = item.tb_checklistc.ID_Calv;
-        item.Tenca = item.tb_checklistc.ent_calv.Tenca;
-        item.Ngay = item.tb_checklistc.Ngay;
-        item.isCheck = false;
-        item.isError = item.Ketqua === item?.ent_checklist?.Giatriloi;
-        if (item.isScan === 1) {
-          item.ent_checklist.ent_hangmuc = {
-            ...item.ent_checklist.ent_hangmuc,
-            isScan: 1,
-          };
-        }
-        arrPush.push(item);
-
-        checklistIds.push(item.ID_Checklist);
-      });
-
-      plainChecklistDoneItems.forEach((item) => {
-        const idChecklists = item.Description.split(",").map(Number);
-        idChecklists.forEach((id) => {
-          itemDoneList.push({
-            ...item,
-            ID_Checklist: id,
-            Description: id.toString(),
-            isCheck: true,
-          });
-        });
-        idChecklists.forEach((id) => {
-          checklistIds.push(id);
-        });
-      });
-
-      const relatedChecklists = await Ent_checklist.findAll({
-        attributes: [
-          "ID_Checklist",
-          "ID_Hangmuc",
-          "ID_Khuvuc",
-          "ID_Tang",
-          "Sothutu",
-          "Maso",
-          "MaQrCode",
-          "Checklist",
-          "Giatridinhdanh",
-          "isCheck",
-          "Tinhtrang",
-          "Giatrinhan",
-        ],
-        include: [
-          {
-            model: Ent_hangmuc,
-            as: "ent_hangmuc",
-            attributes: [
-              "Hangmuc",
-              "Tieuchuankt",
-              "ID_Khuvuc",
-              "MaQrCode",
-              "FileTieuChuan",
-            ],
-          },
-          {
-            model: Ent_khuvuc,
-            as: "ent_khuvuc",
-            attributes: [
-              "Tenkhuvuc",
-              "MaQrCode",
-              "Makhuvuc",
-              "Sothutu",
-              "ID_Khuvuc",
-            ],
-            
-          },
-        
-        ],
-        where: {
-          ID_Checklist: {
-            [Op.in]: checklistIds,
-          },
-        },
-      });
-
-      const plainRelatedChecklists = relatedChecklists.map((item) =>
-        item.get({ plain: true })
-      );
-
-      itemDoneList.forEach((item) => {
-        const relatedChecklist = plainRelatedChecklists.find(
-          (rl) => rl.ID_Checklist === item.ID_Checklist
-        );
-
-        if (relatedChecklist) {
-          item.ent_checklist = {
-            ...relatedChecklist,
-          };
-          item.Ketqua = relatedChecklist.Giatridinhdanh || "";
-          item.isError = false;
-          item.status = 1;
-          arrPush.push(item);
-        }
-      });
-
-      result.push(...arrPush);
-    }
-    // return exportChecklistToExcel(result, dataCalv, dataChecklistAll, './Checklist_Report.xlsx')
-    return res.status(200).json({
-      message: "Danh sách checklist theo tháng!",
-      data: result,
-    });
-  } catch (err) {
-    return res.status(500).json({
-      message: err.message || "Có lỗi xảy ra!",
-    });
-  }
-};
-
-
-const exportChecklistToExcel = async (result, dataCalv, dataChecklistAll, outputFilePath) => {
-  try {
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Checklist Report');
-
-    // Tạo tiêu đề bảng
-    const headers = ["STT", "Tên Khu Vực", "Tên Hạng Mục", "Tên Checklist", ...dataCalv.map(calv => calv.Tenca)];
-    worksheet.addRow(headers);
-
-    // Điền dữ liệu vào bảng
-    let rowIndex = 1;
-    dataChecklistAll.forEach((checklist, index) => {
-      const row = [
-        index + 1,
-        checklist.ent_khuvuc.Tenkhuvuc,
-        checklist.ent_hangmuc.Hangmuc,
-        checklist.Checklist,
-      ];
-
-      // Duyệt qua danh sách ca làm việc và kiểm tra nếu checklist đã được thực hiện
-      dataCalv.forEach((calv) => {
-        const matched = result.find(item =>
-          item.ID_Checklist === checklist.ID_Checklist &&
-          item.ID_Calv === calv.ID_Calv
-        );
-        row.push(matched ? "V" : "");
-      });
-
-      worksheet.addRow(row);
-      rowIndex++;
-    });
-
-    // Lưu file Excel
-    await workbook.xlsx.writeFile(outputFilePath);
-
-    console.log(`File Excel đã được tạo thành công tại: ${outputFilePath}`);
-  } catch (err) {
-    console.error('Có lỗi xảy ra khi tạo file Excel:', err);
-  }
-};
-
-
-
 exports.firstChecklist = async (req, res) => {
   try {
+    const duanAll = await Ent_duan.findAll({
+      attributes: [
+        "ID_Duan",
+        "Duan",
+        "ID_Nhom",
+        "ID_Chinhanh",
+        "ID_Linhvuc",
+        "ID_Loaihinh",
+        "ID_Phanloai",
+        "isDelete",
+      ], // Lấy tên đơn vị
+      include: [
+        {
+          model: Ent_chinhanh,
+          attributes: ["Tenchinhanh", "ID_Chinhanh"],
+        },
+        {
+          model: Ent_nhom,
+          attributes: ["Tennhom", "ID_Nhom"],
+        },
+        {
+          model: Ent_phanloaida,
+          as: "ent_phanloaida",
+          attributes: ["ID_Phanloai", "Phanloai"],
+        },
+        {
+          model: Ent_linhvuc,
+          attributes: ["Linhvuc", "ID_Linhvuc"],
+        },
+        {
+          model: Ent_loaihinhbds,
+          attributes: ["Loaihinh", "ID_Loaihinh"],
+        },
+      ],
+      where: {
+        ID_Duan: {
+          [Op.notIn]: [1, 140],
+        },
+        isDelete: 0,
+      },
+    });
+
     const result = await Tb_checklistc.findAll({
       attributes: [
         "ID_Duan",
@@ -2290,14 +1806,6 @@ exports.firstChecklist = async (req, res) => {
         [Sequelize.fn("MIN", Sequelize.col("Ngay")), "NgayDauTien"],
       ],
       group: ["ID_Duan", "ID_KhoiCV"],
-      order: [
-        ["ID_Duan", "ASC"],
-        [Sequelize.fn("MIN", Sequelize.col("Ngay")), "ASC"],
-        [Sequelize.col("ent_duan.ent_chinhanh.Tenchinhanh"), "ASC"],
-        [Sequelize.col("ent_duan.ent_loaihinhbds.Loaihinh"), "ASC"],
-        [Sequelize.col("ent_duan.ent_phanloaida.Phanloai"), "ASC"],
-        [Sequelize.col("ent_duan.ent_linhvuc.Linhvuc"), "ASC"],
-      ],
       include: [
         {
           model: Ent_khoicv,
@@ -2342,95 +1850,184 @@ exports.firstChecklist = async (req, res) => {
       ],
       where: {
         ID_Duan: {
-          [Op.ne]: 1,
+          [Op.notIn]: [1, 140],
         },
       },
     });
 
+    const resultDuanIds = result.map((r) => r.ID_Duan);
+    const duanNotInResult = duanAll.filter(
+      (duan) => !resultDuanIds.includes(duan.ID_Duan)
+    );
+    const mergedResult = [...result, ...duanNotInResult];
     // Duyệt qua dữ liệu và tổ chức lại theo cột yêu cầu
     const excelData = [];
 
     // Duyệt qua dữ liệu và tổ chức lại theo cột yêu cầu
-    result.forEach((item, index) => {
-      let project = excelData.find((proj) => proj.Dự_án === item.ent_duan.Duan);
+
+    mergedResult.forEach((item) => {
+      let project = excelData.find(
+        (proj) =>
+          proj.Du_an === item?.ent_duan?.Duan || proj.Du_an === item.Duan
+      );
       if (!project) {
         project = {
-          STT: excelData.length + 1,
-          Dự_án: item.ent_duan.Duan,
-          Chi_Nhanh: item.ent_duan.ent_chinhanh.Tenchinhanh,
-          Loai_Hinh: item.ent_duan.ent_loaihinhbd.Loaihinh,
-          Phan_loai_dự_án: item.ent_duan.ent_phanloaida.Phanloai,
-          Linh_vuc: item.ent_duan.ent_linhvuc.Linhvuc,
-          Tinh_trang: "Đang tiến hành", // Tình trạng mặc định
-          Ngay_bat_dau: item.NgayDauTien || item.Ngay,
-          Khối_kỹ_thuật: "",
-          Khối_an_ninh: "",
-          Khối_làm_sạch: "",
-          Khối_dịch_vụ: "",
-          Khối_F_B: "",
+          // STT: excelData.length + 1,
+          Du_an: item?.ent_duan?.Duan || item.Duan,
+          Chi_Nhanh:
+            item?.ent_duan?.ent_chinhanh?.Tenchinhanh ||
+            item?.ent_chinhanh?.Tenchinhanh,
+          Loai_Hinh:
+            item?.ent_duan?.ent_loaihinhbd?.Loaihinh ||
+            item?.ent_loaihinhbd?.Loaihinh,
+          Phan_loai_du_an:
+            item?.ent_duan?.ent_phanloaida?.Phanloai ||
+            item?.ent_phanloaida?.Phanloai,
+          Linh_vuc:
+            item?.ent_duan?.ent_linhvuc?.Linhvuc || item?.ent_linhvuc?.Linhvuc,
+          Tinh_trang: item?.ent_duan?.Duan
+            ? "Đang tiến hành"
+            : "Chưa tiến hành",
+          Ngay_bat_dau: item?.NgayDauTien || item?.Ngay || "",
+          Khoi_ky_thuat: "",
+          Khoi_an_ninh: "",
+          Khoi_lam_sach: "",
+          Khoi_dich_vu: "",
+          Khoi_F_B: "",
         };
         excelData.push(project);
       }
 
       // Đánh dấu X cho các khối công việc
-      switch (item.ent_khoicv.KhoiCV) {
+      switch (item?.ent_khoicv?.KhoiCV) {
         case "Khối kỹ thuật":
-          project.Khối_kỹ_thuật = "X";
+          project.Khoi_ky_thuat = "X";
           break;
         case "Khối an ninh":
-          project.Khối_an_ninh = "X";
+          project.Khoi_an_ninh = "X";
           break;
         case "Khối làm sạch":
-          project.Khối_làm_sạch = "X";
+          project.Khoi_lam_sach = "X";
           break;
         case "Khối dịch vụ":
-          project.Khối_dịch_vụ = "X";
+          project.Khoi_dich_vu = "X";
           break;
         case "Khối F&B":
-          project.Khối_F_B = "X";
+          project.Khoi_F_B = "X";
           break;
       }
     });
 
-    // Tạo workbook mới và worksheet
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet("Danh sách dự án");
+    const sortFields = ['Chi_Nhanh', 'Loai_Hinh', 'Phan_loai_du_an', 'Linh_vuc', 'Du_an'];
 
-    // Định nghĩa các cột trong bảng
-    worksheet.columns = [
-      { header: "STT", key: "STT", width: 5 },
-      { header: "Dự án", key: "Dự_án", width: 30 },
-      { header: "Chi Nhánh", key: "Chi_Nhanh", width: 20 },
-      { header: "Loại Hình", key: "Loai_Hinh", width: 20 },
-      { header: "Phân loại dự án", key: "Phan_loai_dự_án", width: 30 },
-      { header: "Lĩnh vực", key: "Linh_vuc", width: 20 },
-      { header: "Tình trạng", key: "Tinh_trang", width: 20 },
-      { header: "Ngày bắt đầu", key: "Ngay_bat_dau", width: 15 },
-      { header: "Khối kỹ thuật", key: "Khối_kỹ_thuật", width: 15 },
-      { header: "Khối an ninh", key: "Khối_an_ninh", width: 15 },
-      { header: "Khối làm sạch", key: "Khối_làm_sạch", width: 15 },
-      { header: "Khối dịch vụ", key: "Khối_dịch_vụ", width: 15 },
-      { header: "Khối F&B", key: "Khối_F_B", width: 15 },
-    ];
+    const normalizeStr = (str) => {
+        return str
+            ? str.trim()
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+            : '';
+    };
 
-    // Thêm dữ liệu vào worksheet
-    excelData.forEach((row) => {
-      worksheet.addRow(row);
-    });
+    excelData.sort((a, b) => {
+      // Lặp qua các trường cần so sánh
+      for (const field of sortFields) {
+          const valueA = normalizeStr(a[field]);
+          const valueB = normalizeStr(b[field]);
+          
+          const comparison = valueA.localeCompare(valueB, 'vi', {
+              sensitivity: 'base'
+          });
+          
+          if (comparison !== 0) return comparison;
+      }
+      return 0; // Nếu tất cả các trường đều bằng nhau
+  });
 
-    // Lưu file Excel
-    workbook.xlsx
-      .writeFile("duan.xlsx")
-      .then(() => {
-        console.log("File Excel đã được tạo!");
-      })
-      .catch((err) => {
-        console.error("Lỗi khi tạo file Excel:", err);
+
+    if (req.query.format === "excel") {
+      // Tạo workbook mới và worksheet
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Danh sách dự án");
+
+      // Định nghĩa các cột trong bảng
+      worksheet.columns = [
+        { header: "STT", key: "STT", width: 5 },
+        { header: "Dự án", key: "Du_an", width: 30 },
+        { header: "Chi Nhánh", key: "Chi_Nhanh", width: 20 },
+        { header: "Loại Hình", key: "Loai_Hinh", width: 20 },
+        { header: "Phân loại dự án", key: "Phan_loai_du_an", width: 30 },
+        { header: "Lĩnh vực", key: "Linh_vuc", width: 20 },
+        { header: "Tình trạng", key: "Tinh_trang", width: 20 },
+        { header: "Ngày bắt đầu", key: "Ngay_bat_dau", width: 15 },
+        { header: "Khối kỹ thuật", key: "Khoi_ky_thuat", width: 15 },
+        { header: "Khối an ninh", key: "Khoi_an_ninh", width: 15 },
+        { header: "Khối làm sạch", key: "Khoi_lam_sach", width: 15 },
+        { header: "Khối dịch vụ", key: "Khoi_dich_vu", width: 15 },
+        { header: "Khối F&B", key: "Khoi_F_B", width: 15 },
+      ];
+      //////////////
+
+      worksheet.getRow(1).font = { bold: true };
+      worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+    
+      // Thêm dữ liệu với STT tự động và định dạng
+      excelData.forEach((item, index) => {
+        const dataRow = {
+          STT: index + 1,  // Đánh số tự động
+          ...item
+        };
+        const row = worksheet.addRow(dataRow);
+    
+        // Căn giữa cho cột STT
+        row.getCell('STT').alignment = { horizontal: 'center' };
+    
+        // Căn giữa cho các cột khối công việc
+        ['Khoi_ky_thuat', 'Khoi_an_ninh', 'Khoi_lam_sach', 'Khoi_dich_vu', 'Khoi_F_B'].forEach(key => {
+          row.getCell(key).alignment = { horizontal: 'center' };
+        });
+    
+        // Nếu Tinh_trang là "Chưa tiến hành" thì tô màu đỏ
+        if (item.Tinh_trang === 'Chưa tiến hành') {
+          row.eachCell((cell) => {
+            cell.fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFFFFF00' }  // Màu đỏ
+            };
+          });
+        }
       });
+    
+      // Border cho toàn bộ bảng
+      worksheet.eachRow((row) => {
+        row.eachCell((cell) => {
+          cell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+          };
+        });
+      });
+
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      );
+      res.setHeader(
+        "Content-Disposition",
+        "attachment; filename=duandanghoatdong.xlsx"
+      );
+      await workbook.xlsx.write(res);
+      res.end();
+    } else {
+      res.status(200).json(excelData);
+    }
   } catch (error) {
     res
       .status(500)
-      .json({ message: error.message || "L��i! Vui lòng thử lại sau." });
+      .json({ message: error.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
