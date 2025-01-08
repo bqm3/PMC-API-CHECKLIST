@@ -12,6 +12,8 @@ module.exports = (app) => {
 
   
   router.get("/first-checklist", tb_checklistc.firstChecklist)
+  
+  router.get("/report-checklist-month", tb_checklistc.filterChecklistMonth)
 
   // Xuất báo cáo
   //==================================
@@ -22,7 +24,6 @@ module.exports = (app) => {
   router.post("/report-article-important", [isAuthenticated], tb_checklistc.getThongKeHangMucQuanTrong);
   router.post("/preview-report-article-important", [isAuthenticated], tb_checklistc.getPreviewThongKeHangMucQuanTrong);
   router.post("/report-checklist-years", tb_checklistc.getBaoCaoChecklistYear)
-  router.get("/report-checklist-month", tb_checklistc.getBaoCaoChecklistMonths)
   router.post("/report-location-times", tb_checklistc.getBaoCaoLocationsTimes);
   
   // Role: VIP

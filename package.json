@@ -20,6 +20,7 @@
     "crypto": "^1.0.1",
     "crypto-js": "^4.2.0",
     "date-fns": "^4.1.0",
+    "dns": "^0.2.2",
     "dotenv": "^16.4.5",
     "exceljs": "^4.4.0",
     "expess": "^0.0.1-security",
@@ -43,6 +44,7 @@
     "multer-storage-cloudinary": "^4.0.0",
     "mysql2": "^3.9.4",
     "mysqldump": "^1.4.2",
+    "net-ping": "^1.2.4",
     "node-cron": "^3.0.2",
     "node-fetch": "^2.7.0",
     "nodemailer": "^6.9.15",
@@ -64,7 +66,8 @@
     "stripe": "^14.5.0",
     "uuid": "^11.0.2",
     "write-excel-file": "^1.4.30",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "zxcvbn": "^4.4.2"
   },
   "optionalDependencies": {
     "@img/sharp-linux-arm": "^0.33.2",

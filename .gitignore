@@ -40,8 +40,8 @@ jspm_packages
 env
 package-lock.json
 
-pmc-cskh-firebase-adminsdk-y7378-5122f6edc7.json
-pmc-cskh-2088353edcc9.json
+# pmc-cskh-firebase-adminsdk-y7378-5122f6edc7.json
+# pmc-cskh-2088353edcc9.json
 yarn.lock
 
 public
