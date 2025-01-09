@@ -1918,32 +1918,38 @@ exports.firstChecklist = async (req, res) => {
       }
     });
 
-    const sortFields = ['Chi_Nhanh', 'Loai_Hinh', 'Phan_loai_du_an', 'Linh_vuc', 'Du_an'];
+    const sortFields = [
+      "Chi_Nhanh",
+      "Loai_Hinh",
+      "Phan_loai_du_an",
+      "Linh_vuc",
+      "Du_an",
+    ];
 
     const normalizeStr = (str) => {
-        return str
-            ? str.trim()
-                .toLowerCase()
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-            : '';
+      return str
+        ? str
+            .trim()
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+        : "";
     };
 
     excelData.sort((a, b) => {
       // Lặp qua các trường cần so sánh
       for (const field of sortFields) {
-          const valueA = normalizeStr(a[field]);
-          const valueB = normalizeStr(b[field]);
-          
-          const comparison = valueA.localeCompare(valueB, 'vi', {
-              sensitivity: 'base'
-          });
-          
-          if (comparison !== 0) return comparison;
+        const valueA = normalizeStr(a[field]);
+        const valueB = normalizeStr(b[field]);
+
+        const comparison = valueA.localeCompare(valueB, "vi", {
+          sensitivity: "base",
+        });
+
+        if (comparison !== 0) return comparison;
       }
       return 0; // Nếu tất cả các trường đều bằng nhau
-  });
-
+    });
 
     if (req.query.format === "excel") {
       // Tạo workbook mới và worksheet
@@ -1969,44 +1975,53 @@ exports.firstChecklist = async (req, res) => {
       //////////////
 
       worksheet.getRow(1).font = { bold: true };
-      worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
-    
+      worksheet.getRow(1).alignment = {
+        vertical: "middle",
+        horizontal: "center",
+      };
+
       // Thêm dữ liệu với STT tự động và định dạng
       excelData.forEach((item, index) => {
         const dataRow = {
-          STT: index + 1,  // Đánh số tự động
-          ...item
+          STT: index + 1, // Đánh số tự động
+          ...item,
         };
         const row = worksheet.addRow(dataRow);
-    
+
         // Căn giữa cho cột STT
-        row.getCell('STT').alignment = { horizontal: 'center' };
-    
+        row.getCell("STT").alignment = { horizontal: "center" };
+
         // Căn giữa cho các cột khối công việc
-        ['Khoi_ky_thuat', 'Khoi_an_ninh', 'Khoi_lam_sach', 'Khoi_dich_vu', 'Khoi_F_B'].forEach(key => {
-          row.getCell(key).alignment = { horizontal: 'center' };
+        [
+          "Khoi_ky_thuat",
+          "Khoi_an_ninh",
+          "Khoi_lam_sach",
+          "Khoi_dich_vu",
+          "Khoi_F_B",
+        ].forEach((key) => {
+          row.getCell(key).alignment = { horizontal: "center" };
         });
-    
+
         // Nếu Tinh_trang là "Chưa tiến hành" thì tô màu đỏ
-        if (item.Tinh_trang === 'Chưa tiến hành') {
+        if (item.Tinh_trang === "Chưa tiến hành") {
           row.eachCell((cell) => {
             cell.fill = {
-              type: 'pattern',
-              pattern: 'solid',
-              fgColor: { argb: 'FFFFFF00' }  // Màu đỏ
+              type: "pattern",
+              pattern: "solid",
+              fgColor: { argb: "FFFFFF00" }, // Màu đỏ
             };
           });
         }
       });
-    
+
       // Border cho toàn bộ bảng
       worksheet.eachRow((row) => {
         row.eachCell((cell) => {
           cell.border = {
-            top: { style: 'thin' },
-            left: { style: 'thin' },
-            bottom: { style: 'thin' },
-            right: { style: 'thin' }
+            top: { style: "thin" },
+            left: { style: "thin" },
+            bottom: { style: "thin" },
+            right: { style: "thin" },
           };
         });
       });
@@ -9521,27 +9536,42 @@ exports.getProjectsChecklistStatus_Noti = async () => {
 
 exports.testExcel = async (req, res) => {
   try {
-    const { ID_KhoiCV, ID_Duan, month, year } = req.query;
+    const { TenKhoiCV, ID_KhoiCV, ID_Duan, month, year } = req.query;
     const daysInMonth = new Date(year, month, 0).getDate();
 
+    const monthFormat = month.padStart(2, "0");
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet("Sheet1");
 
     // Tiêu đề cố định
-    sheet.mergeCells("A1:R4");
-    sheet.getCell("A1").value = `Báo cáo kiểm tra checklist khối`;
-    sheet.getCell("A1").alignment = { vertical: "middle", horizontal: "center" };
-    sheet.getCell("A1").font = { bold: true, size: 16 };
-    sheet.getCell("A1").fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFDDDDDD" } };
+    sheet.mergeCells("A1:L4");
+    sheet.getCell("A1").value = `Báo cáo kiểm tra checklist ${TenKhoiCV || ""} tháng ${monthFormat} năm ${year}`
+    sheet.getCell("A1").alignment = {
+      vertical: "middle",
+      horizontal: "center",
+    };
+    sheet.getCell("A1").font = { bold: true, size: 20 };
+    sheet.getCell("A1").fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFDDDDDD" },
+    };
 
     // Cột khu vực, hạng mục, checklist
     sheet.getCell("A5").value = "Tên khu vực";
     sheet.getCell("B5").value = "Tên hạng mục";
     sheet.getCell("C5").value = "Tên checklist";
     ["A5", "B5", "C5"].forEach((cell) => {
-      sheet.getCell(cell).font = { bold: true };
-      sheet.getCell(cell).alignment = { vertical: "middle", horizontal: "center" };
-      sheet.getCell(cell).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFE599" } };
+      sheet.getCell(cell).font = { bold: true, size: 14  };
+      sheet.getCell(cell).alignment = {
+        vertical: "middle",
+        horizontal: "center",
+      };
+      sheet.getCell(cell).fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFFFE599" },
+      };
     });
 
     // Đường viền cho các tiêu đề
@@ -9552,7 +9582,7 @@ exports.testExcel = async (req, res) => {
         bottom: { style: "thin" },
         right: { style: "thin" },
       };
-    });    
+    });
 
     const startCol = 4;
 
@@ -9564,7 +9594,10 @@ exports.testExcel = async (req, res) => {
         ID_KhoiCV,
         isDelete: 0,
         Ngay: {
-          [Op.between]: [`${year}-${month}-01`, `${year}-${month}-${daysInMonth}`],
+          [Op.between]: [
+            `${year}-${monthFormat}-01`,
+            `${year}-${monthFormat}-${daysInMonth}`,
+          ],
         },
       },
       include: [{ model: Ent_calv, attributes: ["Tenca"] }],
@@ -9572,13 +9605,14 @@ exports.testExcel = async (req, res) => {
 
     // Lấy danh sách ID_ChecklistC
     const checklistCIds = tbChecklistC.map((item) => item.ID_ChecklistC);
-    const monthFormat = month.padStart(2, "0");
     const table_chitiet = `tb_checklistchitiet_${monthFormat}_${year}`;
+    const table_done = `tb_checklistchitietdone_${monthFormat}_${year}`;
     defineDynamicModelChiTiet(table_chitiet, sequelize);
+    defineDynamicModelChiTietDone(table_done, sequelize);
 
     // Lấy dữ liệu chi tiết checklist
     const dataChecklistChiTiet = await sequelize.models[table_chitiet].findAll({
-      attributes: ["ID_Checklist", "Ketqua", "ID_ChecklistC"],
+      attributes: ["ID_Checklist", "Ketqua", "ID_ChecklistC", "isDelete"],
       where: { ID_ChecklistC: { [Op.in]: checklistCIds }, isDelete: 0 },
       include: [
         {
@@ -9591,51 +9625,52 @@ exports.testExcel = async (req, res) => {
 
     // Lấy dữ liệu checklist hoàn thành
     const checklistDoneItems = await sequelize.query(
-      `SELECT * FROM tb_checklistchitietdone_${monthFormat}_${year} WHERE ID_ChecklistC IN (?) AND isDelete = 0`,
+      `SELECT * FROM ${table_done} WHERE ID_ChecklistC IN (?) AND isDelete = 0`,
       {
         replacements: [checklistCIds],
         type: sequelize.QueryTypes.SELECT,
       }
     );
 
-    // Chuẩn bị lookup table
-    const lookupChecklistByDay = new Map();
-    tbChecklistC.forEach((item) => {
-      const formattedDay = item.Ngay.split("-").reverse().slice(0, 2).join("/");
-      const dayKey = `${formattedDay}-${item.ent_calv?.Tenca || "N/A"}`;
-      if (!lookupChecklistByDay.has(dayKey)) {
-        lookupChecklistByDay.set(dayKey, []);
-      }
-      lookupChecklistByDay.get(dayKey).push(item.ID_ChecklistC);
-    });
-
     const statusByDay = {};
-    dataChecklistChiTiet.forEach((item) => {
-      const checklistCId = item.ID_ChecklistC;
-      const checklistStatus = removeVietnameseTones(item.Ketqua) === removeVietnameseTones(item.ent_checklist.Giatriloi) ? "X" : "V";
-      tbChecklistC.forEach((checklistC) => {
-        if (checklistC.ID_ChecklistC === checklistCId) {
-          const formattedDay = checklistC.Ngay.split("-").reverse().slice(0, 2).join("/");
-          const dayKey = `${formattedDay}-${checklistC.ent_calv?.Tenca || "N/A"}`;
-          if (!statusByDay[dayKey]) {
-            statusByDay[dayKey] = {};
-          }
-          statusByDay[dayKey][item.ID_Checklist] = checklistStatus;
+
+    // Lặp qua từng checklist trong `tbChecklistC`
+    tbChecklistC.forEach((checklistC) => {
+      const formattedDay = checklistC.Ngay.split("-")
+        .reverse()
+        .slice(0, 2)
+        .join("/");
+      const dayKey = `${formattedDay}-${checklistC.ent_calv?.Tenca || "N/A"}`;
+
+      // Tạo đối tượng nếu chưa tồn tại
+      if (!statusByDay[dayKey]) {
+        statusByDay[dayKey] = {};
+      }
+
+      // Thêm trạng thái từ `checklistDoneItems`
+      checklistDoneItems.forEach((item) => {
+        if (item.ID_ChecklistC === checklistC.ID_ChecklistC) {
+          const idChecklists = item.Description.split(",").map(Number);
+          idChecklists.forEach((id) => {
+            if (!statusByDay[dayKey][id]) {
+              statusByDay[dayKey][id] = "V"; // Trạng thái mặc định là "V"
+            }
+          });
         }
       });
-    });
 
-    checklistDoneItems.forEach((item) => {
-      const idChecklists = item.Description.split(",").map(Number);
-      idChecklists.forEach((id) => {
-        tbChecklistC.forEach((checklistC) => {
-          const formattedDay = checklistC.Ngay.split("-").reverse().slice(0, 2).join("/");
-          const dayKey = `${formattedDay}-${checklistC.ent_calv?.Tenca || "N/A"}`;
-          if (!statusByDay[dayKey]) {
-            statusByDay[dayKey] = {};
+      // Thêm trạng thái từ `dataChecklistChiTiet`
+      dataChecklistChiTiet.forEach((item) => {
+        if (item.ID_ChecklistC === checklistC.ID_ChecklistC) {
+          const checklistStatus =
+            removeVietnameseTones(item.Ketqua) ===
+            removeVietnameseTones(item.ent_checklist.Giatriloi)
+              ? "X"
+              : "V";
+          if (!statusByDay[dayKey][item.ID_Checklist]) {
+            statusByDay[dayKey][item.ID_Checklist] = checklistStatus;
           }
-          statusByDay[dayKey][id] = "V";
-        });
+        }
       });
     });
 
@@ -9650,18 +9685,19 @@ exports.testExcel = async (req, res) => {
     for (let day = 1; day <= daysInMonth; day++) {
       const col = startCol + (day - 1) * dataCalv.length;
       sheet.mergeCells(5, col, 5, col + dataCalv.length - 1);
-      
+
       const cell = sheet.getCell(5, col);
-      cell.value = `${day.toString().padStart(2, "0")}/${month}`.slice(-5);
-      cell.alignment = { vertical: "middle", horizontal: "center" }; 
-    
+      cell.value = `${day.toString().padStart(2, "0")}/${monthFormat}`.slice(-5);
+      cell.alignment = { vertical: "middle", horizontal: "center" };
+      cell.font = { bold: true, size: 12 };
+
       dataCalv.forEach((ca, index) => {
         const caCell = sheet.getCell(6, col + index);
+        caCell.font = { bold: true, size: 11 };
         caCell.value = ca.Tenca;
-        caCell.alignment = { vertical: "middle", horizontal: "center" }; 
+        caCell.alignment = { vertical: "middle", horizontal: "center" };
       });
     }
-    
 
     // Lấy danh sách checklist
     const dataChecklistAll = await Ent_checklist.findAll({
@@ -9713,39 +9749,33 @@ exports.testExcel = async (req, res) => {
       sheet.getCell(`C${rowIndex}`).value = checklist.Checklist;
 
       for (let day = 1; day <= daysInMonth; day++) {
-        const dayKey = `${day.toString().padStart(2, "0")}/${monthFormat}`.slice(-5);
+        const dayKey = `${day.toString().padStart(2, "0")}/${monthFormat}`;
         dataCalv.forEach((ca, index) => {
           const key = `${dayKey}-${ca.Tenca}`;
-          const status = statusByDay[key]?.[checklist.ID_Checklist] || "";
+          const status = statusByDay[key]?.[checklist.ID_Checklist] || ""; // Lấy trạng thái đúng theo ngày và ca
 
-          const col = startCol + (day - 1) * dataCalv.length;
-          const cell = sheet.getCell(rowIndex, col + index);
-          cell.value = status;
+          const col = startCol + (day - 1) * dataCalv.length + index; // Cột chính xác cho ngày và ca
+          const cell = sheet.getCell(rowIndex, col);
 
           if (status === "V") {
-            cell.value = "✔"; // Icon tích xanh (✔ - U+2714)
-            cell.font = {
-              bold: true,
-              color: { argb: "FF008000" }, // Màu chữ xanh đậm
-            };
-            cell.alignment = { vertical: "middle", horizontal: "center" }; 
+            cell.value = "✔"; // Icon tích xanh
+            cell.font = { bold: true, color: { argb: "FF008000" } }; // Màu chữ xanh
+            cell.alignment = { vertical: "middle", horizontal: "center" };
           } else if (status === "X") {
-            cell.value = "✘"; // Icon tích đỏ (✘ - U+2718)
-            cell.font = {
-              bold: true,
-              color: { argb: "FF0000" },
-            };
+            cell.value = "✘"; // Icon tích đỏ
+            cell.font = { bold: true, color: { argb: "FF0000" } }; // Màu chữ đỏ
             cell.fill = {
               type: "pattern",
               pattern: "solid",
-              fgColor: { argb: "FFFFEBEE" }, // Màu nền hồng hạt
-            };
-            cell.alignment = { vertical: "middle", horizontal: "center" }; 
+              fgColor: { argb: "FFFFEBEE" },
+            }; // Màu nền hồng
+            cell.alignment = { vertical: "middle", horizontal: "center" };
           } else {
             cell.value = ""; // Trạng thái rỗng
           }
         });
       }
+
       rowIndex++;
     });
 
@@ -9754,8 +9784,8 @@ exports.testExcel = async (req, res) => {
       column.width = 15; // Hoặc điều chỉnh độ rộng cột cho phù hợp
     });
 
-    sheet.getColumn('B').width = 20;
-    sheet.getColumn('C').width = 30;
+    sheet.getColumn("B").width = 20;
+    sheet.getColumn("C").width = 30;
 
     const buffer = await workbook.xlsx.writeBuffer();
     res.setHeader(
@@ -9769,6 +9799,8 @@ exports.testExcel = async (req, res) => {
     res.send(buffer);
   } catch (error) {
     console.error("Error generating Excel:", error);
-    res.status(500).send("An error occurred while generating the Excel report.");
+    res
+      .status(500)
+      .send("An error occurred while generating the Excel report.");
   }
 };
