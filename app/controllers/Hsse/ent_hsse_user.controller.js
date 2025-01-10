@@ -47,15 +47,16 @@ const HSSE = [
   { id: 35, title: "Chỉ số CO2", key: "chiSoCO2" },
   { id: 36, title: "Clorin", key: "clorin" },
   { id: 37, title: "NaOCL", key: "NaOCL" },
+  { id: 38, title: "Ghichu", key: "Ghichu" },
 ];
 
 exports.createHSSE = async (req, res) => {
   const t = await sequelize.transaction();
   try {
     const userData = req.user.data;
-    const data = req.body;
+    const {data, isRole} = req.body;
     const Ngay_ghi_nhan = moment(new Date()).format("YYYY-MM-DD");
-    const yesterday = moment(Ngay_ghi_nhan)
+    const yesterday = moment(isRole ? data.Ngay_ghi_nhan : Ngay_ghi_nhan)
       .subtract(1, "days")
       .format("YYYY-MM-DD");
 
@@ -67,7 +68,8 @@ exports.createHSSE = async (req, res) => {
 
     const dataUser = {
       Ten_du_an: userData?.ent_duan?.Duan,
-      Ngay_ghi_nhan: Ngay_ghi_nhan,
+      Ghichu: isRole ? data?.Ghichu : null,
+      Ngay_ghi_nhan: isRole ? data.Ngay_ghi_nhan : Ngay_ghi_nhan,
       Nguoi_tao: userData?.UserName || userData?.Hoten,
       Email: userData?.Email,
       modifiedBy: "Checklist",
@@ -79,7 +81,7 @@ exports.createHSSE = async (req, res) => {
       attributes: ["Ten_du_an", "Ngay_ghi_nhan"],
       where: {
         Ten_du_an: userData?.ent_duan?.Duan,
-        Ngay_ghi_nhan: Ngay_ghi_nhan,
+        Ngay_ghi_nhan: isRole ? data.Ngay_ghi_nhan : Ngay_ghi_nhan,
       },
     });
 
@@ -124,7 +126,7 @@ exports.updateHSSE = async (req, res) => {
 
     const htmlResponse = await funcYesterday(userData, data, yesterday, t, "Cập nhật thành công !")
     await funcHSSE_Log(req, data, req.params.id, t);
-    await updateHSSE(req, req.params.id, t);
+    await funUpdateHSSE(req, req.params.id, t);
     await t.commit();
 
     return res.status(200).json({
@@ -336,7 +338,7 @@ exports.getDetailHSSE = async (req, res) => {
   }
 };
 
-const updateHSSE = async (req, ID_HSSE, t) => {
+const funUpdateHSSE = async (req, ID_HSSE, t) => {
   try {
     const { data } = req.body;
     const sanitizedData = Object.keys(data).reduce((acc, key) => {

@@ -138,6 +138,7 @@ const hsse = sequelize.define(
     },
     Ghichu: {
       type: DataTypes.STRING(500),
+      allowNull: true
     },
     chiSoCO2: {
       type: DataTypes.DOUBLE,
