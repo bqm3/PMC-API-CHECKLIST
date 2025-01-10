@@ -54,22 +54,21 @@ exports.createHSSE = async (req, res) => {
   const t = await sequelize.transaction();
   try {
     const userData = req.user.data;
-    const {data, isRole} = req.body;
+    const data = req.body;
     const Ngay_ghi_nhan = moment(new Date()).format("YYYY-MM-DD");
-    const yesterday = moment(isRole && data ? data.Ngay_ghi_nhan : Ngay_ghi_nhan)
+    const yesterday = moment( Ngay_ghi_nhan)
       .subtract(1, "days")
       .format("YYYY-MM-DD");
 
     // Convert null values to 0
-    const sanitizedData = Object.keys(data ? data : req.body).reduce((acc, key) => {
+    const sanitizedData = Object.keys(data).reduce((acc, key) => {
       acc[key] = data[key] === null ? 0 : data[key];
       return acc;
     }, {});
 
     const dataUser = {
       Ten_du_an: userData?.ent_duan?.Duan,
-      Ghichu: isRole && data ? data?.Ghichu : null,
-      Ngay_ghi_nhan: isRole && data ? data.Ngay_ghi_nhan : Ngay_ghi_nhan,
+      Ngay_ghi_nhan: Ngay_ghi_nhan,
       Nguoi_tao: userData?.UserName || userData?.Hoten,
       Email: userData?.Email,
       modifiedBy: "Checklist",
@@ -81,7 +80,7 @@ exports.createHSSE = async (req, res) => {
       attributes: ["Ten_du_an", "Ngay_ghi_nhan"],
       where: {
         Ten_du_an: userData?.ent_duan?.Duan,
-        Ngay_ghi_nhan: isRole ? data.Ngay_ghi_nhan : Ngay_ghi_nhan,
+        Ngay_ghi_nhan: Ngay_ghi_nhan,
       },
     });
 
@@ -90,7 +89,7 @@ exports.createHSSE = async (req, res) => {
         .status(400)
         .json({ message: "Báo cáo HSSE ngày hôm nay đã được tạo" });
     } else {
-      const htmlResponse = await funcYesterday(userData, data ? data: req.body, yesterday, t, "Tạo báo cáo HSSE thành công.");
+      const htmlResponse = await funcYesterday(userData, data, yesterday, t, "Tạo báo cáo HSSE thành công.");
       const createHSSE = await hsse.create(combinedData, { transaction: t });
       await funcHSSE_Log(req, sanitizedData, createHSSE.ID, t);
       await t.commit();
@@ -109,23 +108,105 @@ exports.updateHSSE = async (req, res) => {
   const t = await sequelize.transaction();
   try {
     const userData = req.user.data;
-    const { data, Ngay, isRole } = req.body;
+    const { data, Ngay } = req.body;
+    const isToday = moment(Ngay).isSame(moment(), "day");
+    const yesterday = moment(Ngay)
+      .subtract(1, "days")
+      .format("YYYY-MM-DD");
+
+
+    if (!isToday) {
+      await t.rollback();
+      return res.status(400).json({
+        message: "Có lỗi xảy ra! Ngày không đúng dữ liệu.",
+      });
+    }
+
+
+    const htmlResponse = await funcYesterday(userData, data, yesterday, t, "Cập nhật thành công !")
+    await funcHSSE_Log(req, data, req.params.id, t);
+    await funUpdateHSSE(req, req.params.id, t);
+    await t.commit();
+
+    return res.status(200).json({
+      message: "Cập nhật thành công!",
+      htmlResponse: htmlResponse
+    });
+  } catch (error) {
+    await t.rollback();
+    return res.status(500).json({
+      message: error?.message || "Lỗi khi cập nhật HSSE.",
+    });
+  }
+};
+
+exports.createHSSE_PSH = async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const userData = req.user.data;
+    const data = req.body;
+    const Ngay_ghi_nhan = moment(new Date()).format("YYYY-MM-DD");
+    const yesterday = moment(data.Ngay_ghi_nhan)
+      .subtract(1, "days")
+      .format("YYYY-MM-DD");
+
+    // Convert null values to 0
+    const sanitizedData = Object.keys(data).reduce((acc, key) => {
+      acc[key] = data[key] === null ? 0 : data[key];
+      return acc;
+    }, {});
+
+    const dataUser = {
+      Ten_du_an: userData?.ent_duan?.Duan,
+      Ghichu: data?.Ghichu || null,
+      Ngay_ghi_nhan: data.Ngay_ghi_nhan,
+      Nguoi_tao: userData?.UserName || userData?.Hoten,
+      Email: userData?.Email,
+      modifiedBy: "Checklist",
+    };
+
+    const combinedData = { ...sanitizedData, ...dataUser };
+
+    const findHsse = await hsse.findOne({
+      attributes: ["Ten_du_an", "Ngay_ghi_nhan"],
+      where: {
+        Ten_du_an: userData?.ent_duan?.Duan,
+        Ngay_ghi_nhan: data.Ngay_ghi_nhan,
+      },
+    });
+
+    if (findHsse) {
+      return res
+        .status(400)
+        .json({ message: "Báo cáo HSSE ngày hôm nay đã được tạo" });
+    } else {
+      const htmlResponse = await funcYesterday(userData, data, yesterday, t, "Tạo báo cáo HSSE thành công.");
+      const createHSSE = await hsse.create(combinedData, { transaction: t });
+      // await funcHSSE_Log(req, sanitizedData, createHSSE.ID, t);
+      await t.commit();
+      return res.status(200).json({
+        message: "Tạo báo cáo HSSE thành công",
+        htmlResponse: htmlResponse,
+      });
+    }
+  } catch (error) {
+    await t.rollback();
+    res.status(500).json({ message: error?.message });
+  }
+};
+
+exports.updateHSSE_PSH = async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const userData = req.user.data;
+    const { data, Ngay } = req.body;
     const isToday = moment(Ngay).isSame(moment(), "day");
     const yesterday = moment(Ngay)
     .subtract(1, "days")
     .format("YYYY-MM-DD");
 
-    
-      if (!isRole && !isToday) {
-        await t.rollback();
-        return res.status(400).json({
-          message: "Có lỗi xảy ra! Ngày không đúng dữ liệu.",
-        });
-      }
-    
-
     const htmlResponse = await funcYesterday(userData, data, yesterday, t, "Cập nhật thành công !")
-    await funcHSSE_Log(req, data, req.params.id, t);
+    // await funcHSSE_Log(req, data, req.params.id, t);
     await funUpdateHSSE(req, req.params.id, t);
     await t.commit();
 
@@ -277,8 +358,8 @@ exports.getHSSE = async (req, res) => {
   try {
     const Ngay_ghi_nhan = moment(new Date()).format("YYYY-MM-DD");
     const Ngay_dau_thang = moment(Ngay_ghi_nhan, "YYYY-MM-DD")
-    .startOf('month')
-    .format("YYYY-MM-DD");
+      .startOf('month')
+      .format("YYYY-MM-DD");
     const userData = req.user.data;
     const resData = await hsse.findAll({
       where: {
@@ -300,10 +381,10 @@ exports.getHSSE = async (req, res) => {
   }
 };
 
-exports.getHSSEAll = async (req, res)=> {
+exports.getHSSEAll = async (req, res) => {
   try {
     const Ngay_ghi_nhan = moment(new Date()).format("YYYY-MM-DD");
-     
+
     const resData = await hsse.findAll({
       where: {
         Ngay_ghi_nhan: Ngay_ghi_nhan,
