@@ -103,6 +103,42 @@ exports.createHSSE = async (req, res) => {
   }
 };
 
+exports.updateHSSE = async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const userData = req.user.data;
+    const { data, Ngay, isRole } = req.body;
+    const isToday = moment(Ngay).isSame(moment(), "day");
+    const yesterday = moment(Ngay)
+    .subtract(1, "days")
+    .format("YYYY-MM-DD");
+
+    
+      if (!isRole && !isToday) {
+        await t.rollback();
+        return res.status(400).json({
+          message: "Có lỗi xảy ra! Ngày không đúng dữ liệu.",
+        });
+      }
+    
+
+    const htmlResponse = await funcYesterday(userData, data, yesterday, t, "Cập nhật thành công !")
+    await funcHSSE_Log(req, data, req.params.id, t);
+    await updateHSSE(req, req.params.id, t);
+    await t.commit();
+
+    return res.status(200).json({
+      message: "Cập nhật thành công!",
+      htmlResponse: htmlResponse
+    });
+  } catch (error) {
+    await t.rollback();
+    return res.status(500).json({
+      message: error?.message || "Lỗi khi cập nhật HSSE.",
+    });
+  }
+};
+
 exports.checkHSSE = async (req, res) => {
   try {
     const userData = req.user.data;
@@ -296,42 +332,6 @@ exports.getDetailHSSE = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       message: error.mesage || "Có lỗi xảy ra",
-    });
-  }
-};
-
-exports.updateHSSE = async (req, res) => {
-  const t = await sequelize.transaction();
-  try {
-    const userData = req.user.data;
-    const { data, Ngay } = req.body;
-    const isToday = moment(Ngay).isSame(moment(), "day");
-    const yesterday = moment(Ngay)
-    .subtract(1, "days")
-    .format("YYYY-MM-DD");
-
-    console.log("yesterday",yesterday)
-
-    if (!isToday) {
-      await t.rollback();
-      return res.status(400).json({
-        message: "Có lỗi xảy ra! Ngày không đúng dữ liệu.",
-      });
-    }
-
-    const htmlResponse = await funcYesterday(userData, data, yesterday, t, "Cập nhật thành công !")
-    await funcHSSE_Log(req, data, req.params.id, t);
-    await updateHSSE(req, req.params.id, t);
-    await t.commit();
-
-    return res.status(200).json({
-      message: "Cập nhật thành công!",
-      htmlResponse: htmlResponse
-    });
-  } catch (error) {
-    await t.rollback();
-    return res.status(500).json({
-      message: error?.message || "Lỗi khi cập nhật HSSE.",
     });
   }
 };
