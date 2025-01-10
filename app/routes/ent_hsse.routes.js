@@ -10,6 +10,7 @@ module.exports = (app) => {
 
   router.get("/", [isAuthenticated], ent_hsse_user.getHSSE_User_ByDuAn);
   router.post("/create", [isAuthenticated], ent_hsse_user.createHSSE);
+  router.post("/create/psh", [isAuthenticated], ent_hsse_user.createHSSE_PSH);
   router.post("/create-role", [isAuthenticated], ent_hsse_user.createHSSE_User)
   router.post("/check", [isAuthenticated], ent_hsse_user.checkSubmitHSSE);
   router.get("/find", [isAuthenticated], ent_hsse_user.checkHSSE);
@@ -17,6 +18,7 @@ module.exports = (app) => {
   router.get("/admin", [isAuthenticated], ent_hsse_user.getHSSEAll);
   router.get("/:id", [isAuthenticated], ent_hsse_user.getDetailHSSE);
   router.put("/update/:id", [isAuthenticated], ent_hsse_user.updateHSSE);
+  router.put("/update/psh/:id", [isAuthenticated], ent_hsse_user.updateHSSE_PSH);
 
   app.use("/api/v2/hsse", router);
 };

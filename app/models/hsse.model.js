@@ -136,6 +136,10 @@ const hsse = sequelize.define(
     modifiedBy: {
       type: DataTypes.STRING(255),
     },
+    Ghichu: {
+      type: DataTypes.STRING(500),
+      allowNull: true
+    },
     chiSoCO2: {
       type: DataTypes.DOUBLE,
     },
