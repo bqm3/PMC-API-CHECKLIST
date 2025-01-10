@@ -13,6 +13,9 @@ const { Op } = require("sequelize");
 
 const bcrypt = require("bcrypt");
 const jsonwebtoken = require("jsonwebtoken");
+const ExcelJS = require("exceljs");
+const sequelize = require("../config/db.config");
+const xlsx = require("xlsx");
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -198,13 +201,7 @@ exports.ressetPassword = async (req, res) => {
         UserName: UserName.trim(),
         isDelete: 0,
       },
-      attributes: [
-        "ID_User",
-        "UserName",
-        "Email",
-        "Password",
-        "isDelete",
-      ],
+      attributes: ["ID_User", "UserName", "Email", "Password", "isDelete"],
     });
 
     if (!userDetail) {
@@ -214,7 +211,9 @@ exports.ressetPassword = async (req, res) => {
     }
 
     // Tạo mật khẩu 6 chữ số ngẫu nhiên
-    const randomPassword = Math.floor(100000 + Math.random() * 900000).toString();
+    const randomPassword = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
 
     // Mã hóa mật khẩu bằng bcrypt
     const hashedPassword = await bcrypt.hash(randomPassword, 10);
@@ -226,7 +225,7 @@ exports.ressetPassword = async (req, res) => {
         where: { ID_User: userDetail.ID_User },
       }
     );
-   
+
     const mailOptions = {
       from: process.env.EMAIL_USERNAME,
       to: Email,
@@ -321,7 +320,7 @@ exports.ressetPassword = async (req, res) => {
       const user = await Ent_user.findOne({
         where: {
           ID_User: userDetail.ID_User,
-          updatedAt: { [Op.gte]: new Date(Date.now() - 30 * 60 * 1000) }, 
+          updatedAt: { [Op.gte]: new Date(Date.now() - 30 * 60 * 1000) },
         },
       });
 
@@ -332,7 +331,7 @@ exports.ressetPassword = async (req, res) => {
         );
         console.log("Password reset timeout. Password cleared.");
       }
-    }, 30 * 60 * 1000); 
+    }, 30 * 60 * 1000);
 
     return res
       .status(200)
@@ -342,5 +341,209 @@ exports.ressetPassword = async (req, res) => {
     return res
       .status(500)
       .json({ message: "Có lỗi xảy ra khi reset mật khẩu." });
+  }
+};
+
+exports.sendMailBaocao = async (req, res) => {
+  try {
+    // Lấy dữ liệu báo cáo
+    const results = await sequelize.query(`
+      SELECT
+        \`ID_Duan\`, \`duan\`,
+        \`TenHangmuc\`,
+        \`thang1\`, \`thang2\`, \`thang3\`, \`thang4\`,
+        \`thang5\`, \`thang6\`, \`thang7\`, \`thang8\`,
+        \`thang9\`, \`thang10\`, \`thang11\`, \`thang12\`
+      FROM \`Baocaothnam\`
+      WHERE \`Nam\` = 2024
+      ORDER BY ID_Duan ASC;
+    `, {
+      type: sequelize.QueryTypes.SELECT,
+    });
+
+    const uniqueIdDuanList = [...new Set(results.map((row) => row.ID_Duan))].join(',');
+
+    // Lấy danh sách email theo ID dự án
+    const arrMail = await sequelize.query(`
+      SELECT ID_Duan, Email
+      FROM tb_mail_duan
+      WHERE ID_Duan IN (${uniqueIdDuanList})
+        AND LOWER(Email) NOT LIKE '%f@%'
+        ORDER BY ID_Duan ASC;
+    `, {
+      type: sequelize.QueryTypes.SELECT,
+    });
+
+    const arrMail2 = await sequelize.query(`
+      SELECT ID_Duan, Email 
+      FROM ent_user 
+      WHERE ID_Duan IN (${uniqueIdDuanList})
+        AND ID_Chucvu = 2
+        AND isDelete = 0
+        ORDER BY ID_Duan ASC;
+    `, {
+      type: sequelize.QueryTypes.SELECT,
+    });
+
+    const existingIds = new Set(arrMail.map((item) => item.ID_Duan));
+
+    // Lọc arrMail2 để chỉ lấy những email có ID_Duan chưa xuất hiện trong arrMail
+    const filteredArrMail2 = arrMail2.filter((item) => !existingIds.has(item.ID_Duan));
+
+    // Hợp nhất hai danh sách
+    const mergedMailList = [...arrMail, ...filteredArrMail2];
+    mergedMailList.sort((a, b) => a.ID_Duan - b.ID_Duan);
+
+    const testMailList = mergedMailList.filter(mail => [2, 5, 9, 10].includes(mail.ID_Duan));
+
+    
+
+    //    AND Email IS NOT NULL
+    
+    // Nhóm dữ liệu theo ID dự án
+    const groupedData = results.reduce((acc, row) => {
+      const ID_Duan = row.ID_Duan;
+      if (!acc[ID_Duan]) {
+        acc[ID_Duan] = [];
+      }
+      acc[ID_Duan].push(row);
+      return acc;
+    }, {});
+
+    // Gửi email cho từng địa chỉ email theo ID dự án
+    for (const emailData of testMailList) {
+      const duanData = groupedData[emailData.ID_Duan];
+      
+      if (duanData) {
+        // Tạo workbook mới cho mỗi dự án
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet(duanData[0].duan);
+
+        // Thiết lập cột cho worksheet
+        worksheet.columns = [
+          { header: "Tên hạng mục", key: "TenHangmuc", width: 30 },
+          { header: "Tháng 1", key: "thang1", width: 15 },
+          { header: "Tháng 2", key: "thang2", width: 15 },
+          { header: "Tháng 3", key: "thang3", width: 15 },
+          { header: "Tháng 4", key: "thang4", width: 15 },
+          { header: "Tháng 5", key: "thang5", width: 15 },
+          { header: "Tháng 6", key: "thang6", width: 15 },
+          { header: "Tháng 7", key: "thang7", width: 15 },
+          { header: "Tháng 8", key: "thang8", width: 15 },
+          { header: "Tháng 9", key: "thang9", width: 15 },
+          { header: "Tháng 10", key: "thang10", width: 15 },
+          { header: "Tháng 11", key: "thang11", width: 15 },
+          { header: "Tháng 12", key: "thang12", width: 15 },
+        ];
+
+        // Thêm dữ liệu vào worksheet
+        duanData.forEach((row) => {
+          worksheet.addRow(row);
+        });
+
+        // Tạo buffer cho file Excel
+        const buffer = await workbook.xlsx.writeBuffer();
+
+        const mailOptions = {
+          from: process.env.EMAIL_USERNAME,
+          to: emailData.Email,
+          subject: `[Báo cáo] Thống kê sự cố ngoài năm 2024 - Dự án ${duanData[0].duan}`,
+          text: `Kính gửi anh/chị,
+
+    Đính kèm email này là file báo cáo thống kê sự cố ngoài năm 2024 cho dự án ${duanData[0].duan}. Báo cáo bao gồm thông tin chi tiết về các hạng mục liên quan trong suốt 12 tháng.
+    Nếu có bất kỳ câu hỏi hoặc yêu cầu bổ sung, xin vui lòng liên hệ lại.
+
+    Trân trọng,
+    Phòng số hóa`,
+          attachments: [
+            {
+              filename: `ThongKeBaoCao2024_${duanData[0].duan}.xlsx`,
+              content: buffer,
+              contentType: 
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            },
+          ],
+        };
+
+        await transporter.sendMail(mailOptions);
+      }
+    }
+
+    res.status(200).json({ message: "Email đã được gửi thành công!" , data : testMailList});
+  } catch (error) {
+    console.error("Lỗi truy vấn: " + error.stack);
+    res.status(500).json({ error: "Có lỗi xảy ra khi gửi email" });
+  }
+};
+
+exports.uploadMail = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const data = xlsx.utils.sheet_to_json(sheet, { header: 1 });
+    const emailProjectData = [];
+
+    let lastMainProject = null;
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      if (row.length >= 3) {
+        // Get full project name including sub-category
+        const currentMainProject = row[0]?.split(" (")[0].trim();
+        if (currentMainProject) {
+          lastMainProject = currentMainProject;
+        }
+
+        const mainProject = currentMainProject || lastMainProject;
+        const subCategory = row[1]?.trim(); // Get the sub-category name
+        const projectName = `${mainProject}`; // Combine them
+        const ten = `${subCategory}`;
+        const email = row[2]?.trim();
+
+        // Check for valid email and project name
+        if (email && projectName) {
+          // For multiple emails in one cell, split and add each
+          const emails = email.split(/[,;\s]+/); // Split by comma, semicolon, or whitespace
+
+          for (const singleEmail of emails) {
+            if (singleEmail && singleEmail.includes("@")) {
+              emailProjectData.push({
+                Tenduan: projectName,
+                Ten: ten,
+                Email: singleEmail.trim(),
+              });
+            }
+          }
+        }
+      }
+    }
+
+    const promises = emailProjectData.map(async (item) => {
+      const query =
+        "INSERT INTO tb_mail_duan (Tenduan, Ten, Email, createdAt, updatedAt) VALUES (?, ?, ?, NOW(), NOW())";
+
+      console.log("Inserting:", item.Tenduan, item.Ten, item.Email);
+
+      if (item.Tenduan && item.Email) {
+        return sequelize.query(query, {
+          replacements: [item.Tenduan, item.Ten, item.Email],
+        });
+      } else {
+        console.warn("Skipping item due to missing values:", item);
+      }
+    });
+
+    await Promise.all(promises);
+    res.status(200).json({
+      message: "Data uploaded successfully",
+      count: emailProjectData.length,
+    });
+  } catch (error) {
+    console.error("Error uploading data:", error);
+    res.status(500).json({ message: "Error uploading data", error });
   }
 };
