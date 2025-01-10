@@ -173,6 +173,18 @@ const funcCreateYesterDay = () => {
     return formattedYesterday
 }
 
+const validatePassword = (password) => {
+  // Kiểm tra nếu mật khẩu chỉ là số
+  const isAllDigits = /^\d+$/.test(password);
+
+  if (isAllDigits) {
+    return false; // Nếu chỉ toàn số, trả về false
+  }
+
+  // Nếu không phải là toàn số, thì hợp lệ
+  return password?.length >= 6;
+};
+
 const createDynamicTableChiTiet = async (tableName) => {
   const query = `
     CREATE TABLE IF NOT EXISTS ${tableName} (
@@ -233,5 +245,6 @@ module.exports = {
   formatNumber,
   funcCreateYesterDay,
   createDynamicTableDone,
-  createDynamicTableChiTiet
+  createDynamicTableChiTiet,
+  validatePassword
 };
