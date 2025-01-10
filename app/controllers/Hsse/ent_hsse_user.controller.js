@@ -238,15 +238,15 @@ exports.checkSubmitHSSE = async (req, res) => {
 exports.getHSSE = async (req, res) => {
   try {
     const Ngay_ghi_nhan = moment(new Date()).format("YYYY-MM-DD");
-    const Ngay_ghi_nhan_truoc_do = moment(Ngay_ghi_nhan, "YYYY-MM-DD")
-      .subtract(6, "days")
-      .format("YYYY-MM-DD");
+    const Ngay_dau_thang = moment(Ngay_ghi_nhan, "YYYY-MM-DD")
+    .startOf('month')
+    .format("YYYY-MM-DD");
     const userData = req.user.data;
     const resData = await hsse.findAll({
       where: {
         Ten_du_an: userData?.ent_duan?.Duan,
         Ngay_ghi_nhan: {
-          [Op.between]: [Ngay_ghi_nhan_truoc_do, Ngay_ghi_nhan],
+          [Op.between]: [Ngay_dau_thang, Ngay_ghi_nhan],
         },
       },
       order: [["Ngay_ghi_nhan", "DESC"]],
