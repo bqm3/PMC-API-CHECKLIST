@@ -56,20 +56,20 @@ exports.createHSSE = async (req, res) => {
     const userData = req.user.data;
     const {data, isRole} = req.body;
     const Ngay_ghi_nhan = moment(new Date()).format("YYYY-MM-DD");
-    const yesterday = moment(isRole ? data.Ngay_ghi_nhan : Ngay_ghi_nhan)
+    const yesterday = moment(isRole && data ? data.Ngay_ghi_nhan : Ngay_ghi_nhan)
       .subtract(1, "days")
       .format("YYYY-MM-DD");
 
     // Convert null values to 0
-    const sanitizedData = Object.keys(data).reduce((acc, key) => {
+    const sanitizedData = Object.keys(data ? data : req.body).reduce((acc, key) => {
       acc[key] = data[key] === null ? 0 : data[key];
       return acc;
     }, {});
 
     const dataUser = {
       Ten_du_an: userData?.ent_duan?.Duan,
-      Ghichu: isRole ? data?.Ghichu : null,
-      Ngay_ghi_nhan: isRole ? data.Ngay_ghi_nhan : Ngay_ghi_nhan,
+      Ghichu: isRole && data ? data?.Ghichu : null,
+      Ngay_ghi_nhan: isRole && data ? data.Ngay_ghi_nhan : Ngay_ghi_nhan,
       Nguoi_tao: userData?.UserName || userData?.Hoten,
       Email: userData?.Email,
       modifiedBy: "Checklist",
@@ -90,7 +90,7 @@ exports.createHSSE = async (req, res) => {
         .status(400)
         .json({ message: "Báo cáo HSSE ngày hôm nay đã được tạo" });
     } else {
-      const htmlResponse = await funcYesterday(userData, data, yesterday, t, "Tạo báo cáo HSSE thành công.");
+      const htmlResponse = await funcYesterday(userData, data ? data: req.body, yesterday, t, "Tạo báo cáo HSSE thành công.");
       const createHSSE = await hsse.create(combinedData, { transaction: t });
       await funcHSSE_Log(req, sanitizedData, createHSSE.ID, t);
       await t.commit();
