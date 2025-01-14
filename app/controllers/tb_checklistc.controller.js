@@ -1886,8 +1886,8 @@ exports.firstChecklist = async (req, res) => {
           Linh_vuc:
             item?.ent_duan?.ent_linhvuc?.Linhvuc || item?.ent_linhvuc?.Linhvuc,
           Tinh_trang: item?.ent_duan?.Duan
-            ? "Đang tiến hành"
-            : "Chưa tiến hành",
+            ? "Đang triển khai"
+            : "Chưa triển khai",
           Ngay_bat_dau: item?.NgayDauTien || item?.Ngay || "",
           Khoi_ky_thuat: "",
           Khoi_an_ninh: "",
@@ -2002,8 +2002,8 @@ exports.firstChecklist = async (req, res) => {
           row.getCell(key).alignment = { horizontal: "center" };
         });
 
-        // Nếu Tinh_trang là "Chưa tiến hành" thì tô màu đỏ
-        if (item.Tinh_trang === "Chưa tiến hành") {
+        // Nếu Tinh_trang là "Chưa triển khai" thì tô màu đỏ
+        if (item.Tinh_trang === "Chưa triển khai") {
           row.eachCell((cell) => {
             cell.fill = {
               type: "pattern",
