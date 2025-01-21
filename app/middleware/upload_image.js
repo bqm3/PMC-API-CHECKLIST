@@ -87,7 +87,7 @@ const resizeImage = async (req, res, next) => {
 
             // Resize và lưu ảnh
             const buffer = await sharp(originalPath)
-              .resize(800, 650, { fit: sharp.fit.inside, withoutEnlargement: true })
+              .resize(488, 650, { fit: sharp.fit.cover }) // Resize ảnh
               .jpeg({ quality: 90 }) // Chuyển sang JPEG để tối ưu
               .toBuffer();
 
@@ -116,29 +116,10 @@ const resizeImage = async (req, res, next) => {
   }
 };
 
-const processImage = async (filePath) => {
-  try {
-    validateImage(filePath);
-
-    // Resize ảnh
-    const buffer = await sharp(filePath)
-      .resize(800, 600, { fit: sharp.fit.inside, withoutEnlargement: true })
-      .jpeg({ quality: 90 })
-      .toBuffer();
-
-    fs.writeFileSync(filePath, buffer);
-    console.log(`Resized image successfully: ${filePath}`);
-  } catch (err) {
-    console.error(`Error processing image ${filePath}:`, err.message);
-    throw err;
-  }
-};
-
 module.exports = {
   uploadChecklist,
   uploadSuCongNgoai,
   uploadBaoCaoChiSo,
   resizeImage,
   uploadLogo,
-  processImage,
 };

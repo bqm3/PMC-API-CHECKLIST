@@ -166,37 +166,34 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       }
 
       // bỏ rabbit
-      // await transaction.commit();
-      // res
-      //   .status(200)
-      //   .json({ message: "Records created and updated successfully" });
+      await transaction.commit();
+      res
+        .status(200)
+        .json({ message: "Records created and updated successfully" });
 
-      // const backgroundTask = {
-      //   records: newRecords,
-      //   dynamicTableName,
-      // };
-      // await sendToQueue(backgroundTask);
+      const backgroundTask = {
+        records: newRecords,
+        dynamicTableName,
+      };
+      await sendToQueue(backgroundTask);
+
+      // //code cũ
+      // const checklistC = await Tb_checklistc.findOne({
+      //   attributes: ["ID_ChecklistC", "Tong", "TongC", "isDelete"],
+      //   where: { ID_ChecklistC: records.ID_ChecklistC[0], isDelete: 0 },
+
+      //   transaction,
+      // });
+
+      // await updateTongC(checklistC, newRecords, transaction);
+
+      // // Xử lý từng checklist chi tiết
+      // await Promise.all(newRecords.map((record) => processChecklist(record, transaction)));
 
       // // Commit transaction
-      // bỏ rabbit
-
-      //code cũ
-      const checklistC = await Tb_checklistc.findOne({
-        attributes: ["ID_ChecklistC", "Tong", "TongC", "isDelete"],
-        where: { ID_ChecklistC: records.ID_ChecklistC[0], isDelete: 0 },
-
-        transaction,
-      });
-
-      await updateTongC(checklistC, newRecords, transaction);
-
-      // Xử lý từng checklist chi tiết
-      await Promise.all(newRecords.map((record) => processChecklist(record, transaction)));
-
-      // Commit transaction
-      await transaction.commit();
-      res.status(200).json({ message: "Records created and updated successfully" });
-      //code cũ
+      // await transaction.commit();
+      // res.status(200).json({ message: "Records created and updated successfully" });
+      // //code cũ
     } catch (error) {
       await transaction.rollback();
       console.error("Error during transaction:", error);
