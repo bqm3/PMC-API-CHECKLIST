@@ -21,23 +21,33 @@ async function initRabbitMQ() {
   
   async function sendToQueue(task) {
     try {
-      if (!channel) throw new Error("RabbitMQ channel not initialized.");
-      channel.sendToQueue(QUEUE_NAME, Buffer.from(JSON.stringify(task)), {
+      if (!channel) {
+        console.error("RabbitMQ channel not initialized. Reinitializing...");
+        await initRabbitMQ();
+      }
+      await channel.sendToQueue(QUEUE_NAME, Buffer.from(JSON.stringify(task)), {
         persistent: true,
       });
+      console.log(`Task sent to queue ${QUEUE_NAME}:`, task);
     } catch (error) {
       console.error("Error sending task to queue:", error);
     }
   }
+  
   async function sendToQueueDone(task) {
     try {
-      if (!channel) throw new Error("RabbitMQ channel not initialized.");
-      channel.sendToQueue(QUEUE_NAME_DONE, Buffer.from(JSON.stringify(task)), {
+      if (!channel) {
+        console.error("RabbitMQ channel not initialized. Reinitializing...");
+        await initRabbitMQ();
+      }
+      await channel.sendToQueue(QUEUE_NAME_DONE, Buffer.from(JSON.stringify(task)), {
         persistent: true,
       });
+      console.log(`Task sent to queue ${QUEUE_NAME_DONE}:`, task);
     } catch (error) {
       console.error("Error sending task to queue:", error);
     }
   }
+  
   
   module.exports = { initRabbitMQ, sendToQueue, sendToQueueDone };
