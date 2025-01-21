@@ -394,18 +394,28 @@ exports.updateUser = async (req, res) => {
 exports.deleteUser = async (req, res, next) => {
   try {
     const userData = req.user.data;
+    let whereClause = { ID_User: req.params.id};
+    if(userData.ID_Chucvu != 2 && userData.ID_Chucvu != 10) {
+      res.status(400).json({
+        message: "Bạn không có quyền xóa !",
+      });
+    }
+    if (userData.ID_Chucvu == 2) {
+      whereClause.ID_Chucvu = { [Op.ne]: 2 };
+    }
     if (userData) {
       await Ent_user.update(
         {
           isDelete: 1,
         },
         {
-          where: {
-            ID_User: req.params.id,
-          },
+          where: whereClause
         }
       )
         .then((data) => {
+          if(data == 0) {
+            throw new Error ("Không thể xóa vui lòng kiểm tra lại chức vụ")
+          }
           res.status(200).json({
             message: "Xóa tài khoản thành công!",
             data: data,
