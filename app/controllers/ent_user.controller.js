@@ -395,7 +395,7 @@ exports.deleteUser = async (req, res, next) => {
   try {
     const userData = req.user.data;
     let whereClause = { ID_User: req.params.id};
-    if(userData.ID_Chucvu != 2 && userData.ID_Chucvu != 10) {
+    if(userData.ID_Chucvu != 2 && userData.ID_Chucvu != 1) {
       throw new Error ("Bạn không có quyền xóa !")
     }
     if (userData.ID_Chucvu == 2) {
