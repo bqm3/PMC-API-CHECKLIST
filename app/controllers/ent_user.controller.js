@@ -173,7 +173,7 @@ exports.register = async (req, res, next) => {
       where: {
         [Op.and]: [
           { UserName: UserName },
-          { ID_Duan: ID_Duan },
+          // { ID_Duan: ID_Duan },
           { isDelete: 0 },
         ],
       },
