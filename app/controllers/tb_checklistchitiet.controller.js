@@ -165,18 +165,38 @@ exports.createCheckListChiTiet = async (req, res, next) => {
         ]);
       }
 
-      await transaction.commit();
-      res
-        .status(200)
-        .json({ message: "Records created and updated successfully" });
+      // bỏ rabbit
+      // await transaction.commit();
+      // res
+      //   .status(200)
+      //   .json({ message: "Records created and updated successfully" });
 
-      const backgroundTask = {
-        records: newRecords,
-        dynamicTableName,
-      };
-      await sendToQueue(backgroundTask);
+      // const backgroundTask = {
+      //   records: newRecords,
+      //   dynamicTableName,
+      // };
+      // await sendToQueue(backgroundTask);
+
+      // // Commit transaction
+      // bỏ rabbit
+
+      //code cũ
+      const checklistC = await Tb_checklistc.findOne({
+        attributes: ["ID_ChecklistC", "Tong", "TongC", "isDelete"],
+        where: { ID_ChecklistC: records.ID_ChecklistC[0], isDelete: 0 },
+
+        transaction,
+      });
+
+      await updateTongC(checklistC, newRecords, transaction);
+
+      // Xử lý từng checklist chi tiết
+      await Promise.all(newRecords.map((record) => processChecklist(record, transaction)));
 
       // Commit transaction
+      await transaction.commit();
+      res.status(200).json({ message: "Records created and updated successfully" });
+      //code cũ
     } catch (error) {
       await transaction.rollback();
       console.error("Error during transaction:", error);
@@ -219,82 +239,82 @@ const insertIntoDynamicTable = async (tableName, records, transaction) => {
   });
 };
 
-// const updateTongC = async (checklistC, newRecords, transaction) => {
+const updateTongC = async (checklistC, newRecords, transaction) => {
 
-//   if (checklistC) {
-//     const currentTongC = checklistC.TongC;
-//     const totalTong = checklistC.Tong;
+  if (checklistC) {
+    const currentTongC = checklistC.TongC;
+    const totalTong = checklistC.Tong;
 
-//     if (currentTongC < totalTong) {
-//       const hasIsCheckListLaiZero = newRecords.filter(
-//         (item) => item.isCheckListLai === 0
-//       );
-//       await Tb_checklistc.update(
-//         {
-//           TongC: Sequelize.literal(`TongC + ${hasIsCheckListLaiZero.length}`),
-//         },
-//         {
-//           where: { ID_ChecklistC: checklistC.ID_ChecklistC },
-//           transaction,
-//         }
-//       );
-//     }
-//   }
-// };
+    if (currentTongC < totalTong) {
+      const hasIsCheckListLaiZero = newRecords.filter(
+        (item) => item.isCheckListLai === 0
+      );
+      await Tb_checklistc.update(
+        {
+          TongC: Sequelize.literal(`TongC + ${hasIsCheckListLaiZero.length}`),
+        },
+        {
+          where: { ID_ChecklistC: checklistC.ID_ChecklistC },
+          transaction,
+        }
+      );
+    }
+  }
+};
 
-// const checklistCache = new Map();
+const checklistCache = new Map();
 
-// const getChecklist = async (id, transaction) => {
+const getChecklist = async (id, transaction) => {
 
-//   if (checklistCache.has(id)) {
-//     return checklistCache.get(id); // Lấy từ bộ nhớ đệm nếu đã có
-//   }
+  if (checklistCache.has(id)) {
+    return checklistCache.get(id); // Lấy từ bộ nhớ đệm nếu đã có
+  }
 
-//   // Truy vấn cơ sở dữ liệu nếu chưa có trong bộ nhớ đệm
-//   const checklistRecord = await Ent_checklist.findOne({
-//     where: { ID_Checklist: id, isDelete: 0 },
-//     attributes: [
-//       "Checklist",
-//       "ID_Checklist",
-//       "Giatriloi",
-//       "Giatridinhdanh",
-//       "isDelete",
-//     ],
-//     transaction,
-//   });
+  // Truy vấn cơ sở dữ liệu nếu chưa có trong bộ nhớ đệm
+  const checklistRecord = await Ent_checklist.findOne({
+    where: { ID_Checklist: id, isDelete: 0 },
+    attributes: [
+      "Checklist",
+      "ID_Checklist",
+      "Giatriloi",
+      "Giatridinhdanh",
+      "isDelete",
+    ],
+    transaction,
+  });
 
-//   // Lưu vào bộ nhớ đệm
-//   if (checklistRecord) {
-//     checklistCache.set(id, checklistRecord);
-//   }
+  // Lưu vào bộ nhớ đệm
+  if (checklistRecord) {
+    checklistCache.set(id, checklistRecord);
+  }
 
-//   return checklistRecord;
-// };
+  return checklistRecord;
+};
 
-// const processChecklist = async (record, transaction) => {
-//   // Sử dụng getChecklist để lấy dữ liệu
-//   const checklistRecord = await getChecklist(record.ID_Checklist, transaction);
+const processChecklist = async (record, transaction) => {
+  // Sử dụng getChecklist để lấy dữ liệu
+  const checklistRecord = await getChecklist(record.ID_Checklist, transaction);
 
-//   if (checklistRecord) {
-//     // Kiểm tra điều kiện cập nhật Tinhtrang
-//     const shouldUpdateTinhtrang =
-//       removeVietnameseTones(record?.Ketqua) ===
-//       removeVietnameseTones(checklistRecord?.Giatriloi) ||
-//       ((record?.Anh || record?.GhiChu) &&
-//         removeVietnameseTones(record?.Ketqua) !==
-//         removeVietnameseTones(checklistRecord?.Giatridinhdanh));
+  if (checklistRecord) {
+    // Kiểm tra điều kiện cập nhật Tinhtrang
+    const shouldUpdateTinhtrang =
+      removeVietnameseTones(record?.Ketqua) ===
+      removeVietnameseTones(checklistRecord?.Giatriloi) ||
+      ((record?.Anh || record?.GhiChu) &&
+        removeVietnameseTones(record?.Ketqua) !==
+        removeVietnameseTones(checklistRecord?.Giatridinhdanh));
 
-//     // Cập nhật Tinhtrang
-//     const updateData = { Tinhtrang: shouldUpdateTinhtrang ? 1 : 0 };
-//     await Ent_checklist.update(updateData, {
-//       where: {
-//         ID_Checklist: record.ID_Checklist,
-//         isDelete: 0,
-//       },
-//       transaction,
-//     });
-//   }
-// };
+    // Cập nhật Tinhtrang
+    const updateData = { Tinhtrang: shouldUpdateTinhtrang ? 1 : 0 };
+    await Ent_checklist.update(updateData, {
+      where: {
+        ID_Checklist: record.ID_Checklist,
+        isDelete: 0,
+      },
+      transaction,
+    });
+  }
+};
 
 exports.getCheckListChiTiet = async (req, res, next) => {
   try {
