@@ -7473,6 +7473,7 @@ exports.createExcelTongHopCa = async (req, res) => {
             },
             {
               model: Ent_user,
+              as: "ent_user",
               include: {
                 model: Ent_chucvu,
                 attributes: ["Chucvu", "Role"],
