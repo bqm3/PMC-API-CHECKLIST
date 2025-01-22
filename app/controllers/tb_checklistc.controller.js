@@ -23,7 +23,7 @@ const {
   Ent_linhvuc,
   Ent_loaihinhbds,
 } = require("../models/setup.model");
-const { Op, Sequelize } = require("sequelize");
+const { Op, Sequelize, where } = require("sequelize");
 const { uploadFile } = require("../middleware/auth_google");
 const sequelize = require("../config/db.config");
 const cron = require("node-cron");
@@ -9805,3 +9805,86 @@ exports.testExcel = async (req, res) => {
       .send("An error occurred while generating the Excel report.");
   }
 };
+
+exports.updateTongC2 = async (req, res) => {
+  try {
+    const {fromDate, toDate} = req.body;
+    const todayDate = moment();
+    const month = (todayDate.month() + 1).toString().padStart(2, "0"); 
+    const year = todayDate.year();
+    
+    const arrChecklistC = await Tb_checklistc.findAll({
+      attributes: ["ID_ChecklistC"],
+      where: {
+        Ngay: {
+          [Op.between]: [fromDate, toDate],
+        },
+        ID_Duan: 1,
+        isDelete: 0,
+      }
+    })
+
+    const checklistCIds = arrChecklistC.map(item => item.ID_ChecklistC);
+
+    const table_chitiet = `tb_checklistchitiet_${month}_${year}`;
+    const table_done = `tb_checklistchitietdone_${month}_${year}`;
+    defineDynamicModelChiTiet(table_chitiet, sequelize);
+    defineDynamicModelChiTietDone(table_done, sequelize);
+
+    const dataChecklistChiTiet = await sequelize.models[table_chitiet].findAll({
+      attributes: ["ID_Checklistchitiet", "ID_ChecklistC", "isDelete"],
+      where: { ID_ChecklistC: { [Op.in]: checklistCIds }, isDelete: 0 },
+    });
+
+    const dataChecklistChiTietDone = await sequelize.models[table_done].findAll({
+      attributes: ["ID_Checklistchitietdone", "Description", "ID_ChecklistC", "isDelete"],
+      where: { ID_ChecklistC: { [Op.in]: checklistCIds }, isDelete: 0 },
+    });
+
+    const combinedMap = new Map();
+
+    // Xử lý dataChecklistChiTiet
+    dataChecklistChiTiet.forEach((item) => {
+      const { ID_ChecklistC } = item;
+      if (!combinedMap.has(ID_ChecklistC)) {
+        combinedMap.set(ID_ChecklistC, { ID_ChecklistC, tongC: 0 });
+      }
+      combinedMap.get(ID_ChecklistC).tongC += 1;
+    });
+
+    // Xử lý dataChecklistChiTietDone
+    dataChecklistChiTietDone.forEach((item) => {
+      const { ID_ChecklistC, Description } = item;
+      const descriptionLength = Description ? Description.split(",").length : 0;
+
+      if (!combinedMap.has(ID_ChecklistC)) {
+        combinedMap.set(ID_ChecklistC, { ID_ChecklistC, tongC: 0 });
+      }
+      combinedMap.get(ID_ChecklistC).tongC += descriptionLength;
+    });
+
+    // Chuyển Map thành mảng kết quả
+    const result = Array.from(combinedMap.values());
+
+    for (const item of result) {
+      await Tb_checklistc.update(
+        { TongC: item.tongC },
+        {
+          where: {
+            ID_ChecklistC: item.ID_ChecklistC,
+          },
+        }
+      );
+    }
+
+    res.status(200).json({
+      message: "Gộp dữ liệu checklist thành công.",
+      data: result,
+    });
+
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: error.message || "Lỗi! Vui lòng thử lại sau." });
+  }
+}

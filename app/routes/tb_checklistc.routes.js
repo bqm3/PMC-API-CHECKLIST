@@ -99,6 +99,9 @@ module.exports = (app) => {
   );
 
 
+  router.put("/update-tongC",tb_checklistc.updateTongC2);
+
+
   app.use("/api/v2/tb_checklistc", router);
 };
 
