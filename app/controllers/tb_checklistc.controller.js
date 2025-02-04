@@ -9823,7 +9823,8 @@ exports.updateTongC2 = async (req, res) => {
         Ngay: {
           [Op.between]: [fromDate, toDate],
         },
-        ID_Duan: 1,
+        // ID_Duan: 1,
+        TongC: 0,
         isDelete: 0,
       }
     })
@@ -9837,12 +9838,12 @@ exports.updateTongC2 = async (req, res) => {
 
     const dataChecklistChiTiet = await sequelize.models[table_chitiet].findAll({
       attributes: ["ID_Checklistchitiet", "ID_ChecklistC", "isDelete"],
-      where: { ID_ChecklistC: { [Op.in]: checklistCIds }, isDelete: 0 },
+      where: { ID_ChecklistC: { [Op.in]: checklistCIds }, isDelete: 0, isCheckListLai: 0},
     });
 
     const dataChecklistChiTietDone = await sequelize.models[table_done].findAll({
       attributes: ["ID_Checklistchitietdone", "Description", "ID_ChecklistC", "isDelete"],
-      where: { ID_ChecklistC: { [Op.in]: checklistCIds }, isDelete: 0 },
+      where: { ID_ChecklistC: { [Op.in]: checklistCIds }, isDelete: 0, isCheckListLai: 0},
     });
 
     const combinedMap = new Map();
