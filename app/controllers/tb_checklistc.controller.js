@@ -9636,7 +9636,6 @@ exports.testExcel = async (req, res) => {
         );
     }
     
-
     const statusByDay = {};
 
     // Lặp qua từng checklist trong `tbChecklistC`
