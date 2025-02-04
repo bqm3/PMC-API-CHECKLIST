@@ -7815,7 +7815,7 @@ exports.createExcelTongHopCa = async (req, res) => {
         ];
 
         const projectData = dataChecklistC
-          ? dataChecklistC[0].tb_checklistc.ent_duan
+          ? dataChecklistC[0]?.tb_checklistc?.ent_duan
           : {};
         const projectName = projectData?.Duan || "";
         const projectLogo =
@@ -9625,13 +9625,17 @@ exports.testExcel = async (req, res) => {
     });
 
     // Lấy dữ liệu checklist hoàn thành
-    const checklistDoneItems = await sequelize.query(
-      `SELECT * FROM ${table_done} WHERE ID_ChecklistC IN (?) AND isDelete = 0`,
-      {
-        replacements: [checklistCIds],
-        type: sequelize.QueryTypes.SELECT,
-      }
-    );
+    let checklistDoneItems = [];
+    if (checklistCIds.length > 0) {
+        checklistDoneItems = await sequelize.query(
+          `SELECT * FROM ${table_done} WHERE ID_ChecklistC IN (:checklistCIds) AND isDelete = 0`,
+          {
+            replacements: { checklistCIds },
+            type: sequelize.QueryTypes.SELECT,
+          }
+        );
+    }
+    
 
     const statusByDay = {};
 
