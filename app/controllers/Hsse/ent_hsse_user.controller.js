@@ -487,15 +487,16 @@ const funcYesterday = async (userData, data, yesterday, t, message) => {
 
         let percentIncrease;
         if (yesterdayValue == 0 && currentValue != 0) {
-          percentIncrease = 100;
+            percentIncrease = 100;
         } else {
-          percentIncrease = (plus / yesterdayValue) * 100;
+            percentIncrease = ((plus / yesterdayValue) * 100).toFixed(2); 
         }
-
-        if (percentIncrease > 15) {
-          const hsseItem = HSSE.find((item) => item.key === key);
-          warning += `<span><strong>${hsseItem.title}</strong> lớn hơn so với ${percentIncrease}% ngày hôm trước</span></br>`;
+        
+        if (parseFloat(percentIncrease) > 15) {
+            const hsseItem = HSSE.find((item) => item.key === key);
+            warning += `<span><strong>${hsseItem.title}</strong> lớn hơn so với ${percentIncrease}% ngày hôm trước</span></br>`;
         }
+        
       });
     }
     if (warning != "") {
