@@ -4511,11 +4511,11 @@ exports.tiLeHoanThanh = async (req, res) => {
     const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
 
     // Use this in place of the current date logic in the `whereClause`
-    whereClause.Ngay = {
-      [Op.gte]: `${yesterday} 00:00:00`,
-      [Op.lte]: `${yesterday} 23:59:59`,
-    };
-
+    // whereClause.Ngay = {
+    //   [Op.gte]: `${yesterday} 00:00:00`,
+    //   [Op.lte]: `${yesterday} 23:59:59`,
+    // };
+    whereClause.Ngay = yesterday;
     // if (year && month === "all") {
     //   whereClause.Ngay = {
     //     [Op.gte]: `${year}-01-01`,
@@ -4716,11 +4716,11 @@ exports.tiLeSuco = async (req, res) => {
     const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
 
     // Use this in place of the current date logic in the `whereClause`
-    whereClause.Ngay = {
-      [Op.gte]: `${yesterday} 00:00:00`,
-      [Op.lte]: `${yesterday} 23:59:59`,
-    };
-
+    // whereClause.Ngay = {
+    //   [Op.gte]: `${yesterday} 00:00:00`,
+    //   [Op.lte]: `${yesterday} 23:59:59`,
+    // };
+    whereClause.Ngay = yesterday;
     // Tạo tên bảng động dựa trên tháng và năm
     const tableName = `tb_checklistchitiet_${month}_${year}`;
 
