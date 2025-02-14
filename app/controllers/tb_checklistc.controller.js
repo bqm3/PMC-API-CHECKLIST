@@ -7985,7 +7985,7 @@ exports.createPreviewReports = async (req, res) => {
     const startDateObj = new Date(startDateFormat);
     const endDateObj = new Date(endDateFormat);
 
-    const monthsRange = getMonthsRange(startDateObj, endDateObj);
+    const monthsRange = getMonthsRange(startDate, endDateObj);
 
     const workbook = new ExcelJS.Workbook();
     if (keyCreate == 1) {
@@ -7995,8 +7995,8 @@ exports.createPreviewReports = async (req, res) => {
         isDelete: 0,
         ID_Duan: userData.ID_Duan,
         Ngay: {
-          [Op.gte]: startDateFormat,
-          [Op.lte]: endDateFormat,
+          [Op.gte]: startDate,
+          [Op.lte]: endDateObj,
         },
       };
 
@@ -9546,7 +9546,9 @@ exports.testExcel = async (req, res) => {
 
     // Tiêu đề cố định
     sheet.mergeCells("A1:L4");
-    sheet.getCell("A1").value = `Báo cáo kiểm tra checklist ${TenKhoiCV || ""} tháng ${monthFormat} năm ${year}`
+    sheet.getCell("A1").value = `Báo cáo kiểm tra checklist ${
+      TenKhoiCV || ""
+    } tháng ${monthFormat} năm ${year}`;
     sheet.getCell("A1").alignment = {
       vertical: "middle",
       horizontal: "center",
@@ -9563,7 +9565,7 @@ exports.testExcel = async (req, res) => {
     sheet.getCell("B5").value = "Tên hạng mục";
     sheet.getCell("C5").value = "Tên checklist";
     ["A5", "B5", "C5"].forEach((cell) => {
-      sheet.getCell(cell).font = { bold: true, size: 14  };
+      sheet.getCell(cell).font = { bold: true, size: 14 };
       sheet.getCell(cell).alignment = {
         vertical: "middle",
         horizontal: "center",
@@ -9627,15 +9629,15 @@ exports.testExcel = async (req, res) => {
     // Lấy dữ liệu checklist hoàn thành
     let checklistDoneItems = [];
     if (checklistCIds.length > 0) {
-        checklistDoneItems = await sequelize.query(
-          `SELECT * FROM ${table_done} WHERE ID_ChecklistC IN (:checklistCIds) AND isDelete = 0`,
-          {
-            replacements: { checklistCIds },
-            type: sequelize.QueryTypes.SELECT,
-          }
-        );
+      checklistDoneItems = await sequelize.query(
+        `SELECT * FROM ${table_done} WHERE ID_ChecklistC IN (:checklistCIds) AND isDelete = 0`,
+        {
+          replacements: { checklistCIds },
+          type: sequelize.QueryTypes.SELECT,
+        }
+      );
     }
-    
+
     const statusByDay = {};
 
     // Lặp qua từng checklist trong `tbChecklistC`
@@ -9691,7 +9693,9 @@ exports.testExcel = async (req, res) => {
       sheet.mergeCells(5, col, 5, col + dataCalv.length - 1);
 
       const cell = sheet.getCell(5, col);
-      cell.value = `${day.toString().padStart(2, "0")}/${monthFormat}`.slice(-5);
+      cell.value = `${day.toString().padStart(2, "0")}/${monthFormat}`.slice(
+        -5
+      );
       cell.alignment = { vertical: "middle", horizontal: "center" };
       cell.font = { bold: true, size: 12 };
 
@@ -9811,11 +9815,11 @@ exports.testExcel = async (req, res) => {
 
 exports.updateTongC2 = async (req, res) => {
   try {
-    const {fromDate, toDate} = req.body;
+    const { fromDate, toDate } = req.body;
     const todayDate = moment();
-    const month = (todayDate.month() + 1).toString().padStart(2, "0"); 
+    const month = (todayDate.month() + 1).toString().padStart(2, "0");
     const year = todayDate.year();
-    
+
     const arrChecklistC = await Tb_checklistc.findAll({
       attributes: ["ID_ChecklistC"],
       where: {
@@ -9825,10 +9829,10 @@ exports.updateTongC2 = async (req, res) => {
         // ID_Duan: 1,
         TongC: 0,
         isDelete: 0,
-      }
-    })
+      },
+    });
 
-    const checklistCIds = arrChecklistC.map(item => item.ID_ChecklistC);
+    const checklistCIds = arrChecklistC.map((item) => item.ID_ChecklistC);
 
     const table_chitiet = `tb_checklistchitiet_${month}_${year}`;
     const table_done = `tb_checklistchitietdone_${month}_${year}`;
@@ -9837,13 +9841,28 @@ exports.updateTongC2 = async (req, res) => {
 
     const dataChecklistChiTiet = await sequelize.models[table_chitiet].findAll({
       attributes: ["ID_Checklistchitiet", "ID_ChecklistC", "isDelete"],
-      where: { ID_ChecklistC: { [Op.in]: checklistCIds }, isDelete: 0, isCheckListLai: 0},
+      where: {
+        ID_ChecklistC: { [Op.in]: checklistCIds },
+        isDelete: 0,
+        isCheckListLai: 0,
+      },
     });
 
-    const dataChecklistChiTietDone = await sequelize.models[table_done].findAll({
-      attributes: ["ID_Checklistchitietdone", "Description", "ID_ChecklistC", "isDelete"],
-      where: { ID_ChecklistC: { [Op.in]: checklistCIds }, isDelete: 0, isCheckListLai: 0},
-    });
+    const dataChecklistChiTietDone = await sequelize.models[table_done].findAll(
+      {
+        attributes: [
+          "ID_Checklistchitietdone",
+          "Description",
+          "ID_ChecklistC",
+          "isDelete",
+        ],
+        where: {
+          ID_ChecklistC: { [Op.in]: checklistCIds },
+          isDelete: 0,
+          isCheckListLai: 0,
+        },
+      }
+    );
 
     const combinedMap = new Map();
 
@@ -9885,10 +9904,9 @@ exports.updateTongC2 = async (req, res) => {
       message: "Gộp dữ liệu checklist thành công.",
       data: result,
     });
-
   } catch (error) {
     res
       .status(500)
       .json({ message: error.message || "Lỗi! Vui lòng thử lại sau." });
   }
-}
+};

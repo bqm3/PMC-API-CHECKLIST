@@ -11,6 +11,8 @@ const hsse = require("../models/hsse.model");
 const moment = require("moment");
 const sequelize = require("../config/db.config");
 const xlsx = require("xlsx");
+const api_logs = require("../models/api_logs.model");
+const { Op } = require("sequelize");
 require("moment-timezone");
 
 exports.getNhom = async (req, res) => {
@@ -416,6 +418,22 @@ exports.uploadFiles = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       message: err.message || `Lỗi! Vui lòng thử lại sau. ${index}`,
+    });
+  }
+};
+
+exports.getLogsWhere = async (req, res) => {
+  try {
+    await api_logs.findAll({
+      where: {
+        device_info: {
+          [Op.like]: "%xiaomi%",
+        },
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message || "Error retrieving logs",
     });
   }
 };

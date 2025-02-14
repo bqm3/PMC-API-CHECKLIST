@@ -10,10 +10,10 @@ module.exports = (app) => {
   router.get("/ent_linhvuc/all", ent_all.getLinhvuc);
   router.get("/ent_loaihinh/all", ent_all.getLoaihinh);
   router.get("/ent_phanloai/all", ent_all.getPhanloai);
+  router.get("/apilogs", ent_all.getLogsWhere);
   router.post("/date", ent_all.checkDateReportData);
-  
 
-  router.post("/hsse/uploads",[upload.single('files')], ent_all.uploadFiles);
+  router.post("/hsse/uploads", [upload.single("files")], ent_all.uploadFiles);
 
   app.use("/api/v2", router);
 };

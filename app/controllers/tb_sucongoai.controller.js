@@ -90,10 +90,17 @@ exports.create = async (req, res) => {
       deviceNameUser: deviceNameUser,
       ID_User: ID_User,
       ID_Duan: userData?.ID_Duan,
-      TenHangmuc: `${TenHangmuc}` !== "null" && `${TenHangmuc}` !== "undefined" ? TenHangmuc : null,
-      Bienphapxuly: `${Bienphapxuly}` !== "null" && `${Bienphapxuly}` !== "undefined" ? Bienphapxuly : null,
+      TenHangmuc:
+        `${TenHangmuc}` !== "null" && `${TenHangmuc}` !== "undefined"
+          ? TenHangmuc
+          : null,
+      Bienphapxuly:
+        `${Bienphapxuly}` !== "null" && `${Bienphapxuly}` !== "undefined"
+          ? Bienphapxuly
+          : null,
       Tinhtrangxuly: Tinhtrangxuly || 0,
-      Ghichu: `${Ghichu}` !== "null" && `${Ghichu}` !== "undefined" ? Ghichu : null,
+      Ghichu:
+        `${Ghichu}` !== "null" && `${Ghichu}` !== "undefined" ? Ghichu : null,
     };
 
     Tb_sucongoai.create(data)
@@ -176,7 +183,6 @@ exports.get = async (req, res) => {
               attributes: ["Chucvu", "Role"],
             },
           ],
-         
         },
         {
           model: Ent_user,
@@ -292,6 +298,12 @@ exports.updateStatus = async (req, res) => {
       Bienphapxuly,
     } = req.body;
     if (ID_Suco && userData) {
+      if (!Bienphapxuly || Bienphapxuly.trim() === "") {
+        res.status(400).json({
+          message: "Cần có biện pháp xử lý sự cố",
+        });
+      }
+
       const updateFields = {
         ID_Handler: userData.ID_User,
         Tinhtrangxuly: Tinhtrangxuly,
@@ -301,7 +313,10 @@ exports.updateStatus = async (req, res) => {
         Anhkiemtra: idsString,
         Ghichu:
           `${Ghichu}` !== "null" && `${Ghichu}` !== "undefined" ? Ghichu : null,
-        Bienphapxuly: `${Bienphapxuly}` !== "null" && `${Bienphapxuly}` !== "undefined" ? Bienphapxuly : null,
+        Bienphapxuly:
+          `${Bienphapxuly}` !== "null" && `${Bienphapxuly}` !== "undefined"
+            ? Bienphapxuly
+            : null,
       };
 
       if (`${ID_Hangmuc}` !== "null" && `${ID_Hangmuc}` !== "undefined") {
@@ -1853,15 +1868,22 @@ exports.uploadReports = async (req, res) => {
   }
 };
 
-
 exports.getDuanUploadSCN = async (req, res) => {
   try {
     let { fromDate, toDate, format } = req.query;
 
     let whereCondition = {};
 
-    const adjustedFromDate = moment2.tz(fromDate, "YYYY-MM-DD").startOf("day").utc().toDate();
-    const adjustedToDate = moment2.tz(toDate, "YYYY-MM-DD").endOf("day").utc().toDate();
+    const adjustedFromDate = moment2
+      .tz(fromDate, "YYYY-MM-DD")
+      .startOf("day")
+      .utc()
+      .toDate();
+    const adjustedToDate = moment2
+      .tz(toDate, "YYYY-MM-DD")
+      .endOf("day")
+      .utc()
+      .toDate();
     whereCondition = {
       createdAt: {
         [Op.between]: [adjustedFromDate, adjustedToDate],
