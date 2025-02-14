@@ -297,13 +297,13 @@ exports.updateStatus = async (req, res) => {
       deviceNameHandler,
       Bienphapxuly,
     } = req.body;
-    if (ID_Suco && userData) {
-      if (!Bienphapxuly || Bienphapxuly.trim() === "") {
-        res.status(400).json({
-          message: "Cần có biện pháp xử lý sự cố",
-        });
-      }
+    if (!Bienphapxuly || Bienphapxuly.trim() === "") {
+      res.status(400).json({
+        message: "Cần có biện pháp xử lý sự cố",
+      });
+    }
 
+    if (ID_Suco && userData) {
       const updateFields = {
         ID_Handler: userData.ID_User,
         Tinhtrangxuly: Tinhtrangxuly,
