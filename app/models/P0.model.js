@@ -36,6 +36,12 @@ const P0 = sequelize.define(
     Slxedapdien: {
       type: DataTypes.INTEGER,
     },
+    Sotheotodk: {
+      type: DataTypes.INTEGER,
+    },
+    Sothexemaydk: {
+      type: DataTypes.INTEGER,
+    },
     Sltheoto: {
       type: DataTypes.INTEGER,
     },

@@ -2,7 +2,6 @@ const { P0, P0_Log, P0_User, Ent_user, Ent_chucvu, Ent_duan } = require("../mode
 const { Op } = require("sequelize");
 const moment = require("moment");
 const sequelize = require("../config/db.config");
-const { funcCreateYesterDay } = require("../utils/util");
 
 exports.createP0_User = async (req, res) => {
   try {
@@ -79,7 +78,7 @@ exports.getDetailP0 = async (req, res) => {
     const findP0 = await P0.findOne({
       where: {
         ID_P0: req.params.id,
-        isDelete: 0
+        isDelete: 0,
       },
     });
 
@@ -112,7 +111,7 @@ exports.getDetailP0 = async (req, res) => {
         {
           model: Ent_duan,
           as: "ent_duan",
-        }
+        },
       ],
     });
   } catch (error) {
@@ -204,10 +203,22 @@ exports.createP0 = async (req, res) => {
     });
 
     if (findP0) {
-      return res
-        .status(400)
-        .json({ message: "Báo cáo P0 ngày hôm nay đã được tạo" });
+      return res.status(400).json({ message: "Báo cáo P0 ngày hôm nay đã được tạo" });
     } else {
+      if (data.Sotheotodk != undefined && userData.ID_KhoiCV != 4) {
+        if (combinedData.Sotheotodk !== combinedData.Sltheoto + combinedData.Slxeoto + combinedData.Slxeotodien) {
+          return res.status(400).json({
+            message: "Số thẻ ô tô phát hành không khớp. Vui lòng kiểm tra lại số thẻ ô tô còn lại, số xe ô tô và số xe ô tô điện.",
+          });
+        }
+
+        if (combinedData.Sothexemaydk !== combinedData.Slthexemay + combinedData.Slxemay + combinedData.Slxemaydien) {
+          return res.status(400).json({
+            message: "Số thẻ xe máy phát hành không khớp. Vui lòng kiểm tra lại số thẻ xe máy còn lại, số xe máy và số xe máy điện.",
+          });
+        }
+      }
+
       const createP0 = await P0.create(combinedData, { transaction: t });
       await funcP0_Log(req, sanitizedData, createP0.ID_P0, t);
       await t.commit();
@@ -235,7 +246,7 @@ exports.getAll_ByID_Duan = async (req, res) => {
         ID_Duan: userData?.ID_Duan,
         isDelete: 0,
       },
-    })
+    });
 
     const findAll = await P0.findAll({
       where: {
@@ -268,7 +279,7 @@ exports.getAll_ByID_Duan = async (req, res) => {
         {
           model: Ent_duan,
           as: "ent_duan",
-        }
+        },
       ],
       order: [["Ngaybc", "DESC"]],
       offset: offset,
@@ -278,10 +289,10 @@ exports.getAll_ByID_Duan = async (req, res) => {
     return res.status(200).json({
       message: "Lấy dữ liệu P0 thành công",
       data: findAll,
-      count: count
+      count: count,
     });
   } catch (error) {
-    console.log("error",error.message)
+    console.log("error", error.message);
     await t.rollback();
     return res.status(500).json({
       message: error?.message || "Có lỗi xảy ra khi lấy thông tin",
@@ -292,6 +303,7 @@ exports.getAll_ByID_Duan = async (req, res) => {
 exports.updateP0 = async (req, res) => {
   const t = await sequelize.transaction();
   try {
+    const userData = req.user.data;
     const { data, Ngay } = req.body;
     const isToday = moment(Ngay).isSame(moment(), "day");
 
@@ -300,6 +312,20 @@ exports.updateP0 = async (req, res) => {
       return res.status(400).json({
         message: "Có lỗi xảy ra! Ngày không đúng dữ liệu.",
       });
+    }
+
+    if (data.Sotheotodk != undefined && userData.ID_KhoiCV != 4) {
+      if (data.Sotheotodk !== data.Sltheoto + data.Slxeoto + data.Slxeotodien) {
+        return res.status(400).json({
+          message: "Số thẻ ô tô phát hành không khớp. Vui lòng kiểm tra lại số thẻ ô tô còn lại, số xe ô tô và số xe ô tô điện.",
+        });
+      }
+
+      if (data.Sothexemaydk !== data.Slthexemay + data.Slxemay + data.Slxemaydien) {
+        return res.status(400).json({
+          message: "Số thẻ xe máy phát hành không khớp. Vui lòng kiểm tra lại số thẻ xe máy còn lại, số xe máy và số xe máy điện.",
+        });
+      }
     }
 
     await funcP0_Log(req, data, req.params.id, t);
@@ -380,5 +406,55 @@ const funcP0_Log = async (req, data, ID_P0, t) => {
     await P0_Log.create(combinedData, { transaction: t });
   } catch (error) {
     throw error;
+  }
+};
+
+exports.get_SoThePhatHanh = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of today
+
+    // Trước tiên tìm dữ liệu của ngày hôm nay
+    let data = await P0.findOne({
+      attributes: ["Sotheotodk", "Sothexemaydk"],
+      where: {
+        ID_Duan: userData?.ID_Duan,
+        Ngaybc: today,
+        isDelete: 0,
+      },
+    });
+
+    // Nếu không có dữ liệu ngày hôm nay, tìm ngày gần nhất có dữ liệu
+    if (!data) {
+      data = await P0.findOne({
+        attributes: ["Sotheotodk", "Sothexemaydk"],
+        where: {
+          ID_Duan: userData?.ID_Duan,
+          Ngaybc: {
+            [Op.lt]: today, // Tìm các ngày trước today
+          },
+          isDelete: 0,
+        },
+        order: [["Ngaybc", "DESC"]], // Sắp xếp theo ngày giảm dần để lấy ngày gần nhất
+      });
+    }
+
+    // Nếu vẫn không có dữ liệu, trả về giá trị mặc định
+    if (!data) {
+      data = {
+        Sotheotodk: 0,
+        Sothexemaydk: 0,
+      };
+    }
+
+    return res.status(200).json({
+      message: "Số thẻ phát hành",
+      data: data,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error?.message || "Lỗi khi cập nhật P0.",
+    });
   }
 };
