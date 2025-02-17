@@ -7,6 +7,9 @@ const { Op } = require("sequelize");
 const moment = require("moment");
 const hsse = require("../../models/hsse.model");
 const sequelize = require("../../config/db.config");
+const { Expo } = require("expo-server-sdk");
+// Khởi tạo một đối tượng Expo
+let expo = new Expo();
 
 const HSSE = [
   { id: 0, title: "Điện cư dân", key: "Dien_cu_dan" },
@@ -56,7 +59,7 @@ exports.createHSSE = async (req, res) => {
     const userData = req.user.data;
     const data = req.body;
     const Ngay_ghi_nhan = moment(new Date()).format("YYYY-MM-DD");
-    const yesterday = moment( Ngay_ghi_nhan)
+    const yesterday = moment(Ngay_ghi_nhan)
       .subtract(1, "days")
       .format("YYYY-MM-DD");
 
@@ -89,7 +92,52 @@ exports.createHSSE = async (req, res) => {
         .status(400)
         .json({ message: "Báo cáo HSSE ngày hôm nay đã được tạo" });
     } else {
-      const htmlResponse = await funcYesterday(userData, data, yesterday, t, "Tạo báo cáo HSSE thành công.");
+      const htmlResponse = await funcYesterday(
+        userData,
+        data,
+        yesterday,
+        t,
+        "Tạo báo cáo HSSE thành công."
+      );
+
+      // Token của thiết bị cần gửi thông báo
+      let pushToken = "ExponentPushToken[tCg1IsCjTTXAM9Dg7PKpiu]";
+
+      // Kiểm tra điều kiện trước khi gửi
+      if (htmlResponse && userData?.ID_Duan == 2) {
+        // Kiểm tra xem token có hợp lệ không
+        if (!Expo.isExpoPushToken(pushToken)) {
+          console.error(`Push token không hợp lệ: ${pushToken}`);
+        } else {
+          // Tạo nội dung thông báo
+          let messages = [
+            {
+              to: pushToken,
+              sound: "default",
+              title: "Phòng số hóa",
+              body: "Dự án anh có chỉ số tăng bất thường !",
+            },
+          ];
+
+          // Gửi thông báo
+          (async () => {
+            try {
+              let chunks = expo.chunkPushNotifications(messages);
+              let tickets = [];
+
+              for (let chunk of chunks) {
+                let ticketChunk = await expo.sendPushNotificationsAsync(chunk);
+                tickets.push(...ticketChunk);
+              }
+
+              console.log("Gửi thông báo thành công:", tickets);
+            } catch (error) {
+              console.error("Lỗi khi gửi thông báo:", error);
+            }
+          })();
+        }
+      }
+
       const createHSSE = await hsse.create(combinedData, { transaction: t });
       await funcHSSE_Log(req, sanitizedData, createHSSE.ID, t);
       await t.commit();
@@ -110,10 +158,7 @@ exports.updateHSSE = async (req, res) => {
     const userData = req.user.data;
     const { data, Ngay } = req.body;
     const isToday = moment(Ngay).isSame(moment(), "day");
-    const yesterday = moment(Ngay)
-      .subtract(1, "days")
-      .format("YYYY-MM-DD");
-
+    const yesterday = moment(Ngay).subtract(1, "days").format("YYYY-MM-DD");
 
     if (!isToday) {
       await t.rollback();
@@ -122,15 +167,20 @@ exports.updateHSSE = async (req, res) => {
       });
     }
 
-
-    const htmlResponse = await funcYesterday(userData, data, yesterday, t, "Cập nhật thành công !")
+    const htmlResponse = await funcYesterday(
+      userData,
+      data,
+      yesterday,
+      t,
+      "Cập nhật thành công !"
+    );
     await funcHSSE_Log(req, data, req.params.id, t);
     await funUpdateHSSE(req, req.params.id, t);
     await t.commit();
 
     return res.status(200).json({
       message: "Cập nhật thành công!",
-      htmlResponse: htmlResponse
+      htmlResponse: htmlResponse,
     });
   } catch (error) {
     await t.rollback();
@@ -180,7 +230,13 @@ exports.createHSSE_PSH = async (req, res) => {
         .status(400)
         .json({ message: "Báo cáo HSSE ngày hôm nay đã được tạo" });
     } else {
-      const htmlResponse = await funcYesterday(userData, data, yesterday, t, "Tạo báo cáo HSSE thành công.");
+      const htmlResponse = await funcYesterday(
+        userData,
+        data,
+        yesterday,
+        t,
+        "Tạo báo cáo HSSE thành công."
+      );
       const createHSSE = await hsse.create(combinedData, { transaction: t });
       // await funcHSSE_Log(req, sanitizedData, createHSSE.ID, t);
       await t.commit();
@@ -201,18 +257,22 @@ exports.updateHSSE_PSH = async (req, res) => {
     const userData = req.user.data;
     const { data, Ngay } = req.body;
     const isToday = moment(Ngay).isSame(moment(), "day");
-    const yesterday = moment(Ngay)
-    .subtract(1, "days")
-    .format("YYYY-MM-DD");
+    const yesterday = moment(Ngay).subtract(1, "days").format("YYYY-MM-DD");
 
-    const htmlResponse = await funcYesterday(userData, data, yesterday, t, "Cập nhật thành công !")
+    const htmlResponse = await funcYesterday(
+      userData,
+      data,
+      yesterday,
+      t,
+      "Cập nhật thành công !"
+    );
     // await funcHSSE_Log(req, data, req.params.id, t);
     await funUpdateHSSE(req, req.params.id, t);
     await t.commit();
 
     return res.status(200).json({
       message: "Cập nhật thành công!",
-      htmlResponse: htmlResponse
+      htmlResponse: htmlResponse,
     });
   } catch (error) {
     await t.rollback();
@@ -358,7 +418,7 @@ exports.getHSSE = async (req, res) => {
   try {
     const Ngay_ghi_nhan = moment(new Date()).format("YYYY-MM-DD");
     const Ngay_dau_thang = moment(Ngay_ghi_nhan, "YYYY-MM-DD")
-      .startOf('month')
+      .startOf("month")
       .format("YYYY-MM-DD");
     const userData = req.user.data;
     const resData = await hsse.findAll({
@@ -399,7 +459,7 @@ exports.getHSSEAll = async (req, res) => {
       message: error.message || "Có lỗi xảy ra",
     });
   }
-}
+};
 
 exports.getDetailHSSE = async (req, res) => {
   try {
@@ -487,16 +547,15 @@ const funcYesterday = async (userData, data, yesterday, t, message) => {
 
         let percentIncrease;
         if (yesterdayValue == 0 && currentValue != 0) {
-            percentIncrease = 100;
+          percentIncrease = 100;
         } else {
-            percentIncrease = ((plus / yesterdayValue) * 100).toFixed(2); 
+          percentIncrease = ((plus / yesterdayValue) * 100).toFixed(2);
         }
-        
+
         if (parseFloat(percentIncrease) > 15) {
-            const hsseItem = HSSE.find((item) => item.key === key);
-            warning += `<span><strong>${hsseItem.title}</strong> lớn hơn so với ${percentIncrease}% ngày hôm trước</span></br>`;
+          const hsseItem = HSSE.find((item) => item.key === key);
+          warning += `<span><strong>${hsseItem.title}</strong> lớn hơn so với ${percentIncrease}% ngày hôm trước</span></br>`;
         }
-        
       });
     }
     if (warning != "") {

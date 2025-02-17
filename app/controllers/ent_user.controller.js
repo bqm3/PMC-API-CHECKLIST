@@ -15,7 +15,11 @@ const { Op, where } = require("sequelize");
 const fetch = require("node-fetch");
 const sequelize = require("../config/db.config");
 const xlsx = require("xlsx");
-const { convertDateFormat, formatVietnameseText, validatePassword } = require("../utils/util");
+const {
+  convertDateFormat,
+  formatVietnameseText,
+  validatePassword,
+} = require("../utils/util");
 const zxcvbn = require("zxcvbn");
 
 // Login User
@@ -28,7 +32,7 @@ exports.login = async (req, res) => {
       });
     }
 
-    const passwordCore = validatePassword(req.body.Password)
+    const passwordCore = validatePassword(req.body.Password);
     // Find user by username
     const user = await Ent_user.findOne({
       where: {
@@ -125,7 +129,7 @@ exports.login = async (req, res) => {
           token: token,
           user: user,
           projects: projects.length > 0 ? projects : "Không có dự án nào",
-          passwordCore: passwordCore
+          passwordCore: passwordCore,
         });
       } else {
         // Incorrect password
@@ -290,7 +294,8 @@ exports.changePassword = async (req, res, next) => {
       )
         .then((data) => {
           res.status(200).json({
-            message: "Mật khẩu của bạn đã được cập nhật thành công. Vui lòng đăng xuất và đăng nhập lại để tiếp tục sử dụng ứng dụng một cách an toàn.",
+            message:
+              "Mật khẩu của bạn đã được cập nhật thành công. Vui lòng đăng xuất và đăng nhập lại để tiếp tục sử dụng ứng dụng một cách an toàn.",
           });
         })
         .catch((err) => {
@@ -394,9 +399,9 @@ exports.updateUser = async (req, res) => {
 exports.deleteUser = async (req, res, next) => {
   try {
     const userData = req.user.data;
-    let whereClause = { ID_User: req.params.id};
-    if(userData.ID_Chucvu != 2 && userData.ID_Chucvu != 1) {
-      throw new Error ("Bạn không có quyền xóa !")
+    let whereClause = { ID_User: req.params.id };
+    if (userData.ID_Chucvu != 2 && userData.ID_Chucvu != 1) {
+      throw new Error("Bạn không có quyền xóa !");
     }
     if (userData.ID_Chucvu == 2) {
       whereClause.ID_Chucvu = { [Op.ne]: 2 };
@@ -407,12 +412,12 @@ exports.deleteUser = async (req, res, next) => {
           isDelete: 1,
         },
         {
-          where: whereClause
+          where: whereClause,
         }
       )
         .then((data) => {
-          if(data == 0) {
-            throw new Error ("Không thể xóa vui lòng kiểm tra lại chức vụ")
+          if (data == 0) {
+            throw new Error("Không thể xóa vui lòng kiểm tra lại chức vụ");
           }
           res.status(200).json({
             message: "Xóa tài khoản thành công!",
@@ -629,7 +634,7 @@ exports.getDetail = async (req, res) => {
               {
                 model: Ent_toanha,
                 as: "ent_toanha",
-                attributes: ["Toanha", "Sotang", "ID_Duan", "Vido", "Kinhdo"],
+                attributes: ["Toanha", "Sotang", "ID_Duan"],
                 where: { isDelete: 0 },
                 required: false,
               },
@@ -714,7 +719,7 @@ exports.checkAuth = async (req, res, next) => {
             {
               model: Ent_toanha,
               as: "ent_toanha",
-              attributes: ["Toanha", "Sotang", "ID_Duan", "Vido", "Kinhdo"],
+              attributes: ["Toanha", "Sotang", "ID_Duan"],
               where: { isDelete: 0 },
               required: false,
             },
@@ -797,7 +802,7 @@ exports.getGiamSat = async (req, res, next) => {
               {
                 model: Ent_toanha,
                 as: "ent_toanha",
-                attributes: ["Toanha", "Sotang", "ID_Duan", "Vido", "Kinhdo"],
+                attributes: ["Toanha", "Sotang", "ID_Duan"],
                 where: { isDelete: 0 },
                 required: false,
               },
@@ -892,7 +897,6 @@ exports.deviceToken = async (req, res, next) => {
       .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
-
 
 exports.uploadFileUsers = async (req, res) => {
   try {

@@ -25,7 +25,7 @@ const Tb_checklistchitiet = sequelize.define(
       type: DataTypes.CHAR,
     },
     Anh: {
-      type: DataTypes.CHAR,
+      type: DataTypes.TEXT,
     },
     Ngay: {
       type: DataTypes.DATE,
@@ -48,7 +48,7 @@ const Tb_checklistchitiet = sequelize.define(
     isCheckListLai: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
-     },
+    },
     isDelete: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
@@ -60,12 +60,11 @@ const Tb_checklistchitiet = sequelize.define(
     tableName: "tb_checklistchitiet",
     indexes: [
       {
-        unique: false,  
-        fields: ['isDelete',,"ID_ChecklistC","ID_Checklist", "isScan"], 
+        unique: false,
+        fields: ["isDelete", , "ID_ChecklistC", "ID_Checklist", "isScan"],
       },
     ],
-  },
- 
+  }
 );
 
 module.exports = Tb_checklistchitiet;

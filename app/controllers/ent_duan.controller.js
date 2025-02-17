@@ -94,7 +94,7 @@ exports.get = async (req, res) => {
           {
             model: Ent_toanha,
             as: "ent_toanha",
-            attributes: ["Toanha", "Sotang", "ID_Duan", "Vido", "Kinhdo"],
+            attributes: ["Toanha", "Sotang", "ID_Duan"],
             where: { isDelete: 0 },
             required: false,
           },
@@ -140,7 +140,7 @@ exports.get = async (req, res) => {
           {
             model: Ent_toanha,
             as: "ent_toanha",
-            attributes: ["Toanha", "Sotang", "ID_Duan", "Vido", "Kinhdo"],
+            attributes: ["Toanha", "Sotang", "ID_Duan"],
             where: { isDelete: 0 },
             required: false,
           },
@@ -252,7 +252,7 @@ exports.update = async (req, res) => {
     });
 
     let Anh = "";
-    if ( uploadedFileIds.length > 0) {
+    if (uploadedFileIds.length > 0) {
       if (uploadedFileIds) {
         Anh = uploadedFileIds[0].fileId.id;
       } else {
@@ -267,7 +267,9 @@ exports.update = async (req, res) => {
           Diachi: req.body.Diachi,
           Vido: req.body.Vido,
           Kinhdo: req.body.Kinhdo,
-          Logo: req.body.Logo || `https://checklist.pmcweb.vn/be/upload/logo/${Anh}`,
+          Logo:
+            req.body.Logo ||
+            `https://checklist.pmcweb.vn/be/upload/logo/${Anh}`,
           Ngaybatdau: req.body.Ngaybatdau,
           Percent: req.body.Percent,
           ID_Nhom: req.body.ID_Nhom || null,
@@ -353,7 +355,7 @@ exports.getKhuvucByDuan = async (req, res) => {
         {
           model: Ent_toanha,
           as: "ent_toanha",
-          attributes: ["Toanha", "Sotang", "ID_Duan", "Vido", "Kinhdo"],
+          attributes: ["Toanha", "Sotang", "ID_Duan"],
           where: { isDelete: 0 },
           required: false,
         },
@@ -408,7 +410,11 @@ exports.getThongtinduan = async (req, res) => {
       isDelete: 0,
     };
 
-    if (userData && (userData?.ent_chucvu?.Role == 4 || userData?.ent_chucvu?.Role == 1) && duanIds.length > 0) {
+    if (
+      userData &&
+      (userData?.ent_chucvu?.Role == 4 || userData?.ent_chucvu?.Role == 1) &&
+      duanIds.length > 0
+    ) {
       whereCondition.ID_Duan = {
         [Op.in]: duanIds,
       };
