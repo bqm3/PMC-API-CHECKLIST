@@ -7197,6 +7197,12 @@ exports.createExcelFile = async (req, res) => {
   }
 };
 
+// 17/02/2025
+function formatDateManh(dateStr) {
+  const date = new Date(dateStr);
+  return date.toISOString().split("T")[0];
+}
+
 exports.createExcelTongHopCa = async (req, res) => {
   try {
     const keyCreate = req.params.id;
@@ -7207,6 +7213,9 @@ exports.createExcelTongHopCa = async (req, res) => {
 
     const startDateShow = formatDateShow(startDate);
     const endDateShow = formatDateEnd(endDate);
+
+    const startDateShowManh = formatDateManh(startDate);
+    const endDateShowManh = formatDateManh(endDate);
 
     const startDateObj = new Date(startDateFormat);
     const endDateObj = new Date(endDateFormat);
@@ -7219,10 +7228,13 @@ exports.createExcelTongHopCa = async (req, res) => {
       let whereClause = {
         isDelete: 0,
         ID_Duan: userData.ID_Duan,
-        Ngay: {
-          [Op.gte]: startDateFormat,
-          [Op.lte]: endDateFormat,
-        },
+        // Ngay: {
+        //   [Op.gte]: startDateFormat,
+        //   [Op.lte]: endDateFormat,
+        // },
+        createdAt: {
+          [Op.between]: [startDate,endDate]
+        }
       };
 
       const dataChecklist = await Tb_checklistc.findAll({
@@ -7271,8 +7283,8 @@ exports.createExcelTongHopCa = async (req, res) => {
             Tong: item.Tong,
             Ghichu: item.Ghichu,
           };
-          aggregatedData[shiftKey].TongC += item.TongC;
         }
+        aggregatedData[shiftKey].TongC += item.TongC;
       });
 
       worksheet.columns = [
@@ -7332,8 +7344,8 @@ exports.createExcelTongHopCa = async (req, res) => {
       // Merge cells and set values for the date range in row 2 (C2:H2)
       worksheet.mergeCells("A2:H2");
       worksheet.getCell("A2").value =
-        startDateShow && endDateShow
-          ? `Từ ngày: ${startDateShow}  Đến ngày: ${endDateShow}`
+      startDateShowManh && endDateShowManh
+          ? `Từ ngày: ${startDateShowManh}  Đến ngày: ${endDateShowManh}`
           : `Từ ngày: `;
       worksheet.getCell("A2").alignment = {
         horizontal: "center",
@@ -7994,10 +8006,13 @@ exports.createPreviewReports = async (req, res) => {
       let whereClause = {
         isDelete: 0,
         ID_Duan: userData.ID_Duan,
-        Ngay: {
-          [Op.gte]: startDateFormat,
-          [Op.lte]: endDateFormat,
-        },
+        // Ngay: {
+        //   [Op.gte]: startDateFormat,
+        //   [Op.lte]: endDateFormat,
+        // },
+        createdAt: {
+          [Op.between]: [startDate,endDate]
+        }
       };
 
       const dataChecklist = await Tb_checklistc.findAll({
