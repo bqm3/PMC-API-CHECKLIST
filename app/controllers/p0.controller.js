@@ -442,10 +442,11 @@ exports.get_SoThePhatHanh = async (req, res) => {
 
     // Nếu vẫn không có dữ liệu, trả về giá trị mặc định
     if (!data) {
-      data = {
-        Sotheotodk: 0,
-        Sothexemaydk: 0,
-      };
+      data = { Sotheotodk: "0", Sothexemaydk: "0" };
+    } else {
+      // Nếu có dữ liệu nhưng bị null, gán lại giá trị "0"
+      data.Sotheotodk = data.Sotheotodk ?? "0";
+      data.Sothexemaydk = data.Sothexemaydk ?? "0";
     }
 
     return res.status(200).json({
