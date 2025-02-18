@@ -3,6 +3,7 @@ const upload = multer();
 
 const {
   uploadSuCongNgoai,
+  uploadHandler,
   resizeImage,
 } = require("../middleware/upload_image.js");
 const logAction = require("../middleware/log_action.js");
@@ -18,14 +19,24 @@ module.exports = (app) => {
 
   router.post(
     "/create",
-    [isAuthenticated, uploadSuCongNgoai.any("images"), resizeImage, logAction],
+    [
+      isAuthenticated,
+      uploadHandler(uploadSuCongNgoai.any("images")),
+      resizeImage,
+      logAction,
+    ],
     tb_sucongoai.create
   );
 
   router.get("/", [isAuthenticated], tb_sucongoai.get);
   router.put(
     "/status/:id",
-    [isAuthenticated, uploadSuCongNgoai.any("images"), resizeImage, logAction],
+    [
+      isAuthenticated,
+      uploadHandler(uploadSuCongNgoai.any("images")),
+      resizeImage,
+      logAction,
+    ],
     tb_sucongoai.updateStatus
   );
   router.get("/getDetail/:id", [isAuthenticated], tb_sucongoai.getDetail);
@@ -65,7 +76,7 @@ module.exports = (app) => {
     tb_sucongoai.dashboardAllChiNhanh
   );
 
-  router.get("/duan-upload", tb_sucongoai.getDuanUploadSCN)
+  router.get("/duan-upload", tb_sucongoai.getDuanUploadSCN);
 
   app.use("/api/v2/tb_sucongoai", router);
 };
