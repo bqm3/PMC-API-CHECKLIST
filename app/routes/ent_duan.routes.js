@@ -1,9 +1,5 @@
 const multer = require("multer");
-const {
-  uploadLogo,
-  resizeImage,
-  uploadHandler,
-} = require("../middleware/upload_image.js");
+const { uploadLogo, resizeImage } = require("../middleware/upload_image.js");
 const upload = multer();
 
 module.exports = (app) => {
@@ -17,12 +13,7 @@ module.exports = (app) => {
 
   router.post(
     "/create",
-    [
-      isAuthenticated,
-      isAdmin,
-      uploadHandler(uploadLogo.any("images")),
-      resizeImage,
-    ],
+    [isAuthenticated, isAdmin, uploadLogo.any("images"), resizeImage],
     ent_duan.create
   );
   router.get("/", [isAuthenticated], ent_duan.get);
@@ -34,7 +25,7 @@ module.exports = (app) => {
   router.get("/:id", [isAuthenticated], ent_duan.getDetail);
   router.put(
     "/update/:id",
-    [isAuthenticated, uploadHandler(uploadLogo.any("images")), resizeImage],
+    [isAuthenticated, uploadLogo.any("images"), resizeImage],
     ent_duan.update
   );
   router.put("/delete/:id", [isAuthenticated], ent_duan.delete);

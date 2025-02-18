@@ -5,7 +5,6 @@ module.exports = (app) => {
   const {
     uploadBaoCaoChiSo,
     resizeImage,
-    uploadHandler,
   } = require("../../middleware/upload_image.js");
   const ent_baocaochiso = require("../../controllers/BaocaochisoController/ent_baocaochiso.controller.js");
   const {
@@ -18,11 +17,7 @@ module.exports = (app) => {
 
   router.post(
     "/create",
-    [
-      isAuthenticated,
-      uploadHandler(uploadBaoCaoChiSo.any("images")),
-      resizeImage,
-    ],
+    [isAuthenticated, uploadBaoCaoChiSo.any("images"), resizeImage],
     ent_baocaochiso.create
   );
 
@@ -30,11 +25,7 @@ module.exports = (app) => {
 
   router.put(
     "/:id",
-    [
-      isAuthenticated,
-      uploadHandler(uploadBaoCaoChiSo.any("images")),
-      resizeImage,
-    ],
+    [isAuthenticated, uploadBaoCaoChiSo.any("images"), resizeImage],
     ent_baocaochiso.update
   );
   router.put(
