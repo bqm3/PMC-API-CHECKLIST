@@ -3,7 +3,6 @@ const upload = multer();
 
 const {
   uploadSuCongNgoai,
-  uploadHandler,
   resizeImage,
 } = require("../middleware/upload_image.js");
 const logAction = require("../middleware/log_action.js");
@@ -21,7 +20,7 @@ module.exports = (app) => {
     "/create",
     [
       isAuthenticated,
-      uploadHandler(uploadSuCongNgoai.any("images")),
+      uploadSuCongNgoai.any("images"),
       resizeImage,
       logAction,
     ],
@@ -33,7 +32,7 @@ module.exports = (app) => {
     "/status/:id",
     [
       isAuthenticated,
-      uploadHandler(uploadSuCongNgoai.any("images")),
+      uploadSuCongNgoai.any("images"),
       resizeImage,
       logAction,
     ],

@@ -205,19 +205,20 @@ exports.createP0 = async (req, res) => {
     if (findP0) {
       return res.status(400).json({ message: "Báo cáo P0 ngày hôm nay đã được tạo" });
     } else {
-      if (data.Sotheotodk != undefined && userData.ID_KhoiCV != 4) {
-        if (combinedData.Sotheotodk !== combinedData.Sltheoto + combinedData.Slxeoto + combinedData.Slxeotodien) {
-          return res.status(400).json({
-            message: "Số thẻ ô tô phát hành không khớp. Vui lòng kiểm tra lại số thẻ ô tô còn lại, số xe ô tô và số xe ô tô điện.",
-          });
-        }
+      // bỏ vẫn cho tạo
+      // if (data.Sotheotodk != undefined && userData.ID_KhoiCV != 4) {
+      //   if (combinedData.Sotheotodk !== combinedData.Sltheoto + combinedData.Slxeoto + combinedData.Slxeotodien) {
+      //     return res.status(400).json({
+      //       message: "Số thẻ ô tô phát hành không khớp. Vui lòng kiểm tra lại số thẻ ô tô còn lại, số xe ô tô và số xe ô tô điện.",
+      //     });
+      //   }
 
-        if (combinedData.Sothexemaydk !== combinedData.Slthexemay + combinedData.Slxemay + combinedData.Slxemaydien) {
-          return res.status(400).json({
-            message: "Số thẻ xe máy phát hành không khớp. Vui lòng kiểm tra lại số thẻ xe máy còn lại, số xe máy và số xe máy điện.",
-          });
-        }
-      }
+      //   if (combinedData.Sothexemaydk !== combinedData.Slthexemay + combinedData.Slxemay + combinedData.Slxemaydien) {
+      //     return res.status(400).json({
+      //       message: "Số thẻ xe máy phát hành không khớp. Vui lòng kiểm tra lại số thẻ xe máy còn lại, số xe máy và số xe máy điện.",
+      //     });
+      //   }
+      // }
 
       const createP0 = await P0.create(combinedData, { transaction: t });
       await funcP0_Log(req, sanitizedData, createP0.ID_P0, t);
@@ -314,19 +315,19 @@ exports.updateP0 = async (req, res) => {
       });
     }
 
-    if (data.Sotheotodk != undefined && userData.ID_KhoiCV != 4) {
-      if (data.Sotheotodk !== data.Sltheoto + data.Slxeoto + data.Slxeotodien) {
-        return res.status(400).json({
-          message: "Số thẻ ô tô phát hành không khớp. Vui lòng kiểm tra lại số thẻ ô tô còn lại, số xe ô tô và số xe ô tô điện.",
-        });
-      }
+    // if (data.Sotheotodk != undefined && userData.ID_KhoiCV != 4) {
+    //   if (data.Sotheotodk !== data.Sltheoto + data.Slxeoto + data.Slxeotodien) {
+    //     return res.status(400).json({
+    //       message: "Số thẻ ô tô phát hành không khớp. Vui lòng kiểm tra lại số thẻ ô tô còn lại, số xe ô tô và số xe ô tô điện.",
+    //     });
+    //   }
 
-      if (data.Sothexemaydk !== data.Slthexemay + data.Slxemay + data.Slxemaydien) {
-        return res.status(400).json({
-          message: "Số thẻ xe máy phát hành không khớp. Vui lòng kiểm tra lại số thẻ xe máy còn lại, số xe máy và số xe máy điện.",
-        });
-      }
-    }
+    //   if (data.Sothexemaydk !== data.Slthexemay + data.Slxemay + data.Slxemaydien) {
+    //     return res.status(400).json({
+    //       message: "Số thẻ xe máy phát hành không khớp. Vui lòng kiểm tra lại số thẻ xe máy còn lại, số xe máy và số xe máy điện.",
+    //     });
+    //   }
+    // }
 
     await funcP0_Log(req, data, req.params.id, t);
     await updateP0(req, req.params.id, t);
