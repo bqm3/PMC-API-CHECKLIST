@@ -8,8 +8,10 @@ const {
   Ent_khoicv,
   Ent_phanloaida,
   Ent_chinhanh,
+  Ent_user,
 } = require("../models/setup.model");
-const { Op, Sequelize, fn, col, literal, where } = require("sequelize");
+const { Op } = require("sequelize");
+const sequelize = require("../config/db.config");
 var path = require("path");
 const { formatVietnameseText } = require("../utils/util");
 const { uploadFile } = require("../middleware/auth_google");
@@ -656,3 +658,89 @@ exports.getProjectbyName = async (req, res) => {
     });
   }
 };
+
+exports.updateSDTKhanCap = async (req, res) => {
+  const transaction = await sequelize.transaction(); 
+  try {
+    const { SDTKhanCap } = req.body; 
+    const userData = req.user?.data;
+
+    if (!SDTKhanCap) {
+      return res.status(400).json({
+        success: false,
+        message: "Vui lòng cung cấp số điện thoại khẩn cấp.",
+      });
+    }
+
+    const [updatedRows] = await Ent_duan.update(
+      { SDTKhanCap },
+      {
+        where: { ID_Duan: userData.ID_Duan },
+        transaction,
+      }
+    );
+
+    // Kiểm tra xem có bản ghi nào được cập nhật không
+    if (updatedRows === 0) {
+      await transaction.rollback();
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy dự án với ID cung cấp.",
+      });
+    }
+
+    await transaction.commit(); // Xác nhận giao dịch
+
+    return res.status(200).json({
+      success: true,
+      message: "Cập nhật số điện thoại khẩn cấp thành công!",
+      data: SDTKhanCap,
+    });
+  } catch (error) {
+    await transaction.rollback();
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Lỗi server! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+exports.getSDTKhanCap = async (req, res) => {
+  try {
+    const userData = req.user?.data;
+
+    const sdt = await Ent_duan.findOne({
+      attributes: ["SDTKhanCap"],
+      where: {
+        ID_Duan: userData.ID_Duan,
+        isDelete: 0,
+      }
+    })
+
+    if(sdt.SDTKhanCap != null && sdt.SDTKhanCap != undefined) {
+      return res.status(200).json({
+        message: "Số điện thoại khẩn cấp của dự án!",
+        SDTKhanCap: sdt.SDTKhanCap,
+      });
+    } else {
+      const data = await Ent_user.findAll({
+        where: {
+          ID_Chucvu: 2,
+          ID_Duan: userData.ID_Duan,
+          isDelete: 0
+        }
+      })
+      return res.status(200).json({
+        message: "Số điện thoại khẩn cấp của dự án!",
+        SDTKhanCap: data[0]?.Sodienthoai
+      });
+    }
+
+  } catch (error) {
+    await transaction.rollback();
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Lỗi server! Vui lòng thử lại sau.",
+    });
+  }
+}

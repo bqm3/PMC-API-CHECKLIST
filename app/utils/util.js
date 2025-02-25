@@ -165,6 +165,7 @@ const getMonthsRange = (start, end) => {
   return months;
 };
 
+//YYYY/MM/DD
 const funcCreateYesterDay = () => {
     const today = new Date();
     const yesterday = new Date(today);
@@ -232,6 +233,28 @@ const createDynamicTableDone = async (tableName) => {
   await sequelize.query(query);
 };
 
+// https://checklist.pmcweb.vn/upload/baocaosuco
+const BASE_URL_IMAGE = "https://checklist.pmcweb.vn/be/upload"
+
+const funcBaseUri_Image = (key, image) => {
+  let uri = ""
+  switch (key) {
+    // checklist
+    case 1:
+      uri = `${BASE_URL_IMAGE}/checklist/${image}`;
+      break;
+    // báo cáo chỉ số
+    case 2:
+      uri = `${BASE_URL_IMAGE}/baocaochiso/${image}`;
+      break;
+    // sự cố ngoài
+    case 3:
+      uri = `${BASE_URL_IMAGE}/sucongoai/${image}`;
+      break;
+  }
+  return uri;
+};
+
 module.exports = {
   convertDateFormat,
   checkDataExcel,
@@ -246,5 +269,6 @@ module.exports = {
   funcCreateYesterDay,
   createDynamicTableDone,
   createDynamicTableChiTiet,
-  validatePassword
+  validatePassword,
+  funcBaseUri_Image
 };

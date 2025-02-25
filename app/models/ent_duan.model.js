@@ -38,6 +38,9 @@ const Ent_duan = sequelize.define(
     Percent: {
       type: DataTypes.INTEGER,
     },
+    SDTKhanCap: {
+      type: DataTypes.CHAR,
+    },
     isDelete: {
       type: DataTypes.INTEGER,
       defaultValue: 0,

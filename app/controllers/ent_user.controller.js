@@ -628,6 +628,7 @@ exports.getDetail = async (req, res) => {
               "Vido",
               "Kinhdo",
               "Logo",
+              "SDTKhanCap",
               "isDelete",
             ],
             include: [
@@ -713,6 +714,7 @@ exports.checkAuth = async (req, res, next) => {
             "Vido",
             "Kinhdo",
             "Logo",
+            "SDTKhanCap",
             "isDelete",
           ],
           include: [

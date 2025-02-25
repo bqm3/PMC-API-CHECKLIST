@@ -37,6 +37,9 @@ const Tb_sucongoai = sequelize.define("tb_sucongoai", {
    Noidungsuco: {
     type: DataTypes.TEXT,
    },
+   Mucdo: {
+    type: DataTypes.TINYINT,
+   },
    Duongdancacanh: {
     type: DataTypes.TEXT,
    },

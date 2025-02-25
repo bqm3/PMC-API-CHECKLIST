@@ -20,6 +20,7 @@ module.exports = (app) => {
   router.get("/web", [isAuthenticated], ent_duan.getKhuvucByDuan);
   router.get("/du-an-theo-nhom", ent_duan.getThongtinduantheonhom);
   router.get("/du-an", ent_duan.getProjectbyName);
+  router.get("/sdt-khan-cap/", [isAuthenticated], ent_duan.getSDTKhanCap);
 
   router.get("/thong-tin-du-an", [isAuthenticated], ent_duan.getThongtinduan);
   router.get("/:id", [isAuthenticated], ent_duan.getDetail);
@@ -28,6 +29,7 @@ module.exports = (app) => {
     [isAuthenticated, uploadLogo.any("images"), resizeImage],
     ent_duan.update
   );
+  router.put("/update-sdt-khan-cap/", [isAuthenticated], ent_duan.updateSDTKhanCap);
   router.put("/delete/:id", [isAuthenticated], ent_duan.delete);
 
   app.use("/api/v2/ent_duan", router);

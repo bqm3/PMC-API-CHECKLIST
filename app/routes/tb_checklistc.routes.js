@@ -60,19 +60,19 @@ module.exports = (app) => {
     tb_checklistc.getProjectsChecklistStatus_Noti
   );
   router.get("/quan-ly-vi-tri", tb_checklistc.getLocationsChecklist);
-  router.get("/ti-le-hoan-thanh", tb_checklistc.tiLeHoanThanh);
-  router.get("/ti-le-su-co", tb_checklistc.tiLeSuco);
-  router.get("/su-co", tb_checklistc.suCoChiTiet);
-  router.get("/report-checklist-percent-week", tb_checklistc.reportPercentWeek);
+  router.get("/ti-le-hoan-thanh",[isAuthenticated], tb_checklistc.tiLeHoanThanh);
+  router.get("/ti-le-su-co", [isAuthenticated], tb_checklistc.tiLeSuco);
+  router.get("/su-co",[isAuthenticated], tb_checklistc.suCoChiTiet);
+  router.get("/report-checklist-percent-week",[isAuthenticated], tb_checklistc.reportPercentWeek);
   router.get(
     "/report-checklist-percent-yesterday",
     tb_checklistc.reportPercentYesterday
   );
   router.get(
-    "/report-checklist-percent-a-week",
+    "/report-checklist-percent-a-week",[isAuthenticated],
     tb_checklistc.reportPercentLastWeek
   );
-  router.get("/report-problem-percent-week", tb_checklistc.soSanhSuCo);
+  router.get("/report-problem-percent-week",[isAuthenticated], tb_checklistc.soSanhSuCo);
   router.get("/report-checklist-project-excel", tb_checklistc.createExcelDuAn);
   router.post(
     "/report-checklist-project-percent-excel",

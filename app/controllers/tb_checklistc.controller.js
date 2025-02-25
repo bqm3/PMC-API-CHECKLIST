@@ -32,7 +32,7 @@ const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
 const defineDynamicModelChiTiet = require("../models/definechecklistchitiet.model");
-const { getMonthsRange, removeVietnameseTones } = require("../utils/util");
+const { getMonthsRange, removeVietnameseTones, funcBaseUri_Image } = require("../utils/util");
 const defineDynamicModelChiTietDone = require("../models/definechecklistchitietdone.model");
 
 function convertTimeFormat(timeStr) {
@@ -64,9 +64,7 @@ function getCurrentDayInCycle(ngayBatDau, ngayHienTai, chuKy) {
   const ngayHienTaiTime = new Date(ngayHienTai).getTime();
 
   // Tính số ngày đã trôi qua kể từ ngày bắt đầu
-  const soNgayDaTroiQua = Math.floor(
-    (ngayHienTaiTime - ngayBatDauTime) / (1000 * 60 * 60 * 24)
-  );
+  const soNgayDaTroiQua = Math.floor((ngayHienTaiTime - ngayBatDauTime) / (1000 * 60 * 60 * 24));
 
   // Tìm ngày hiện tại trong chu kỳ
   const ngayTrongChuKy = (soNgayDaTroiQua % chuKy) + 1;
@@ -98,9 +96,7 @@ exports.createFirstChecklist = async (req, res, next) => {
       attributes: ["Ngaybatdau", "Chuky", "isDelete", "ID_Duan"],
     });
 
-    const formattedDateNow = moment(khoiData.Ngaybatdau)
-      .startOf("day")
-      .format("DD-MM-YYYY");
+    const formattedDateNow = moment(khoiData.Ngaybatdau).startOf("day").format("DD-MM-YYYY");
 
     let nowFormattedDate = moment(Ngay).startOf("day").format("YYYY-MM-DD");
 
@@ -109,14 +105,9 @@ exports.createFirstChecklist = async (req, res, next) => {
       .startOf("day")
       .format("YYYY-MM-DD");
 
-    const formattedDate = moment(khoiData.Ngaybatdau)
-      .startOf("day")
-      .format("YYYY-MM-DD");
+    const formattedDate = moment(khoiData.Ngaybatdau).startOf("day").format("YYYY-MM-DD");
 
-    const daysDifference = moment(formattedDatePrev).diff(
-      moment(formattedDate),
-      "days"
-    );
+    const daysDifference = moment(formattedDatePrev).diff(moment(formattedDate), "days");
     const { Giobatdau, Gioketthuc } = calvData;
 
     if (daysDifference <= 0) {
@@ -126,10 +117,7 @@ exports.createFirstChecklist = async (req, res, next) => {
     }
 
     if (Giobatdau >= Gioketthuc && Giobd < Gioketthuc && Giobatdau > Giobd) {
-      nowFormattedDate = moment(Ngay)
-        .subtract(1, "days")
-        .startOf("day")
-        .format("YYYY-MM-DD");
+      nowFormattedDate = moment(Ngay).subtract(1, "days").startOf("day").format("YYYY-MM-DD");
       Giogn = Giobatdau;
     }
 
@@ -142,10 +130,7 @@ exports.createFirstChecklist = async (req, res, next) => {
       });
     }
 
-    if (
-      (Giobd <= Giobatdau || Giobd >= Gioketthuc) &&
-      Giobatdau <= Gioketthuc
-    ) {
+    if ((Giobd <= Giobatdau || Giobd >= Gioketthuc) && Giobatdau <= Gioketthuc) {
       return res.status(400).json({
         message: "Giờ bắt đầu không thuộc khoảng thời gian \n của ca làm việc!",
       });
@@ -162,14 +147,7 @@ exports.createFirstChecklist = async (req, res, next) => {
     }
 
     const thietlapcaData = await Ent_thietlapca.findOne({
-      attributes: [
-        "ID_ThietLapCa",
-        "Ngaythu",
-        "ID_Calv",
-        "ID_Hangmucs",
-        "ID_Duan",
-        "isDelete",
-      ],
+      attributes: ["ID_ThietLapCa", "Ngaythu", "ID_Calv", "ID_Hangmucs", "ID_Duan", "isDelete"],
       where: [
         {
           Ngaythu: ngayCheck,
@@ -219,14 +197,7 @@ exports.createFirstChecklist = async (req, res, next) => {
         {
           model: Ent_hangmuc,
           as: "ent_hangmuc",
-          attributes: [
-            "Hangmuc",
-            "Tieuchuankt",
-            "ID_Hangmuc",
-            "ID_Khuvuc",
-            "FileTieuChuan",
-            "isDelete",
-          ],
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Hangmuc", "ID_Khuvuc", "FileTieuChuan", "isDelete"],
           where: {
             ID_Hangmuc: {
               [Op.in]: thietlapcaData?.ID_Hangmucs,
@@ -236,16 +207,7 @@ exports.createFirstChecklist = async (req, res, next) => {
         },
         {
           model: Ent_khuvuc,
-          attributes: [
-            "Tenkhuvuc",
-            "MaQrCode",
-            "Makhuvuc",
-            "Sothutu",
-
-            "ID_Khuvuc",
-            "ID_KhoiCVs",
-            "isDelete",
-          ],
+          attributes: ["Tenkhuvuc", "MaQrCode", "Makhuvuc", "Sothutu", "ID_Khuvuc", "ID_KhoiCVs", "isDelete"],
           include: [
             {
               model: Ent_khuvuc_khoicv,
@@ -290,18 +252,7 @@ exports.createFirstChecklist = async (req, res, next) => {
     });
 
     Tb_checklistc.findAndCountAll({
-      attributes: [
-        "ID_ChecklistC",
-        "ID_Duan",
-        "ID_KhoiCV",
-        "ID_User",
-        "ID_Calv",
-        "ID_ThietLapCa",
-        "ID_Hangmucs",
-        "TongC",
-        "Ngay",
-        "Tinhtrang",
-      ],
+      attributes: ["ID_ChecklistC", "ID_Duan", "ID_KhoiCV", "ID_User", "ID_Calv", "ID_ThietLapCa", "ID_Hangmucs", "TongC", "Ngay", "Tinhtrang"],
       where: {
         isDelete: 0,
         [Op.and]: [
@@ -350,14 +301,10 @@ exports.createFirstChecklist = async (req, res, next) => {
         } else {
           // Nếu đã có checklist được tạo
           // Kiểm tra xem tất cả các ca checklist đều đã hoàn thành (Tinhtrang === 1)
-          const allCompleted = rows.every(
-            (checklist) => checklist.dataValues.Tinhtrang === 1
-          );
+          const allCompleted = rows.every((checklist) => checklist.dataValues.Tinhtrang === 1);
           //
           if (allCompleted) {
-            const allCompletedTwo = rows.every(
-              (checklist) => checklist.dataValues.ID_Calv !== ID_Calv
-            );
+            const allCompletedTwo = rows.every((checklist) => checklist.dataValues.ID_Calv !== ID_Calv);
 
             if (allCompletedTwo) {
               const data = {
@@ -425,12 +372,7 @@ exports.getCheckListc = async (req, res, next) => {
       };
 
       // Nếu quyền là 1 (ID_Chucvu === 1) thì không cần thêm điều kiện ID_KhoiCV
-      if (
-        userData.ID_Chucvu !== 1 &&
-        userData.ID_Chucvu !== 2 &&
-        userData.ID_Chucvu !== 3 &&
-        userData.ID_Chucvu !== 11
-      ) {
+      if (userData.ID_Chucvu !== 1 && userData.ID_Chucvu !== 2 && userData.ID_Chucvu !== 3 && userData.ID_Chucvu !== 11) {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
         whereClause.ID_User = userData?.ID_User;
       } else if (userData?.ent_chucvu.Role == 2) {
@@ -605,8 +547,7 @@ exports.getDayCheckListc = async (req, res, next) => {
     const userData = req.user.data;
     const khoi = req.query.khoi || "all";
     const ca = req.query.ca || "all";
-    const fromDate =
-      req.query.fromDate || moment().startOf("month").format("YYYY-MM-DD");
+    const fromDate = req.query.fromDate || moment().startOf("month").format("YYYY-MM-DD");
     const toDate = req.query.toDate || moment(new Date()).format("YYYY-MM-DD");
 
     if (userData) {
@@ -619,12 +560,7 @@ exports.getDayCheckListc = async (req, res, next) => {
       };
 
       // Nếu quyền là 1 (ID_Chucvu === 1) thì không cần thêm điều kiện ID_KhoiCV
-      if (
-        userData.ID_Chucvu !== 1 &&
-        userData.ID_Chucvu !== 2 &&
-        userData.ID_Chucvu !== 3 &&
-        userData.ID_Chucvu !== 11
-      ) {
+      if (userData.ID_Chucvu !== 1 && userData.ID_Chucvu !== 2 && userData.ID_Chucvu !== 3 && userData.ID_Chucvu !== 11) {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
         whereClause.ID_User = userData?.ID_User;
       } else if (userData?.ent_chucvu.Role == 2) {
@@ -835,9 +771,7 @@ exports.getThongKe = async (req, res, next) => {
       const toDate = req.body.toDate;
       const ID_Calv = req.body.ID_Calv;
       const ID_KhoiCV = req.body.ID_KhoiCV ? req.body.ID_KhoiCV : null;
-      const arr_Duan_Array = userData?.arr_Duan
-        ?.split(",")
-        .map((item) => item.trim());
+      const arr_Duan_Array = userData?.arr_Duan?.split(",").map((item) => item.trim());
       console.log("fromDate, toDate", fromDate, toDate);
 
       const orConditions = [
@@ -851,18 +785,16 @@ exports.getThongKe = async (req, res, next) => {
         orConditions.push({ "$tb_checklistc.ID_User$": userData?.ID_User });
       }
       if (
-        (userData?.ID_KhoiCV !== null &&
-          userData?.ID_KhoiCV !== undefined &&
-          userData.ent_chucvu.Role == 5 &&
-          !arr_Duan_Array?.includes(String(userData.ID_Duan))) ||
-        (userData?.ID_KhoiCV !== null &&
-          userData?.ID_KhoiCV !== undefined &&
-          userData.ent_chucvu.Role !== 5)
+        (userData?.ID_KhoiCV !== null && userData?.ID_KhoiCV !== undefined && userData.ent_chucvu.Role == 5 && !arr_Duan_Array?.includes(String(userData.ID_Duan))) ||
+        (userData?.ID_KhoiCV !== null && userData?.ID_KhoiCV !== undefined && userData.ent_chucvu.Role !== 5)
       ) {
         orConditions.push({ "$tb_checklistc.ID_KhoiCV$": userData?.ID_KhoiCV });
       }
 
       // orConditions.push({ "$tb_checklistc.ID_KhoiCV$": userData?.ID_KhoiCV });
+      // if(userData?.ID_Duan != null) {
+      //   orConditions.push({ "$tb_checklistc.ID_Duan$": userData?.ID_Duan });
+      // }
       orConditions.push({ "$tb_checklistc.ID_Duan$": userData?.ID_Duan });
 
       if (ID_Calv !== null && ID_Calv !== undefined) {
@@ -1038,9 +970,7 @@ exports.getThongKeHangMucQuanTrong = async (req, res, next) => {
     const monthsRange = getMonthsRange(startDateObj, endDateObj);
 
     const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet(
-      "BÁO CÁO TỔNG HỢP CHECKLIST NGĂN NGỪA RỦI RO"
-    );
+    const worksheet = workbook.addWorksheet("BÁO CÁO TỔNG HỢP CHECKLIST NGĂN NGỪA RỦI RO");
 
     const khoiCVs = await Ent_khoicv.findAll({
       where: {
@@ -1070,8 +1000,7 @@ exports.getThongKeHangMucQuanTrong = async (req, res, next) => {
       isDelete: 0,
     };
     whereClauseHangMuc["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData.ID_Duan;
-    whereClauseHangMuc["$ent_khuvuc.ent_khuvuc_khoicvs.ID_KhoiCV$"] =
-      ID_KhoiCVs;
+    whereClauseHangMuc["$ent_khuvuc.ent_khuvuc_khoicvs.ID_KhoiCV$"] = ID_KhoiCVs;
 
     // Lấy thông tin hạng mục quan trọng
     const dataHangMucImportant = await Ent_hangmuc.findAll({
@@ -1111,54 +1040,25 @@ exports.getThongKeHangMucQuanTrong = async (req, res, next) => {
     });
 
     let dataChecklistC = [];
-    const isRecentData =
-      new Date(startDateFormat) >= new Date("2025-01-01 00:00:00");
+    const isRecentData = new Date(startDateFormat) >= new Date("2025-01-01 00:00:00");
     if (isRecentData) {
       for (const { year, month } of monthsRange) {
         const tableName = `tb_checklistchitiet_${month}_${year}`;
         defineDynamicModelChiTiet(tableName, sequelize);
         try {
           const monthlyData = await sequelize.models[tableName].findAll({
-            attributes: [
-              "ID_Checklistchitiet",
-              "ID_Checklist",
-              "ID_ChecklistC",
-              "Ketqua",
-              "Anh",
-              "Gioht",
-              "Ngay",
-              "Ghichu",
-              "isDelete",
-            ],
+            attributes: ["ID_Checklistchitiet", "ID_Checklist", "ID_ChecklistC", "Ketqua", "Anh", "Gioht", "Ngay", "Ghichu", "isDelete"],
             include: [
               {
                 model: Tb_checklistc,
                 as: "tb_checklistc",
-                attributes: [
-                  "ID_ChecklistC",
-                  "Ngay",
-                  "ID_User",
-                  "ID_Duan",
-                  "ID_KhoiCV",
-                  "Giobd",
-                  "Gioghinhan",
-                  "Giokt",
-                  "Tinhtrang",
-                  "Ghichu",
-                ],
+                attributes: ["ID_ChecklistC", "Ngay", "ID_User", "ID_Duan", "ID_KhoiCV", "Giobd", "Gioghinhan", "Giokt", "Tinhtrang", "Ghichu"],
                 where: whereClause,
               },
               {
                 model: Ent_checklist,
                 as: "ent_checklist",
-                attributes: [
-                  "Checklist",
-                  "Tinhtrang",
-                  "Giatrinhan",
-                  "ID_Khuvuc",
-                  "ID_Hangmuc",
-                  "ID_Tang",
-                ],
+                attributes: ["Checklist", "Tinhtrang", "Giatrinhan", "ID_Khuvuc", "ID_Hangmuc", "ID_Tang"],
               },
             ],
           });
@@ -1172,13 +1072,7 @@ exports.getThongKeHangMucQuanTrong = async (req, res, next) => {
     } else {
       // Lấy dữ liệu checklist chi tiết
       dataChecklistC = await Tb_checklistchitiet.findAll({
-        attributes: [
-          "ID_Checklistchitiet",
-          "Ketqua",
-          "Ghichu",
-          "Ngay",
-          "isDelete",
-        ],
+        attributes: ["ID_Checklistchitiet", "Ketqua", "Ghichu", "Ngay", "isDelete"],
         include: [
           {
             model: Tb_checklistc,
@@ -1204,12 +1098,9 @@ exports.getThongKeHangMucQuanTrong = async (req, res, next) => {
       { header: "Hướng xử lý", key: "huong_xuly", width: 25 },
     ];
 
-    const projectData = dataHangMucImportant
-      ? dataHangMucImportant[0].ent_khuvuc.ent_toanha.ent_duan
-      : {};
+    const projectData = dataHangMucImportant ? dataHangMucImportant[0].ent_khuvuc.ent_toanha.ent_duan : {};
     const projectName = projectData?.Duan || "";
-    const projectLogo =
-      projectData?.Logo || "https://pmcweb.vn/wp-content/uploads/logo.png";
+    const projectLogo = projectData?.Logo || "https://pmcweb.vn/wp-content/uploads/logo.png";
 
     // Download the image and add it to the workbook
     const imageResponse = await axios({
@@ -1245,10 +1136,7 @@ exports.getThongKeHangMucQuanTrong = async (req, res, next) => {
     headerRow.font = { size: 16, bold: true };
 
     worksheet.mergeCells("A2:G2");
-    worksheet.getCell("A2").value =
-      startDateShow && endDateShow
-        ? `Từ ngày: ${startDateShow}  Đến ngày: ${endDateShow}`
-        : `Từ ngày: `;
+    worksheet.getCell("A2").value = startDateShow && endDateShow ? `Từ ngày: ${startDateShow}  Đến ngày: ${endDateShow}` : `Từ ngày: `;
     worksheet.getCell("A2").alignment = {
       horizontal: "center",
       vertical: "middle",
@@ -1264,15 +1152,7 @@ exports.getThongKeHangMucQuanTrong = async (req, res, next) => {
     worksheet.getCell("A3").font = { size: 13, bold: true };
 
     const tableHeaderRow = worksheet.getRow(5);
-    tableHeaderRow.values = [
-      "STT",
-      "Tên Hạng mục",
-      "Đạt",
-      "Không đạt",
-      "Lý do",
-      "Ghi chú",
-      "Hướng xử lý",
-    ];
+    tableHeaderRow.values = ["STT", "Tên Hạng mục", "Đạt", "Không đạt", "Lý do", "Ghi chú", "Hướng xử lý"];
     tableHeaderRow.eachCell((cell) => {
       cell.font = { bold: true };
       cell.alignment = {
@@ -1291,22 +1171,16 @@ exports.getThongKeHangMucQuanTrong = async (req, res, next) => {
     // Thêm dữ liệu vào bảng
     dataHangMucImportant.forEach((item, index) => {
       // Lấy thông tin lỗi từ bảng checklist chi tiết
-      const checklistCoLoi = dataChecklistC.filter(
-        (checklist) => checklist.ent_checklist.ID_Hangmuc === item.ID_Hangmuc
-      );
+      const checklistCoLoi = dataChecklistC.filter((checklist) => checklist.ent_checklist.ID_Hangmuc === item.ID_Hangmuc);
 
       const soLuongLoi = checklistCoLoi.length;
       const dat = soLuongLoi === 0 ? "X" : "";
       const khongDat = soLuongLoi > 0 ? "X" : "";
       const lyDo = soLuongLoi > 0 ? `Lỗi ${soLuongLoi} điểm` : "";
-      const ghiChu =
-        checklistCoLoi.length > 0 ? checklistCoLoi[0].Ghichu || "" : "";
+      const ghiChu = checklistCoLoi.length > 0 ? checklistCoLoi[0].Ghichu || "" : "";
 
       // Kiểm tra tình trạng để điền hướng xử lý
-      const tinhTrang =
-        checklistCoLoi.length > 0
-          ? checklistCoLoi[0].ent_checklist.Tinhtrang
-          : null;
+      const tinhTrang = checklistCoLoi.length > 0 ? checklistCoLoi[0].ent_checklist.Tinhtrang : null;
       const huongXuLy = tinhTrang === 1 ? "Đang chờ xử lý" : "Đã xử lý xong";
 
       // Add a new row
@@ -1332,14 +1206,8 @@ exports.getThongKeHangMucQuanTrong = async (req, res, next) => {
 
     const buffer = await workbook.xlsx.writeBuffer();
 
-    res.setHeader(
-      "Content-Disposition",
-      "attachment; filename=Checklist_Report.xlsx"
-    );
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    );
+    res.setHeader("Content-Disposition", "attachment; filename=Checklist_Report.xlsx");
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     res.send(buffer);
   } catch (error) {
     return res.status(500).json({
@@ -1356,9 +1224,7 @@ exports.getPreviewThongKeHangMucQuanTrong = async (req, res, next) => {
     const endDateFormat = formatDate(endDate);
 
     const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet(
-      "BÁO CÁO TỔNG HỢP CHECKLIST NGĂN NGỪA RỦI RO"
-    );
+    const worksheet = workbook.addWorksheet("BÁO CÁO TỔNG HỢP CHECKLIST NGĂN NGỪA RỦI RO");
 
     let whereClause = {
       isDelete: 0,
@@ -1376,8 +1242,7 @@ exports.getPreviewThongKeHangMucQuanTrong = async (req, res, next) => {
       isDelete: 0,
     };
     whereClauseHangMuc["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData.ID_Duan;
-    whereClauseHangMuc["$ent_khuvuc.ent_khuvuc_khoicvs.ID_KhoiCV$"] =
-      ID_KhoiCVs;
+    whereClauseHangMuc["$ent_khuvuc.ent_khuvuc_khoicvs.ID_KhoiCV$"] = ID_KhoiCVs;
 
     // Lấy thông tin hạng mục quan trọng
     const dataHangMucImportant = await Ent_hangmuc.findAll({
@@ -1418,13 +1283,7 @@ exports.getPreviewThongKeHangMucQuanTrong = async (req, res, next) => {
 
     // Lấy dữ liệu checklist chi tiết
     const dataChecklistC = await Tb_checklistchitiet.findAll({
-      attributes: [
-        "ID_Checklistchitiet",
-        "Ketqua",
-        "Ghichu",
-        "Ngay",
-        "isDelete",
-      ],
+      attributes: ["ID_Checklistchitiet", "Ketqua", "Ghichu", "Ngay", "isDelete"],
       include: [
         {
           model: Tb_checklistc,
@@ -1450,15 +1309,7 @@ exports.getPreviewThongKeHangMucQuanTrong = async (req, res, next) => {
     ];
 
     const tableHeaderRow = worksheet.getRow(1);
-    tableHeaderRow.values = [
-      "STT",
-      "Tên Hạng mục",
-      "Đạt",
-      "Không đạt",
-      "Lý do",
-      "Ghi chú",
-      "Hướng xử lý",
-    ];
+    tableHeaderRow.values = ["STT", "Tên Hạng mục", "Đạt", "Không đạt", "Lý do", "Ghi chú", "Hướng xử lý"];
     tableHeaderRow.eachCell((cell) => {
       cell.font = { bold: true };
       cell.alignment = {
@@ -1477,22 +1328,16 @@ exports.getPreviewThongKeHangMucQuanTrong = async (req, res, next) => {
     // Thêm dữ liệu vào bảng
     dataHangMucImportant.forEach((item, index) => {
       // Lấy thông tin lỗi từ bảng checklist chi tiết
-      const checklistCoLoi = dataChecklistC.filter(
-        (checklist) => checklist.ent_checklist.ID_Hangmuc === item.ID_Hangmuc
-      );
+      const checklistCoLoi = dataChecklistC.filter((checklist) => checklist.ent_checklist.ID_Hangmuc === item.ID_Hangmuc);
 
       const soLuongLoi = checklistCoLoi.length;
       const dat = soLuongLoi === 0 ? "X" : "";
       const khongDat = soLuongLoi > 0 ? "X" : "";
       const lyDo = soLuongLoi > 0 ? `Lỗi ${soLuongLoi} điểm` : "";
-      const ghiChu =
-        checklistCoLoi.length > 0 ? checklistCoLoi[0].Ghichu || "" : "";
+      const ghiChu = checklistCoLoi.length > 0 ? checklistCoLoi[0].Ghichu || "" : "";
 
       // Kiểm tra tình trạng để điền hướng xử lý
-      const tinhTrang =
-        checklistCoLoi.length > 0
-          ? checklistCoLoi[0].ent_checklist.Tinhtrang
-          : null;
+      const tinhTrang = checklistCoLoi.length > 0 ? checklistCoLoi[0].ent_checklist.Tinhtrang : null;
       const huongXuLy = tinhTrang === 1 ? "Đang chờ xử lý" : "Đã xử lý xong";
 
       // Add a new row
@@ -1518,14 +1363,8 @@ exports.getPreviewThongKeHangMucQuanTrong = async (req, res, next) => {
 
     const buffer = await workbook.xlsx.writeBuffer();
 
-    res.setHeader(
-      "Content-Disposition",
-      "attachment; filename=Checklist_Report.xlsx"
-    );
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    );
+    res.setHeader("Content-Disposition", "attachment; filename=Checklist_Report.xlsx");
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     await workbook.xlsx.load(buffer);
     const rows = [];
     worksheet.eachRow((row, rowNumber) => {
@@ -1552,26 +1391,13 @@ exports.getBaoCaoChecklistYear = async (req, res, next) => {
       return res.status(400).json({ message: "Month and year are required" });
     }
 
-    const startDate = moment(`${year}-${month}-01`)
-      .startOf("month")
-      .format("YYYY-MM-DD");
-    const endDate = moment(`${year}-${month}-01`)
-      .endOf("month")
-      .format("YYYY-MM-DD");
+    const startDate = moment(`${year}-${month}-01`).startOf("month").format("YYYY-MM-DD");
+    const endDate = moment(`${year}-${month}-01`).endOf("month").format("YYYY-MM-DD");
     const daysInMonth = moment(startDate).daysInMonth();
 
     // Lấy dữ liệu từ cơ sở dữ liệu
     const dataChecklistCs = await Tb_checklistc.findAll({
-      attributes: [
-        "ID_ChecklistC",
-        "ID_Duan",
-        "ID_Calv",
-        "Ngay",
-        "TongC",
-        "Tong",
-        "ID_KhoiCV",
-        "isDelete",
-      ],
+      attributes: ["ID_ChecklistC", "ID_Duan", "ID_Calv", "Ngay", "TongC", "Tong", "ID_KhoiCV", "isDelete"],
       where: {
         Ngay: { [Op.between]: [startDate, endDate] },
         ID_Duan: {
@@ -1597,8 +1423,7 @@ exports.getBaoCaoChecklistYear = async (req, res, next) => {
 
       if (!projectData[projectName]) projectData[projectName] = {};
       if (!projectData[projectName][date]) projectData[projectName][date] = {};
-      if (!projectData[projectName][date][khoiName])
-        projectData[projectName][date][khoiName] = {};
+      if (!projectData[projectName][date][khoiName]) projectData[projectName][date][khoiName] = {};
       if (!projectData[projectName][date][khoiName][shiftName]) {
         projectData[projectName][date][khoiName][shiftName] = {
           totalTongC: 0,
@@ -1606,8 +1431,7 @@ exports.getBaoCaoChecklistYear = async (req, res, next) => {
         };
       }
 
-      projectData[projectName][date][khoiName][shiftName].totalTongC +=
-        checklistC.TongC;
+      projectData[projectName][date][khoiName][shiftName].totalTongC += checklistC.TongC;
     });
 
     // Khởi tạo file Excel
@@ -1626,10 +1450,7 @@ exports.getBaoCaoChecklistYear = async (req, res, next) => {
     // Tạo các cột cho từng ngày trong tháng với các khối KT, AN, LS, DV, F&B
     for (let day = 1; day <= daysInMonth; day++) {
       const colIndex = (day - 1) * 5 + 3; // Tính toán vị trí cột
-      const colRange =
-        worksheet.getCell(1, colIndex).address +
-        ":" +
-        worksheet.getCell(1, colIndex + 4).address;
+      const colRange = worksheet.getCell(1, colIndex).address + ":" + worksheet.getCell(1, colIndex + 4).address;
 
       worksheet.mergeCells(colRange);
       worksheet.getCell(1, colIndex).value = `Ngày ${day}`;
@@ -1686,19 +1507,11 @@ exports.getBaoCaoChecklistYear = async (req, res, next) => {
 
       // Lấy dữ liệu từng ngày cho dự án
       for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = moment(`${year}-${month}-${day}`, "YYYY-MM-DD").format(
-          "YYYY-MM-DD"
-        );
+        const dateStr = moment(`${year}-${month}-${day}`, "YYYY-MM-DD").format("YYYY-MM-DD");
         const dayData = projectData[projectName][dateStr] || {};
 
         // Duyệt qua từng khối và ca trong ngày
-        [
-          "Khối kỹ thuật",
-          "Khối an ninh",
-          "Khối làm sạch",
-          "Khối dịch vụ",
-          "Khối F&B",
-        ].forEach((khoiName, index) => {
+        ["Khối kỹ thuật", "Khối an ninh", "Khối làm sạch", "Khối dịch vụ", "Khối F&B"].forEach((khoiName, index) => {
           const colIndex = (day - 1) * 5 + 3 + index;
           let totalCompletion = 0;
           let countShifts = 0;
@@ -1706,8 +1519,7 @@ exports.getBaoCaoChecklistYear = async (req, res, next) => {
           if (dayData[khoiName]) {
             Object.values(dayData[khoiName]).forEach((shiftData) => {
               if (shiftData.totalTong > 0) {
-                const completionRate =
-                  (shiftData.totalTongC / shiftData.totalTong) * 100;
+                const completionRate = (shiftData.totalTongC / shiftData.totalTong) * 100;
                 totalCompletion += Math.min(completionRate, 100); // Giới hạn tối đa 100%
                 countShifts++;
               }
@@ -1715,14 +1527,10 @@ exports.getBaoCaoChecklistYear = async (req, res, next) => {
           }
 
           // Tính trung bình tỷ lệ hoàn thành cho các ca trong khối
-          let avgCompletion =
-            countShifts > 0 ? totalCompletion / countShifts : ""; // Trả về rỗng nếu không có ca
+          let avgCompletion = countShifts > 0 ? totalCompletion / countShifts : ""; // Trả về rỗng nếu không có ca
 
           // Kiểm tra nếu avgCompletion là số nguyên hoặc bằng 100 hoặc 90
-          if (
-            typeof avgCompletion === "number" &&
-            Number.isInteger(avgCompletion)
-          ) {
+          if (typeof avgCompletion === "number" && Number.isInteger(avgCompletion)) {
             row.getCell(colIndex).value = Number(avgCompletion); // Để nguyên giá trị
           } else if (avgCompletion !== "") {
             row.getCell(colIndex).value = Number(avgCompletion.toFixed(2)); // Dùng toFixed(2) cho số không chẵn
@@ -1741,32 +1549,20 @@ exports.getBaoCaoChecklistYear = async (req, res, next) => {
     // Set headers for file download
     res.set({
       "Content-Disposition": `attachment; filename=Bao_cao_checklist_du_an_${month}_${year}.xlsx`,
-      "Content-Type":
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
 
     // Send the buffer as the response
     res.send(buffer);
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
 exports.firstChecklist = async (req, res) => {
   try {
     const duanAll = await Ent_duan.findAll({
-      attributes: [
-        "ID_Duan",
-        "Duan",
-        "ID_Nhom",
-        "ID_Chinhanh",
-        "ID_Linhvuc",
-        "ID_Loaihinh",
-        "ID_Phanloai",
-        "isDelete",
-      ], // Lấy tên đơn vị
+      attributes: ["ID_Duan", "Duan", "ID_Nhom", "ID_Chinhanh", "ID_Linhvuc", "ID_Loaihinh", "ID_Phanloai", "isDelete"], // Lấy tên đơn vị
       include: [
         {
           model: Ent_chinhanh,
@@ -1799,12 +1595,7 @@ exports.firstChecklist = async (req, res) => {
     });
 
     const result = await Tb_checklistc.findAll({
-      attributes: [
-        "ID_Duan",
-        "ID_KhoiCV",
-        "Ngay",
-        [Sequelize.fn("MIN", Sequelize.col("Ngay")), "NgayDauTien"],
-      ],
+      attributes: ["ID_Duan", "ID_KhoiCV", "Ngay", [Sequelize.fn("MIN", Sequelize.col("Ngay")), "NgayDauTien"]],
       group: ["ID_Duan", "ID_KhoiCV"],
       include: [
         {
@@ -1813,16 +1604,7 @@ exports.firstChecklist = async (req, res) => {
         },
         {
           model: Ent_duan,
-          attributes: [
-            "ID_Duan",
-            "Duan",
-            "ID_Nhom",
-            "ID_Chinhanh",
-            "ID_Linhvuc",
-            "ID_Loaihinh",
-            "ID_Phanloai",
-            "isDelete",
-          ], // Lấy tên đơn vị
+          attributes: ["ID_Duan", "Duan", "ID_Nhom", "ID_Chinhanh", "ID_Linhvuc", "ID_Loaihinh", "ID_Phanloai", "isDelete"], // Lấy tên đơn vị
           include: [
             {
               model: Ent_chinhanh,
@@ -1856,9 +1638,7 @@ exports.firstChecklist = async (req, res) => {
     });
 
     const resultDuanIds = result.map((r) => r.ID_Duan);
-    const duanNotInResult = duanAll.filter(
-      (duan) => !resultDuanIds.includes(duan.ID_Duan)
-    );
+    const duanNotInResult = duanAll.filter((duan) => !resultDuanIds.includes(duan.ID_Duan));
     const mergedResult = [...result, ...duanNotInResult];
     // Duyệt qua dữ liệu và tổ chức lại theo cột yêu cầu
     const excelData = [];
@@ -1866,28 +1646,16 @@ exports.firstChecklist = async (req, res) => {
     // Duyệt qua dữ liệu và tổ chức lại theo cột yêu cầu
 
     mergedResult.forEach((item) => {
-      let project = excelData.find(
-        (proj) =>
-          proj.Du_an === item?.ent_duan?.Duan || proj.Du_an === item.Duan
-      );
+      let project = excelData.find((proj) => proj.Du_an === item?.ent_duan?.Duan || proj.Du_an === item.Duan);
       if (!project) {
         project = {
           // STT: excelData.length + 1,
           Du_an: item?.ent_duan?.Duan || item.Duan,
-          Chi_Nhanh:
-            item?.ent_duan?.ent_chinhanh?.Tenchinhanh ||
-            item?.ent_chinhanh?.Tenchinhanh,
-          Loai_Hinh:
-            item?.ent_duan?.ent_loaihinhbd?.Loaihinh ||
-            item?.ent_loaihinhbd?.Loaihinh,
-          Phan_loai_du_an:
-            item?.ent_duan?.ent_phanloaida?.Phanloai ||
-            item?.ent_phanloaida?.Phanloai,
-          Linh_vuc:
-            item?.ent_duan?.ent_linhvuc?.Linhvuc || item?.ent_linhvuc?.Linhvuc,
-          Tinh_trang: item?.ent_duan?.Duan
-            ? "Đang triển khai"
-            : "Chưa triển khai",
+          Chi_Nhanh: item?.ent_duan?.ent_chinhanh?.Tenchinhanh || item?.ent_chinhanh?.Tenchinhanh,
+          Loai_Hinh: item?.ent_duan?.ent_loaihinhbd?.Loaihinh || item?.ent_loaihinhbd?.Loaihinh,
+          Phan_loai_du_an: item?.ent_duan?.ent_phanloaida?.Phanloai || item?.ent_phanloaida?.Phanloai,
+          Linh_vuc: item?.ent_duan?.ent_linhvuc?.Linhvuc || item?.ent_linhvuc?.Linhvuc,
+          Tinh_trang: item?.ent_duan?.Duan ? "Đang triển khai" : "Chưa triển khai",
           Ngay_bat_dau: item?.NgayDauTien || item?.Ngay || "",
           Khoi_ky_thuat: "",
           Khoi_an_ninh: "",
@@ -1918,13 +1686,7 @@ exports.firstChecklist = async (req, res) => {
       }
     });
 
-    const sortFields = [
-      "Chi_Nhanh",
-      "Loai_Hinh",
-      "Phan_loai_du_an",
-      "Linh_vuc",
-      "Du_an",
-    ];
+    const sortFields = ["Chi_Nhanh", "Loai_Hinh", "Phan_loai_du_an", "Linh_vuc", "Du_an"];
 
     const normalizeStr = (str) => {
       return str
@@ -1992,13 +1754,7 @@ exports.firstChecklist = async (req, res) => {
         row.getCell("STT").alignment = { horizontal: "center" };
 
         // Căn giữa cho các cột khối công việc
-        [
-          "Khoi_ky_thuat",
-          "Khoi_an_ninh",
-          "Khoi_lam_sach",
-          "Khoi_dich_vu",
-          "Khoi_F_B",
-        ].forEach((key) => {
+        ["Khoi_ky_thuat", "Khoi_an_ninh", "Khoi_lam_sach", "Khoi_dich_vu", "Khoi_F_B"].forEach((key) => {
           row.getCell(key).alignment = { horizontal: "center" };
         });
 
@@ -2026,23 +1782,15 @@ exports.firstChecklist = async (req, res) => {
         });
       });
 
-      res.setHeader(
-        "Content-Type",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-      );
-      res.setHeader(
-        "Content-Disposition",
-        "attachment; filename=duandanghoatdong.xlsx"
-      );
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.setHeader("Content-Disposition", "attachment; filename=duandanghoatdong.xlsx");
       await workbook.xlsx.write(res);
       res.end();
     } else {
       res.status(200).json(excelData);
     }
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: error.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: error.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -2162,12 +1910,7 @@ exports.open = async (req, res) => {
   try {
     const userData = req.user.data;
 
-    if (
-      req.params.id &&
-      (userData.ID_Chucvu === 1 ||
-        userData.ID_Chucvu === 2 ||
-        userData.ID_Chucvu === 3)
-    ) {
+    if (req.params.id && (userData.ID_Chucvu === 1 || userData.ID_Chucvu === 2 || userData.ID_Chucvu === 3)) {
       // Truy vấn ngày từ cơ sở dữ liệu
       const checklist = await Tb_checklistc.findOne({
         attributes: [
@@ -2346,9 +2089,7 @@ exports.checklistImages = async (req, res) => {
         const imageKey = `Anh${i}`;
         const timestampKey = `Giochupanh${i}`;
         if (req.body[imageKey]) {
-          const imagePath = uploadedFileIds.find(
-            (file) => file.name === req.body[imageKey]
-          )?.id;
+          const imagePath = uploadedFileIds.find((file) => file.name === req.body[imageKey])?.id;
           //  ;
           if (imagePath) {
             reqData[imageKey] = imagePath;
@@ -2365,19 +2106,13 @@ exports.checklistImages = async (req, res) => {
 
         res.status(200).json({ message: "Cập nhật khu vực thành công!" });
       } else {
-        res
-          .status(400)
-          .json({ message: "Không có dữ liệu hình ảnh hợp lệ để cập nhật!" });
+        res.status(400).json({ message: "Không có dữ liệu hình ảnh hợp lệ để cập nhật!" });
       }
     } else {
-      res
-        .status(401)
-        .json({ message: "Bạn không có quyền truy cập! Vui lòng thử lại" });
+      res.status(401).json({ message: "Bạn không có quyền truy cập! Vui lòng thử lại" });
     }
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -2456,16 +2191,7 @@ exports.checklistCalv = async (req, res) => {
             {
               model: Tb_checklistc,
               as: "tb_checklistc",
-              attributes: [
-                "ID_ChecklistC",
-                "Ngay",
-                "Giobd",
-                "Gioghinhan",
-                "Giokt",
-                "ID_KhoiCV",
-                "ID_Calv",
-                "ID_Duan",
-              ],
+              attributes: ["ID_ChecklistC", "Ngay", "Giobd", "Gioghinhan", "Giokt", "ID_KhoiCV", "ID_Calv", "ID_Duan"],
               where: whereClause,
               include: [
                 {
@@ -2499,12 +2225,7 @@ exports.checklistCalv = async (req, res) => {
                 {
                   model: Ent_hangmuc,
                   as: "ent_hangmuc",
-                  attributes: [
-                    "Hangmuc",
-                    "ID_Khuvuc",
-                    "MaQrCode",
-                    "Tieuchuankt",
-                  ],
+                  attributes: ["Hangmuc", "ID_Khuvuc", "MaQrCode", "Tieuchuankt"],
                 },
                 {
                   model: Ent_khuvuc,
@@ -2531,13 +2252,10 @@ exports.checklistCalv = async (req, res) => {
         });
 
         // Fetch checklist done items from the dynamic "done" table
-        const checklistDoneItems = await sequelize.query(
-          `SELECT * FROM ${dynamicTableNameDone} WHERE ID_ChecklistC = ? AND isDelete = 0`,
-          {
-            replacements: [ID_ChecklistC],
-            type: sequelize.QueryTypes.SELECT,
-          }
-        );
+        const checklistDoneItems = await sequelize.query(`SELECT * FROM ${dynamicTableNameDone} WHERE ID_ChecklistC = ? AND isDelete = 0`, {
+          replacements: [ID_ChecklistC],
+          type: sequelize.QueryTypes.SELECT,
+        });
 
         // Convert done items to plain objects
         const plainChecklistDoneItems = checklistDoneItems.map((item) => ({
@@ -2597,24 +2315,12 @@ exports.checklistCalv = async (req, res) => {
             {
               model: Ent_hangmuc,
               as: "ent_hangmuc",
-              attributes: [
-                "Hangmuc",
-                "Tieuchuankt",
-                "ID_Khuvuc",
-                "MaQrCode",
-                "FileTieuChuan",
-              ],
+              attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "FileTieuChuan"],
             },
             {
               model: Ent_khuvuc,
               as: "ent_khuvuc",
-              attributes: [
-                "Tenkhuvuc",
-                "MaQrCode",
-                "Makhuvuc",
-                "Sothutu",
-                "ID_Khuvuc",
-              ],
+              attributes: ["Tenkhuvuc", "MaQrCode", "Makhuvuc", "Sothutu", "ID_Khuvuc"],
               include: [
                 {
                   model: Ent_toanha,
@@ -2634,14 +2340,10 @@ exports.checklistCalv = async (req, res) => {
           },
         });
 
-        const plainRelatedChecklists = relatedChecklists.map((item) =>
-          item.get({ plain: true })
-        );
+        const plainRelatedChecklists = relatedChecklists.map((item) => item.get({ plain: true }));
 
         itemDoneList.forEach((item) => {
-          const relatedChecklist = plainRelatedChecklists.find(
-            (rl) => rl.ID_Checklist === item.ID_Checklist
-          );
+          const relatedChecklist = plainRelatedChecklists.find((rl) => rl.ID_Checklist === item.ID_Checklist);
 
           if (relatedChecklist) {
             item.ent_checklist = {
@@ -2679,16 +2381,7 @@ exports.checklistCalv = async (req, res) => {
             {
               model: Tb_checklistc,
               as: "tb_checklistc",
-              attributes: [
-                "ID_ChecklistC",
-                "Ngay",
-                "Giobd",
-                "Gioghinhan",
-                "Giokt",
-                "ID_KhoiCV",
-                "ID_Calv",
-                "ID_Duan",
-              ],
+              attributes: ["ID_ChecklistC", "Ngay", "Giobd", "Gioghinhan", "Giokt", "ID_KhoiCV", "ID_Calv", "ID_Duan"],
               where: whereClause,
               include: [
                 {
@@ -2724,12 +2417,7 @@ exports.checklistCalv = async (req, res) => {
                 {
                   model: Ent_hangmuc,
                   as: "ent_hangmuc",
-                  attributes: [
-                    "Hangmuc",
-                    "ID_Khuvuc",
-                    "MaQrCode",
-                    "Tieuchuankt",
-                  ],
+                  attributes: ["Hangmuc", "ID_Khuvuc", "MaQrCode", "Tieuchuankt"],
                 },
                 {
                   model: Ent_khuvuc,
@@ -2758,28 +2446,16 @@ exports.checklistCalv = async (req, res) => {
         });
 
         // Convert fetched data to plain JavaScript objects
-        const plainChecklistChiTiet = dataChecklistChiTiet?.map((item) =>
-          item.get({ plain: true })
-        );
+        const plainChecklistChiTiet = dataChecklistChiTiet?.map((item) => item.get({ plain: true }));
 
         // Fetch checklist done items
         const checklistDoneItems = await Tb_checklistchitietdone.findAll({
-          attributes: [
-            "ID_Checklistchitietdone",
-            "Description",
-            "isDelete",
-            "ID_ChecklistC",
-            "Gioht",
-            "isScan",
-            "isCheckListLai",
-          ],
+          attributes: ["ID_Checklistchitietdone", "Description", "isDelete", "ID_ChecklistC", "Gioht", "isScan", "isCheckListLai"],
           where: { isDelete: 0, ID_ChecklistC: ID_ChecklistC },
         });
 
         // Convert done items to plain objects
-        const plainChecklistDoneItems = checklistDoneItems?.map((item) =>
-          item.get({ plain: true })
-        );
+        const plainChecklistDoneItems = checklistDoneItems?.map((item) => item.get({ plain: true }));
 
         const arrPush = [];
         let checklistIds = [];
@@ -2834,24 +2510,12 @@ exports.checklistCalv = async (req, res) => {
             {
               model: Ent_hangmuc,
               as: "ent_hangmuc",
-              attributes: [
-                "Hangmuc",
-                "Tieuchuankt",
-                "ID_Khuvuc",
-                "MaQrCode",
-                "FileTieuChuan",
-              ],
+              attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "FileTieuChuan"],
             },
             {
               model: Ent_khuvuc,
               as: "ent_khuvuc",
-              attributes: [
-                "Tenkhuvuc",
-                "MaQrCode",
-                "Makhuvuc",
-                "Sothutu",
-                "ID_Khuvuc",
-              ],
+              attributes: ["Tenkhuvuc", "MaQrCode", "Makhuvuc", "Sothutu", "ID_Khuvuc"],
               include: [
                 {
                   model: Ent_toanha,
@@ -2872,22 +2536,17 @@ exports.checklistCalv = async (req, res) => {
           },
         });
 
-        const plainRelatedChecklists = relatedChecklists?.map((item) =>
-          item.get({ plain: true })
-        );
+        const plainRelatedChecklists = relatedChecklists?.map((item) => item.get({ plain: true }));
 
         itemDoneList.forEach((item) => {
-          const relatedChecklist = plainRelatedChecklists.find(
-            (rl) => rl.ID_Checklist == item.ID_Checklist
-          );
+          const relatedChecklist = plainRelatedChecklists.find((rl) => rl.ID_Checklist == item.ID_Checklist);
 
           if (relatedChecklist) {
             item.ent_checklist = {
               ...relatedChecklist,
               //ent_hangmuc: relatedChecklist.ent_hangmuc
             };
-            (item.Ketqua = relatedChecklist.Giatridinhdanh || ""),
-              (item.status = 1);
+            (item.Ketqua = relatedChecklist.Giatridinhdanh || ""), (item.status = 1);
             arrPush.push(item);
           }
         });
@@ -2900,9 +2559,7 @@ exports.checklistCalv = async (req, res) => {
       }
     }
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -2975,14 +2632,7 @@ exports.reportLocation = async (req, res) => {
           // as: "tb_checklistchitietdones",
           model: sequelize.models[tableName],
           as: tableName,
-          attributes: [
-            "Description",
-            "isDelete",
-            "ID_ChecklistC",
-            "Gioht",
-            "Vido",
-            "Kinhdo",
-          ],
+          attributes: ["Description", "isDelete", "ID_ChecklistC", "Gioht", "Vido", "Kinhdo"],
         },
       ],
       where: orConditions,
@@ -3012,14 +2662,10 @@ exports.reportLocation = async (req, res) => {
 
             // Check if the current item is within 15 seconds of any existing item
             const isWithinTimeRange = existingItems.some((existingItem) => {
-              const [existingHours, existingMinutes, existingSeconds] =
-                existingItem.Gioht.split(":").map(Number);
-              const existingTimeInSeconds =
-                existingHours * 3600 + existingMinutes * 60 + existingSeconds;
+              const [existingHours, existingMinutes, existingSeconds] = existingItem.Gioht.split(":").map(Number);
+              const existingTimeInSeconds = existingHours * 3600 + existingMinutes * 60 + existingSeconds;
 
-              const timeDiffInSeconds = Math.abs(
-                currentTimeInSeconds - existingTimeInSeconds
-              );
+              const timeDiffInSeconds = Math.abs(currentTimeInSeconds - existingTimeInSeconds);
               return timeDiffInSeconds <= 10; // Compare with a 10-second threshold
             });
 
@@ -3091,9 +2737,7 @@ exports.reportLocation = async (req, res) => {
       where: {
         ID_Checklist: {
           [Op.in]: results.flatMap((result) =>
-            result.duplicateCoordinates.flatMap((entry) =>
-              entry.checklistItems.flatMap((item) => item.checklistIds)
-            )
+            result.duplicateCoordinates.flatMap((entry) => entry.checklistItems.flatMap((item) => item.checklistIds))
           ),
         },
       },
@@ -3106,9 +2750,7 @@ exports.reportLocation = async (req, res) => {
           .map((entry) => {
             const detailedItems = entry.checklistItems.map((item) => {
               // Get the first related Hangmuc, Khuvuc, and Tentang from the checklist
-              const relatedItem = relatedChecklists.find((checklist) =>
-                item.checklistIds?.includes(checklist.ID_Checklist)
-              );
+              const relatedItem = relatedChecklists.find((checklist) => item.checklistIds?.includes(checklist.ID_Checklist));
               return {
                 Gioht: item.Gioht,
                 relatedHangmuc: relatedItem
@@ -3141,9 +2783,7 @@ exports.reportLocation = async (req, res) => {
     });
   } catch (err) {
     // Handle errors and send appropriate response
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -3170,12 +2810,8 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
       as = tableName;
     }
 
-    const startDate = moment(`${year}-${month}-01`)
-      .startOf("month")
-      .format("YYYY-MM-DD");
-    const endDate = moment(`${year}-${month}-01`)
-      .endOf("month")
-      .format("YYYY-MM-DD");
+    const startDate = moment(`${year}-${month}-01`).startOf("month").format("YYYY-MM-DD");
+    const endDate = moment(`${year}-${month}-01`).endOf("month").format("YYYY-MM-DD");
 
     let whereClause = {
       Ngay: { [Op.between]: [startDate, endDate] },
@@ -3231,25 +2867,14 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
         {
           model: model,
           as: as,
-          attributes: [
-            "Description",
-            "isDelete",
-            "ID_ChecklistC",
-            "Gioht",
-            "Vido",
-            "Kinhdo",
-            "isScan",
-          ],
+          attributes: ["Description", "isDelete", "ID_ChecklistC", "Gioht", "Vido", "Kinhdo", "isScan"],
         },
       ],
       where: whereClause,
     });
 
     const results = dataChecklistC.map((checklist) => {
-      const tbChecklistChiTiet =
-        year <= 2024 && month <= 11
-          ? checklist.tb_checklistchitietdones
-          : checklist[tableName];
+      const tbChecklistChiTiet = year <= 2024 && month <= 11 ? checklist.tb_checklistchitietdones : checklist[tableName];
       // Create a Map to group checklist items by Vido and Kinhdo
       const coordinatesMap = new Map();
 
@@ -3320,9 +2945,7 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
 
     // Extract checklist IDs
     const checklistIds = results.flatMap((result) =>
-      result.duplicateCoordinates.flatMap((entry) =>
-        entry.checklistItems.flatMap((item) => item.checklistIds)
-      )
+      result.duplicateCoordinates.flatMap((entry) => entry.checklistItems.flatMap((item) => item.checklistIds))
     );
 
     // Chunk the IDs
@@ -3332,13 +2955,7 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
     let relatedChecklists = [];
     for (const chunk of chunks) {
       const batchResults = await Ent_checklist.findAll({
-        attributes: [
-          "ID_Checklist",
-          "ID_Tang",
-          "ID_Hangmuc",
-          "ID_Khuvuc",
-          "isDelete",
-        ],
+        attributes: ["ID_Checklist", "ID_Tang", "ID_Hangmuc", "ID_Khuvuc", "isDelete"],
         include: [
           {
             model: Ent_hangmuc,
@@ -3393,36 +3010,24 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
         const detailedCoordinates = result.duplicateCoordinates
           .map(({ coordinates, checklistItems }) => {
             // Sắp xếp các checklist theo thời gian Gioht
-            checklistItems.sort((a, b) =>
-              moment(a.Gioht, "HH:mm:ss").diff(moment(b.Gioht, "HH:mm:ss"))
-            );
+            checklistItems.sort((a, b) => moment(a.Gioht, "HH:mm:ss").diff(moment(b.Gioht, "HH:mm:ss")));
 
             // Ánh xạ các checklist sang dữ liệu chi tiết
             const detailedItems = checklistItems.map((item, index) => {
-              const relatedData = item.checklistIds
-                .map((id) => checklistMap.get(id))
-                .find((data) => data); // Tìm checklist đầu tiên khớp
+              const relatedData = item.checklistIds.map((id) => checklistMap.get(id)).find((data) => data); // Tìm checklist đầu tiên khớp
 
               const floor = relatedData?.floor || null;
               let isValid = true;
 
               if (index > 0) {
                 const previousItem = checklistItems[index - 1];
-                const previousData = previousItem.checklistIds
-                  .map((id) => checklistMap.get(id))
-                  .find((data) => data); // Tìm checklist đầu tiên khớp cho item trước đó
+                const previousData = previousItem.checklistIds.map((id) => checklistMap.get(id)).find((data) => data); // Tìm checklist đầu tiên khớp cho item trước đó
                 const previousFloor = previousData?.floor || null;
 
-                const timeDifference = moment(item.Gioht, "HH:mm:ss").diff(
-                  moment(previousItem.Gioht, "HH:mm:ss"),
-                  "seconds"
-                );
+                const timeDifference = moment(item.Gioht, "HH:mm:ss").diff(moment(previousItem.Gioht, "HH:mm:ss"), "seconds");
 
                 // Đánh dấu không hợp lệ nếu tầng thay đổi và thời gian quá ngắn
-                if (
-                  previousFloor !== floor &&
-                  timeDifference < MIN_TRAVERSAL_TIME_BETWEEN_FLOORS
-                ) {
+                if (previousFloor !== floor && timeDifference < MIN_TRAVERSAL_TIME_BETWEEN_FLOORS) {
                   isValid = false;
                 }
               }
@@ -3563,17 +3168,14 @@ exports.getBaoCaoLocationsTimes = async (req, res) => {
     // Set headers for file download
     res.set({
       "Content-Disposition": `attachment; filename=Bao_cao_checklist_vi_pham_tong_hop_${month}_${year}.xlsx`,
-      "Content-Type":
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
 
     // Send the buffer as the response
     res.send(buffer);
   } catch (err) {
     // Handle errors and send appropriate response
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -3589,28 +3191,11 @@ exports.checklistCalvDinhKy = async (req, res) => {
 
       // Fetch checklist detail items
       const dataChecklistChiTiet = await Tb_checklistchitiet.findAll({
-        attributes: [
-          "ID_Checklistchitiet",
-          "ID_ChecklistC",
-          "ID_Checklist",
-          "Ketqua",
-          "Anh",
-          "Gioht",
-          "Ghichu",
-          "isDelete",
-        ],
+        attributes: ["ID_Checklistchitiet", "ID_ChecklistC", "ID_Checklist", "Ketqua", "Anh", "Gioht", "Ghichu", "isDelete"],
         include: [
           {
             model: Tb_checklistc,
-            attributes: [
-              "ID_ChecklistC",
-              "Ngay",
-              "Giobd",
-              "Gioghinhan",
-              "Giokt",
-              "ID_KhoiCV",
-              "ID_Calv",
-            ],
+            attributes: ["ID_ChecklistC", "Ngay", "Giobd", "Gioghinhan", "Giokt", "ID_KhoiCV", "ID_Calv"],
             where: whereClause,
             include: [
               {
@@ -3645,39 +3230,18 @@ exports.checklistCalvDinhKy = async (req, res) => {
               {
                 model: Ent_hangmuc,
                 as: "ent_hangmuc",
-                attributes: [
-                  "Hangmuc",
-                  "Tieuchuankt",
-                  "ID_Khuvuc",
-                  "MaQrCode",
-                  "ID_KhoiCV",
-                  "FileTieuChuan",
-                ],
+                attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "ID_KhoiCV", "FileTieuChuan"],
                 include: [
                   {
                     model: Ent_khuvuc,
-                    attributes: [
-                      "Tenkhuvuc",
-                      "MaQrCode",
-                      "Makhuvuc",
-                      "Sothutu",
-
-                      "ID_KhoiCV",
-                      "ID_Khuvuc",
-                    ],
+                    attributes: ["Tenkhuvuc", "MaQrCode", "Makhuvuc", "Sothutu", "ID_KhoiCV", "ID_Khuvuc"],
                     include: [
                       {
                         model: Ent_toanha,
                         attributes: ["Toanha", "ID_Toanha"],
                         include: {
                           model: Ent_duan,
-                          attributes: [
-                            "ID_Duan",
-                            "Duan",
-                            "Diachi",
-                            "Vido",
-                            "Kinhdo",
-                          ],
+                          attributes: ["ID_Duan", "Duan", "Diachi", "Vido", "Kinhdo"],
                           where: { ID_Duan: userData.ID_Duan },
                         },
                       },
@@ -3695,14 +3259,7 @@ exports.checklistCalvDinhKy = async (req, res) => {
               },
               {
                 model: Ent_user,
-                attributes: [
-                  "UserName",
-                  "Email",
-                  "Hoten",
-                  "Ngaysinh",
-                  "Gioitinh",
-                  "Sodienthoai",
-                ],
+                attributes: ["UserName", "Email", "Hoten", "Ngaysinh", "Gioitinh", "Sodienthoai"],
               },
             ],
           },
@@ -3747,18 +3304,7 @@ exports.checklistCalvDinhKy = async (req, res) => {
 
       // Fetch related checklist data
       const relatedChecklists = await Ent_checklist.findAll({
-        attributes: [
-          "ID_Checklist",
-          "ID_Hangmuc",
-          "ID_Tang",
-          "Sothutu",
-          "Maso",
-          "MaQrCode",
-          "Checklist",
-          "Giatridinhdanh",
-          "isCheck",
-          "Giatrinhan",
-        ],
+        attributes: ["ID_Checklist", "ID_Hangmuc", "ID_Tang", "Sothutu", "Maso", "MaQrCode", "Checklist", "Giatridinhdanh", "isCheck", "Giatrinhan"],
         where: {
           ID_Checklist: initialChecklistIds,
         },
@@ -3766,39 +3312,18 @@ exports.checklistCalvDinhKy = async (req, res) => {
           {
             model: Ent_hangmuc,
             as: "ent_hangmuc",
-            attributes: [
-              "Hangmuc",
-              "Tieuchuankt",
-              "ID_Khuvuc",
-              "MaQrCode",
-              "ID_KhoiCV",
-              "FileTieuChuan",
-            ],
+            attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "ID_KhoiCV", "FileTieuChuan"],
             include: [
               {
                 model: Ent_khuvuc,
-                attributes: [
-                  "Tenkhuvuc",
-                  "MaQrCode",
-                  "Makhuvuc",
-                  "Sothutu",
-
-                  "ID_KhoiCV",
-                  "ID_Khuvuc",
-                ],
+                attributes: ["Tenkhuvuc", "MaQrCode", "Makhuvuc", "Sothutu", "ID_KhoiCV", "ID_Khuvuc"],
                 include: [
                   {
                     model: Ent_toanha,
                     attributes: ["Toanha", "ID_Toanha"],
                     include: {
                       model: Ent_duan,
-                      attributes: [
-                        "ID_Duan",
-                        "Duan",
-                        "Diachi",
-                        "Vido",
-                        "Kinhdo",
-                      ],
+                      attributes: ["ID_Duan", "Duan", "Diachi", "Vido", "Kinhdo"],
                       where: { ID_Duan: userData.ID_Duan },
                     },
                   },
@@ -3816,14 +3341,7 @@ exports.checklistCalvDinhKy = async (req, res) => {
           },
           {
             model: Ent_user,
-            attributes: [
-              "UserName",
-              "Email",
-              "Hoten",
-              "Ngaysinh",
-              "Gioitinh",
-              "Sodienthoai",
-            ],
+            attributes: ["UserName", "Email", "Hoten", "Ngaysinh", "Gioitinh", "Sodienthoai"],
           },
         ],
       });
@@ -3836,9 +3354,7 @@ exports.checklistCalvDinhKy = async (req, res) => {
             const splitByComma = description.split(",");
             splitByComma.forEach((splitItem) => {
               const [ID_Checklist, valueCheck, gioht] = splitItem.split("/");
-              const relatedChecklist = relatedChecklists.find(
-                (rl) => rl.ID_Checklist === parseInt(ID_Checklist)
-              );
+              const relatedChecklist = relatedChecklists.find((rl) => rl.ID_Checklist === parseInt(ID_Checklist));
               if (relatedChecklist) {
                 arrPush.push({
                   ID_Checklist: parseInt(ID_Checklist),
@@ -3854,18 +3370,7 @@ exports.checklistCalvDinhKy = async (req, res) => {
       });
 
       const dataChecklistC = await Tb_checklistc.findByPk(ID_ChecklistC, {
-        attributes: [
-          "Ngay",
-          "ID_KhoiCV",
-          "ID_Duan",
-          "Tinhtrang",
-          "Giobd",
-          "Gioghinhan",
-          "Giokt",
-          "ID_User",
-          "ID_Calv",
-          "isDelete",
-        ],
+        attributes: ["Ngay", "ID_KhoiCV", "ID_Duan", "Tinhtrang", "Giobd", "Gioghinhan", "Giokt", "ID_User", "ID_Calv", "isDelete"],
         include: [
           {
             model: Ent_duan,
@@ -3904,9 +3409,7 @@ exports.checklistCalvDinhKy = async (req, res) => {
       });
     }
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -3938,11 +3441,7 @@ exports.checklistCalvDate = async (req, res) => {
       };
 
       // Nếu quyền là 1 (ID_Chucvu === 1) thì không cần thêm điều kiện ID_KhoiCV
-      if (
-        userData.ID_Chucvu !== 1 &&
-        userData.ID_Chucvu !== 2 &&
-        userData.ID_Chucvu !== 3
-      ) {
+      if (userData.ID_Chucvu !== 1 && userData.ID_Chucvu !== 2 && userData.ID_Chucvu !== 3) {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
         whereClause.ID_User = userData?.ID_User;
       }
@@ -4113,16 +3612,7 @@ exports.checklistYearByKhoiCV = async (req, res) => {
 
     // Fetch the checklist data with shift (Calv) information
     const relatedChecklists = await Tb_checklistc.findAll({
-      attributes: [
-        "ID_KhoiCV",
-        "Ngay",
-        "TongC",
-        "Tong",
-        "ID_Calv",
-        "isDelete",
-        "ID_Duan",
-        "Tinhtrang",
-      ],
+      attributes: ["ID_KhoiCV", "Ngay", "TongC", "Tong", "ID_Calv", "isDelete", "ID_Duan", "Tinhtrang"],
       where: whereClause,
       include: [
         {
@@ -4140,20 +3630,7 @@ exports.checklistYearByKhoiCV = async (req, res) => {
     const result = {};
 
     // Initialize months array for categories
-    const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
     // Initialize result for each work unit (KhoiCV) and each month, per shift (Calv)
     months.forEach((month) => {
@@ -4222,9 +3699,7 @@ exports.checklistYearByKhoiCV = async (req, res) => {
             });
           });
 
-          return countDays > 0
-            ? parseFloat((monthlyTotalPercentage / countDays).toFixed(2))
-            : 0;
+          return countDays > 0 ? parseFloat((monthlyTotalPercentage / countDays).toFixed(2)) : 0;
         });
 
         series.push({
@@ -4251,8 +3726,7 @@ exports.checklistYearByKhoiCV = async (req, res) => {
 
     // Send response
     res.status(200).json({
-      message:
-        "Tỉ lệ hoàn thành checklist theo khối công việc (KhoiCV), ca làm việc (Calv), và tháng",
+      message: "Tỉ lệ hoàn thành checklist theo khối công việc (KhoiCV), ca làm việc (Calv), và tháng",
       data: resultArray,
     });
   } catch (err) {
@@ -4288,13 +3762,10 @@ exports.checklistYearByKhoiCVSuCo = async (req, res) => {
         const tableName = `tb_checkilstchitiet_${month}_${year}`;
 
         // Kiểm tra bảng có tồn tại không
-        const tableExists = await sequelize.query(
-          `SELECT COUNT(*) AS count FROM information_schema.tables WHERE table_name = :tableName`,
-          {
-            replacements: { tableName },
-            type: sequelize.QueryTypes.SELECT,
-          }
-        );
+        const tableExists = await sequelize.query(`SELECT COUNT(*) AS count FROM information_schema.tables WHERE table_name = :tableName`, {
+          replacements: { tableName },
+          type: sequelize.QueryTypes.SELECT,
+        });
 
         if (tableExists[0].count > 0) {
           // Truy vấn dữ liệu từ bảng
@@ -4358,30 +3829,12 @@ exports.checklistYearByKhoiCVSuCo = async (req, res) => {
     } else {
       // Dùng bảng tb_checklistchitiet cho năm < 2024
       relatedChecklists = await Tb_checklistchitiet.findAll({
-        attributes: [
-          "ID_Checklistchitiet",
-          "ID_ChecklistC",
-          "ID_Checklist",
-          "Ketqua",
-          "Anh",
-          "Ngay",
-          "Gioht",
-          "Ghichu",
-          "isDelete",
-        ],
+        attributes: ["ID_Checklistchitiet", "ID_ChecklistC", "ID_Checklist", "Ketqua", "Anh", "Ngay", "Gioht", "Ghichu", "isDelete"],
         include: [
           {
             model: Tb_checklistc,
             as: "tb_checklistc",
-            attributes: [
-              "ID_KhoiCV",
-              "Ngay",
-              "TongC",
-              "Tong",
-              "Tinhtrang",
-              "ID_Duan",
-              "isDelete",
-            ],
+            attributes: ["ID_KhoiCV", "Ngay", "TongC", "Tong", "Tinhtrang", "ID_Duan", "isDelete"],
             include: [
               {
                 model: Ent_khoicv,
@@ -4446,20 +3899,7 @@ exports.checklistYearByKhoiCVSuCo = async (req, res) => {
     });
 
     const result = {
-      categories: [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-      ],
+      categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
       series: [
         {
           type: String(year),
@@ -4473,14 +3913,13 @@ exports.checklistYearByKhoiCVSuCo = async (req, res) => {
       data: result,
     });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
 exports.tiLeHoanThanh = async (req, res) => {
   try {
+    const user = req.user.data;
     const year = req.query.year || new Date().getFullYear();
     const month = req.query.month || new Date().getMonth() + 1;
     const khoi = req.query.khoi;
@@ -4502,6 +3941,10 @@ exports.tiLeHoanThanh = async (req, res) => {
 
     if (khoi !== "all") {
       whereClause.ID_KhoiCV = khoi;
+    }
+
+    if (user.ent_chucvu.Role == 5) {
+      whereClause.ID_KhoiCV = user.ID_KhoiCV;
     }
 
     if (nhom !== "all") {
@@ -4534,16 +3977,7 @@ exports.tiLeHoanThanh = async (req, res) => {
 
     // Fetch related checklist data along with project and khối information
     const relatedChecklists = await Tb_checklistc.findAll({
-      attributes: [
-        "ID_Duan",
-        "ID_KhoiCV",
-        "ID_Calv",
-        "Ngay",
-        "TongC",
-        "Tong",
-        "isDelete",
-        "Tinhtrang",
-      ],
+      attributes: ["ID_Duan", "ID_KhoiCV", "ID_Calv", "Ngay", "TongC", "Tong", "isDelete", "Tinhtrang"],
       where: whereClause,
       include: [
         {
@@ -4592,14 +4026,11 @@ exports.tiLeHoanThanh = async (req, res) => {
       }
 
       // Accumulate data for shifts
-      result[projectId].khois[khoiName].shifts[shiftName].totalTongC +=
-        checklistC.TongC;
+      result[projectId].khois[khoiName].shifts[shiftName].totalTongC += checklistC.TongC;
 
       // Calculate user completion rate and add to the list
       const userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
-      result[projectId].khois[khoiName].shifts[
-        shiftName
-      ].userCompletionRates.push(userCompletionRate);
+      result[projectId].khois[khoiName].shifts[shiftName].userCompletionRates.push(userCompletionRate);
     });
 
     // Calculate completion rates for each khối and project
@@ -4610,10 +4041,7 @@ exports.tiLeHoanThanh = async (req, res) => {
 
         Object.values(khoi.shifts).forEach((shift) => {
           // Calculate shift completion ratio
-          let shiftCompletionRatio = shift.userCompletionRates.reduce(
-            (sum, rate) => sum + rate,
-            0
-          );
+          let shiftCompletionRatio = shift.userCompletionRates.reduce((sum, rate) => sum + rate, 0);
           if (shiftCompletionRatio > 100) {
             shiftCompletionRatio = 100; // Cap each shift at 100%
           }
@@ -4643,8 +4071,7 @@ exports.tiLeHoanThanh = async (req, res) => {
         totalKhois += 1;
       });
 
-      const avgCompletionRatio =
-        totalKhois > 0 ? totalCompletionRatio / totalKhois : 0;
+      const avgCompletionRatio = totalKhois > 0 ? totalCompletionRatio / totalKhois : 0;
       percentageData.push(avgCompletionRatio.toFixed(2)); // Format to 2 decimal places
     });
 
@@ -4688,14 +4115,13 @@ exports.tiLeHoanThanh = async (req, res) => {
       data: resultArray,
     });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
 exports.tiLeSuco = async (req, res) => {
   try {
+    const user = req.user.data;
     const year = req.query.year || new Date().getFullYear(); // Lấy năm
     // const month = req.query.month || (new Date().getMonth() + 1).toString().padStart(2, '0'); // Lấy tháng
     const month = (new Date().getMonth() + 1).toString().padStart(2, "0"); // Lấy tháng
@@ -4713,7 +4139,19 @@ exports.tiLeSuco = async (req, res) => {
       Tinhtrang: 1,
     };
 
+    if (khoi != "all") {
+      whereClause.ID_KhoiCV = khoi;
+    }
+
+    if (nhom !== "all") {
+      whereClause["$ent_duan.ID_Phanloai$"] = nhom; // Add condition for nhom
+    }
+
     const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
+
+    if (user.ent_chucvu.Role == 5) {
+      whereClause.ID_KhoiCV = user.ID_KhoiCV;
+    }
 
     // Use this in place of the current date logic in the `whereClause`
     // whereClause.Ngay = {
@@ -4727,16 +4165,7 @@ exports.tiLeSuco = async (req, res) => {
     defineDynamicModelChiTiet(tableName, sequelize);
     // Truy vấn cơ sở dữ liệu
     const relatedChecklists = await Tb_checklistc.findAll({
-      attributes: [
-        "ID_Duan",
-        "ID_KhoiCV",
-        "ID_Calv",
-        "Ngay",
-        "TongC",
-        "Tong",
-        "Tinhtrang",
-        "isDelete",
-      ],
+      attributes: ["ID_Duan", "ID_KhoiCV", "ID_Calv", "Ngay", "TongC", "Tong", "Tinhtrang", "isDelete"],
       where: whereClause,
       include: [
         {
@@ -4754,17 +4183,7 @@ exports.tiLeSuco = async (req, res) => {
         {
           model: sequelize.models[tableName],
           as: tableName,
-          attributes: [
-            "ID_Checklistchitiet",
-            "ID_ChecklistC",
-            "ID_Checklist",
-            "Ketqua",
-            "Anh",
-            "Ngay",
-            "Gioht",
-            "Ghichu",
-            "isDelete",
-          ],
+          attributes: ["ID_Checklistchitiet", "ID_ChecklistC", "ID_Checklist", "Ketqua", "Anh", "Ngay", "Gioht", "Ghichu", "isDelete"],
           include: [
             {
               model: Ent_checklist,
@@ -4800,10 +4219,7 @@ exports.tiLeSuco = async (req, res) => {
       const projectName = checklistC["ent_duan.Duan"]; // Lấy tên dự án
 
       // Kiểm tra nếu có dữ liệu trong tb_checklistchitiets và Tinhtrang của ent_checklist = 1
-      if (
-        checklistC[`${tableName}.ID_Checklistchitiet`] &&
-        checklistC[`${tableName}.ent_checklist.Tinhtrang`] === 1
-      ) {
+      if (checklistC[`${tableName}.ID_Checklistchitiet`] && checklistC[`${tableName}.ent_checklist.Tinhtrang`] === 1) {
         // Khởi tạo nếu dự án chưa có trong đối tượng
         if (!projectIncidentCount[projectName]) {
           projectIncidentCount[projectName] = 0;
@@ -4815,12 +4231,10 @@ exports.tiLeSuco = async (req, res) => {
     });
 
     // Chuyển đối tượng thành mảng kết quả
-    const resultArray = Object.keys(projectIncidentCount).map(
-      (projectName) => ({
-        project: projectName,
-        incidentCount: projectIncidentCount[projectName],
-      })
-    );
+    const resultArray = Object.keys(projectIncidentCount).map((projectName) => ({
+      project: projectName,
+      incidentCount: projectIncidentCount[projectName],
+    }));
 
     // Sắp xếp kết quả theo tangGiam
     if (tangGiam === "asc") {
@@ -4855,171 +4269,153 @@ exports.tiLeSuco = async (req, res) => {
       data: result,
     });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
 exports.suCoChiTiet = async (req, res) => {
-  const name = req.query.name;
-  const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
+  try {
+    const user = req.user.data;
+    const name = req.query.name;
+    const khoi = req.query.khoi;
+    const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
 
-  const yesterdayDate = new Date(yesterday);
-  const month = (yesterdayDate.getMonth() + 1).toString().padStart(2, "0");
-  const year = yesterdayDate.getFullYear();
+    const yesterdayDate = new Date(yesterday);
+    const month = (yesterdayDate.getMonth() + 1).toString().padStart(2, "0");
+    const year = yesterdayDate.getFullYear();
 
-  const tableName = `tb_checklistchitiet_${month}_${year}`;
-  defineDynamicModelChiTiet(tableName, sequelize);
+    const tableName = `tb_checklistchitiet_${month}_${year}`;
+    defineDynamicModelChiTiet(tableName, sequelize);
 
-  let whereClause = {
-    isDelete: 0,
-    ID_Duan: {
-      [Op.ne]: 1,
-    },
-    Tinhtrang: 1,
-  };
-
-  whereClause.Ngay = {
-    [Op.gte]: `${yesterday} 00:00:00`,
-    [Op.lte]: `${yesterday} 23:59:59`,
-  };
-
-  const relatedChecklists = await Tb_checklistc.findAll({
-    attributes: [
-      "ID_Duan",
-      "ID_KhoiCV",
-      "ID_Calv",
-      "Ngay",
-      "TongC",
-      "Tong",
-      "Tinhtrang",
-      "isDelete",
-    ],
-    where: whereClause,
-    include: [
-      {
-        model: Ent_duan,
-        attributes: ["Duan", "ID_Nhom", "ID_Phanloai"],
+    let whereClause = {
+      isDelete: 0,
+      ID_Duan: {
+        [Op.ne]: 1,
       },
-      {
-        model: Ent_khoicv,
-        attributes: ["KhoiCV"],
-      },
-      {
-        model: Ent_calv,
-        attributes: ["Tenca"],
-      },
-      {
-        // model: Tb_checklistchitiet,
-        // as: "tb_checklistchitiets",
-        model: sequelize.models[tableName],
-        as: tableName,
-        attributes: [
-          "ID_Checklistchitiet",
-          "ID_ChecklistC",
-          "ID_Checklist",
-          "Ketqua",
-          "Anh",
-          "Ngay",
-          "Gioht",
-          "Ghichu",
-          "isDelete",
-        ],
-        include: [
-          {
-            model: Ent_checklist,
-            as: "ent_checklist",
-            attributes: [
-              "ID_Checklist",
-              "ID_Hangmuc",
-              "ID_Tang",
-              "Sothutu",
-              "Maso",
-              "MaQrCode",
-              "Checklist",
-              "Giatridinhdanh",
-              "isCheck",
-              "Giatrinhan",
-              "Tinhtrang",
-              "isDelete",
-            ],
-            where: {
-              Tinhtrang: 1,
-              isDelete: 0,
-            },
-            include: [
-              {
-                model: Ent_hangmuc,
-                attributes: ["Hangmuc", "isDelete"],
+      Tinhtrang: 1,
+    };
+
+    // whereClause.Ngay = {
+    //   [Op.gte]: `${yesterday} 00:00:00`,
+    //   [Op.lte]: `${yesterday} 23:59:59`,
+    // };
+
+    if (khoi != "all") {
+      whereClause.ID_KhoiCV = khoi;
+    }
+
+    whereClause.Ngay = yesterday;
+
+    if (user.ent_chucvu.Role == 5) {
+      whereClause.ID_KhoiCV = user.ID_KhoiCV;
+    }
+
+    const relatedChecklists = await Tb_checklistc.findAll({
+      attributes: ["ID_Duan", "ID_KhoiCV", "ID_Calv", "Ngay", "TongC", "Tong", "Tinhtrang", "isDelete"],
+      where: whereClause,
+      include: [
+        {
+          model: Ent_duan,
+          attributes: ["Duan", "ID_Nhom", "ID_Phanloai"],
+        },
+        {
+          model: Ent_khoicv,
+          attributes: ["KhoiCV"],
+        },
+        {
+          model: Ent_calv,
+          attributes: ["Tenca"],
+        },
+        {
+          // model: Tb_checklistchitiet,
+          // as: "tb_checklistchitiets",
+          model: sequelize.models[tableName],
+          as: tableName,
+          attributes: ["ID_Checklistchitiet", "ID_ChecklistC", "ID_Checklist", "Ketqua", "Anh", "Ngay", "Gioht", "Ghichu", "isDelete"],
+          include: [
+            {
+              model: Ent_checklist,
+              as: "ent_checklist",
+              attributes: [
+                "ID_Checklist",
+                "ID_Hangmuc",
+                "ID_Tang",
+                "Sothutu",
+                "Maso",
+                "MaQrCode",
+                "Checklist",
+                "Giatridinhdanh",
+                "isCheck",
+                "Giatrinhan",
+                "Tinhtrang",
+                "isDelete",
+              ],
+              where: {
+                Tinhtrang: 1,
                 isDelete: 0,
               },
-            ],
-          },
-        ],
-      },
-    ],
-  });
+              include: [
+                {
+                  model: Ent_hangmuc,
+                  attributes: ["Hangmuc", "isDelete"],
+                  isDelete: 0,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
 
-  // Gom tất cả các tb_checklistchitiets từ tất cả các dự án
-  const allChecklistDetails = relatedChecklists.reduce((acc, checklist) => {
-    // Kiểm tra nếu có bảng động và trùng tên dự án (name)
-    if (
-      checklist[tableName] &&
-      checklist[tableName].length > 0 && // Kiểm tra bảng động có phần tử
-      checklist.ent_duan.Duan.toLowerCase() === name.toLowerCase() // So sánh tên dự án không phân biệt hoa thường
-    ) {
-      // Gom mảng bảng động
-      acc.push(...checklist[tableName]);
-    }
-    return acc;
-  }, []);
+    // Gom tất cả các tb_checklistchitiets từ tất cả các dự án
+    const allChecklistDetails = relatedChecklists.reduce((acc, checklist) => {
+      // Kiểm tra nếu có bảng động và trùng tên dự án (name)
+      if (
+        checklist[tableName] &&
+        checklist[tableName].length > 0 && // Kiểm tra bảng động có phần tử
+        checklist.ent_duan.Duan.toLowerCase() === name.toLowerCase() // So sánh tên dự án không phân biệt hoa thường
+      ) {
+        // Gom mảng bảng động
+        acc.push(...checklist[tableName]);
+      }
+      return acc;
+    }, []);
 
-  // Trả về dữ liệu chỉ bao gồm mảng tb_checklistchitiets
-  return res.status(200).json({
-    message: "Danh sách chi tiết sự cố",
-    data: allChecklistDetails,
-  });
+    // Trả về dữ liệu chỉ bao gồm mảng tb_checklistchitiets
+    return res.status(200).json({
+      message: "Danh sách chi tiết sự cố",
+      data: allChecklistDetails,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message || "Lỗi! Vui lòng thử lại sau." });
+  }
 };
 
 exports.soSanhSuCo = async (req, res) => {
   try {
+    const user = req.user.data;
     const currentDay = moment(); // Ngày hiện tại
 
-    const startOfLastWeek = currentDay
-      .clone()
-      .subtract(7, "day")
-      .startOf("day")
-      .format("YYYY-MM-DD HH:mm:ss");
+    const startOfLastWeek = currentDay.clone().subtract(7, "day").startOf("day").format("YYYY-MM-DD HH:mm:ss");
 
-    const endOfLastWeek = currentDay
-      .clone()
-      .subtract(1, "day")
-      .endOf("day")
-      .format("YYYY-MM-DD HH:mm:ss");
+    const endOfLastWeek = currentDay.clone().subtract(1, "day").endOf("day").format("YYYY-MM-DD HH:mm:ss");
 
-    const startOfTwoWeeksAgo = currentDay
-      .clone()
-      .subtract(15, "day")
-      .startOf("day")
-      .format("YYYY-MM-DD HH:mm:ss");
+    const startOfTwoWeeksAgo = currentDay.clone().subtract(15, "day").startOf("day").format("YYYY-MM-DD HH:mm:ss");
 
-    const endOfTwoWeeksAgo = currentDay
-      .clone()
-      .subtract(8, "day")
-      .endOf("day")
-      .format("YYYY-MM-DD HH:mm:ss");
+    const endOfTwoWeeksAgo = currentDay.clone().subtract(8, "day").endOf("day").format("YYYY-MM-DD HH:mm:ss");
 
     // Xây dựng điều kiện where cho truy vấn
     let whereClause = {
       isDelete: 0,
     };
 
+    if (user.ent_chucvu.Role == 5) {
+      whereClause.ID_KhoiCV = user.ID_KhoiCV;
+    }
+
     // Truy vấn số lượng sự cố cho tuần trước
     const lastWeekIncidents = await Tb_checklistc.findAll({
-      attributes: [
-        [sequelize.fn("COUNT", sequelize.col("ID_Duan")), "lastWeekTotalCount"],
-      ],
+      attributes: [[sequelize.fn("COUNT", sequelize.col("ID_Duan")), "lastWeekTotalCount"]],
       where: {
         ...whereClause,
         Ngay: {
@@ -5036,12 +4432,7 @@ exports.soSanhSuCo = async (req, res) => {
 
     // Truy vấn số lượng sự cố cho tuần trước nữa
     const twoWeeksAgoIncidents = await Tb_checklistc.findAll({
-      attributes: [
-        [
-          sequelize.fn("COUNT", sequelize.col("ID_Duan")),
-          "twoWeeksAgoTotalCount",
-        ],
-      ],
+      attributes: [[sequelize.fn("COUNT", sequelize.col("ID_Duan")), "twoWeeksAgoTotalCount"]],
       where: {
         ...whereClause,
         Ngay: {
@@ -5054,17 +4445,14 @@ exports.soSanhSuCo = async (req, res) => {
     });
 
     // Lấy tổng số lượng sự cố từ kết quả truy vấn
-    const lastWeekCount =
-      parseInt(lastWeekIncidents[0]?.lastWeekTotalCount, 10) || 0;
-    const twoWeeksAgoCount =
-      parseInt(twoWeeksAgoIncidents[0]?.twoWeeksAgoTotalCount, 10) || 0;
+    const lastWeekCount = parseInt(lastWeekIncidents[0]?.lastWeekTotalCount, 10) || 0;
+    const twoWeeksAgoCount = parseInt(twoWeeksAgoIncidents[0]?.twoWeeksAgoTotalCount, 10) || 0;
 
     // Tính phần trăm thay đổi
     let percentageChange = 0;
     if (twoWeeksAgoCount > 0) {
       // Tránh chia cho 0
-      percentageChange =
-        ((lastWeekCount - twoWeeksAgoCount) / twoWeeksAgoCount) * 100;
+      percentageChange = ((lastWeekCount - twoWeeksAgoCount) / twoWeeksAgoCount) * 100;
     } else if (lastWeekCount > 0) {
       percentageChange = 100; // Nếu tuần trước có sự cố mà tuần này không có
     }
@@ -5079,9 +4467,7 @@ exports.soSanhSuCo = async (req, res) => {
       },
     });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -5109,21 +4495,95 @@ const calculateCompletionPercentagePerProject = (checklists) => {
 
   // Calculate percentage for each project and sum them
   Object.values(projectCompletionRates).forEach((project) => {
-    const projectPercentage =
-      project.totalTong > 0
-        ? (project.totalTongC / project.totalTong) * 100
-        : 0;
+    const projectPercentage = project.totalTong > 0 ? (project.totalTongC / project.totalTong) * 100 : 0;
     totalCompletionPercentage += projectPercentage;
   });
 
   // Return average completion percentage for all projects
-  return numberOfProjects > 0
-    ? totalCompletionPercentage / numberOfProjects
-    : 0;
+  return numberOfProjects > 0 ? totalCompletionPercentage / numberOfProjects : 0;
+};
+
+const calculateCompletionPercentagePerProject1 = (dataChecklistCs) => {
+  const result = {};
+  let tong = 0;
+  let count = 0;
+
+  dataChecklistCs.forEach((checklistC) => {
+    const projectId = checklistC.ID_Duan;
+    const projectName = checklistC.ent_duan.Duan;
+    const khoiName = checklistC.ent_khoicv.KhoiCV;
+    const shiftName = checklistC.ent_calv.Tenca;
+
+    // Khởi tạo dữ liệu dự án nếu chưa tồn tại
+    if (!result[projectId]) {
+      result[projectId] = {
+        projectId,
+        projectName,
+        createdKhois: {},
+      };
+    }
+
+    // Khởi tạo dữ liệu cho khối nếu chưa tồn tại
+    if (!result[projectId].createdKhois[khoiName]) {
+      result[projectId].createdKhois[khoiName] = {
+        shifts: {},
+      };
+    }
+
+    // Khởi tạo dữ liệu cho ca nếu chưa tồn tại
+    if (!result[projectId].createdKhois[khoiName].shifts[shiftName]) {
+      result[projectId].createdKhois[khoiName].shifts[shiftName] = {
+        totalTongC: 0,
+        totalTong: 0,
+        userCompletionRates: [],
+      };
+    }
+
+    // Cộng dồn TongC và Tong cho ca
+    result[projectId].createdKhois[khoiName].shifts[shiftName].totalTongC += checklistC.TongC;
+    result[projectId].createdKhois[khoiName].shifts[shiftName].totalTong = checklistC.Tong;
+
+    // Lưu tỷ lệ hoàn thành của từng người (nếu Tong > 0)
+    if (checklistC.Tong > 0) {
+      const userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
+      result[projectId].createdKhois[khoiName].shifts[shiftName].userCompletionRates.push(userCompletionRate);
+    }
+  });
+
+  // Tính toán phần trăm hoàn thành riêng cho từng ca và tổng khối
+  Object.values(result).forEach((project) => {
+    Object.values(project.createdKhois).forEach((khoi) => {
+      let totalKhoiCompletionRatio = 0;
+      let totalShifts = 0;
+
+      Object.values(khoi.shifts).forEach((shift) => {
+        if (shift.userCompletionRates.length > 0) {
+          let shiftCompletionRatio = shift.userCompletionRates.reduce((sum, rate) => sum + rate, 0);
+          shiftCompletionRatio = Math.min(shiftCompletionRatio, 100); // Giới hạn tối đa là 100%
+          totalKhoiCompletionRatio += shiftCompletionRatio;
+          totalShifts += 1;
+        }
+      });
+
+      // Tính phần trăm hoàn thành trung bình cho khối (nếu có shift)
+      if (totalShifts > 0) {
+        const avgKhoiCompletionRatio = totalKhoiCompletionRatio / totalShifts;
+        const formatAvg = Number.isInteger(avgKhoiCompletionRatio) ? avgKhoiCompletionRatio : avgKhoiCompletionRatio.toFixed(2);
+        khoi.completionRatio = formatAvg;
+        tong += Number(formatAvg);
+        count += 1;
+      } else {
+        khoi.completionRatio = null; // Không có shift nào
+      }
+    });
+  });
+
+  return tong / count;
 };
 
 exports.reportPercentWeek = async (req, res) => {
   try {
+    const user = req.user.data;
     const khoi = req.query.khoi;
     const nhom = req.query.nhom;
 
@@ -5143,6 +4603,11 @@ exports.reportPercentWeek = async (req, res) => {
       Tinhtrang: 1,
     };
 
+    if (user.ent_chucvu.Role == 5) {
+      lastWhereClause.ID_KhoiCV = user.ID_KhoiCV;
+      prevWhereClause.ID_KhoiCV = user.ID_KhoiCV;
+    }
+
     // if (khoi !== "all") {
     //   lastWhereClause.ID_KhoiCV = khoi;
     //   prevWhereClause.ID_KhoiCV = khoi;
@@ -5154,46 +4619,39 @@ exports.reportPercentWeek = async (req, res) => {
     // }
 
     // Get date ranges for last week and the previous week
-    const lastWeekStart = moment()
-      .subtract(7, "days")
-      .startOf("day")
-      .format("YYYY-MM-DD");
-    const lastWeekEnd = moment()
-      .subtract(1, "days")
-      .endOf("day")
-      .format("YYYY-MM-DD");
-    const previousWeekStart = moment()
-      .subtract(14, "days")
-      .startOf("day")
-      .format("YYYY-MM-DD");
-    const previousWeekEnd = moment()
-      .subtract(8, "days")
-      .endOf("day")
-      .format("YYYY-MM-DD");
+    const lastWeekStart = moment().subtract(7, "days").startOf("day").format("YYYY-MM-DD");
+    const lastWeekEnd = moment().subtract(1, "days").endOf("day").format("YYYY-MM-DD");
+    const previousWeekStart = moment().subtract(14, "days").startOf("day").format("YYYY-MM-DD");
+    const previousWeekEnd = moment().subtract(8, "days").endOf("day").format("YYYY-MM-DD");
 
-    lastWhereClause.Ngay = {
-      [Op.gte]: `${lastWeekStart} 00:00:00`,
-      [Op.lte]: `${lastWeekEnd} 23:59:59`,
-    };
+    // lastWhereClause.Ngay = {
+    //   [Op.gte]: `${lastWeekStart} 00:00:00`,
+    //   [Op.lte]: `${lastWeekEnd} 23:59:59`,
+    // };
 
-    prevWhereClause.Ngay = {
-      [Op.gte]: `${previousWeekStart} 00:00:00`,
-      [Op.lte]: `${previousWeekEnd} 23:59:59`,
-    };
+    // prevWhereClause.Ngay = {
+    //   [Op.gte]: `${previousWeekStart} 00:00:00`,
+    //   [Op.lte]: `${previousWeekEnd} 23:59:59`,
+    // };
+
+    // lastWhereClause.ngay = {
+    //   [Op.between]: [lastWeekStart, lastWeekEnd],
+    // }
+
+    // prevWhereClause.ngay = {
+    //   [Op.between]: [previousWeekStart, previousWeekEnd],
+    // }
+
+    const yesterdayDate = moment().subtract(1, "days").endOf("day").format("YYYY-MM-DD");
+    const previousYesterdayDate = moment().subtract(2, "days").endOf("day").format("YYYY-MM-DD");
+
+    lastWhereClause.Ngay = yesterdayDate;
+
+    prevWhereClause.Ngay = previousYesterdayDate;
 
     // Fetch data for last week
     const lastWeekData = await Tb_checklistc.findAll({
-      attributes: [
-        "ID_ChecklistC",
-        "ID_Duan",
-        "ID_Calv",
-        "Ngay",
-        "TongC",
-        "Tong",
-        "ID_KhoiCV",
-        "isDelete",
-        "Tinhtrang",
-      ],
+      attributes: ["ID_ChecklistC", "ID_Duan", "ID_Calv", "Ngay", "TongC", "Tong", "ID_KhoiCV", "isDelete", "Tinhtrang"],
       where: lastWhereClause,
       include: [
         { model: Ent_duan, attributes: ["Duan", "ID_Nhom"] },
@@ -5204,17 +4662,7 @@ exports.reportPercentWeek = async (req, res) => {
 
     // Fetch data for previous week
     const previousWeekData = await Tb_checklistc.findAll({
-      attributes: [
-        "ID_ChecklistC",
-        "ID_Duan",
-        "ID_Calv",
-        "Ngay",
-        "TongC",
-        "Tong",
-        "ID_KhoiCV",
-        "isDelete",
-        "Tinhtrang",
-      ],
+      attributes: ["ID_ChecklistC", "ID_Duan", "ID_Calv", "Ngay", "TongC", "Tong", "ID_KhoiCV", "isDelete", "Tinhtrang"],
       where: prevWhereClause,
       include: [
         { model: Ent_duan, attributes: ["Duan", "ID_Nhom", "ID_Duan"] },
@@ -5224,10 +4672,8 @@ exports.reportPercentWeek = async (req, res) => {
     });
 
     // Calculate total completion percentage for last week and previous week
-    const lastWeekPercentage =
-      calculateCompletionPercentagePerProject(lastWeekData);
-    const previousWeekPercentage =
-      calculateCompletionPercentagePerProject(previousWeekData);
+    const lastWeekPercentage = calculateCompletionPercentagePerProject1(lastWeekData);
+    const previousWeekPercentage = calculateCompletionPercentagePerProject1(previousWeekData);
 
     // Calculate the difference between the two weeks
     const percentageDifference = lastWeekPercentage - previousWeekPercentage;
@@ -5235,15 +4681,15 @@ exports.reportPercentWeek = async (req, res) => {
     res.status(200).json({
       message: "Completion percentages comparison between two weeks",
       data: {
+        yesterdayDate: moment(yesterdayDate).format("DD-MM-YYYY"),
+        previousYesterdayDate: moment(previousYesterdayDate).format("DD-MM-YYYY"),
         lastWeekPercentage: lastWeekPercentage.toFixed(2),
         previousWeekPercentage: previousWeekPercentage.toFixed(2),
         percentageDifference: percentageDifference.toFixed(2),
       },
     });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Error! Please try again later." });
+    res.status(500).json({ message: err.message || "Error! Please try again later." });
   }
 };
 
@@ -5254,17 +4700,7 @@ exports.reportPercentYesterday = async (req, res) => {
 
     // Lấy tất cả dữ liệu checklistC cho ngày hôm qua
     const dataChecklistCs = await Tb_checklistc.findAll({
-      attributes: [
-        "ID_ChecklistC",
-        "ID_Duan",
-        "ID_Calv",
-        "Ngay",
-        "TongC",
-        "Tong",
-        "ID_KhoiCV",
-        "isDelete",
-        "Tinhtrang",
-      ],
+      attributes: ["ID_ChecklistC", "ID_Duan", "ID_Calv", "Ngay", "TongC", "Tong", "ID_KhoiCV", "isDelete", "Tinhtrang"],
       where: {
         Ngay: yesterday,
         isDelete: 0,
@@ -5324,17 +4760,13 @@ exports.reportPercentYesterday = async (req, res) => {
       }
 
       // Cộng dồn TongC và Tong cho ca
-      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTongC +=
-        checklistC.TongC;
-      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTong =
-        checklistC.Tong;
+      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTongC += checklistC.TongC;
+      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTong = checklistC.Tong;
 
       // Lưu tỷ lệ hoàn thành của từng người (nếu Tong > 0)
       if (checklistC.Tong > 0) {
         const userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
-        result[projectId].createdKhois[khoiName].shifts[
-          shiftName
-        ].userCompletionRates.push(userCompletionRate);
+        result[projectId].createdKhois[khoiName].shifts[shiftName].userCompletionRates.push(userCompletionRate);
       }
     });
 
@@ -5346,10 +4778,7 @@ exports.reportPercentYesterday = async (req, res) => {
 
         Object.values(khoi.shifts).forEach((shift) => {
           if (shift.userCompletionRates.length > 0) {
-            let shiftCompletionRatio = shift.userCompletionRates.reduce(
-              (sum, rate) => sum + rate,
-              0
-            );
+            let shiftCompletionRatio = shift.userCompletionRates.reduce((sum, rate) => sum + rate, 0);
             shiftCompletionRatio = Math.min(shiftCompletionRatio, 100); // Giới hạn tối đa là 100%
             totalKhoiCompletionRatio += shiftCompletionRatio;
             totalShifts += 1;
@@ -5359,9 +4788,7 @@ exports.reportPercentYesterday = async (req, res) => {
         // Tính phần trăm hoàn thành trung bình cho khối (nếu có shift)
         if (totalShifts > 0) {
           const avgKhoiCompletionRatio = totalKhoiCompletionRatio / totalShifts;
-          khoi.completionRatio = Number.isInteger(avgKhoiCompletionRatio)
-            ? avgKhoiCompletionRatio
-            : avgKhoiCompletionRatio.toFixed(2);
+          khoi.completionRatio = Number.isInteger(avgKhoiCompletionRatio) ? avgKhoiCompletionRatio : avgKhoiCompletionRatio.toFixed(2);
         } else {
           khoi.completionRatio = null; // Không có shift nào
         }
@@ -5381,9 +4808,7 @@ exports.reportPercentYesterday = async (req, res) => {
       Object.keys(avgKhoiCompletion).forEach((khoiName) => {
         const khoi = project.createdKhois[khoiName];
         if (khoi && khoi.completionRatio !== null) {
-          avgKhoiCompletion[khoiName].totalCompletion += parseFloat(
-            khoi.completionRatio
-          );
+          avgKhoiCompletion[khoiName].totalCompletion += parseFloat(khoi.completionRatio);
           avgKhoiCompletion[khoiName].projectCount += 1;
         }
       });
@@ -5394,9 +4819,7 @@ exports.reportPercentYesterday = async (req, res) => {
       const { totalCompletion, projectCount } = avgKhoiCompletion[khoiName];
       if (projectCount > 0) {
         const averageCompletion = totalCompletion / projectCount;
-        avgCompletionRatios[khoiName] = Number.isInteger(averageCompletion)
-          ? averageCompletion
-          : averageCompletion.toFixed(2);
+        avgCompletionRatios[khoiName] = Number.isInteger(averageCompletion) ? averageCompletion : averageCompletion.toFixed(2);
       } else {
         // Gán mặc định là 0 khi không có project nào
         avgCompletionRatios[khoiName] = 0;
@@ -5405,50 +4828,52 @@ exports.reportPercentYesterday = async (req, res) => {
 
     // Trả về kết quả
     res.status(200).json({
-      message:
-        "Trạng thái checklist của các dự án theo từng khối và ca làm việc",
+      message: "Trạng thái checklist của các dự án theo từng khối và ca làm việc",
       // data: Object.values(result),
       avgCompletionRatios,
     });
   } catch (err) {
     console.error("Error fetching checklist data: ", err);
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
 exports.reportPercentLastWeek = async (req, res) => {
   try {
+    const user = req.user.data;
     // Khởi tạo mảng để lưu kết quả
     let reportData = [];
+
+    let whereClause = {
+      isDelete: 0,
+      ID_Duan: {
+        [Op.ne]: 1,
+      },
+      Tinhtrang: 1,
+    };
+
+    if (user.ent_chucvu.Role == 5) {
+      whereClause.ID_KhoiCV = user.ID_KhoiCV;
+    }
 
     // Lặp qua 7 ngày từ hôm qua
     for (let i = 1; i <= 7; i++) {
       // Lấy ngày trước `i` ngày
       const targetDate = moment().subtract(i, "days").format("YYYY-MM-DD");
+      whereClause.Ngay = targetDate;
 
       // Lấy dữ liệu checklistC cho ngày targetDate
       const dataChecklistCs = await Tb_checklistc.findAll({
-        attributes: [
-          "ID_ChecklistC",
-          "ID_Duan",
-          "ID_Calv",
-          "Ngay",
-          "TongC",
-          "Tong",
-          "ID_KhoiCV",
-          "isDelete",
-          "Tinhtrang",
-        ],
-        where: {
-          Ngay: targetDate,
-          isDelete: 0,
-          ID_Duan: {
-            [Op.ne]: 1,
-          },
-          Tinhtrang: 1,
-        },
+        attributes: ["ID_ChecklistC", "ID_Duan", "ID_Calv", "Ngay", "TongC", "Tong", "ID_KhoiCV", "isDelete", "Tinhtrang"],
+        // where: {
+        //   Ngay: targetDate,
+        //   isDelete: 0,
+        //   ID_Duan: {
+        //     [Op.ne]: 1,
+        //   },
+        //   Tinhtrang: 1,
+        // },
+        where: whereClause,
         include: [
           {
             model: Ent_duan,
@@ -5500,17 +4925,13 @@ exports.reportPercentLastWeek = async (req, res) => {
         }
 
         // Cộng dồn TongC và Tong cho ca
-        result[projectId].createdKhois[khoiName].shifts[shiftName].totalTongC +=
-          checklistC.TongC;
-        result[projectId].createdKhois[khoiName].shifts[shiftName].totalTong =
-          checklistC.Tong;
+        result[projectId].createdKhois[khoiName].shifts[shiftName].totalTongC += checklistC.TongC;
+        result[projectId].createdKhois[khoiName].shifts[shiftName].totalTong = checklistC.Tong;
 
         // Lưu tỷ lệ hoàn thành của từng người (nếu Tong > 0)
         if (checklistC.Tong > 0) {
           const userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
-          result[projectId].createdKhois[khoiName].shifts[
-            shiftName
-          ].userCompletionRates.push(userCompletionRate);
+          result[projectId].createdKhois[khoiName].shifts[shiftName].userCompletionRates.push(userCompletionRate);
         }
       });
 
@@ -5522,10 +4943,7 @@ exports.reportPercentLastWeek = async (req, res) => {
 
           Object.values(khoi.shifts).forEach((shift) => {
             if (shift.userCompletionRates.length > 0) {
-              let shiftCompletionRatio = shift.userCompletionRates.reduce(
-                (sum, rate) => sum + rate,
-                0
-              );
+              let shiftCompletionRatio = shift.userCompletionRates.reduce((sum, rate) => sum + rate, 0);
               shiftCompletionRatio = Math.min(shiftCompletionRatio, 100); // Giới hạn tối đa là 100%
               totalKhoiCompletionRatio += shiftCompletionRatio;
               totalShifts += 1;
@@ -5534,11 +4952,8 @@ exports.reportPercentLastWeek = async (req, res) => {
 
           // Tính phần trăm hoàn thành trung bình cho khối (nếu có shift)
           if (totalShifts > 0) {
-            const avgKhoiCompletionRatio =
-              totalKhoiCompletionRatio / totalShifts;
-            khoi.completionRatio = Number.isInteger(avgKhoiCompletionRatio)
-              ? avgKhoiCompletionRatio
-              : avgKhoiCompletionRatio.toFixed(2);
+            const avgKhoiCompletionRatio = totalKhoiCompletionRatio / totalShifts;
+            khoi.completionRatio = Number.isInteger(avgKhoiCompletionRatio) ? avgKhoiCompletionRatio : avgKhoiCompletionRatio.toFixed(2);
           } else {
             khoi.completionRatio = null; // Không có shift nào
           }
@@ -5558,9 +4973,7 @@ exports.reportPercentLastWeek = async (req, res) => {
         Object.keys(avgKhoiCompletion).forEach((khoiName) => {
           const khoi = project.createdKhois[khoiName];
           if (khoi && khoi.completionRatio !== null) {
-            avgKhoiCompletion[khoiName].totalCompletion += parseFloat(
-              khoi.completionRatio
-            );
+            avgKhoiCompletion[khoiName].totalCompletion += parseFloat(khoi.completionRatio);
             avgKhoiCompletion[khoiName].projectCount += 1;
           }
         });
@@ -5571,9 +4984,7 @@ exports.reportPercentLastWeek = async (req, res) => {
         const { totalCompletion, projectCount } = avgKhoiCompletion[khoiName];
         if (projectCount > 0) {
           const averageCompletion = totalCompletion / projectCount;
-          avgCompletionRatios[khoiName] = Number.isInteger(averageCompletion)
-            ? averageCompletion
-            : averageCompletion.toFixed(2);
+          avgCompletionRatios[khoiName] = Number.isInteger(averageCompletion) ? averageCompletion : averageCompletion.toFixed(2);
         } else {
           avgCompletionRatios[khoiName] = 0;
         }
@@ -5603,8 +5014,7 @@ exports.reportPercentLastWeek = async (req, res) => {
     reportData.reverse();
 
     // Khởi tạo categories mới từ ngày trong "date"
-    const categories =
-      reportData?.map((dayData) => moment(dayData.date).format("DD-MM")) || [];
+    const categories = reportData?.map((dayData) => moment(dayData.date).format("DD-MM")) || [];
 
     // Đi qua từng ngày trong mảng responseData và thêm dữ liệu vào `series`
     reportData.forEach((dayData) => {
@@ -5612,14 +5022,10 @@ exports.reportPercentLastWeek = async (req, res) => {
 
       // Thêm dữ liệu cho từng khối vào `series`
       Object.keys(dayData.avgCompletionRatios).forEach((blockName) => {
-        const completionRatio = parseFloat(
-          dayData.avgCompletionRatios[blockName]
-        );
+        const completionRatio = parseFloat(dayData.avgCompletionRatios[blockName]);
 
         // Tìm khối tương ứng trong `series`
-        const blockIndex = series[0].data.findIndex(
-          (block) => block.name === blockName
-        );
+        const blockIndex = series[0].data.findIndex((block) => block.name === blockName);
 
         // Thêm tỷ lệ hoàn thành vào `data` của khối tương ứng
         if (blockIndex !== -1) {
@@ -5630,15 +5036,12 @@ exports.reportPercentLastWeek = async (req, res) => {
 
     // Trả về kết quả
     res.status(200).json({
-      message:
-        "Trạng thái checklist của các dự án theo từng khối và ca làm việc trong 7 ngày",
+      message: "Trạng thái checklist của các dự án theo từng khối và ca làm việc trong 7 ngày",
       data: { categories, series },
     });
   } catch (err) {
     console.error("Error fetching checklist data: ", err);
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -5766,10 +5169,7 @@ exports.checklistPercent = async (req, res) => {
       attributes: [
         [sequelize.col("ent_khoicv.KhoiCV"), "label"],
         [sequelize.col("tb_checklistc.tongC"), "totalAmount"],
-        [
-          sequelize.literal("tb_checklistc.tongC / tb_checklistc.tong * 100"),
-          "value",
-        ],
+        [sequelize.literal("tb_checklistc.tongC / tb_checklistc.tong * 100"), "value"],
       ],
       where: whereClause,
     });
@@ -5790,9 +5190,7 @@ exports.checklistPercent = async (req, res) => {
       });
     });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -5805,16 +5203,7 @@ exports.getChecklistsErrorFromYesterday = async (req, res) => {
 
     // Fetch all checklistC data for yesterday
     const dataChecklistCs = await Tb_checklistc.findAll({
-      attributes: [
-        "ID_ChecklistC",
-        "ID_Duan",
-        "Tong",
-        "TongC",
-        "Ngay",
-        "ID_KhoiCV",
-        "ID_Calv",
-        "ID_User",
-      ],
+      attributes: ["ID_ChecklistC", "ID_Duan", "Tong", "TongC", "Ngay", "ID_KhoiCV", "ID_Calv", "ID_User"],
       include: [
         {
           model: Ent_khoicv,
@@ -5848,19 +5237,10 @@ exports.getChecklistsErrorFromYesterday = async (req, res) => {
 
     // Fetch checklist detail items for the related checklistC
     const checklistDetailItems = await Tb_checklistchitiet.findAll({
-      attributes: [
-        "ID_ChecklistC",
-        "ID_Checklist",
-        "Ketqua",
-        "Anh",
-        "Ghichu",
-        "Gioht",
-      ],
+      attributes: ["ID_ChecklistC", "ID_Checklist", "Ketqua", "Anh", "Ghichu", "Gioht"],
       where: {
         ID_ChecklistC: {
-          [Op.in]: dataChecklistCs.map(
-            (checklistC) => checklistC.ID_ChecklistC
-          ),
+          [Op.in]: dataChecklistCs.map((checklistC) => checklistC.ID_ChecklistC),
         },
         Anh: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: "" }] },
         Ghichu: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: "" }] },
@@ -5949,13 +5329,7 @@ exports.getChecklistsErrorFromYesterday = async (req, res) => {
             {
               model: Ent_hangmuc,
               as: "ent_hangmuc",
-              attributes: [
-                "Hangmuc",
-                "Tieuchuankt",
-                "ID_Khuvuc",
-                "MaQrCode",
-                "FileTieuChuan",
-              ],
+              attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "FileTieuChuan"],
             },
             {
               model: Ent_tang,
@@ -5990,9 +5364,7 @@ exports.getChecklistsErrorFromYesterday = async (req, res) => {
       data: errorDetails,
     });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -6022,16 +5394,7 @@ exports.getChecklistsErrorFromWeekbyDuan = async (req, res) => {
     let checklistDetailItems = [];
     // Fetch all checklistC data for yesterday, excluding projects 10 and 17
     const dataChecklistCs = await Tb_checklistc.findAll({
-      attributes: [
-        "ID_ChecklistC",
-        "ID_Duan",
-        "Tong",
-        "TongC",
-        "Ngay",
-        "ID_KhoiCV",
-        "ID_Calv",
-        "ID_User",
-      ],
+      attributes: ["ID_ChecklistC", "ID_Duan", "Tong", "TongC", "Ngay", "ID_KhoiCV", "ID_Calv", "ID_User"],
       include: [
         {
           model: Ent_khoicv,
@@ -6089,9 +5452,7 @@ LEFT JOIN ent_user u ON b.ID_User = u.ID_User
 LEFT JOIN ent_checklist cl ON c.ID_Checklist = cl.ID_Checklist
 LEFT JOIN ent_calv ca ON b.ID_Calv = ca.ID_Calv
 LEFT JOIN ent_khoicv k ON b.ID_KhoiCV = k.ID_KhoiCV
-      WHERE c.ID_ChecklistC IN (${dataChecklistCs.map(
-        (checklistC) => checklistC.ID_ChecklistC
-      )})
+      WHERE c.ID_ChecklistC IN (${dataChecklistCs.map((checklistC) => checklistC.ID_ChecklistC)})
         AND c.Anh IS NOT NULL 
         AND c.Anh != ''
         AND c.Ghichu IS NOT NULL 
@@ -6124,9 +5485,7 @@ LEFT JOIN ent_khoicv k ON b.ID_KhoiCV = k.ID_KhoiCV
 
       // Populate error details and count errors
       checklistDetailItems.forEach((item) => {
-        const projectId = dataChecklistCs.find(
-          (checklistC) => checklistC.ID_ChecklistC === item.ID_ChecklistC
-        ).ID_Duan;
+        const projectId = dataChecklistCs.find((checklistC) => checklistC.ID_ChecklistC === item.ID_ChecklistC).ID_Duan;
 
         result[projectId].errorDetails.push({
           checklistId: item.ID_Checklist,
@@ -6155,19 +5514,10 @@ LEFT JOIN ent_khoicv k ON b.ID_KhoiCV = k.ID_KhoiCV
     } else {
       // Fetch checklist detail items for the related checklistC
       checklistDetailItems = await Tb_checklistchitiet.findAll({
-        attributes: [
-          "ID_ChecklistC",
-          "ID_Checklist",
-          "Ketqua",
-          "Anh",
-          "Ghichu",
-          "Gioht",
-        ],
+        attributes: ["ID_ChecklistC", "ID_Checklist", "Ketqua", "Anh", "Ghichu", "Gioht"],
         where: {
           ID_ChecklistC: {
-            [Op.in]: dataChecklistCs.map(
-              (checklistC) => checklistC.ID_ChecklistC
-            ),
+            [Op.in]: dataChecklistCs.map((checklistC) => checklistC.ID_ChecklistC),
           },
           Anh: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: "" }] },
           Ghichu: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: "" }] },
@@ -6262,13 +5612,7 @@ LEFT JOIN ent_khoicv k ON b.ID_KhoiCV = k.ID_KhoiCV
               {
                 model: Ent_hangmuc,
                 as: "ent_hangmuc",
-                attributes: [
-                  "Hangmuc",
-                  "Tieuchuankt",
-                  "ID_Khuvuc",
-                  "MaQrCode",
-                  "FileTieuChuan",
-                ],
+                attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "FileTieuChuan"],
               },
               {
                 model: Ent_tang,
@@ -6276,14 +5620,7 @@ LEFT JOIN ent_khoicv k ON b.ID_KhoiCV = k.ID_KhoiCV
               },
               {
                 model: Ent_user,
-                attributes: [
-                  "UserName",
-                  "Email",
-                  "Hoten",
-                  "Ngaysinh",
-                  "Gioitinh",
-                  "Sodienthoai",
-                ],
+                attributes: ["UserName", "Email", "Hoten", "Ngaysinh", "Gioitinh", "Sodienthoai"],
               },
             ],
           },
@@ -6309,9 +5646,7 @@ LEFT JOIN ent_khoicv k ON b.ID_KhoiCV = k.ID_KhoiCV
 
       // Populate error details and count errors
       checklistDetailItems.forEach((item) => {
-        const projectId = dataChecklistCs.find(
-          (checklistC) => checklistC.ID_ChecklistC === item.ID_ChecklistC
-        ).ID_Duan;
+        const projectId = dataChecklistCs.find((checklistC) => checklistC.ID_ChecklistC === item.ID_ChecklistC).ID_Duan;
 
         result[projectId].errorDetails.push({
           checklistId: item.ID_Checklist,
@@ -6338,9 +5673,8 @@ LEFT JOIN ent_khoicv k ON b.ID_KhoiCV = k.ID_KhoiCV
       });
     }
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    console.log("err.message", err.message);
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -6372,14 +5706,7 @@ exports.getChecklistsError = async (req, res) => {
         {
           model: Ent_hangmuc,
           as: "ent_hangmuc",
-          attributes: [
-            "Hangmuc",
-            "Tieuchuankt",
-            "ID_Khuvuc",
-            "MaQrCode",
-            "ID_Khuvuc",
-            "FileTieuChuan",
-          ],
+          attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "ID_Khuvuc", "FileTieuChuan"],
           include: [
             {
               model: Ent_khuvuc,
@@ -6441,14 +5768,7 @@ exports.getChecklistsError = async (req, res) => {
         },
         {
           model: Ent_user,
-          attributes: [
-            "UserName",
-            "Email",
-            "Hoten",
-            "Ngaysinh",
-            "Gioitinh",
-            "Sodienthoai",
-          ],
+          attributes: ["UserName", "Email", "Hoten", "Ngaysinh", "Gioitinh", "Sodienthoai"],
         },
       ],
       where: {
@@ -6467,9 +5787,7 @@ exports.getChecklistsError = async (req, res) => {
       data: resultArray,
     });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -6480,16 +5798,7 @@ exports.getProjectsChecklistStatus = async (req, res) => {
 
     // Lấy tất cả dữ liệu checklistC cho ngày hôm qua
     const dataChecklistCs = await Tb_checklistc.findAll({
-      attributes: [
-        "ID_ChecklistC",
-        "ID_Duan",
-        "ID_Calv",
-        "Ngay",
-        "TongC",
-        "Tong",
-        "ID_KhoiCV",
-        "isDelete",
-      ],
+      attributes: ["ID_ChecklistC", "ID_Duan", "ID_Calv", "Ngay", "TongC", "Tong", "ID_KhoiCV", "isDelete"],
       where: {
         Ngay: yesterday,
         isDelete: 0,
@@ -6548,26 +5857,18 @@ exports.getProjectsChecklistStatus = async (req, res) => {
       }
 
       // Cộng dồn TongC và Tong cho ca
-      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTongC +=
-        checklistC.TongC;
-      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTong +=
-        checklistC.Tong;
+      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTongC += checklistC.TongC;
+      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTong += checklistC.Tong;
 
       // Lưu tỷ lệ hoàn thành của từng người
       let userCompletionRate = 0; // Mặc định là 0 nếu không có giá trị hợp lệ
-      if (
-        checklistC.Tong !== 0 &&
-        checklistC.Tong != null &&
-        checklistC.TongC != null
-      ) {
+      if (checklistC.Tong !== 0 && checklistC.Tong != null && checklistC.TongC != null) {
         userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
       }
       // Đảm bảo tỷ lệ hoàn thành không vượt quá 100%
       userCompletionRate = userCompletionRate > 100 ? 100 : userCompletionRate;
 
-      result[projectId].createdKhois[khoiName].shifts[
-        shiftName
-      ].userCompletionRates.push(userCompletionRate);
+      result[projectId].createdKhois[khoiName].shifts[shiftName].userCompletionRates.push(userCompletionRate);
     });
 
     // Tính toán phần trăm hoàn thành riêng cho từng ca và tổng khối
@@ -6578,10 +5879,7 @@ exports.getProjectsChecklistStatus = async (req, res) => {
 
         Object.values(khoi.shifts).forEach((shift) => {
           // Tính phần trăm hoàn thành cho ca dựa trên tỷ lệ của từng người trong ca
-          let shiftCompletionRatio = shift.userCompletionRates.reduce(
-            (sum, rate) => sum + (rate || 0),
-            0
-          );
+          let shiftCompletionRatio = shift.userCompletionRates.reduce((sum, rate) => sum + (rate || 0), 0);
           if (shiftCompletionRatio > 100) {
             shiftCompletionRatio = 100; // Giới hạn phần trăm hoàn thành tối đa là 100% cho từng ca
           }
@@ -6604,14 +5902,11 @@ exports.getProjectsChecklistStatus = async (req, res) => {
     const resultArray = Object.values(result);
 
     res.status(200).json({
-      message:
-        "Trạng thái checklist của các dự án theo từng khối và ca làm việc",
+      message: "Trạng thái checklist của các dự án theo từng khối và ca làm việc",
       data: resultArray,
     });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -6639,10 +5934,7 @@ exports.getProjectChecklistDays = async (req, res) => {
     };
 
     if (
-      (ID_KhoiCV != null &&
-        ID_KhoiCV != undefined &&
-        ent_chucvu.Role == 5 &&
-        !arr_Duan_Array?.includes(String(ID_Duan))) ||
+      (ID_KhoiCV != null && ID_KhoiCV != undefined && ent_chucvu.Role == 5 && !arr_Duan_Array?.includes(String(ID_Duan))) ||
       (ID_KhoiCV != null && ID_KhoiCV != undefined && ent_chucvu.Role !== 5)
     ) {
       whereClause.ID_KhoiCV = ID_KhoiCV;
@@ -6650,16 +5942,7 @@ exports.getProjectChecklistDays = async (req, res) => {
 
     // Lấy tất cả dữ liệu checklistC cho dự án duy nhất trong vòng 7 ngày
     const dataChecklistCs = await Tb_checklistc.findAll({
-      attributes: [
-        "ID_ChecklistC",
-        "ID_Duan",
-        "ID_Calv",
-        "Ngay",
-        "TongC",
-        "Tong",
-        "ID_KhoiCV",
-        "isDelete",
-      ],
+      attributes: ["ID_ChecklistC", "ID_Duan", "ID_Calv", "Ngay", "TongC", "Tong", "ID_KhoiCV", "isDelete"],
       where: whereClause,
       include: [
         {
@@ -6707,14 +5990,11 @@ exports.getProjectChecklistDays = async (req, res) => {
       }
 
       // Cộng dồn TongC và Tong cho ca
-      result[date].createdKhois[khoiName].shifts[shiftName].totalTongC +=
-        checklistC.TongC;
+      result[date].createdKhois[khoiName].shifts[shiftName].totalTongC += checklistC.TongC;
 
       // Lưu tỷ lệ hoàn thành của từng người
       const userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
-      result[date].createdKhois[khoiName].shifts[
-        shiftName
-      ].userCompletionRates.push(userCompletionRate);
+      result[date].createdKhois[khoiName].shifts[shiftName].userCompletionRates.push(userCompletionRate);
     });
 
     // Tính toán phần trăm hoàn thành riêng cho từng ca và tổng khối
@@ -6725,10 +6005,7 @@ exports.getProjectChecklistDays = async (req, res) => {
 
         Object.values(khoi.shifts).forEach((shift) => {
           // Tính phần trăm hoàn thành cho ca dựa trên tỷ lệ của từng người
-          let shiftCompletionRatio = shift.userCompletionRates.reduce(
-            (sum, rate) => sum + rate,
-            0
-          );
+          let shiftCompletionRatio = shift.userCompletionRates.reduce((sum, rate) => sum + rate, 0);
           if (shiftCompletionRatio > 100) {
             shiftCompletionRatio = 100;
           }
@@ -6741,9 +6018,7 @@ exports.getProjectChecklistDays = async (req, res) => {
         // Tính phần trăm hoàn thành trung bình cho khối
         const avgKhoiCompletionRatio = totalKhoiCompletionRatio / totalShifts;
 
-        khoi.completionRatio = Number.isInteger(avgKhoiCompletionRatio)
-          ? avgKhoiCompletionRatio
-          : avgKhoiCompletionRatio.toFixed(2);
+        khoi.completionRatio = Number.isInteger(avgKhoiCompletionRatio) ? avgKhoiCompletionRatio : avgKhoiCompletionRatio.toFixed(2);
       });
     });
 
@@ -6755,9 +6030,7 @@ exports.getProjectChecklistDays = async (req, res) => {
       data: resultArray,
     });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -6769,16 +6042,7 @@ exports.getLocationsChecklist = async (req, res) => {
 
     // Lấy tất cả dữ liệu checklistC cho ngày hôm qua
     const dataChecklistCs = await Tb_checklistc.findAll({
-      attributes: [
-        "ID_ChecklistC",
-        "ID_Duan",
-        "ID_Calv",
-        "Ngay",
-        "TongC",
-        "Tong",
-        "ID_KhoiCV",
-        "isDelete",
-      ],
+      attributes: ["ID_ChecklistC", "ID_Duan", "ID_Calv", "Ngay", "TongC", "Tong", "ID_KhoiCV", "isDelete"],
       where: {
         Ngay: {
           [Op.between]: [yesterday, now],
@@ -6836,14 +6100,11 @@ exports.getLocationsChecklist = async (req, res) => {
       }
 
       // Cộng dồn TongC và Tong cho ca
-      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTongC +=
-        checklistC.TongC;
+      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTongC += checklistC.TongC;
 
       // Lưu tỷ lệ hoàn thành của từng người
       const userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
-      result[projectId].createdKhois[khoiName].shifts[
-        shiftName
-      ].userCompletionRates.push(userCompletionRate);
+      result[projectId].createdKhois[khoiName].shifts[shiftName].userCompletionRates.push(userCompletionRate);
     });
 
     // Tính toán phần trăm hoàn thành riêng cho từng ca và tổng khối
@@ -6854,10 +6115,7 @@ exports.getLocationsChecklist = async (req, res) => {
 
         Object.values(khoi.shifts).forEach((shift) => {
           // Tính phần trăm hoàn thành cho ca dựa trên tỷ lệ của từng người trong ca
-          let shiftCompletionRatio = shift.userCompletionRates.reduce(
-            (sum, rate) => sum + rate,
-            0
-          );
+          let shiftCompletionRatio = shift.userCompletionRates.reduce((sum, rate) => sum + rate, 0);
           if (shiftCompletionRatio > 100) {
             shiftCompletionRatio = 100; // Giới hạn phần trăm hoàn thành tối đa là 100% cho từng ca
           }
@@ -6880,14 +6138,11 @@ exports.getLocationsChecklist = async (req, res) => {
     const resultArray = Object.values(result);
 
     res.status(200).json({
-      message:
-        "Trạng thái checklist của các dự án theo từng khối và ca làm việc",
+      message: "Trạng thái checklist của các dự án theo từng khối và ca làm việc",
       data: resultArray,
     });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -6904,18 +6159,14 @@ exports.checklistKhoiCVPercent = async (req, res) => {
       ID_Duan: userData.ID_Duan,
     };
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
 exports.fileChecklistSuCo = async (req, res) => {
   try {
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -6936,16 +6187,7 @@ exports.createExcelFile = async (req, res) => {
     };
 
     const dataChecklistC = await Tb_checklistchitiet.findAll({
-      attributes: [
-        "ID_Checklistchitiet",
-        "ID_ChecklistC",
-        "ID_Checklist",
-        "Ketqua",
-        "Anh",
-        "Gioht",
-        "Ghichu",
-        "isDelete",
-      ],
+      attributes: ["ID_Checklistchitiet", "ID_ChecklistC", "ID_Checklist", "Ketqua", "Anh", "Gioht", "Ghichu", "isDelete"],
       include: [
         {
           model: Tb_checklistc,
@@ -7027,14 +6269,7 @@ exports.createExcelFile = async (req, res) => {
             {
               model: Ent_hangmuc,
               as: "ent_hangmuc",
-              attributes: [
-                "Hangmuc",
-                "Tieuchuankt",
-                "ID_Khuvuc",
-                "MaQrCode",
-                "FileTieuChuan",
-                "isDelete",
-              ],
+              attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "FileTieuChuan", "isDelete"],
             },
             {
               model: Ent_tang,
@@ -7042,14 +6277,7 @@ exports.createExcelFile = async (req, res) => {
             },
             {
               model: Ent_user,
-              attributes: [
-                "UserName",
-                "Email",
-                "Hoten",
-                "Ngaysinh",
-                "Gioitinh",
-                "Sodienthoai",
-              ],
+              attributes: ["UserName", "Email", "Hoten", "Ngaysinh", "Gioitinh", "Sodienthoai"],
             },
           ],
         },
@@ -7080,14 +6308,10 @@ exports.createExcelFile = async (req, res) => {
     headerRow.font = { size: 16, bold: true };
 
     worksheet.mergeCells("A3:B3");
-    worksheet.getCell("A3").value = startDate
-      ? `Từ ngày: ${moment(startDate).format("DD/MM/YYYY")}`
-      : `Từ ngày:`;
+    worksheet.getCell("A3").value = startDate ? `Từ ngày: ${moment(startDate).format("DD/MM/YYYY")}` : `Từ ngày:`;
 
     worksheet.mergeCells("C3:D3");
-    worksheet.getCell("C3").value = endDate
-      ? `Đến ngày: ${moment(endDate).format("DD/MM/YYYY")}`
-      : `Đến ngày:`;
+    worksheet.getCell("C3").value = endDate ? `Đến ngày: ${moment(endDate).format("DD/MM/YYYY")}` : `Đến ngày:`;
 
     worksheet.mergeCells("E3:F3");
     worksheet.getCell("E3").value = `Tên Bộ phận: ${tenBoPhan}`;
@@ -7139,9 +6363,7 @@ exports.createExcelFile = async (req, res) => {
         "", // Placeholder for the image
         `https://lh3.googleusercontent.com/d/${dataChecklistC[i]?.Anh}=s1000?authuser=0`,
         dataChecklistC[i]?.Ghichu,
-        dataChecklistC[i]?.ent_checklist?.Tinhtrang == 1
-          ? "Chưa xử lý"
-          : "Đã xử lý",
+        dataChecklistC[i]?.ent_checklist?.Tinhtrang == 1 ? "Chưa xử lý" : "Đã xử lý",
       ]);
 
       // Download the image and add it to the Excel file
@@ -7181,19 +6403,11 @@ exports.createExcelFile = async (req, res) => {
       }
     }
 
-    res.setHeader(
-      "Content-Disposition",
-      "attachment; filename=Checklist_Report.xlsx"
-    );
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    );
+    res.setHeader("Content-Disposition", "attachment; filename=Checklist_Report.xlsx");
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     res.send(buffer);
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -7233,24 +6447,12 @@ exports.createExcelTongHopCa = async (req, res) => {
         //   [Op.lte]: endDateFormat,
         // },
         createdAt: {
-          [Op.between]: [startDate,endDate]
-        }
+          [Op.between]: [startDate, endDate],
+        },
       };
 
       const dataChecklist = await Tb_checklistc.findAll({
-        attributes: [
-          "ID_ChecklistC",
-          "ID_Duan",
-          "ID_KhoiCV",
-          "ID_Calv",
-          "ID_ThietLapCa",
-          "ID_User",
-          "Ngay",
-          "Tong",
-          "TongC",
-          "Ghichu",
-          "isDelete",
-        ],
+        attributes: ["ID_ChecklistC", "ID_Duan", "ID_KhoiCV", "ID_Calv", "ID_ThietLapCa", "ID_User", "Ngay", "Tong", "TongC", "Ghichu", "isDelete"],
         include: [
           {
             model: Ent_khoicv,
@@ -7297,11 +6499,9 @@ exports.createExcelTongHopCa = async (req, res) => {
         { header: "Tỷ lệ thực hiện (%)", key: "tylethuchien", width: 20 },
         { header: "Ghi chú", key: "ghichuloi", width: 30 },
       ];
-      const projectData =
-        dataChecklist.length > 0 ? dataChecklist[0].ent_duan : {};
+      const projectData = dataChecklist.length > 0 ? dataChecklist[0].ent_duan : {};
       const projectName = projectData?.Duan || "Tên dự án không có";
-      const projectLogo =
-        projectData?.Logo || "https://pmcweb.vn/wp-content/uploads/logo.png";
+      const projectLogo = projectData?.Logo || "https://pmcweb.vn/wp-content/uploads/logo.png";
 
       // Download the image and add it to the workbook
       const imageResponse = await axios({
@@ -7332,8 +6532,7 @@ exports.createExcelTongHopCa = async (req, res) => {
 
       // Merge cells and set values for the report title in row 1 (C1:H1)
       worksheet.mergeCells("A1:H1");
-      worksheet.getCell("A1").value =
-        "BÁO CÁO TỔNG HỢP CA CHECKLIST NGĂN NGỪA RỦI RO";
+      worksheet.getCell("A1").value = "BÁO CÁO TỔNG HỢP CA CHECKLIST NGĂN NGỪA RỦI RO";
       worksheet.getCell("A1").alignment = {
         horizontal: "center",
         vertical: "middle",
@@ -7344,9 +6543,7 @@ exports.createExcelTongHopCa = async (req, res) => {
       // Merge cells and set values for the date range in row 2 (C2:H2)
       worksheet.mergeCells("A2:H2");
       worksheet.getCell("A2").value =
-      startDateShowManh && endDateShowManh
-          ? `Từ ngày: ${startDateShowManh}  Đến ngày: ${endDateShowManh}`
-          : `Từ ngày: `;
+        startDateShowManh && endDateShowManh ? `Từ ngày: ${startDateShowManh}  Đến ngày: ${endDateShowManh}` : `Từ ngày: `;
       worksheet.getCell("A2").alignment = {
         horizontal: "center",
         vertical: "middle",
@@ -7386,8 +6583,7 @@ exports.createExcelTongHopCa = async (req, res) => {
         const item = aggregatedData[key];
         const completion = item.TongC;
         const total = item.Tong;
-        const completionPercentage =
-          completion >= total ? 100 : (completion / total) * 100;
+        const completionPercentage = completion >= total ? 100 : (completion / total) * 100;
         const formattedPercentage = Number.isInteger(completionPercentage)
           ? completionPercentage.toString() // Convert to string if integer
           : completionPercentage.toFixed(2); // Use toFixed(2) for non-integer
@@ -7415,14 +6611,8 @@ exports.createExcelTongHopCa = async (req, res) => {
 
       const buffer = await workbook.xlsx.writeBuffer();
 
-      res.setHeader(
-        "Content-Disposition",
-        "attachment; filename=TongHopCa.xlsx"
-      );
-      res.setHeader(
-        "Content-Type",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-      );
+      res.setHeader("Content-Disposition", "attachment; filename=TongHopCa.xlsx");
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
       res.send(buffer);
     }
 
@@ -7437,29 +6627,12 @@ exports.createExcelTongHopCa = async (req, res) => {
           },
         };
         const dataSuCoNgoai = await Tb_sucongoai.findAll({
-          attributes: [
-            "ID_Suco",
-            "ID_Hangmuc",
-            "ID_User",
-            "Ngaysuco",
-            "Giosuco",
-            "Noidungsuco",
-            "Tinhtrangxuly",
-            "Ngayxuly",
-            "isDelete",
-          ],
+          attributes: ["ID_Suco", "ID_Hangmuc", "ID_User", "Ngaysuco", "Giosuco", "Noidungsuco", "Tinhtrangxuly", "Ngayxuly", "isDelete"],
           include: [
             {
               model: Ent_hangmuc,
               as: "ent_hangmuc",
-              attributes: [
-                "Hangmuc",
-                "Tieuchuankt",
-                "ID_Khuvuc",
-                "MaQrCode",
-                "FileTieuChuan",
-                "isDelete",
-              ],
+              attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "FileTieuChuan", "isDelete"],
               include: [
                 {
                   model: Ent_khuvuc,
@@ -7511,10 +6684,7 @@ exports.createExcelTongHopCa = async (req, res) => {
         headerRow.font = { size: 16, bold: true };
 
         worksheet.mergeCells("A2:E2");
-        worksheet.getCell("A2").value =
-          startDateShow && endDateShow
-            ? `Từ ngày: ${startDateShow}  Đến ngày: ${endDateShow}`
-            : `Từ ngày: `;
+        worksheet.getCell("A2").value = startDateShow && endDateShow ? `Từ ngày: ${startDateShow}  Đến ngày: ${endDateShow}` : `Từ ngày: `;
         worksheet.getCell("A2").alignment = {
           horizontal: "center",
           vertical: "middle",
@@ -7522,13 +6692,7 @@ exports.createExcelTongHopCa = async (req, res) => {
         worksheet.getCell("A2").font = { size: 13, bold: true };
 
         const tableHeaderRow = worksheet.getRow(4);
-        tableHeaderRow.values = [
-          "STT",
-          "Ngày",
-          "Giờ",
-          "Nội dung sự cố",
-          "Người báo cáo",
-        ];
+        tableHeaderRow.values = ["STT", "Ngày", "Giờ", "Nội dung sự cố", "Người báo cáo"];
         tableHeaderRow.eachCell((cell) => {
           cell.font = { bold: true };
           cell.alignment = { horizontal: "center" };
@@ -7555,19 +6719,11 @@ exports.createExcelTongHopCa = async (req, res) => {
         // Generate the Excel file buffer
         const buffer = await workbook.xlsx.writeBuffer();
 
-        res.setHeader(
-          "Content-Disposition",
-          "attachment; filename=KhancapngoaiCheckList.xlsx"
-        );
-        res.setHeader(
-          "Content-Type",
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        );
+        res.setHeader("Content-Disposition", "attachment; filename=KhancapngoaiCheckList.xlsx");
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         res.send(buffer);
       } catch (err) {
-        res
-          .status(500)
-          .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+        res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
       }
     }
 
@@ -7599,8 +6755,7 @@ exports.createExcelTongHopCa = async (req, res) => {
           },
         };
 
-        const isRecentData =
-          new Date(startDateFormat) >= new Date("2025-01-01 00:00:00");
+        const isRecentData = new Date(startDateFormat) >= new Date("2025-01-01 00:00:00");
         let dataChecklistC = [];
         if (isRecentData) {
           for (const { year, month } of monthsRange) {
@@ -7609,33 +6764,12 @@ exports.createExcelTongHopCa = async (req, res) => {
             defineDynamicModelChiTiet(tableName, sequelize);
             try {
               const monthlyData = await sequelize.models[tableName].findAll({
-                attributes: [
-                  "ID_Checklistchitiet",
-                  "ID_Checklist",
-                  "ID_ChecklistC",
-                  "Ketqua",
-                  "Anh",
-                  "Gioht",
-                  "Ngay",
-                  "Ghichu",
-                  "isDelete",
-                ],
+                attributes: ["ID_Checklistchitiet", "ID_Checklist", "ID_ChecklistC", "Ketqua", "Anh", "Gioht", "Ngay", "Ghichu", "isDelete"],
                 include: [
                   {
                     model: Tb_checklistc,
                     as: "tb_checklistc",
-                    attributes: [
-                      "ID_ChecklistC",
-                      "Ngay",
-                      "ID_User",
-                      "ID_Duan",
-                      "ID_KhoiCV",
-                      "Giobd",
-                      "Gioghinhan",
-                      "Giokt",
-                      "Tinhtrang",
-                      "Ghichu",
-                    ],
+                    attributes: ["ID_ChecklistC", "Ngay", "ID_User", "ID_Duan", "ID_KhoiCV", "Giobd", "Gioghinhan", "Giokt", "Tinhtrang", "Ghichu"],
                     where: whereClause,
                     include: [
                       {
@@ -7655,14 +6789,7 @@ exports.createExcelTongHopCa = async (req, res) => {
                   {
                     model: Ent_checklist,
                     as: "ent_checklist",
-                    attributes: [
-                      "Checklist",
-                      "Tinhtrang",
-                      "Giatrinhan",
-                      "ID_Khuvuc",
-                      "ID_Hangmuc",
-                      "ID_Tang",
-                    ],
+                    attributes: ["Checklist", "Tinhtrang", "Giatrinhan", "ID_Khuvuc", "ID_Hangmuc", "ID_Tang"],
                     include: [
                       {
                         model: Ent_khuvuc,
@@ -7683,27 +6810,14 @@ exports.createExcelTongHopCa = async (req, res) => {
 
               dataChecklistC = dataChecklistC.concat(monthlyData);
             } catch (error) {
-              console.error(
-                `Lỗi khi truy vấn bảng ${tableName}:`,
-                error.message
-              );
+              console.error(`Lỗi khi truy vấn bảng ${tableName}:`, error.message);
               // Bỏ qua nếu bảng không tồn tại hoặc lỗi khác
             }
           }
         } else {
           // Logic hiện tại
           dataChecklistC = await Tb_checklistchitiet.findAll({
-            attributes: [
-              "ID_Checklistchitiet",
-              "ID_ChecklistC",
-              "ID_Checklist",
-              "Ketqua",
-              "Anh",
-              "Gioht",
-              "Ngay",
-              "Ghichu",
-              "isDelete",
-            ],
+            attributes: ["ID_Checklistchitiet", "ID_ChecklistC", "ID_Checklist", "Ketqua", "Anh", "Gioht", "Ngay", "Ghichu", "isDelete"],
             include: [
               {
                 model: Tb_checklistc,
@@ -7784,14 +6898,7 @@ exports.createExcelTongHopCa = async (req, res) => {
                   },
                   {
                     model: Ent_user,
-                    attributes: [
-                      "UserName",
-                      "Email",
-                      "Hoten",
-                      "Ngaysinh",
-                      "Gioitinh",
-                      "Sodienthoai",
-                    ],
+                    attributes: ["UserName", "Email", "Hoten", "Ngaysinh", "Gioitinh", "Sodienthoai"],
                   },
                 ],
               },
@@ -7826,12 +6933,11 @@ exports.createExcelTongHopCa = async (req, res) => {
           { header: "Tình trạng xử lý", key: "tinhtrang", width: 10 },
         ];
 
-        const projectData = dataChecklistC
-          ? dataChecklistC[0]?.tb_checklistc?.ent_duan
-          : {};
+        const projectData = dataChecklistC ? dataChecklistC[0]?.tb_checklistc?.ent_duan : {};
         const projectName = projectData?.Duan || "";
-        const projectLogo =
-          projectData?.Logo || "https://pmcweb.vn/wp-content/uploads/logo.png";
+        const projectLogo = projectData?.Logo || "https://pmcweb.vn/wp-content/uploads/logo.png";
+
+        console.log("projectData",dataChecklistC[0]?.tb_checklistc?.ent_duan);
 
         // Download the image and add it to the workbook
         const imageResponse = await axios({
@@ -7865,10 +6971,7 @@ exports.createExcelTongHopCa = async (req, res) => {
         headerRow.font = { size: 16, bold: true };
 
         worksheet.mergeCells("A2:M2");
-        worksheet.getCell("A2").value =
-          startDateShow && endDateShow
-            ? `Từ ngày: ${startDateShow}  Đến ngày: ${endDateShow}`
-            : `Từ ngày: `;
+        worksheet.getCell("A2").value = startDateShow && endDateShow ? `Từ ngày: ${startDateShow}  Đến ngày: ${endDateShow}` : `Từ ngày: `;
         worksheet.getCell("A2").alignment = {
           horizontal: "center",
           vertical: "middle",
@@ -7878,8 +6981,7 @@ exports.createExcelTongHopCa = async (req, res) => {
           bold: true,
         };
         worksheet.mergeCells("A3:M3");
-        worksheet.getCell("A3").value =
-          startDateFormat && endDateFormat && `Tên bộ phận: ${tenBoPhan}`;
+        worksheet.getCell("A3").value = startDateFormat && endDateFormat && `Tên bộ phận: ${tenBoPhan}`;
         worksheet.getCell("A3").alignment = {
           horizontal: "center",
           vertical: "middle",
@@ -7923,7 +7025,10 @@ exports.createExcelTongHopCa = async (req, res) => {
         // Add data rows
         for (let i = 0; i < dataChecklistC.length; i++) {
           const rowIndex = i + 7; // Adjust for header rows
-          const imageUrl = `https://lh3.googleusercontent.com/d/${dataChecklistC[i]?.Anh}=s1000?authuser=0`; // Image URL
+          // const imageUrl = `https://lh3.googleusercontent.com/d/${dataChecklistC[i]?.Anh}=s1000?authuser=0`; // Image URL
+          const imagePath = `${dataChecklistC[i]?.Anh}`; // Image URL
+
+          const imageUrls = imagePath?.split(",")?.map((path) => `${funcBaseUri_Image(1,path.trim())}`).join(",");
 
           // Add text data to the row
           worksheet.addRow([
@@ -7939,9 +7044,7 @@ exports.createExcelTongHopCa = async (req, res) => {
             dataChecklistC[i]?.Gioht,
             "", // Empty column for image hyperlink
             dataChecklistC[i]?.Ghichu,
-            dataChecklistC[i]?.ent_checklist?.Tinhtrang == 1
-              ? "Chưa xử lý"
-              : "Đã xử lý",
+            dataChecklistC[i]?.ent_checklist?.Tinhtrang == 1 ? "Chưa xử lý" : "Đã xử lý",
           ]);
 
           // Add hyperlink to the image URL
@@ -7949,8 +7052,9 @@ exports.createExcelTongHopCa = async (req, res) => {
           const imageCell = row.getCell(11); // Assuming the 11th cell (change the index if needed)
           imageCell.value = {
             text: "Xem ảnh", // Display text for the hyperlink
-            hyperlink: imageUrl, // Hyperlink to the image
+            hyperlink: imageUrls, // Hyperlink to the image
           };
+
 
           // Center align and wrap text for each cell in the row
           row.eachCell({ includeEmpty: true }, (cell) => {
@@ -7965,25 +7069,17 @@ exports.createExcelTongHopCa = async (req, res) => {
         // Generate the Excel file buffer
         const buffer = await workbook.xlsx.writeBuffer();
 
-        res.setHeader(
-          "Content-Disposition",
-          "attachment; filename=Checklist_Report.xlsx"
-        );
-        res.setHeader(
-          "Content-Type",
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        );
+        res.setHeader("Content-Disposition", "attachment; filename=Checklist_Report.xlsx");
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         res.send(buffer);
       } catch (error) {
         res.status(500).json({
-          message: error.message || "Loi",
+          message: error.message || "Lỗi",
         });
       }
     }
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -8011,25 +7107,12 @@ exports.createPreviewReports = async (req, res) => {
         //   [Op.lte]: endDateObj,
         // },
         createdAt: {
-          [Op.between]: [startDate,endDate]
-        }
-
+          [Op.between]: [startDate, endDate],
+        },
       };
 
       const dataChecklist = await Tb_checklistc.findAll({
-        attributes: [
-          "ID_ChecklistC",
-          "ID_Duan",
-          "ID_KhoiCV",
-          "ID_Calv",
-          "ID_ThietLapCa",
-          "ID_User",
-          "Ngay",
-          "Tong",
-          "TongC",
-          "Ghichu",
-          "isDelete",
-        ],
+        attributes: ["ID_ChecklistC", "ID_Duan", "ID_KhoiCV", "ID_Calv", "ID_ThietLapCa", "ID_User", "Ngay", "Tong", "TongC", "Ghichu", "isDelete"],
         include: [
           {
             model: Ent_khoicv,
@@ -8110,8 +7193,7 @@ exports.createPreviewReports = async (req, res) => {
         const item = aggregatedData[key];
         const completion = item.TongC;
         const total = item.Tong;
-        const completionPercentage =
-          completion >= total ? 100 : (completion / total) * 100;
+        const completionPercentage = completion >= total ? 100 : (completion / total) * 100;
         const formattedPercentage = Number.isInteger(completionPercentage)
           ? completionPercentage.toString() // Convert to string if integer
           : completionPercentage.toFixed(2); // Use toFixed(2) for non-integer
@@ -8139,14 +7221,8 @@ exports.createPreviewReports = async (req, res) => {
 
       const buffer = await workbook.xlsx.writeBuffer();
 
-      res.setHeader(
-        "Content-Disposition",
-        "attachment; filename=TongHopCa.xlsx"
-      );
-      res.setHeader(
-        "Content-Type",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-      );
+      res.setHeader("Content-Disposition", "attachment; filename=TongHopCa.xlsx");
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
       await workbook.xlsx.load(buffer);
       const rows = [];
       worksheet.eachRow((row, rowNumber) => {
@@ -8172,29 +7248,12 @@ exports.createPreviewReports = async (req, res) => {
           },
         };
         const dataSuCoNgoai = await Tb_sucongoai.findAll({
-          attributes: [
-            "ID_Suco",
-            "ID_Hangmuc",
-            "ID_User",
-            "Ngaysuco",
-            "Giosuco",
-            "Noidungsuco",
-            "Tinhtrangxuly",
-            "Ngayxuly",
-            "isDelete",
-          ],
+          attributes: ["ID_Suco", "ID_Hangmuc", "ID_User", "Ngaysuco", "Giosuco", "Noidungsuco", "Tinhtrangxuly", "Ngayxuly", "isDelete"],
           include: [
             {
               model: Ent_hangmuc,
               as: "ent_hangmuc",
-              attributes: [
-                "Hangmuc",
-                "Tieuchuankt",
-                "ID_Khuvuc",
-                "MaQrCode",
-                "FileTieuChuan",
-                "isDelete",
-              ],
+              attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "FileTieuChuan", "isDelete"],
               include: [
                 {
                   model: Ent_khuvuc,
@@ -8239,13 +7298,7 @@ exports.createPreviewReports = async (req, res) => {
         ];
 
         const tableHeaderRow = worksheet.getRow(1);
-        tableHeaderRow.values = [
-          "STT",
-          "Ngày",
-          "Giờ",
-          "Nội dung sự cố",
-          "Người báo cáo",
-        ];
+        tableHeaderRow.values = ["STT", "Ngày", "Giờ", "Nội dung sự cố", "Người báo cáo"];
         tableHeaderRow.eachCell((cell) => {
           cell.font = { bold: true };
           cell.alignment = { horizontal: "center" };
@@ -8272,14 +7325,8 @@ exports.createPreviewReports = async (req, res) => {
         // Generate the Excel file buffer
         const buffer = await workbook.xlsx.writeBuffer();
 
-        res.setHeader(
-          "Content-Disposition",
-          "attachment; filename=KhancapngoaiCheckList.xlsx"
-        );
-        res.setHeader(
-          "Content-Type",
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        );
+        res.setHeader("Content-Disposition", "attachment; filename=KhancapngoaiCheckList.xlsx");
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         await workbook.xlsx.load(buffer);
         const rows = [];
         worksheet.eachRow((row, rowNumber) => {
@@ -8292,9 +7339,7 @@ exports.createPreviewReports = async (req, res) => {
 
         res.json(rows);
       } catch (err) {
-        res
-          .status(500)
-          .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+        res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
       }
     }
 
@@ -8314,8 +7359,7 @@ exports.createPreviewReports = async (req, res) => {
           },
         };
 
-        const isRecentData =
-          new Date(startDateFormat) >= new Date("2025-01-01 00:00:00");
+        const isRecentData = new Date(startDateFormat) >= new Date("2025-01-01 00:00:00");
         let dataChecklistC = [];
         if (isRecentData) {
           for (const { year, month } of monthsRange) {
@@ -8324,33 +7368,12 @@ exports.createPreviewReports = async (req, res) => {
             defineDynamicModelChiTiet(tableName, sequelize);
             try {
               const monthlyData = await sequelize.models[tableName].findAll({
-                attributes: [
-                  "ID_Checklistchitiet",
-                  "ID_Checklist",
-                  "ID_ChecklistC",
-                  "Ketqua",
-                  "Anh",
-                  "Gioht",
-                  "Ngay",
-                  "Ghichu",
-                  "isDelete",
-                ],
+                attributes: ["ID_Checklistchitiet", "ID_Checklist", "ID_ChecklistC", "Ketqua", "Anh", "Gioht", "Ngay", "Ghichu", "isDelete"],
                 include: [
                   {
                     model: Tb_checklistc,
                     as: "tb_checklistc",
-                    attributes: [
-                      "ID_ChecklistC",
-                      "Ngay",
-                      "ID_User",
-                      "ID_Duan",
-                      "ID_KhoiCV",
-                      "Giobd",
-                      "Gioghinhan",
-                      "Giokt",
-                      "Tinhtrang",
-                      "Ghichu",
-                    ],
+                    attributes: ["ID_ChecklistC", "Ngay", "ID_User", "ID_Duan", "ID_KhoiCV", "Giobd", "Gioghinhan", "Giokt", "Tinhtrang", "Ghichu"],
                     where: whereClause,
                     include: [
                       {
@@ -8370,14 +7393,7 @@ exports.createPreviewReports = async (req, res) => {
                   {
                     model: Ent_checklist,
                     as: "ent_checklist",
-                    attributes: [
-                      "Checklist",
-                      "Tinhtrang",
-                      "Giatrinhan",
-                      "ID_Khuvuc",
-                      "ID_Hangmuc",
-                      "ID_Tang",
-                    ],
+                    attributes: ["Checklist", "Tinhtrang", "Giatrinhan", "ID_Khuvuc", "ID_Hangmuc", "ID_Tang"],
                     include: [
                       {
                         model: Ent_khuvuc,
@@ -8398,27 +7414,14 @@ exports.createPreviewReports = async (req, res) => {
 
               dataChecklistC = dataChecklistC.concat(monthlyData);
             } catch (error) {
-              console.error(
-                `Lỗi khi truy vấn bảng ${tableName}:`,
-                error.message
-              );
+              console.error(`Lỗi khi truy vấn bảng ${tableName}:`, error.message);
               // Bỏ qua nếu bảng không tồn tại hoặc lỗi khác
             }
           }
         } else {
           // Logic hiện tại
           dataChecklistC = await Tb_checklistchitiet.findAll({
-            attributes: [
-              "ID_Checklistchitiet",
-              "ID_ChecklistC",
-              "ID_Checklist",
-              "Ketqua",
-              "Anh",
-              "Gioht",
-              "Ngay",
-              "Ghichu",
-              "isDelete",
-            ],
+            attributes: ["ID_Checklistchitiet", "ID_ChecklistC", "ID_Checklist", "Ketqua", "Anh", "Gioht", "Ngay", "Ghichu", "isDelete"],
             include: [
               {
                 model: Tb_checklistc,
@@ -8499,14 +7502,7 @@ exports.createPreviewReports = async (req, res) => {
                   },
                   {
                     model: Ent_user,
-                    attributes: [
-                      "UserName",
-                      "Email",
-                      "Hoten",
-                      "Ngaysinh",
-                      "Gioitinh",
-                      "Sodienthoai",
-                    ],
+                    attributes: ["UserName", "Email", "Hoten", "Ngaysinh", "Gioitinh", "Sodienthoai"],
                   },
                 ],
               },
@@ -8583,9 +7579,7 @@ exports.createPreviewReports = async (req, res) => {
             dataChecklistC[i]?.Gioht,
 
             dataChecklistC[i]?.Ghichu,
-            dataChecklistC[i]?.ent_checklist?.Tinhtrang == 1
-              ? "Chưa xử lý"
-              : "Đã xử lý",
+            dataChecklistC[i]?.ent_checklist?.Tinhtrang == 1 ? "Chưa xử lý" : "Đã xử lý",
           ]);
 
           // Add hyperlink to the image URL
@@ -8604,14 +7598,8 @@ exports.createPreviewReports = async (req, res) => {
         // Generate the Excel file buffer
         const buffer = await workbook.xlsx.writeBuffer();
 
-        res.setHeader(
-          "Content-Disposition",
-          "attachment; filename=Checklist_Report.xlsx"
-        );
-        res.setHeader(
-          "Content-Type",
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        );
+        res.setHeader("Content-Disposition", "attachment; filename=Checklist_Report.xlsx");
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         await workbook.xlsx.load(buffer);
         const rows = [];
         worksheet.eachRow((row, rowNumber) => {
@@ -8630,9 +7618,7 @@ exports.createPreviewReports = async (req, res) => {
       }
     }
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -8659,16 +7645,7 @@ exports.createExcelDuAn = async (req, res) => {
 
     // Lấy tất cả dữ liệu checklistC cho ngày hôm qua
     const dataChecklistCs = await Tb_checklistc.findAll({
-      attributes: [
-        "ID_ChecklistC",
-        "ID_Duan",
-        "ID_Calv",
-        "Ngay",
-        "TongC",
-        "Tong",
-        "ID_KhoiCV",
-        "isDelete",
-      ],
+      attributes: ["ID_ChecklistC", "ID_Duan", "ID_Calv", "Ngay", "TongC", "Tong", "ID_KhoiCV", "isDelete"],
       where: {
         isDelete: 0,
         ID_Duan: {
@@ -8737,17 +7714,13 @@ exports.createExcelDuAn = async (req, res) => {
       }
 
       // Cộng dồn TongC và Tong cho ca
-      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTongC +=
-        checklistC.TongC;
-      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTong =
-        checklistC.Tong;
+      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTongC += checklistC.TongC;
+      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTong = checklistC.Tong;
 
       // Lưu tỷ lệ hoàn thành của từng người
       if (checklistC.Tong > 0) {
         const userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
-        result[projectId].createdKhois[khoiName].shifts[
-          shiftName
-        ].userCompletionRates.push(userCompletionRate);
+        result[projectId].createdKhois[khoiName].shifts[shiftName].userCompletionRates.push(userCompletionRate);
       } else {
         console.log(`Tỷ lệ hoàn thành của ca: 0% (Tong = 0)`);
       }
@@ -8761,10 +7734,7 @@ exports.createExcelDuAn = async (req, res) => {
 
         Object.values(khoi.shifts).forEach((shift) => {
           // Tính phần trăm hoàn thành cho ca dựa trên tỷ lệ của từng người trong ca
-          let shiftCompletionRatio = shift.userCompletionRates.reduce(
-            (sum, rate) => sum + rate,
-            0
-          );
+          let shiftCompletionRatio = shift.userCompletionRates.reduce((sum, rate) => sum + rate, 0);
           if (shiftCompletionRatio > 100) {
             shiftCompletionRatio = 100; // Giới hạn phần trăm hoàn thành tối đa là 100% cho từng ca
           }
@@ -8823,10 +7793,7 @@ exports.createExcelDuAn = async (req, res) => {
         // Kiểm tra từng ca làm việc trong khối
         Object.keys(khoi.shifts).forEach((shiftName) => {
           const shift = khoi.shifts[shiftName];
-          const completionRate = shift.userCompletionRates.reduce(
-            (sum, rate) => sum + rate,
-            0
-          );
+          const completionRate = shift.userCompletionRates.reduce((sum, rate) => sum + rate, 0);
 
           const shiftCompletionRatio = Math.min(completionRate, 100);
 
@@ -8840,10 +7807,7 @@ exports.createExcelDuAn = async (req, res) => {
 
         // Tính phần trăm hoàn thành trung bình cho khối
         if (totalShifts >= 0) {
-          const avgKhoiCompletionRatio =
-            totalKhoiCompletionRatio / totalShifts
-              ? totalKhoiCompletionRatio / totalShifts
-              : 0;
+          const avgKhoiCompletionRatio = totalKhoiCompletionRatio / totalShifts ? totalKhoiCompletionRatio / totalShifts : 0;
           // Cộng tổng tỷ lệ của khối vào tổng tỷ lệ checklist chung
           totalChecklistPercentage += avgKhoiCompletionRatio;
           numKhoisWithData += 1; // Tăng số khối có dữ liệu
@@ -8874,9 +7838,7 @@ exports.createExcelDuAn = async (req, res) => {
       }
 
       // Đảm bảo không có giá trị NaN và chỉ hiển thị khi có giá trị hợp lệ
-      rowValues.tile = isNaN(tileChecklist)
-        ? 0
-        : tileChecklist.toFixed(2) + "%";
+      rowValues.tile = isNaN(tileChecklist) ? 0 : tileChecklist.toFixed(2) + "%";
 
       // Thêm dữ liệu vào bảng
       worksheet.addRow(rowValues);
@@ -8925,16 +7887,7 @@ exports.createExcelDuAnPercent = async (req, res) => {
 
     // Lấy tất cả dữ liệu checklistC cho ngày hôm qua
     const dataChecklistCs = await Tb_checklistc.findAll({
-      attributes: [
-        "ID_ChecklistC",
-        "ID_Duan",
-        "ID_Calv",
-        "Ngay",
-        "TongC",
-        "Tong",
-        "ID_KhoiCV",
-        "isDelete",
-      ],
+      attributes: ["ID_ChecklistC", "ID_Duan", "ID_Calv", "Ngay", "TongC", "Tong", "ID_KhoiCV", "isDelete"],
       where: {
         isDelete: 0,
         ID_Duan: {
@@ -9004,17 +7957,13 @@ exports.createExcelDuAnPercent = async (req, res) => {
       }
 
       // Cộng dồn TongC và Tong cho ca
-      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTongC +=
-        checklistC.TongC;
-      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTong =
-        checklistC.Tong;
+      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTongC += checklistC.TongC;
+      result[projectId].createdKhois[khoiName].shifts[shiftName].totalTong = checklistC.Tong;
 
       // Lưu tỷ lệ hoàn thành của từng người
       if (checklistC.Tong > 0) {
         const userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
-        result[projectId].createdKhois[khoiName].shifts[
-          shiftName
-        ].userCompletionRates.push(userCompletionRate);
+        result[projectId].createdKhois[khoiName].shifts[shiftName].userCompletionRates.push(userCompletionRate);
       }
     });
 
@@ -9025,10 +7974,7 @@ exports.createExcelDuAnPercent = async (req, res) => {
         let totalShifts = 0;
 
         Object.values(khoi.shifts).forEach((shift) => {
-          let shiftCompletionRatio = shift.userCompletionRates.reduce(
-            (sum, rate) => sum + rate,
-            0
-          );
+          let shiftCompletionRatio = shift.userCompletionRates.reduce((sum, rate) => sum + rate, 0);
           if (shiftCompletionRatio > 100) {
             shiftCompletionRatio = 100;
           }
@@ -9075,10 +8021,7 @@ exports.createExcelDuAnPercent = async (req, res) => {
 
         Object.keys(khoi.shifts).forEach((shiftName) => {
           const shift = khoi.shifts[shiftName];
-          const completionRate = shift.userCompletionRates.reduce(
-            (sum, rate) => sum + rate,
-            0
-          );
+          const completionRate = shift.userCompletionRates.reduce((sum, rate) => sum + rate, 0);
 
           const shiftCompletionRatio = Math.min(completionRate, 100);
 
@@ -9117,23 +8060,15 @@ exports.createExcelDuAnPercent = async (req, res) => {
         tileChecklist = totalChecklistPercentage / numKhoisWithData;
       }
 
-      rowValues.tile = isNaN(tileChecklist)
-        ? 0
-        : tileChecklist.toFixed(2) + "%";
+      rowValues.tile = isNaN(tileChecklist) ? 0 : tileChecklist.toFixed(2) + "%";
 
       worksheet.addRow(rowValues);
     });
 
     const buffer = await workbook.xlsx.writeBuffer();
 
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    );
-    res.setHeader(
-      "Content-Disposition",
-      "attachment; filename=CheckList_Projects.xlsx"
-    );
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", "attachment; filename=CheckList_Projects.xlsx");
 
     res.end(buffer);
   } catch (err) {
@@ -9262,10 +8197,7 @@ cron.schedule("0 */2 * * *", async function () {
 
     // Cập nhật tất cả bản ghi của ngày hôm qua với Tinhtrang: 1
     const yesterdayUpdates = yesterdayResults.map((record) => {
-      return Tb_checklistc.update(
-        { Tinhtrang: 1, Giokt: currentDateTime },
-        { where: { ID_ChecklistC: record.ID_ChecklistC } }
-      );
+      return Tb_checklistc.update({ Tinhtrang: 1, Giokt: currentDateTime }, { where: { ID_ChecklistC: record.ID_ChecklistC } });
     });
 
     await Promise.all(yesterdayUpdates);
@@ -9308,21 +8240,11 @@ cron.schedule("0 */2 * * *", async function () {
       const { Gioketthuc, Giobatdau } = record.ent_calv;
 
       if (Giobatdau < Gioketthuc && currentDateTime >= Gioketthuc) {
-        return Tb_checklistc.update(
-          { Tinhtrang: 1, Giokt: formattedTime },
-          { where: { ID_ChecklistC: record.ID_ChecklistC } }
-        );
+        return Tb_checklistc.update({ Tinhtrang: 1, Giokt: formattedTime }, { where: { ID_ChecklistC: record.ID_ChecklistC } });
       }
 
-      if (
-        Giobatdau >= Gioketthuc &&
-        currentDateTime < Giobatdau &&
-        currentDateTime >= Gioketthuc
-      ) {
-        return Tb_checklistc.update(
-          { Tinhtrang: 1, Giokt: formattedTime },
-          { where: { ID_ChecklistC: record.ID_ChecklistC } }
-        );
+      if (Giobatdau >= Gioketthuc && currentDateTime < Giobatdau && currentDateTime >= Gioketthuc) {
+        return Tb_checklistc.update({ Tinhtrang: 1, Giokt: formattedTime }, { where: { ID_ChecklistC: record.ID_ChecklistC } });
       }
     });
 
@@ -9343,16 +8265,7 @@ exports.getProjectsChecklistStatus_Noti = async () => {
     // Parallel database queries for efficiency
     const [dataChecklistCs, users] = await Promise.all([
       Tb_checklistc.findAll({
-        attributes: [
-          "ID_ChecklistC",
-          "ID_Duan",
-          "ID_Calv",
-          "Ngay",
-          "TongC",
-          "Tong",
-          "ID_KhoiCV",
-          "isDelete",
-        ],
+        attributes: ["ID_ChecklistC", "ID_Duan", "ID_Calv", "Ngay", "TongC", "Tong", "ID_KhoiCV", "isDelete"],
         where: {
           Ngay: yesterday,
           isDelete: 0,
@@ -9377,15 +8290,7 @@ exports.getProjectsChecklistStatus_Noti = async () => {
         ],
       }),
       Ent_user.findAll({
-        attributes: [
-          "ID_User",
-          "UserName",
-          "Hoten",
-          "ID_KhoiCV",
-          "ID_Chucvu",
-          "ID_Duan",
-          "deviceToken",
-        ],
+        attributes: ["ID_User", "UserName", "Hoten", "ID_KhoiCV", "ID_Chucvu", "ID_Duan", "deviceToken"],
         include: {
           model: Ent_chucvu,
           attributes: ["Chucvu", "Role"],
@@ -9459,10 +8364,7 @@ exports.getProjectsChecklistStatus_Noti = async () => {
       shift.totalTongC += checklistC.TongC || 0;
       shift.totalTong += checklistC.Tong || 0;
 
-      const userCompletionRate =
-        checklistC.Tong > 0
-          ? Math.min((checklistC.TongC / checklistC.Tong) * 100, 100)
-          : 0;
+      const userCompletionRate = checklistC.Tong > 0 ? Math.min((checklistC.TongC / checklistC.Tong) * 100, 100) : 0;
 
       shift.userCompletionRates.push(userCompletionRate);
     });
@@ -9489,17 +8391,13 @@ exports.getProjectsChecklistStatus_Noti = async () => {
         }
 
         // Calculate average completion ratio
-        const avgKhoiCompletionRatio =
-          totalShifts > 0 ? totalKhoiCompletionRatio / totalShifts : 0;
+        const avgKhoiCompletionRatio = totalShifts > 0 ? totalKhoiCompletionRatio / totalShifts : 0;
 
-        khoi.completionRatio = Number.isInteger(avgKhoiCompletionRatio)
-          ? avgKhoiCompletionRatio
-          : parseFloat(avgKhoiCompletionRatio.toFixed(2));
+        khoi.completionRatio = Number.isInteger(avgKhoiCompletionRatio) ? avgKhoiCompletionRatio : parseFloat(avgKhoiCompletionRatio.toFixed(2));
 
         // Determine completion status
         const comparisonPercent = project.percent || DEFAULT_COMPLETION_PERCENT;
-        khoi.completionStatus =
-          khoi.completionRatio < comparisonPercent ? 1 : 0;
+        khoi.completionStatus = khoi.completionRatio < comparisonPercent ? 1 : 0;
 
         if (khoi.completionStatus === 1) {
           processedKhois.push(khoi);
@@ -9509,22 +8407,14 @@ exports.getProjectsChecklistStatus_Noti = async () => {
       // Filter and process users
       if (processedKhois.length > 0) {
         const filteredUsers = project.users
-          .filter(
-            (user) =>
-              user.khoiCV === null ||
-              processedKhois.some((khoi) => khoi.ID_KhoiCV === user.khoiCV)
-          )
+          .filter((user) => user.khoiCV === null || processedKhois.some((khoi) => khoi.ID_KhoiCV === user.khoiCV))
           .map((user) => {
             // Add TenKhoi to matching users
-            const matchingKhoi = processedKhois.find(
-              (khoi) => khoi.ID_KhoiCV === user.khoiCV
-            );
+            const matchingKhoi = processedKhois.find((khoi) => khoi.ID_KhoiCV === user.khoiCV);
             return {
               ...user,
               TenKhoi: matchingKhoi ? matchingKhoi.TenKhoi : null,
-              completionRatio: matchingKhoi
-                ? matchingKhoi.completionRatio
-                : null,
+              completionRatio: matchingKhoi ? matchingKhoi.completionRatio : null,
             };
           });
 
@@ -9562,9 +8452,7 @@ exports.testExcel = async (req, res) => {
 
     // Tiêu đề cố định
     sheet.mergeCells("A1:L4");
-    sheet.getCell("A1").value = `Báo cáo kiểm tra checklist ${
-      TenKhoiCV || ""
-    } tháng ${monthFormat} năm ${year}`;
+    sheet.getCell("A1").value = `Báo cáo kiểm tra checklist ${TenKhoiCV || ""} tháng ${monthFormat} năm ${year}`;
     sheet.getCell("A1").alignment = {
       vertical: "middle",
       horizontal: "center",
@@ -9613,10 +8501,7 @@ exports.testExcel = async (req, res) => {
         ID_KhoiCV,
         isDelete: 0,
         Ngay: {
-          [Op.between]: [
-            `${year}-${monthFormat}-01`,
-            `${year}-${monthFormat}-${daysInMonth}`,
-          ],
+          [Op.between]: [`${year}-${monthFormat}-01`, `${year}-${monthFormat}-${daysInMonth}`],
         },
       },
       include: [{ model: Ent_calv, attributes: ["Tenca"] }],
@@ -9645,23 +8530,17 @@ exports.testExcel = async (req, res) => {
     // Lấy dữ liệu checklist hoàn thành
     let checklistDoneItems = [];
     if (checklistCIds.length > 0) {
-      checklistDoneItems = await sequelize.query(
-        `SELECT * FROM ${table_done} WHERE ID_ChecklistC IN (:checklistCIds) AND isDelete = 0`,
-        {
-          replacements: { checklistCIds },
-          type: sequelize.QueryTypes.SELECT,
-        }
-      );
+      checklistDoneItems = await sequelize.query(`SELECT * FROM ${table_done} WHERE ID_ChecklistC IN (:checklistCIds) AND isDelete = 0`, {
+        replacements: { checklistCIds },
+        type: sequelize.QueryTypes.SELECT,
+      });
     }
 
     const statusByDay = {};
 
     // Lặp qua từng checklist trong `tbChecklistC`
     tbChecklistC.forEach((checklistC) => {
-      const formattedDay = checklistC.Ngay.split("-")
-        .reverse()
-        .slice(0, 2)
-        .join("/");
+      const formattedDay = checklistC.Ngay.split("-").reverse().slice(0, 2).join("/");
       const dayKey = `${formattedDay}-${checklistC.ent_calv?.Tenca || "N/A"}`;
 
       // Tạo đối tượng nếu chưa tồn tại
@@ -9684,11 +8563,7 @@ exports.testExcel = async (req, res) => {
       // Thêm trạng thái từ `dataChecklistChiTiet`
       dataChecklistChiTiet.forEach((item) => {
         if (item.ID_ChecklistC === checklistC.ID_ChecklistC) {
-          const checklistStatus =
-            removeVietnameseTones(item.Ketqua) ===
-            removeVietnameseTones(item.ent_checklist.Giatriloi)
-              ? "X"
-              : "V";
+          const checklistStatus = removeVietnameseTones(item.Ketqua) === removeVietnameseTones(item.ent_checklist.Giatriloi) ? "X" : "V";
           if (!statusByDay[dayKey][item.ID_Checklist]) {
             statusByDay[dayKey][item.ID_Checklist] = checklistStatus;
           }
@@ -9709,9 +8584,7 @@ exports.testExcel = async (req, res) => {
       sheet.mergeCells(5, col, 5, col + dataCalv.length - 1);
 
       const cell = sheet.getCell(5, col);
-      cell.value = `${day.toString().padStart(2, "0")}/${monthFormat}`.slice(
-        -5
-      );
+      cell.value = `${day.toString().padStart(2, "0")}/${monthFormat}`.slice(-5);
       cell.alignment = { vertical: "middle", horizontal: "center" };
       cell.font = { bold: true, size: 12 };
 
@@ -9812,20 +8685,12 @@ exports.testExcel = async (req, res) => {
     sheet.getColumn("C").width = 30;
 
     const buffer = await workbook.xlsx.writeBuffer();
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    );
-    res.setHeader(
-      "Content-Disposition",
-      "attachment; filename=Checklist_Report.xlsx"
-    );
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", "attachment; filename=Checklist_Report.xlsx");
     res.send(buffer);
   } catch (error) {
     console.error("Error generating Excel:", error);
-    res
-      .status(500)
-      .send("An error occurred while generating the Excel report.");
+    res.status(500).send("An error occurred while generating the Excel report.");
   }
 };
 
@@ -9864,21 +8729,14 @@ exports.updateTongC2 = async (req, res) => {
       },
     });
 
-    const dataChecklistChiTietDone = await sequelize.models[table_done].findAll(
-      {
-        attributes: [
-          "ID_Checklistchitietdone",
-          "Description",
-          "ID_ChecklistC",
-          "isDelete",
-        ],
-        where: {
-          ID_ChecklistC: { [Op.in]: checklistCIds },
-          isDelete: 0,
-          isCheckListLai: 0,
-        },
-      }
-    );
+    const dataChecklistChiTietDone = await sequelize.models[table_done].findAll({
+      attributes: ["ID_Checklistchitietdone", "Description", "ID_ChecklistC", "isDelete"],
+      where: {
+        ID_ChecklistC: { [Op.in]: checklistCIds },
+        isDelete: 0,
+        isCheckListLai: 0,
+      },
+    });
 
     const combinedMap = new Map();
 
@@ -9921,8 +8779,6 @@ exports.updateTongC2 = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: error.message || "Lỗi! Vui lòng thử lại sau." });
+    res.status(500).json({ message: error.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
