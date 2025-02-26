@@ -785,7 +785,10 @@ exports.getThongKe = async (req, res, next) => {
         orConditions.push({ "$tb_checklistc.ID_User$": userData?.ID_User });
       }
       if (
-        (userData?.ID_KhoiCV !== null && userData?.ID_KhoiCV !== undefined && userData.ent_chucvu.Role == 5 && !arr_Duan_Array?.includes(String(userData.ID_Duan))) ||
+        (userData?.ID_KhoiCV !== null &&
+          userData?.ID_KhoiCV !== undefined &&
+          userData.ent_chucvu.Role == 5 &&
+          !arr_Duan_Array?.includes(String(userData.ID_Duan))) ||
         (userData?.ID_KhoiCV !== null && userData?.ID_KhoiCV !== undefined && userData.ent_chucvu.Role !== 5)
       ) {
         orConditions.push({ "$tb_checklistc.ID_KhoiCV$": userData?.ID_KhoiCV });
@@ -4503,82 +4506,111 @@ const calculateCompletionPercentagePerProject = (checklists) => {
   return numberOfProjects > 0 ? totalCompletionPercentage / numberOfProjects : 0;
 };
 
-const calculateCompletionPercentagePerProject1 = (dataChecklistCs) => {
-  const result = {};
-  let tong = 0;
-  let count = 0;
+const calculateCompletionPercentagePerProject1 = (danhSachKiemTra) => {
+  const ketQua = {};
 
-  dataChecklistCs.forEach((checklistC) => {
-    const projectId = checklistC.ID_Duan;
-    const projectName = checklistC.ent_duan.Duan;
-    const khoiName = checklistC.ent_khoicv.KhoiCV;
-    const shiftName = checklistC.ent_calv.Tenca;
+  // Giai đoạn 1: Tổng hợp dữ liệu
+  danhSachKiemTra.forEach((kiemTra) => {
+    const maDuAn = kiemTra.ID_Duan;
+    const tenDuAn = kiemTra.ent_duan.Duan;
+    const tenKhoi = kiemTra.ent_khoicv.KhoiCV;
+    const tenCa = kiemTra.ent_calv.Tenca;
 
-    // Khởi tạo dữ liệu dự án nếu chưa tồn tại
-    if (!result[projectId]) {
-      result[projectId] = {
-        projectId,
-        projectName,
-        createdKhois: {},
+    // Khởi tạo dữ liệu dự án
+    if (!ketQua[maDuAn]) {
+      ketQua[maDuAn] = {
+        maDuAn,
+        tenDuAn,
+        danhSachKhoi: {},
       };
     }
 
-    // Khởi tạo dữ liệu cho khối nếu chưa tồn tại
-    if (!result[projectId].createdKhois[khoiName]) {
-      result[projectId].createdKhois[khoiName] = {
-        shifts: {},
+    // Khởi tạo dữ liệu khối
+    if (!ketQua[maDuAn].danhSachKhoi[tenKhoi]) {
+      ketQua[maDuAn].danhSachKhoi[tenKhoi] = {
+        ca: {},
       };
     }
 
-    // Khởi tạo dữ liệu cho ca nếu chưa tồn tại
-    if (!result[projectId].createdKhois[khoiName].shifts[shiftName]) {
-      result[projectId].createdKhois[khoiName].shifts[shiftName] = {
-        totalTongC: 0,
-        totalTong: 0,
-        userCompletionRates: [],
+    // Khởi tạo dữ liệu ca
+    if (!ketQua[maDuAn].danhSachKhoi[tenKhoi].ca[tenCa]) {
+      ketQua[maDuAn].danhSachKhoi[tenKhoi].ca[tenCa] = {
+        tongC: 0,
+        tong: 0,
+        tiLeNguoiDung: [],
       };
     }
 
-    // Cộng dồn TongC và Tong cho ca
-    result[projectId].createdKhois[khoiName].shifts[shiftName].totalTongC += checklistC.TongC;
-    result[projectId].createdKhois[khoiName].shifts[shiftName].totalTong = checklistC.Tong;
+    const ca = ketQua[maDuAn].danhSachKhoi[tenKhoi].ca[tenCa];
+    ca.tongC += kiemTra.TongC;
+    ca.tong = kiemTra.Tong;
 
-    // Lưu tỷ lệ hoàn thành của từng người (nếu Tong > 0)
-    if (checklistC.Tong > 0) {
-      const userCompletionRate = (checklistC.TongC / checklistC.Tong) * 100;
-      result[projectId].createdKhois[khoiName].shifts[shiftName].userCompletionRates.push(userCompletionRate);
+    if (kiemTra.Tong > 0) {
+      const tiLe = (kiemTra.TongC / kiemTra.Tong) * 100;
+      ca.tiLeNguoiDung.push(tiLe);
     }
   });
 
-  // Tính toán phần trăm hoàn thành riêng cho từng ca và tổng khối
-  Object.values(result).forEach((project) => {
-    Object.values(project.createdKhois).forEach((khoi) => {
-      let totalKhoiCompletionRatio = 0;
-      let totalShifts = 0;
+  // Giai đoạn 2: Tính toán tỷ lệ hoàn thành
+  Object.values(ketQua).forEach((duAn) => {
+    Object.values(duAn.danhSachKhoi).forEach((khoi) => {
+      let tongTiLeKhoi = 0;
+      let soCa = 0;
 
-      Object.values(khoi.shifts).forEach((shift) => {
-        if (shift.userCompletionRates.length > 0) {
-          let shiftCompletionRatio = shift.userCompletionRates.reduce((sum, rate) => sum + rate, 0);
-          shiftCompletionRatio = Math.min(shiftCompletionRatio, 100); // Giới hạn tối đa là 100%
-          totalKhoiCompletionRatio += shiftCompletionRatio;
-          totalShifts += 1;
+      Object.values(khoi.ca).forEach((ca) => {
+        if (ca.tiLeNguoiDung.length > 0) {
+          let tiLeCa = ca.tiLeNguoiDung.reduce((tong, tiLe) => tong + tiLe, 0);
+          tiLeCa = Math.min(tiLeCa, 100);
+          tongTiLeKhoi += tiLeCa;
+          soCa += 1;
         }
       });
 
-      // Tính phần trăm hoàn thành trung bình cho khối (nếu có shift)
-      if (totalShifts > 0) {
-        const avgKhoiCompletionRatio = totalKhoiCompletionRatio / totalShifts;
-        const formatAvg = Number.isInteger(avgKhoiCompletionRatio) ? avgKhoiCompletionRatio : avgKhoiCompletionRatio.toFixed(2);
-        khoi.completionRatio = formatAvg;
-        tong += Number(formatAvg);
-        count += 1;
+      if (soCa > 0) {
+        const tiLeTrungBinhKhoi = tongTiLeKhoi / soCa;
+        khoi.tiLeHoanThanh = Number.isInteger(tiLeTrungBinhKhoi) ? tiLeTrungBinhKhoi : Number(tiLeTrungBinhKhoi.toFixed(2));
       } else {
-        khoi.completionRatio = null; // Không có shift nào
+        khoi.tiLeHoanThanh = null;
       }
     });
   });
 
-  return tong / count;
+  // Giai đoạn 3: Tính trung bình theo khối
+  const trungBinhKhoi = {
+    "Khối kỹ thuật": { tongTiLe: 0, soDuAn: 0 },
+    "Khối làm sạch": { tongTiLe: 0, soDuAn: 0 },
+    "Khối dịch vụ": { tongTiLe: 0, soDuAn: 0 },
+    "Khối an ninh": { tongTiLe: 0, soDuAn: 0 },
+    "Khối F&B": { tongTiLe: 0, soDuAn: 0 },
+  };
+
+  Object.values(ketQua).forEach((duAn) => {
+    Object.keys(trungBinhKhoi).forEach((tenKhoi) => {
+      const khoi = duAn.danhSachKhoi[tenKhoi];
+      if (khoi && khoi.tiLeHoanThanh !== null) {
+        trungBinhKhoi[tenKhoi].tongTiLe += parseFloat(khoi.tiLeHoanThanh);
+        trungBinhKhoi[tenKhoi].soDuAn += 1;
+      }
+    });
+  });
+
+  const tiLeTrungBinh = {};
+  Object.keys(trungBinhKhoi).forEach((tenKhoi) => {
+    const { tongTiLe, soDuAn } = trungBinhKhoi[tenKhoi];
+    if (soDuAn > 0) {
+      const trungBinh = tongTiLe / soDuAn;
+      tiLeTrungBinh[tenKhoi] = Number.isInteger(trungBinh) ? trungBinh : Number(trungBinh.toFixed(2));
+    } else {
+      tiLeTrungBinh[tenKhoi] = 0;
+    }
+  });
+
+  // Giai đoạn 4: Tính trung bình cuối cùng
+  const giaTriHopLe = Object.values(tiLeTrungBinh)
+    .map(Number)
+    .filter((giaTri) => giaTri > 0);
+
+  return giaTriHopLe.length > 0 ? Number((giaTriHopLe.reduce((tong, giaTri) => tong + giaTri, 0) / giaTriHopLe.length).toFixed(2)) : 0;
 };
 
 exports.reportPercentWeek = async (req, res) => {
@@ -4654,7 +4686,7 @@ exports.reportPercentWeek = async (req, res) => {
       attributes: ["ID_ChecklistC", "ID_Duan", "ID_Calv", "Ngay", "TongC", "Tong", "ID_KhoiCV", "isDelete", "Tinhtrang"],
       where: lastWhereClause,
       include: [
-        { model: Ent_duan, attributes: ["Duan", "ID_Nhom"] },
+        { model: Ent_duan, attributes: ["Duan"] },
         { model: Ent_khoicv, attributes: ["KhoiCV"] },
         { model: Ent_calv, attributes: ["Tenca"] },
       ],
@@ -4665,7 +4697,7 @@ exports.reportPercentWeek = async (req, res) => {
       attributes: ["ID_ChecklistC", "ID_Duan", "ID_Calv", "Ngay", "TongC", "Tong", "ID_KhoiCV", "isDelete", "Tinhtrang"],
       where: prevWhereClause,
       include: [
-        { model: Ent_duan, attributes: ["Duan", "ID_Nhom", "ID_Duan"] },
+        { model: Ent_duan, attributes: ["Duan"] },
         { model: Ent_khoicv, attributes: ["KhoiCV"] },
         { model: Ent_calv, attributes: ["Tenca"] },
       ],
@@ -6937,7 +6969,7 @@ exports.createExcelTongHopCa = async (req, res) => {
         const projectName = projectData?.Duan || "";
         const projectLogo = projectData?.Logo || "https://pmcweb.vn/wp-content/uploads/logo.png";
 
-        console.log("projectData",dataChecklistC[0]?.tb_checklistc?.ent_duan);
+        console.log("projectData", dataChecklistC[0]?.tb_checklistc?.ent_duan);
 
         // Download the image and add it to the workbook
         const imageResponse = await axios({
@@ -7028,7 +7060,10 @@ exports.createExcelTongHopCa = async (req, res) => {
           // const imageUrl = `https://lh3.googleusercontent.com/d/${dataChecklistC[i]?.Anh}=s1000?authuser=0`; // Image URL
           const imagePath = `${dataChecklistC[i]?.Anh}`; // Image URL
 
-          const imageUrls = imagePath?.split(",")?.map((path) => `${funcBaseUri_Image(1,path.trim())}`).join(",");
+          const imageUrls = imagePath
+            ?.split(",")
+            ?.map((path) => `${funcBaseUri_Image(1, path.trim())}`)
+            .join(",");
 
           // Add text data to the row
           worksheet.addRow([
@@ -7054,7 +7089,6 @@ exports.createExcelTongHopCa = async (req, res) => {
             text: "Xem ảnh", // Display text for the hyperlink
             hyperlink: imageUrls, // Hyperlink to the image
           };
-
 
           // Center align and wrap text for each cell in the row
           row.eachCell({ includeEmpty: true }, (cell) => {

@@ -28,7 +28,7 @@ exports.login = async (req, res) => {
     // Check if username and password are provided
     if (!req.body.UserName || !req.body.Password) {
       return res.status(400).json({
-        message: "Sai tài khoản hoặc mật khẩu. Vui lòng thử lại!!",
+        message: "Thiếu tài khoản hoặc mật khẩu. Vui lòng thử lại!!",
       });
     }
 
