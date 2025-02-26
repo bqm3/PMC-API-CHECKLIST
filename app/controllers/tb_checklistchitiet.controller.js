@@ -37,22 +37,182 @@ const insertInBatches = async (records, transaction) => {
   }
 };
 
-const processImageUpload = async (
-  index,
-  ID_Checklist,
-  uploadedFileIds,
-  images
-) => {
+// const processImageUpload = async (
+//   index,
+//   ID_Checklist,
+//   uploadedFileIds,
+//   images
+// ) => {
+//   let anhs = [];
+//   for (let i = 0; i < images?.length; i++) {
+//     const imageIndex = `Images_${index}_${ID_Checklist}_${i}`;
+//     const matchingImage = uploadedFileIds?.find(
+//       (file) => file.fieldname === imageIndex
+//     );
+//     if (matchingImage) {
+//       anhs.push(matchingImage.fileId.id);
+//     } else {
+//       console.log(`No matching image found for Anh: ${imageIndex}`);
+//     }
+//   }
+//   return anhs;
+// };
+
+// exports.createCheckListChiTiet = async (req, res, next) => {
+//   try {
+//     const records = req.body;
+//     const images = req.files || [];
+
+//     // Chuyển các trường về dạng mảng
+//     records.ID_ChecklistC = ensureArray(records.ID_ChecklistC);
+//     records.ID_Checklist = ensureArray(records.ID_Checklist);
+//     records.Vido = ensureArray(records.Vido);
+//     records.Kinhdo = ensureArray(records.Kinhdo);
+//     records.Docao = ensureArray(records.Docao);
+//     records.Ketqua = ensureArray(records.Ketqua);
+//     records.Ghichu = ensureArray(records.Ghichu);
+//     records.Key_Image = ensureArray(records.Key_Image);
+//     records.Gioht = ensureArray(records.Gioht);
+//     records.isScan = ensureArray(records.isScan);
+//     records.isCheckListLai = ensureArray(records?.isCheckListLai);
+
+//     // Kiểm tra sự phù hợp của độ dài các mảng
+//     if (records.ID_ChecklistC.length !== records.ID_Checklist.length) {
+//       return res.status(400).json({
+//         error: "ID_ChecklistC and ID_Checklist must have the same length.",
+//       });
+//     }
+
+//     let uploadedFiles = [];
+//     // Xử lý tải lên ảnh
+//     if (req.files && req.files.length > 0) {
+//       uploadedFiles = req.files.map((file) => {
+//         const projectFolder = path.basename(path.dirname(file.path));
+//         const filename = path.basename(file.filename);
+
+//         return {
+//           fieldname: file.fieldname,
+//           fileId: { id: `${projectFolder}/${filename}` },
+//           filePath: file.path,
+//         };
+//       });
+//     }
+
+//     // Mảng lưu trữ thông tin ảnh đã tải lên
+//     const uploadedFileIds = await uploadedFiles?.map((file) => file);
+
+//     // Tạo tên bảng động theo tháng và năm
+//     const dynamicTableName = `tb_checklistchitiet_${
+//       (new Date().getMonth() + 1).toString().padStart(2, '0')
+//     }_${new Date().getFullYear()}`;
+//     // const dynamicTableName = "tb_checklistchitiet_01_2025"
+    
+//     const processValue = (data) => {
+//       if (
+//         data !== "null" &&
+//         data !== undefined &&
+//         data !== "undefined" &&
+//         data !== ""
+//       ) {
+//         return data;
+//       } else {
+//         return null;
+//       }
+//     };
+
+//     // Xử lý các bản ghi chi tiết checklist
+//     const newRecords = await Promise.all(
+//       records.ID_Checklist.map(async (ID_Checklist, index) => {
+//         const anhs = await processImageUpload(
+//           index,
+//           ID_Checklist,
+//           uploadedFileIds,
+//           images
+//         );
+
+//         return {
+//           ID_ChecklistC: records.ID_ChecklistC[0],
+//           ID_Checklist,
+//           Vido: processValue(records.Vido[index]) || null,
+//           Kinhdo: processValue(records.Kinhdo[index]) || null,
+//           Docao: processValue(records.Docao[index]) || null,
+//           Ketqua: processValue(records.Ketqua[index]) || null,
+//           Gioht: processValue(records.Gioht[index]),
+//           Ghichu: processValue(records.Ghichu[index]),
+//           isScan: processValue(records.isScan[index]),
+//           Anh: anhs.length > 0 ? anhs?.join(",") : null,
+//           Ngay: `${new Date().getFullYear()}-${String(
+//             new Date().getMonth() + 1
+//           ).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`,
+//           isCheckListLai: processValue(records.isCheckListLai[index]) || 0,
+//         };
+//       })
+//     );
+
+//     // Tạo transaction để xử lý đồng thời và đảm bảo tính toàn vẹn
+//     const transaction = await sequelize.transaction();
+//     const currentDate = moment();
+//     const cutoffDate = moment('2024-12-31', 'YYYY-MM-DD');
+//     try {
+//       if (currentDate.isAfter(cutoffDate)) {
+//         // Nếu ngày hiện tại > 31/12/2024, chỉ chèn vào Dynamic Table
+//         await insertIntoDynamicTable(dynamicTableName, newRecords, transaction);
+//       } else {
+//         // Nếu ngày hiện tại <= 31/12/2024, chèn cả hai
+//         await Promise.all([
+//           insertInBatches(newRecords, transaction),
+//           insertIntoDynamicTable(dynamicTableName, newRecords, transaction),
+//         ]);
+//       }
+
+//       // bỏ rabbit
+//       await transaction.commit();
+//       res
+//         .status(200)
+//         .json({ message: "Records created and updated successfully" });
+
+//       const backgroundTask = {
+//         records: newRecords,
+//         dynamicTableName,
+//       };
+//       await sendToQueue(backgroundTask);
+
+//       // //code cũ
+//       // const checklistC = await Tb_checklistc.findOne({
+//       //   attributes: ["ID_ChecklistC", "Tong", "TongC", "isDelete"],
+//       //   where: { ID_ChecklistC: records.ID_ChecklistC[0], isDelete: 0 },
+
+//       //   transaction,
+//       // });
+
+//       // await updateTongC(checklistC, newRecords, transaction);
+
+//       // // Xử lý từng checklist chi tiết
+//       // await Promise.all(newRecords.map((record) => processChecklist(record, transaction)));
+
+//       // // Commit transaction
+//       // await transaction.commit();
+//       // res.status(200).json({ message: "Records created and updated successfully" });
+//       // //code cũ
+//     } catch (error) {
+//       await transaction.rollback();
+//       console.error("Error during transaction:", error);
+//       res.status(500).json({
+//         error: "Failed to create checklist details, transaction rolled back",
+//       });
+//     }
+//   } catch (error) {
+//     console.error("Internal server error:", error);
+//     res.status(500).json({ message: error.message, error: error.message });
+//   }
+// };
+const processImageUpload = async (index, ID_Checklist, uploadedFiles) => {
   let anhs = [];
-  for (let i = 0; i < images?.length; i++) {
+  for (let i = 0; i < 10; i++) { // Giả sử tối đa 10 ảnh mỗi record
     const imageIndex = `Images_${index}_${ID_Checklist}_${i}`;
-    const matchingImage = uploadedFileIds?.find(
-      (file) => file.fieldname === imageIndex
-    );
+    const matchingImage = uploadedFiles?.find((file) => file.fieldname === imageIndex);
     if (matchingImage) {
       anhs.push(matchingImage.fileId.id);
-    } else {
-      console.log(`No matching image found for Anh: ${imageIndex}`);
     }
   }
   return anhs;
@@ -61,9 +221,8 @@ const processImageUpload = async (
 exports.createCheckListChiTiet = async (req, res, next) => {
   try {
     const records = req.body;
-    const images = req.files || [];
+    const uploadedFiles = req.uploadedFiles || [];
 
-    // Chuyển các trường về dạng mảng
     records.ID_ChecklistC = ensureArray(records.ID_ChecklistC);
     records.ID_Checklist = ensureArray(records.ID_Checklist);
     records.Vido = ensureArray(records.Vido);
@@ -76,59 +235,22 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     records.isScan = ensureArray(records.isScan);
     records.isCheckListLai = ensureArray(records?.isCheckListLai);
 
-    // Kiểm tra sự phù hợp của độ dài các mảng
     if (records.ID_ChecklistC.length !== records.ID_Checklist.length) {
       return res.status(400).json({
-        error: "ID_ChecklistC and ID_Checklist must have the same length.",
+        error: 'ID_ChecklistC and ID_Checklist must have the same length.',
       });
     }
 
-    let uploadedFiles = [];
-    // Xử lý tải lên ảnh
-    if (req.files && req.files.length > 0) {
-      uploadedFiles = req.files.map((file) => {
-        const projectFolder = path.basename(path.dirname(file.path));
-        const filename = path.basename(file.filename);
+    const dynamicTableName = `tb_checklistchitiet_${(new Date().getMonth() + 1)
+      .toString()
+      .padStart(2, '0')}_${new Date().getFullYear()}`;
 
-        return {
-          fieldname: file.fieldname,
-          fileId: { id: `${projectFolder}/${filename}` },
-          filePath: file.path,
-        };
-      });
-    }
+    const processValue = (data) =>
+      data !== 'null' && data !== undefined && data !== '' ? data : null;
 
-    // Mảng lưu trữ thông tin ảnh đã tải lên
-    const uploadedFileIds = await uploadedFiles?.map((file) => file);
-
-    // Tạo tên bảng động theo tháng và năm
-    const dynamicTableName = `tb_checklistchitiet_${
-      (new Date().getMonth() + 1).toString().padStart(2, '0')
-    }_${new Date().getFullYear()}`;
-    // const dynamicTableName = "tb_checklistchitiet_01_2025"
-    
-    const processValue = (data) => {
-      if (
-        data !== "null" &&
-        data !== undefined &&
-        data !== "undefined" &&
-        data !== ""
-      ) {
-        return data;
-      } else {
-        return null;
-      }
-    };
-
-    // Xử lý các bản ghi chi tiết checklist
     const newRecords = await Promise.all(
       records.ID_Checklist.map(async (ID_Checklist, index) => {
-        const anhs = await processImageUpload(
-          index,
-          ID_Checklist,
-          uploadedFileIds,
-          images
-        );
+        const anhs = await processImageUpload(index, ID_Checklist, uploadedFiles);
 
         return {
           ID_ChecklistC: records.ID_ChecklistC[0],
@@ -140,36 +262,29 @@ exports.createCheckListChiTiet = async (req, res, next) => {
           Gioht: processValue(records.Gioht[index]),
           Ghichu: processValue(records.Ghichu[index]),
           isScan: processValue(records.isScan[index]),
-          Anh: anhs.length > 0 ? anhs?.join(",") : null,
-          Ngay: `${new Date().getFullYear()}-${String(
-            new Date().getMonth() + 1
-          ).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`,
+          Anh: anhs.length > 0 ? anhs.join(',') : null,
+          Ngay: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`,
           isCheckListLai: processValue(records.isCheckListLai[index]) || 0,
         };
       })
     );
 
-    // Tạo transaction để xử lý đồng thời và đảm bảo tính toàn vẹn
     const transaction = await sequelize.transaction();
     const currentDate = moment();
     const cutoffDate = moment('2024-12-31', 'YYYY-MM-DD');
+
     try {
       if (currentDate.isAfter(cutoffDate)) {
-        // Nếu ngày hiện tại > 31/12/2024, chỉ chèn vào Dynamic Table
         await insertIntoDynamicTable(dynamicTableName, newRecords, transaction);
       } else {
-        // Nếu ngày hiện tại <= 31/12/2024, chèn cả hai
         await Promise.all([
           insertInBatches(newRecords, transaction),
           insertIntoDynamicTable(dynamicTableName, newRecords, transaction),
         ]);
       }
 
-      // bỏ rabbit
       await transaction.commit();
-      res
-        .status(200)
-        .json({ message: "Records created and updated successfully" });
+      res.status(200).json({ message: 'Records created successfully' });
 
       const backgroundTask = {
         records: newRecords,
@@ -177,36 +292,16 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       };
       await sendToQueue(backgroundTask);
 
-      // //code cũ
-      // const checklistC = await Tb_checklistc.findOne({
-      //   attributes: ["ID_ChecklistC", "Tong", "TongC", "isDelete"],
-      //   where: { ID_ChecklistC: records.ID_ChecklistC[0], isDelete: 0 },
-
-      //   transaction,
-      // });
-
-      // await updateTongC(checklistC, newRecords, transaction);
-
-      // // Xử lý từng checklist chi tiết
-      // await Promise.all(newRecords.map((record) => processChecklist(record, transaction)));
-
-      // // Commit transaction
-      // await transaction.commit();
-      // res.status(200).json({ message: "Records created and updated successfully" });
-      // //code cũ
     } catch (error) {
       await transaction.rollback();
-      console.error("Error during transaction:", error);
-      res.status(500).json({
-        error: "Failed to create checklist details, transaction rolled back",
-      });
+      console.error('Transaction error:', error);
+      res.status(500).json({ error: 'Failed to create checklist details' });
     }
   } catch (error) {
-    console.error("Internal server error:", error);
-    res.status(500).json({ message: error.message, error: error.message });
+    console.error('Server error:', error);
+    res.status(500).json({ error: error.message });
   }
 };
-
 
 const insertIntoDynamicTable = async (tableName, records, transaction) => {
   const query = `

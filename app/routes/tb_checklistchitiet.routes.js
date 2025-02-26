@@ -1,8 +1,12 @@
-const multer = require("multer");
+// const {
+//   uploadChecklist,
+//   resizeImage,
+// } = require("../middleware/upload_image.js");
+
 const {
   uploadChecklist,
   resizeImage,
-} = require("../middleware/upload_image.js");
+} = require("../middleware/upload_image_manh_test.js");
 // const upload = multer();
 
 module.exports = (app) => {
