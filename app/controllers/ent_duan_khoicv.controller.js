@@ -22,9 +22,6 @@ exports.create = async (req, res) => {
       });
     }
 
-    if(Tenchuky) {
-      Tenchuky = `Chu kỳ ${Chuky} ngày`
-    }
 
     if (userData) {
       const data = {
@@ -32,7 +29,7 @@ exports.create = async (req, res) => {
         ID_Duan: ID_Duan,
         ID_KhoiCV: ID_KhoiCV,
         Ngaybatdau: Ngaybatdau,
-        Tenchuky: Tenchuky,
+        Tenchuky: Tenchuky || `Chu kỳ ${Chuky} ngày`,
       };
 
       const dataChuky = await Ent_duan_khoicv.findOne({
