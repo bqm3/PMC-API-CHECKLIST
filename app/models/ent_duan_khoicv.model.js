@@ -22,6 +22,9 @@ const Ent_duan_khoicv = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    Tenchuky: {
+      type: DataTypes.STRING,
+    },
     Ngaybatdau: {
       type: DataTypes.DATE,
       allowNull: false,

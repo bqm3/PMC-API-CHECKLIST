@@ -16,6 +16,9 @@ const Ent_thietlapca = sequelize.define("ent_thietlapca", {
    ID_Calv: {
     type: DataTypes.INTEGER,
    },
+   ID_Chuky: {
+    type: DataTypes.INTEGER,
+   },
    Ngaythu: {
      type: DataTypes.INTEGER,
      

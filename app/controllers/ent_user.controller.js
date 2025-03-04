@@ -78,6 +78,9 @@ exports.login = async (req, res) => {
           model: Ent_chucvu,
           attributes: ["Chucvu", "Role", "isDelete"],
         },
+        {
+          model: Ent_khoicv,
+        },
       ],
     });
 

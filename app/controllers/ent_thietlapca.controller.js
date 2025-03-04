@@ -18,7 +18,7 @@ const xlsx = require("xlsx");
 exports.create = async (req, res) => {
   try {
     const userData = req.user.data;
-    const { Ngaythu, ID_Calv, Sochecklist, ID_Hangmucs } = req.body;
+    const { Ngaythu, ID_Chuky,  ID_Calv, Sochecklist, ID_Hangmucs } = req.body;
 
     if (!ID_Calv || !ID_Hangmucs) {
       return res.status(400).json({
@@ -30,6 +30,7 @@ exports.create = async (req, res) => {
       attributes: [
         "ID_Duan",
         "ID_Calv",
+        "ID_Chuky",
         "Ngaythu",
         "ID_Hangmucs",
         "Sochecklist",
@@ -39,6 +40,7 @@ exports.create = async (req, res) => {
       where: {
         ID_Calv: ID_Calv,
         Ngaythu: Ngaythu,
+        ID_Chuky: ID_Chuky,
         isDelete: 0,
       },
     });
@@ -60,11 +62,12 @@ exports.create = async (req, res) => {
     if (userData) {
       const data = {
         Ngaythu: Ngaythu,
-        Sochecklist: Sochecklist,
+        // Sochecklist: Sochecklist,
         ID_Hangmucs: ID_Hangmucs,
         Sochecklist: checklistCount,
         ID_Calv: ID_Calv,
         ID_Duan: userData.ID_Duan,
+        ID_Chuky: ID_Chuky
       };
       // Tạo khu vực mới
       const newKhuvuc = await Ent_thietlapca.create(data);
@@ -128,6 +131,10 @@ exports.get = async (req, res) => {
             model: Ent_duan,
             attributes: ["Duan"],
           },
+          {
+            model: Ent_duan_khoicv,
+            as: 'ent_duan_khoicv',
+          }
         ],
         where: whereCondition,
         order: [["Ngaythu", "ASC"]],

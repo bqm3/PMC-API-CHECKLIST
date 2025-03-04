@@ -127,11 +127,14 @@ Tb_sucongoai.belongsTo(Ent_user, { as: "ent_handler", foreignKey: "ID_Handler" }
 
 // Thiet lap ca ===========================================================================
 
-Ent_calv.hasMany(Ent_thietlapca, { as: 'ent_calv', foreignKey: 'ID_Calv' });
+Ent_calv.hasMany(Ent_thietlapca, { as: 'ent_thietlapca', foreignKey: 'ID_Calv' });
 Ent_thietlapca.belongsTo(Ent_calv, { foreignKey: "ID_Calv" })
 
 Ent_duan.hasMany(Ent_thietlapca, { as: 'ent_duan', foreignKey: 'ID_Duan' });
 Ent_thietlapca.belongsTo(Ent_duan, { foreignKey: "ID_Duan" })
+
+Ent_duan_khoicv.hasMany(Ent_thietlapca, { as: 'ent_thietlapca_list', foreignKey: 'ID_Chuky' });
+Ent_thietlapca.belongsTo(Ent_duan_khoicv, {as: 'ent_duan_khoicv', foreignKey: "ID_Chuky" })
 
 // Du an ===========================================================================
 Ent_nhom.hasMany(Ent_duan, { as: 'ent_nhom', foreignKey: 'ID_Nhom' });

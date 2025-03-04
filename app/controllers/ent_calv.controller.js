@@ -1,10 +1,4 @@
-const {
-  Ent_calv,
-  Ent_duan,
-  Ent_khoicv,
-  Ent_user,
-  Ent_chucvu,
-} = require("../models/setup.model");
+const { Ent_calv, Ent_duan, Ent_khoicv, Ent_user, Ent_chucvu, Ent_thietlapca, Ent_duan_khoicv } = require("../models/setup.model");
 const { Op } = require("sequelize");
 
 exports.create = async (req, res) => {
@@ -22,7 +16,6 @@ exports.create = async (req, res) => {
           message: "Cần có thời gian bắt đầu và kết thúc!",
         });
       }
-      
 
       const reqData = {
         ID_Duan: userData.ID_Duan,
@@ -40,18 +33,9 @@ exports.create = async (req, res) => {
           ID_KhoiCV: req.body.ID_KhoiCV,
           Tenca: req.body.Tenca,
           ID_Duan: userData.ID_Duan,
-          isDelete: 0
+          isDelete: 0,
         },
-        attributes: [
-          "ID_Calv",
-          "ID_KhoiCV",
-          "ID_Duan",
-          "Tenca",
-          "Giobatdau",
-          "Gioketthuc",
-          "ID_User",
-          "isDelete",
-        ],
+        attributes: ["ID_Calv", "ID_KhoiCV", "ID_Duan", "Tenca", "Giobatdau", "Gioketthuc", "ID_User", "isDelete"],
       });
 
       if (existingCalv) {
@@ -97,7 +81,7 @@ exports.get = async (req, res) => {
 
       if (userData?.ent_chucvu.Role === 5 && userData?.arr_Duan !== null) {
         const arrDuanArray = userData?.arr_Duan.split(",").map(Number);
-  
+
         // Kiểm tra ID_Duan có thuộc mảng không
         const exists = arrDuanArray.includes(userData?.ID_Duan);
         if (!exists) {
@@ -106,18 +90,8 @@ exports.get = async (req, res) => {
         }
       }
 
-
       await Ent_calv.findAll({
-        attributes: [
-          "ID_Calv",
-          "ID_KhoiCV",
-          "ID_Duan",
-          "Tenca",
-          "Giobatdau",
-          "Gioketthuc",
-          "ID_User",
-          "isDelete",
-        ],
+        attributes: ["ID_Calv", "ID_KhoiCV", "ID_Duan", "Tenca", "Giobatdau", "Gioketthuc", "ID_User", "isDelete"],
         include: [
           {
             model: Ent_duan,
@@ -151,6 +125,65 @@ exports.get = async (req, res) => {
         });
     }
   } catch (err) {
+    console.log("err", err.message);
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+//04/03/2025
+exports.get_chuky = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    if (!userData) {
+      return res.status(400).json({ message: "Dữ liệu người dùng không hợp lệ!" });
+    }
+
+    let whereClause = {
+      ID_Duan: userData.ID_Duan,
+      isDelete: 0,
+    };
+
+    // Nếu quyền là 1 (ID_Chucvu === 1) thì không cần thêm điều kiện ID_KhoiCV
+    if (userData.ID_Chucvu !== 1 && userData.ID_Chucvu !== 2 && userData.ID_Chucvu !== 11) {
+      whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
+    }
+
+    if (userData?.ent_chucvu.Role === 5 && userData?.arr_Duan !== null) {
+      const arrDuanArray = userData?.arr_Duan.split(",").map(Number);
+
+      // Kiểm tra ID_Duan có thuộc mảng không
+      const exists = arrDuanArray.includes(userData?.ID_Duan);
+      if (!exists) {
+        // Thêm điều kiện tham chiếu cột từ bảng liên kết
+        whereClause.ID_KhoiCV = userData.ID_KhoiCV;
+      }
+    }
+
+    console.log("vao day");
+    const data = await Ent_duan_khoicv.findAll({
+      where: whereClause,
+      include: [
+        {
+          model: Ent_thietlapca,
+          as: "ent_thietlapca_list",
+          include: [
+            {
+              model: Ent_calv,
+              as: "ent_calv",
+              attributes: ["ID_Calv", "ID_KhoiCV", "ID_Duan", "Tenca", "Giobatdau", "Gioketthuc", "ID_User", "isDelete"],
+            },
+          ],
+        },
+      ],
+    });
+
+    return res.status(200).json({
+      message: "Danh sách ca làm việc!",
+      data,
+    });
+  } catch (err) {
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
@@ -161,7 +194,7 @@ exports.getFilter = async (req, res) => {
   try {
     const userData = req.user.data;
     const ID_KhoiCV = req.body.ID_KhoiCV;
-    
+
     if (userData) {
       let whereClause = {
         ID_Duan: userData?.ID_Duan,
@@ -172,19 +205,9 @@ exports.getFilter = async (req, res) => {
       if (ID_KhoiCV !== null && ID_KhoiCV !== undefined) {
         whereClause.ID_KhoiCV = ID_KhoiCV;
       }
-      
 
       await Ent_calv.findAll({
-        attributes: [
-          "ID_Calv",
-          "ID_KhoiCV",
-          "ID_Duan",
-          "Tenca",
-          "Giobatdau",
-          "Gioketthuc",
-          "ID_User",
-          "isDelete",
-        ],
+        attributes: ["ID_Calv", "ID_KhoiCV", "ID_Duan", "Tenca", "Giobatdau", "Gioketthuc", "ID_User", "isDelete"],
         include: [
           {
             model: Ent_duan,
@@ -229,16 +252,7 @@ exports.getDetail = async (req, res) => {
     const userData = req.user.data;
     if (req.params.id && userData) {
       await Ent_calv.findByPk(req.params.id, {
-        attributes: [
-          "ID_Calv",
-          "ID_KhoiCV",
-          "ID_Duan",
-          "Tenca",
-          "Giobatdau",
-          "Gioketthuc",
-          "ID_User",
-          "isDelete",
-        ],
+        attributes: ["ID_Calv", "ID_KhoiCV", "ID_Duan", "Tenca", "Giobatdau", "Gioketthuc", "ID_User", "isDelete"],
         include: [
           {
             model: Ent_duan,

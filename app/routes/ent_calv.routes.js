@@ -7,6 +7,7 @@ module.exports = (app) => {
     // Create a new Ent_calv
     router.post("/create",[isAuthenticated], ent_calv.create);
     router.get("/",[isAuthenticated], ent_calv.get);
+    router.get("/chuky", [isAuthenticated], ent_calv.get_chuky);
     router.post("/",[isAuthenticated], ent_calv.getFilter);
     router.get("/:id",[isAuthenticated], ent_calv.getDetail);
     router.put("/delete/:id",isAuthenticated, ent_calv.delete);

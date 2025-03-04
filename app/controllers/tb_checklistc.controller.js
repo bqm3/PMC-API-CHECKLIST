@@ -75,7 +75,7 @@ function getCurrentDayInCycle(ngayBatDau, ngayHienTai, chuKy) {
 exports.createFirstChecklist = async (req, res, next) => {
   try {
     const userData = req.user.data;
-    const { ID_Calv, ID_KhoiCV, Giobd, Ngay, Tenca } = req.body;
+    const { ID_Calv, ID_KhoiCV, Giobd, Ngay, Tenca, ID_Duan_KhoiCV } = req.body;
     // Validate request
     if (!ID_Calv) {
       res.status(400).json({
@@ -91,10 +91,19 @@ exports.createFirstChecklist = async (req, res, next) => {
       attributes: ["Giobatdau", "Gioketthuc", "isDelete", "ID_KhoiCV", "Tenca"],
     });
 
-    const khoiData = await Ent_duan_khoicv.findOne({
+    //04/03/2025 thêm nhiều chu kì cho khối
+    let khoiData = "";
+    if(ID_Duan_KhoiCV) {
+      khoiData = await Ent_duan_khoicv.findOne({
+        where: { ID_Duan_KhoiCV, isDelete: 0 },
+        attributes: ["Ngaybatdau", "Chuky", "isDelete", "ID_Duan"],
+      });
+    } else {
+      khoiData = await Ent_duan_khoicv.findOne({
       where: { ID_KhoiCV: ID_KhoiCV, ID_Duan: userData.ID_Duan, isDelete: 0 },
       attributes: ["Ngaybatdau", "Chuky", "isDelete", "ID_Duan"],
     });
+    }
 
     const formattedDateNow = moment(khoiData.Ngaybatdau).startOf("day").format("DD-MM-YYYY");
 
@@ -286,18 +295,20 @@ exports.createFirstChecklist = async (req, res, next) => {
             isDelete: 0,
           };
 
-          Tb_checklistc.create(data)
-            .then((data) => {
-              res.status(200).json({
-                message: "Tạo checklist thành công!",
-                data: data,
-              });
-            })
-            .catch((err) => {
-              res.status(500).json({
-                message: err.message || "Lỗi! Vui lòng thử lại sau.",
-              });
-            });
+          console.log("data",data)
+
+          // Tb_checklistc.create(data)
+          //   .then((data) => {
+          //     res.status(200).json({
+          //       message: "Tạo checklist thành công!",
+          //       data: data,
+          //     });
+          //   })
+          //   .catch((err) => {
+          //     res.status(500).json({
+          //       message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          //     });
+          //   });
         } else {
           // Nếu đã có checklist được tạo
           // Kiểm tra xem tất cả các ca checklist đều đã hoàn thành (Tinhtrang === 1)
@@ -323,18 +334,18 @@ exports.createFirstChecklist = async (req, res, next) => {
                 isDelete: 0,
               };
 
-              Tb_checklistc.create(data)
-                .then((data) => {
-                  res.status(200).json({
-                    message: "Tạo checklist thành công!",
-                    data: data,
-                  });
-                })
-                .catch((err) => {
-                  res.status(500).json({
-                    message: err.message || "Lỗi! Vui lòng thử lại sau.",
-                  });
-                });
+              // Tb_checklistc.create(data)
+              //   .then((data) => {
+              //     res.status(200).json({
+              //       message: "Tạo checklist thành công!",
+              //       data: data,
+              //     });
+              //   })
+              //   .catch((err) => {
+              //     res.status(500).json({
+              //       message: err.message || "Lỗi! Vui lòng thử lại sau.",
+              //     });
+              //   });
             } else {
               res.status(400).json({
                 message: "Đã có ca làm việc",
@@ -480,6 +491,10 @@ exports.getCheckListc = async (req, res, next) => {
           {
             model: Ent_thietlapca,
             attributes: ["Ngaythu", "isDelete"],
+            include: {
+              model: Ent_duan_khoicv,
+              as: "ent_duan_khoicv"
+            }
           },
           {
             model: Ent_khoicv,

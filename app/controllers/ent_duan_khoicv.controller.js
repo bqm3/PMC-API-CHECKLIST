@@ -14,12 +14,16 @@ const { Op, Sequelize, fn, col, literal, where } = require("sequelize");
 exports.create = async (req, res) => {
   try {
     const userData = req.user.data;
-    const { Chuky, ID_KhoiCV, ID_Duan, Ngaybatdau } = req.body;
+    const { Chuky, ID_KhoiCV, ID_Duan, Ngaybatdau, KhoiCV, Tenchuky } = req.body;
 
     if (!ID_KhoiCV || !ID_Duan || !Chuky) {
       return res.status(400).json({
         message: "Phải nhập đầy đủ dữ liệu!",
       });
+    }
+
+    if(Tenchuky) {
+      Tenchuky = `Chu kỳ ${Chuky} ngày`
     }
 
     if (userData) {
@@ -28,6 +32,7 @@ exports.create = async (req, res) => {
         ID_Duan: ID_Duan,
         ID_KhoiCV: ID_KhoiCV,
         Ngaybatdau: Ngaybatdau,
+        Tenchuky: Tenchuky,
       };
 
       const dataChuky = await Ent_duan_khoicv.findOne({
@@ -35,13 +40,14 @@ exports.create = async (req, res) => {
         where: {
           ID_Duan: ID_Duan,
           ID_KhoiCV: ID_KhoiCV,
+          Chuky: Chuky,
           isDelete: 0
         },
       });
 
       if (dataChuky) {
         return res.status(400).json({
-          message: "Chỉ được tạo một chu kỳ của một khối !",
+          message: `Bạn đã tạo chu kỳ ${Chuky} ngày cho khối ${KhoiCV} !`,
         });
       }
       // Tạo khu vực mới
@@ -82,6 +88,7 @@ exports.get = async (req, res) => {
         "ID_Duan_KhoiCV",
         "ID_KhoiCV",
         "Chuky",
+        "Tenchuky",
         "ID_Duan",
         "Ngaybatdau",
         "isDelete",
@@ -132,6 +139,7 @@ exports.getDetail = async (req, res) => {
         attributes: [
           "ID_Duan_KhoiCV",
           "ID_KhoiCV",
+          "Tenchuky",
           "Chuky",
           "ID_Duan",
           "Ngaybatdau",
@@ -177,7 +185,7 @@ exports.update = async (req, res) => {
   try {
     const ID_Duan_KhoiCV = req.params.id;
     const userData = req.user.data;
-    const { Chuky, ID_KhoiCV, ID_Duan, Ngaybatdau } = req.body;
+    const { Chuky, ID_KhoiCV, ID_Duan, Ngaybatdau, Tenchuky } = req.body;
 
     if (userData) {
       Ent_duan_khoicv.update(
@@ -185,6 +193,7 @@ exports.update = async (req, res) => {
           Chuky: Chuky,
           ID_KhoiCV: ID_KhoiCV,
           ID_Duan: ID_Duan,
+          Tenchuky: Tenchuky,
           Ngaybatdau: Ngaybatdau,
         },
         {
