@@ -1,5 +1,6 @@
 module.exports = (app) => {
   const ent_duan_khoicv = require("../controllers/ent_duan_khoicv.controller.js");
+  const logAction = require("../middleware/log_action.js");
   const {
     isAuthenticated,
     isAdmin,
@@ -13,7 +14,7 @@ module.exports = (app) => {
 
   router.get("/:id", [isAuthenticated], ent_duan_khoicv.getDetail);
   router.put("/update/:id", [isAuthenticated], ent_duan_khoicv.update);
-  router.put("/delete/:id", [isAuthenticated], ent_duan_khoicv.delete);
+  router.put("/delete/:id", [isAuthenticated, logAction], ent_duan_khoicv.delete);
 
   app.use("/api/v2/ent_duan_khoicv", router);
 };

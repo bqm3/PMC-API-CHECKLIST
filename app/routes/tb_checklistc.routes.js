@@ -171,7 +171,7 @@ module.exports = (app) => {
   router.put("/close/:id", [isAuthenticated], tb_checklistc.close);
   router.put("/open/:id", [isAuthenticated], tb_checklistc.open);
   router.get("/update-tongC/:id1/:id2", tb_checklistc.updateTongC);
-  router.put("/delete/:id", [isAuthenticated], tb_checklistc.delete);
+  router.put("/delete/:id", [isAuthenticated, logAction], tb_checklistc.delete);
   router.post("/create", [isAuthenticated], tb_checklistc.createFirstChecklist);
 
   router.get("/ca/:id", [isAuthenticated], tb_checklistc.checklistCalv);

@@ -4,6 +4,7 @@ const upload = multer();
 module.exports = (app) => {
   const ent_khuvuc = require("../controllers/ent_khuvuc.controller.js");
   const { isAuthenticated, isAdmin } = require("../middleware/auth_middleware.js");
+  const logAction = require("../middleware/log_action.js");
 
   var router = require("express").Router();
 
@@ -12,9 +13,9 @@ module.exports = (app) => {
   router.post("/filter",[isAuthenticated], ent_khuvuc.getKhuVucFilter);
   router.get("/total", [isAuthenticated], ent_khuvuc.getKhuvucTotal)
   router.get("/:id", [isAuthenticated], ent_khuvuc.getDetail);
-  router.put("/delete/:id",[isAuthenticated], ent_khuvuc.delete);
+  router.put("/delete/:id",[isAuthenticated, logAction], ent_khuvuc.delete);
   router.put("/update/:id",[isAuthenticated], ent_khuvuc.update);
-  router.put("/delete-mul", [isAuthenticated], ent_khuvuc.deleteMul)
+  router.put("/delete-mul", [isAuthenticated, logAction], ent_khuvuc.deleteMul)
   router.post("/generate-qr-codes", ent_khuvuc.downloadQrCodes)
   // router.post("/filter_qr", [isAuthenticated], ent_khuvuc.filterByQr)
 

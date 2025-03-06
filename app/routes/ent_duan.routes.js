@@ -1,5 +1,6 @@
 const multer = require("multer");
 const { uploadLogo, resizeImage } = require("../middleware/upload_image.js");
+const logAction = require("../middleware/log_action.js");
 const upload = multer();
 
 module.exports = (app) => {
@@ -30,7 +31,7 @@ module.exports = (app) => {
     ent_duan.update
   );
   router.put("/update-sdt-khan-cap/", [isAuthenticated], ent_duan.updateSDTKhanCap);
-  router.put("/delete/:id", [isAuthenticated], ent_duan.delete);
+  router.put("/delete/:id", [isAuthenticated, logAction], ent_duan.delete);
 
   app.use("/api/v2/ent_duan", router);
 };

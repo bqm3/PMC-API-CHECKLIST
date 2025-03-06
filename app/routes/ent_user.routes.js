@@ -27,7 +27,7 @@ module.exports = (app) => {
   router.post("/device-token", [isAuthenticated], ent_user.deviceToken);
   router.post("/register", [isAuthenticated], ent_user.register);
   router.post("/change-password", [isAuthenticated], ent_user.changePassword);
-  router.put("/delete/:id", [isAuthenticated], ent_user.deleteUser);
+  router.put("/delete/:id", [isAuthenticated, logAction], ent_user.deleteUser);
   router.put("/update/:id", [isAuthenticated], ent_user.updateUser);
   router.put("/error", [isAuthenticated], ent_user.fixUserError);
   // router.post("/noti", [isAuthenticated], ent_user.notiPush);

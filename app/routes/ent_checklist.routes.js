@@ -4,6 +4,7 @@ const upload = multer();
 module.exports = (app) => {
   const ent_checklist = require("../controllers/ent_checklist.controller.js");
   const { isAuthenticated } = require("../middleware/auth_middleware.js");
+  const logAction = require("../middleware/log_action.js");
 
   var router = require("express").Router();
 
@@ -18,10 +19,10 @@ module.exports = (app) => {
   router.post("/filter/", [isAuthenticated], ent_checklist.getFilterSearch);
   
   router.put("/update/:id", [isAuthenticated], ent_checklist.update);
-  router.put("/delete/:id", [isAuthenticated], ent_checklist.delete);
+  router.put("/delete/:id", [isAuthenticated, logAction], ent_checklist.delete);
   router.put(
     "/delete-all/:ids",
-    isAuthenticated,
+    [isAuthenticated, logAction],
     ent_checklist.deleteChecklists
   );
   router.put(
@@ -47,7 +48,7 @@ module.exports = (app) => {
     ent_checklist.filterReturn
   );
 
-  router.put("/delete-mul", [isAuthenticated], ent_checklist.deleteMul)
+  router.put("/delete-mul", [isAuthenticated, logAction], ent_checklist.deleteMul)
   router.post("/uploads", [isAuthenticated, upload.single('files')], ent_checklist.uploadFiles)
   router.post("/fix-uploads", [isAuthenticated, upload.single('files')], ent_checklist.uploadFixFiles)
 

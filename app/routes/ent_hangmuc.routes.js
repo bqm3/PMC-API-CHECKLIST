@@ -5,6 +5,7 @@ const upload = multer();
 module.exports = (app) => {
     const ent_hangmuc = require("../controllers/ent_hangmuc.controller.js");
     const {isAuthenticated}= require('../middleware/auth_middleware.js');
+    const logAction = require("../middleware/log_action.js");
   
     var router = require("express").Router();
   
@@ -15,8 +16,8 @@ module.exports = (app) => {
     
     router.put("/update/:id",[isAuthenticated], ent_hangmuc.update);
 
-    router.put("/delete/:id",isAuthenticated, ent_hangmuc.delete);
-    router.put("/delete-mul", [isAuthenticated], ent_hangmuc.deleteMul)
+    router.put("/delete/:id",[isAuthenticated, logAction], ent_hangmuc.delete);
+    router.put("/delete-mul", [isAuthenticated, logAction], ent_hangmuc.deleteMul)
 
     router.get("/filter/:id",isAuthenticated, ent_hangmuc.filterByKhuvuc);
 

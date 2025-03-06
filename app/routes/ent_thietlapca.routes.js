@@ -1,6 +1,7 @@
 module.exports = (app) => {
   const ent_thietlapca = require("../controllers/ent_thietlapca.controller.js");
   const { isAuthenticated } = require("../middleware/auth_middleware.js");
+  const logAction = require("../middleware/log_action.js");
 
   var router = require("express").Router();
 
@@ -8,7 +9,7 @@ module.exports = (app) => {
   router.get("/", [isAuthenticated], ent_thietlapca.get);
   router.get("/:id", [isAuthenticated], ent_thietlapca.getDetail);
   router.put("/update/:id", [isAuthenticated], ent_thietlapca.update);
-  router.put("/delete/:id", [isAuthenticated], ent_thietlapca.delete);
+  router.put("/delete/:id", [isAuthenticated, logAction], ent_thietlapca.delete);
   
   app.use("/api/v2/ent_thietlapca", router);
 };

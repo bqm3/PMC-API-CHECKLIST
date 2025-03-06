@@ -198,9 +198,11 @@ exports.getDetail = async (req, res) => {
                 model: Ent_duan_khoicv,
                 as: "ent_duan_khoicv",
                 attributes: [
+                  "ID_Duan_KhoiCV",
                   "ID_KhoiCV",
                   "ID_Duan",
                   "Chuky",
+                  "Tenchuky",
                   "Ngaybatdau",
                   "isDelete",
                 ],
@@ -208,6 +210,10 @@ exports.getDetail = async (req, res) => {
               },
             ],
           },
+          {
+            model: Ent_duan_khoicv,
+            as: 'ent_duan_khoicv',
+          }
         ],
         where: whereCondition,
       });
@@ -285,10 +291,11 @@ exports.getDetail = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
+  const transaction = await sequelize.transaction();
   try {
     const ID_ThietLapCa = req.params.id;
     const userData = req.user.data;
-    const { ID_Calv, Ngaythu, ID_Hangmucs } = req.body;
+    const { ID_Calv, Ngaythu, ID_Hangmucs, ID_Chuky, Tenchuky } = req.body;
 
     // Validate input
     if (!ID_Calv || !ID_Hangmucs) {
@@ -300,6 +307,7 @@ exports.update = async (req, res) => {
     // Check if the combination of ID_Calv and Ngaythu already exists
     const existingRecord = await Ent_thietlapca.findOne({
       where: {
+        ID_Chuky: ID_Chuky,
         ID_Calv: ID_Calv,
         Ngaythu: Ngaythu,
         ID_ThietLapCa: {
@@ -307,11 +315,13 @@ exports.update = async (req, res) => {
         },
         isDelete: 0,
       },
+      transaction,
     });
 
     if (existingRecord) {
+      await transaction.rollback();
       return res.status(400).json({
-        message: "Ca làm việc và ngày thực hiện đã tồn tại!",
+        message: `Ca làm việc và ngày thực hiện của ${Tenchuky} đã tồn tại!`,
       });
     }
 
@@ -323,11 +333,13 @@ exports.update = async (req, res) => {
         },
         isDelete: 0,
       },
+      transaction
     });
 
     // Proceed with the update if the check passes
     await Ent_thietlapca.update(
       {
+        ID_Chuky: ID_Chuky,
         ID_Duan: userData.ID_Duan,
         ID_Calv: ID_Calv,
         Ngaythu: Ngaythu,
@@ -338,13 +350,16 @@ exports.update = async (req, res) => {
         where: {
           ID_ThietLapCa: ID_ThietLapCa,
         },
+        transaction
       }
     );
 
+    await transaction.commit()
     res.status(200).json({
       message: "Cập nhật tòa nhà thành công!!!",
     });
   } catch (error) {
+    await transaction.rollback();
     res.status(500).json({
       message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
