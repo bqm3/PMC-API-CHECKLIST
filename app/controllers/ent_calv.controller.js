@@ -173,8 +173,14 @@ exports.get_chuky = async (req, res) => {
               model: Ent_calv,
               as: "ent_calv",
               attributes: ["ID_Calv", "ID_KhoiCV", "ID_Duan", "Tenca", "Giobatdau", "Gioketthuc", "ID_User", "isDelete"],
+              where: {
+                isDelete: 0
+              },
             },
           ],
+          where: {
+            isDelete: 0
+          },
         },
       ],
     });
