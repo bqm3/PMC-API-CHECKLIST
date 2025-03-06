@@ -159,6 +159,7 @@ exports.createFirstChecklist = async (req, res, next) => {
       attributes: ["ID_ThietLapCa", "Ngaythu", "ID_Calv", "ID_Hangmucs", "ID_Duan", "isDelete"],
       where: [
         {
+          ID_Chuky: ID_Duan_KhoiCV,
           Ngaythu: ngayCheck,
           ID_Calv: ID_Calv,
           ID_Duan: userData.ID_Duan,
@@ -272,6 +273,7 @@ exports.createFirstChecklist = async (req, res, next) => {
           { ID_Duan: userData.ID_Duan },
           { ID_User: userData.ID_User },
           { ID_Calv: ID_Calv },
+          { ID_ThietLapCa: thietlapcaData.ID_ThietLapCa }
         ],
       },
     })
@@ -295,20 +297,19 @@ exports.createFirstChecklist = async (req, res, next) => {
             isDelete: 0,
           };
 
-          console.log("data",data)
 
-          // Tb_checklistc.create(data)
-          //   .then((data) => {
-          //     res.status(200).json({
-          //       message: "Tạo checklist thành công!",
-          //       data: data,
-          //     });
-          //   })
-          //   .catch((err) => {
-          //     res.status(500).json({
-          //       message: err.message || "Lỗi! Vui lòng thử lại sau.",
-          //     });
-          //   });
+          Tb_checklistc.create(data)
+            .then((data) => {
+              res.status(200).json({
+                message: "Tạo checklist thành công!",
+                data: data,
+              });
+            })
+            .catch((err) => {
+              res.status(500).json({
+                message: err.message || "Lỗi! Vui lòng thử lại sau.",
+              });
+            });
         } else {
           // Nếu đã có checklist được tạo
           // Kiểm tra xem tất cả các ca checklist đều đã hoàn thành (Tinhtrang === 1)
@@ -334,18 +335,18 @@ exports.createFirstChecklist = async (req, res, next) => {
                 isDelete: 0,
               };
 
-              // Tb_checklistc.create(data)
-              //   .then((data) => {
-              //     res.status(200).json({
-              //       message: "Tạo checklist thành công!",
-              //       data: data,
-              //     });
-              //   })
-              //   .catch((err) => {
-              //     res.status(500).json({
-              //       message: err.message || "Lỗi! Vui lòng thử lại sau.",
-              //     });
-              //   });
+              Tb_checklistc.create(data)
+                .then((data) => {
+                  res.status(200).json({
+                    message: "Tạo checklist thành công!",
+                    data: data,
+                  });
+                })
+                .catch((err) => {
+                  res.status(500).json({
+                    message: err.message || "Lỗi! Vui lòng thử lại sau.",
+                  });
+                });
             } else {
               res.status(400).json({
                 message: "Đã có ca làm việc",
