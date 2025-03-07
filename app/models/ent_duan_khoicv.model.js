@@ -29,6 +29,10 @@ const Ent_duan_khoicv = sequelize.define(
       type: DataTypes.DATE,
       allowNull: false,
     },
+    isQuantrong: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
     isDelete: {
       type: DataTypes.INTEGER,
       defaultValue: 0,

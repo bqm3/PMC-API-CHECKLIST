@@ -64,7 +64,7 @@ exports.get = async (req, res) => {
             {
               model: Ent_duan_khoicv,
               as: "ent_duan_khoicv",
-              attributes: ["ID_Duan_KhoiCV","ID_KhoiCV", "Chuky", "Tenchuky", "Ngaybatdau", "isDelete"],
+              attributes: ["ID_Duan_KhoiCV","ID_KhoiCV", "Chuky", "Tenchuky", "Ngaybatdau", "isQuantrong", "isDelete"],
               where: {
                 isDelete: 0
               }
@@ -114,7 +114,7 @@ exports.getDetail = async (req, res) => {
             {
               model: Ent_duan_khoicv,
               as: "ent_duan_khoicv",
-              attributes: ["ID_KhoiCV", "Chuky", "Ngaybatdau"]
+              attributes: ["ID_KhoiCV", "Chuky", "Ngaybatdau", "isQuantrong"]
             }
           ]
         },

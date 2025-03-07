@@ -14,7 +14,7 @@ const { Op, Sequelize, fn, col, literal, where } = require("sequelize");
 exports.create = async (req, res) => {
   try {
     const userData = req.user.data;
-    const { Chuky, ID_KhoiCV, ID_Duan, Ngaybatdau, KhoiCV, Tenchuky } = req.body;
+    const { Chuky, ID_KhoiCV, ID_Duan, Ngaybatdau, KhoiCV, Tenchuky, isQuantrong } = req.body;
 
     if (!ID_KhoiCV || !ID_Duan || !Chuky) {
       return res.status(400).json({
@@ -30,6 +30,7 @@ exports.create = async (req, res) => {
         ID_KhoiCV: ID_KhoiCV,
         Ngaybatdau: Ngaybatdau,
         Tenchuky: Tenchuky || `Chu kỳ ${Chuky} ngày`,
+        isQuantrong,
       };
 
       const dataChuky = await Ent_duan_khoicv.findOne({
@@ -88,6 +89,7 @@ exports.get = async (req, res) => {
         "Tenchuky",
         "ID_Duan",
         "Ngaybatdau",
+        "isQuantrong",
         "isDelete",
       ],
       include: [
@@ -140,6 +142,7 @@ exports.getDetail = async (req, res) => {
           "Chuky",
           "ID_Duan",
           "Ngaybatdau",
+          "isQuantrong"
         ],
         include: [
           {
@@ -182,7 +185,7 @@ exports.update = async (req, res) => {
   try {
     const ID_Duan_KhoiCV = req.params.id;
     const userData = req.user.data;
-    const { Chuky, ID_KhoiCV, ID_Duan, Ngaybatdau, Tenchuky } = req.body;
+    const { Chuky, ID_KhoiCV, ID_Duan, Ngaybatdau, Tenchuky, isQuantrong } = req.body;
 
     if (userData) {
       Ent_duan_khoicv.update(
@@ -192,6 +195,7 @@ exports.update = async (req, res) => {
           ID_Duan: ID_Duan,
           Tenchuky: Tenchuky,
           Ngaybatdau: Ngaybatdau,
+          isQuantrong: isQuantrong,
         },
         {
           where: {

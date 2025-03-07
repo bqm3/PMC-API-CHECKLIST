@@ -204,6 +204,7 @@ exports.getDetail = async (req, res) => {
                   "Chuky",
                   "Tenchuky",
                   "Ngaybatdau",
+                  "isQuantrong",
                   "isDelete",
                 ],
                 isDelete: 0,
