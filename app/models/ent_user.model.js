@@ -63,6 +63,10 @@ const Ent_user = sequelize.define(
     ID_Chucvu: {
       type: DataTypes.INTEGER,
     },
+    isCheckketoan: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
     isDelete: {
       type: DataTypes.INTEGER,
       defaultValue: 0,

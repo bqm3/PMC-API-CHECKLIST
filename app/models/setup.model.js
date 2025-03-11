@@ -33,6 +33,10 @@ const P0_User = require('./P0_User.model')
 const P0 = require('./P0.model')
 const P0_Log = require('./P0_Log.model')
 
+//S0
+const S0_Thaydoithe = require('./s0_thaydoithe.model')
+const S0_Thaydoithe_log = require('./s0_thaydoithe_log.model')
+
 
 //bao cao chi so
 const Ent_Loai_Chiso = require('./BaocaochisoModel/ent_loai_chiso.model')
@@ -83,6 +87,7 @@ P0_User.belongsTo(Ent_user,{as: "ent_user", foreignKey: "ID_User"})
 P0.belongsTo(Ent_duan, {as: "ent_duan", foreignKey: "ID_Duan"})
 P0.belongsTo(Ent_user, {as: "ent_user_AN", foreignKey: "ID_User_AN"})
 P0.belongsTo(Ent_user, {as: "ent_user_KT", foreignKey: "ID_User_KT"})
+P0.belongsTo(Ent_user, {as: "ent_user_DV", foreignKey: "ID_User_DV"})
 
 P0_Log.belongsTo(P0, {as: "P0", foreignKey: "ID_P0"})
 P0_Log.belongsTo(Ent_duan, {as: "ent_duan", foreignKey: "ID_Duan"})
@@ -329,4 +334,6 @@ module.exports = {
   P0,
   P0_Log,
   P0_User,
+  S0_Thaydoithe,
+  S0_Thaydoithe_log,
 };

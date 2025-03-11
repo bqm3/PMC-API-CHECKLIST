@@ -45,6 +45,12 @@ const P0_Log = sequelize.define(
     Slthexemay: {
       type: DataTypes.INTEGER,
     },
+    Sltheotophanmem: {
+      type: DataTypes.INTEGER,
+    },
+    Slthexemayphanmem: {
+      type: DataTypes.INTEGER,
+    },
     Slscoto: {
       type: DataTypes.INTEGER,
     },
@@ -86,6 +92,9 @@ const P0_Log = sequelize.define(
       type: DataTypes.STRING(200),
     },
     ID_User_KT_Update: {
+      type: DataTypes.INTEGER,
+    },
+    ID_User_DV_Update: {
       type: DataTypes.INTEGER,
     },
     isDelete: {

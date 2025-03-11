@@ -48,6 +48,12 @@ const P0 = sequelize.define(
     Slthexemay: {
       type: DataTypes.INTEGER,
     },
+    Sltheotophanmem: {
+      type: DataTypes.INTEGER,
+    },
+    Slthexemayphanmem: {
+      type: DataTypes.INTEGER,
+    },
     Slscoto: {
       type: DataTypes.INTEGER,
     },
@@ -90,6 +96,9 @@ const P0 = sequelize.define(
       allowNull: true
     },
     ID_User_KT: {
+      type: DataTypes.INTEGER,
+    },
+    ID_User_DV: {
       type: DataTypes.INTEGER,
     },
     isDelete: {

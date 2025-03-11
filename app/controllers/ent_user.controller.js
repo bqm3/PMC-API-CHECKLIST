@@ -52,6 +52,7 @@ exports.login = async (req, res) => {
         "arr_Duan",
         "Email",
         "isError",
+        "isCheckketoan",
         "isDelete",
       ],
       include: [
@@ -168,6 +169,7 @@ exports.register = async (req, res, next) => {
       ID_KhoiCV,
       Email,
       ID_Duan,
+      isCheckketoan,
       arr_Duan,
     } = req.body;
     if (!UserName || !Password || !ID_Chucvu) {
@@ -232,6 +234,7 @@ exports.register = async (req, res, next) => {
           ? null
           : ID_KhoiCV,
       arr_Duan: `${arr_Duan}`,
+      isCheckketoan: isCheckketoan || 0,
       isDelete: 0,
     };
 
@@ -342,6 +345,7 @@ exports.updateUser = async (req, res) => {
       Ngaysinh,
       Gioitinh,
       arr_Duan,
+      isCheckketoan,
     } = req.body;
 
     const now = new Date();
@@ -375,6 +379,7 @@ exports.updateUser = async (req, res) => {
       Ngaysinh,
       arrData,
       arr_Duan: `${arr_Duan}`,
+      isCheckketoan,
       isDelete: 0,
       updateTime: formattedVietnamTime, // Add the current time to the update
     };
@@ -472,6 +477,7 @@ exports.getUserOnline = async (req, res, next) => {
         "ID_Duan",
         "ID_KhoiCV",
         "ID_Chucvu",
+        "isCheckketoan",
         "isDelete",
       ],
       include: [
@@ -543,6 +549,7 @@ exports.getUserRoleOnline = async (req, res, next) => {
         "ID_Duan",
         "ID_KhoiCV",
         "ID_Chucvu",
+        "isCheckketoan",
         "isDelete",
       ],
       include: [
@@ -610,6 +617,7 @@ exports.getDetail = async (req, res) => {
           "ID_KhoiCV",
           "ID_Chucvu",
           "isDelete",
+          "isCheckketoan",
           "ID_Chucvu",
         ],
         order: [
@@ -700,6 +708,7 @@ exports.checkAuth = async (req, res, next) => {
         "ID_Duan",
         "ID_KhoiCV",
         "deviceToken",
+        "isCheckketoan",
         "ID_Chucvu",
       ],
       include: [

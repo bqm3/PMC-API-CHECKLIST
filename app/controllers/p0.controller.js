@@ -99,6 +99,17 @@ exports.getDetailP0 = async (req, res) => {
         },
         {
           model: Ent_user,
+          as: "ent_user_DV",
+          attributes: ["ID_User", "Hoten", "ID_Chucvu"],
+          include: [
+            {
+              model: Ent_chucvu,
+              attributes: ["Chucvu", "Role"],
+            },
+          ],
+        },
+        {
+          model: Ent_user,
           as: "ent_user_KT",
           attributes: ["ID_User", "Hoten", "ID_Chucvu"],
           include: [
@@ -183,13 +194,17 @@ exports.createP0 = async (req, res) => {
       isDelete: 0,
     };
 
+    if(userData?.isCheckketoan === 1){
+      generalData.ID_User_KT = userData.ID_User;
+    }
     if (userData.ID_KhoiCV == 3) {
       generalData.ID_User_AN = userData.ID_User;
     } else if (userData.ID_KhoiCV == 4) {
-      generalData.ID_User_KT = userData.ID_User;
-    } else {
+      generalData.ID_User_DV = userData.ID_User;
+    } else if (userData?.ent_chucvu?.Role == 1) {
       generalData.ID_User_AN = userData.ID_User;
       generalData.ID_User_KT = userData.ID_User;
+      generalData.ID_User_DV = userData.ID_User;
     }
 
     const combinedData = { ...sanitizedData, ...generalData };
@@ -205,21 +220,6 @@ exports.createP0 = async (req, res) => {
     if (findP0) {
       return res.status(400).json({ message: "Báo cáo P0 ngày hôm nay đã được tạo" });
     } else {
-      // bỏ vẫn cho tạo
-      // if (data.Sotheotodk != undefined && userData.ID_KhoiCV != 4) {
-      //   if (combinedData.Sotheotodk !== combinedData.Sltheoto + combinedData.Slxeoto + combinedData.Slxeotodien) {
-      //     return res.status(400).json({
-      //       message: "Số thẻ ô tô phát hành không khớp. Vui lòng kiểm tra lại số thẻ ô tô còn lại, số xe ô tô và số xe ô tô điện.",
-      //     });
-      //   }
-
-      //   if (combinedData.Sothexemaydk !== combinedData.Slthexemay + combinedData.Slxemay + combinedData.Slxemaydien) {
-      //     return res.status(400).json({
-      //       message: "Số thẻ xe máy phát hành không khớp. Vui lòng kiểm tra lại số thẻ xe máy còn lại, số xe máy và số xe máy điện.",
-      //     });
-      //   }
-      // }
-
       const createP0 = await P0.create(combinedData, { transaction: t });
       await funcP0_Log(req, sanitizedData, createP0.ID_P0, t);
       await t.commit();
@@ -258,6 +258,17 @@ exports.getAll_ByID_Duan = async (req, res) => {
         {
           model: Ent_user,
           as: "ent_user_AN",
+          attributes: ["ID_User", "Hoten", "ID_Chucvu"],
+          include: [
+            {
+              model: Ent_chucvu,
+              attributes: ["Chucvu", "Role"],
+            },
+          ],
+        },
+        {
+          model: Ent_user,
+          as: "ent_user_DV",
           attributes: ["ID_User", "Hoten", "ID_Chucvu"],
           include: [
             {
@@ -353,13 +364,18 @@ const updateP0 = async (req, ID_P0, t) => {
       return acc;
     }, {});
 
+    if(userData?.isCheckketoan === 1){
+      sanitizedData.ID_User_KT = userData.ID_User;
+    }
+
     if (userData.ID_KhoiCV == 3) {
       sanitizedData.ID_User_AN = userData.ID_User;
     } else if (userData.ID_KhoiCV == 4) {
-      sanitizedData.ID_User_KT = userData.ID_User;
-    } else {
+      sanitizedData.ID_User_DV = userData.ID_User;
+    } else if (userData?.ent_chucvu?.Role == 1) {
       sanitizedData.ID_User_AN = userData.ID_User;
       sanitizedData.ID_User_KT = userData.ID_User;
+      sanitizedData.ID_User_DV = userData.ID_User;
     }
 
     const result = await P0.update(sanitizedData, {
@@ -394,13 +410,17 @@ const funcP0_Log = async (req, data, ID_P0, t) => {
       Ngaybc: Ngaybc,
     };
 
+    if(userData?.isCheckketoan === 1){
+      generalData.ID_User_KT_Update = userData.ID_User;
+    }
     if (userData.ID_KhoiCV == 3) {
       generalData.ID_User_AN_Update = userData.ID_User;
     } else if (userData.ID_KhoiCV == 4) {
-      generalData.ID_User_KT_Update = userData.ID_User;
-    } else {
+      generalData.ID_User_DV_Update = userData.ID_User;
+    } else if (userData?.ent_chucvu?.Role == 1) {
       generalData.ID_User_AN_Update = userData.ID_User;
       generalData.ID_User_KT_Update = userData.ID_User;
+      generalData.ID_User_DV_Update = userData.ID_User;
     }
 
     const combinedData = { ...sanitizedData, ...generalData };
