@@ -281,7 +281,7 @@ const sendEmail = async (data, userData, action, dataOld) => {
           ? `<span style="color: #28a745;"> ▲ Tăng ${diff} thẻ</span>`
           : `<span style="color: #dc3545;"> ▼ Giảm ${Math.abs(diff)} thẻ</span>`;
 
-      subject = "Cập nhật số lượng thẻ ô tô và xe máy";
+      subject = "Cập nhật biến động thẻ ô tô và xe máy";
       content = `
         <p>Kính gửi: Ban Tổng giám đốc,</p>
         <p>Dự án: <strong>${userData?.ent_duan?.Duan}</strong> (Giám đốc dự án: <strong>${userData?.Hoten}</strong>) đã cập nhật số lượng thẻ.</p>
