@@ -8054,34 +8054,34 @@ exports.createExcelTongHopCa = async (req, res) => {
         const projectData = dataChecklistC
           ? dataChecklistC[0]?.tb_checklistc?.ent_duan
           : {};
-        const projectName = projectData?.Duan || "";
-        const projectLogo =
-          projectData?.Logo || "https://pmcweb.vn/wp-content/uploads/logo.png";
+        // const projectName = projectData?.Duan || "";
+        // const projectLogo =
+        //   projectData?.Logo || "https://pmcweb.vn/wp-content/uploads/logo.png";
 
-        console.log("projectData", dataChecklistC[0]?.tb_checklistc?.ent_duan);
+        // console.log("projectData", dataChecklistC[0]?.tb_checklistc?.ent_duan);
 
-        // Download the image and add it to the workbook
-        const imageResponse = await axios({
-          url: projectLogo,
-          responseType: "arraybuffer",
-        });
+        // // Download the image and add it to the workbook
+        // const imageResponse = await axios({
+        //   url: projectLogo,
+        //   responseType: "arraybuffer",
+        // });
 
-        const imageBuffer = Buffer.from(imageResponse.data, "binary");
-        worksheet.getCell("A1").alignment = {
-          horizontal: "center",
-          vertical: "middle",
-          wrapText: true,
-        };
+        // const imageBuffer = Buffer.from(imageResponse.data, "binary");
+        // worksheet.getCell("A1").alignment = {
+        //   horizontal: "center",
+        //   vertical: "middle",
+        //   wrapText: true,
+        // };
 
-        // Add image to the merged cells A1:B1
-        const imageId = workbook.addImage({
-          buffer: imageBuffer,
-          extension: "png",
-        });
-        worksheet.addImage(imageId, {
-          tl: { col: 0, row: 0 }, // Position for the image within the merged cells
-          ext: { width: 120, height: 60 },
-        });
+        // // Add image to the merged cells A1:B1
+        // const imageId = workbook.addImage({
+        //   buffer: imageBuffer,
+        //   extension: "png",
+        // });
+        // worksheet.addImage(imageId, {
+        //   tl: { col: 0, row: 0 }, // Position for the image within the merged cells
+        //   ext: { width: 120, height: 60 },
+        // });
         worksheet.getRow(1).height = 60;
         worksheet.getRow(2).height = 25;
 
