@@ -11,23 +11,28 @@ const cors = require("cors");
 const admin = require("firebase-admin");
 const AdmZip = require("adm-zip");
 const archiver = require("archiver");
-const { Readable } = require('stream');
+const { Readable } = require("stream");
 const app = express();
 const { exec } = require("child_process");
 var serviceAccount = require("./pmc-cskh-firebase-adminsdk-y7378-5122f6edc7.json");
 const sequelize = require("./app/config/db.config");
 const { Sequelize, Op } = require("sequelize");
 const { funcAutoNoti, funcAllNoti } = require("./noti");
-const { processBackgroundTask , processBackgroundTaskDone} = require("./app/queue/consumer.checklist");
+const {
+  processBackgroundTask,
+  processBackgroundTaskDone,
+} = require("./app/queue/consumer.checklist");
 const { initRabbitMQ } = require("./app/queue/producer.checklist");
-const { createDynamicTableDone, createDynamicTableChiTiet } = require("./app/utils/util");
-
+const {
+  createDynamicTableDone,
+  createDynamicTableChiTiet,
+} = require("./app/utils/util");
 
 (async () => {
   try {
     await initRabbitMQ(); // Khởi tạo kết nối RabbitMQ
     processBackgroundTask(); // Bắt đầu lắng nghe các tác vụ từ queue
-    processBackgroundTaskDone()
+    processBackgroundTaskDone();
     console.log("Queue is ready.");
   } catch (error) {
     console.error("Failed to initialize RabbitMQ:", error);
@@ -49,7 +54,7 @@ const credentials = {
   token_uri: process.env.TOKEN_URI,
   auth_provider_x509_cert_url: process.env.AUTH_PROVIDER_X509_CERT_URL,
   client_x509_cert_url: process.env.CLIENT_X509_CERT_URL,
-  universe_domain: process.env.UNIVERSE_DOMAIN
+  universe_domain: process.env.UNIVERSE_DOMAIN,
 };
 
 const SCOPES = "https://www.googleapis.com/auth/drive";
@@ -83,12 +88,12 @@ app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
 
-app.use(express.json({ limit: '500mb' }));
-app.use(express.urlencoded({ extended: true, limit: '500mb' }));
+app.use(express.json({ limit: "500mb" }));
+app.use(express.urlencoded({ extended: true, limit: "500mb" }));
 
 // Nếu dùng body-parser
-app.use(bodyParser.json({limit: '500mb'}));
-app.use(bodyParser.urlencoded({limit: '500mb', extended: true}));
+app.use(bodyParser.json({ limit: "500mb" }));
+app.use(bodyParser.urlencoded({ limit: "500mb", extended: true }));
 app.use(express.urlencoded({ extended: true }));
 app.use("/upload", express.static("app/public"));
 
@@ -106,8 +111,8 @@ if (process.env.BACKUP_ENV === "development") {
     const endOfDay = new Date(yesterday.setHours(23, 59, 59, 999));
 
     // Lấy tháng và năm hiện tại
-    const month = (yesterday.getMonth() + 1).toString().padStart(2, '0');  // Tháng hiện tại (01-12)
-    const year = yesterday.getFullYear();  // Năm hiện tại
+    const month = (yesterday.getMonth() + 1).toString().padStart(2, "0"); // Tháng hiện tại (01-12)
+    const year = yesterday.getFullYear(); // Năm hiện tại
 
     // Tạo tên các bảng động
     const dynamicTables = [
@@ -129,9 +134,12 @@ if (process.env.BACKUP_ENV === "development") {
         fs.mkdirSync(backupDir);
       }
 
-      const sqlFilePath = path.join(backupDir, `backup_yesterday_${new Date().toISOString().slice(0, 10)}.sql`);
+      const sqlFilePath = path.join(
+        backupDir,
+        `backup_yesterday_${new Date().toISOString().slice(0, 10)}.sql`
+      );
 
-      let sqlData = '';
+      let sqlData = "";
 
       for (const table of dynamicTables) {
         // Lấy dữ liệu từ mỗi bảng
@@ -146,7 +154,11 @@ if (process.env.BACKUP_ENV === "development") {
         if (results.length > 0) {
           sqlData += `-- Data from table: ${table}\n`;
           results.forEach((row) => {
-            const insertSQL = `INSERT INTO ${table} (${Object.keys(row).join(", ")}) VALUES (${Object.values(row).map((value) => `'${value}'`).join(", ")});\n`;
+            const insertSQL = `INSERT INTO ${table} (${Object.keys(row).join(
+              ", "
+            )}) VALUES (${Object.values(row)
+              .map((value) => `'${value}'`)
+              .join(", ")});\n`;
             sqlData += insertSQL;
           });
           sqlData += `\n`;
@@ -165,16 +177,16 @@ if (process.env.BACKUP_ENV === "development") {
       const zipFilePath = sqlFilePath + ".zip";
       const output = fs.createWriteStream(zipFilePath);
       const archive = archiver("zip", {
-        zlib: { level: 9 } // Đặt mức độ nén
+        zlib: { level: 9 }, // Đặt mức độ nén
       });
 
       archive.pipe(output);
       archive.file(sqlFilePath, { name: path.basename(sqlFilePath) });
       await archive.finalize();
-      
+
       // Xóa file SQL gốc sau khi nén
       fs.unlinkSync(sqlFilePath);
-      
+
       return zipFilePath;
     } catch (error) {
       console.error("Lỗi khi xuất dữ liệu:", error);
@@ -192,22 +204,24 @@ if (process.env.BACKUP_ENV === "development") {
     }
   });
 } else {
-  console.log("Backup chỉ chạy ở môi trường local. NODE_ENV hiện tại là:", process.env.NODE_ENV);
+  console.log(
+    "Backup chỉ chạy ở môi trường local. NODE_ENV hiện tại là:",
+    process.env.NODE_ENV
+  );
 }
 
-
-if(process.env.BACKUP_DRIVER === "development") {
+if (process.env.BACKUP_DRIVER === "development") {
   async function exportDatabaseFromYesterday() {
     // Tính ngày hôm qua
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const startOfDay = new Date(yesterday.setHours(0, 0, 0, 0));
     const endOfDay = new Date(yesterday.setHours(23, 59, 59, 999));
-  
+
     // Lấy tháng và năm hiện tại
-    const month = (yesterday.getMonth() + 1).toString().padStart(2, '0');  // Tháng hiện tại (01-12)
-    const year = yesterday.getFullYear();  // Năm hiện tại
-  
+    const month = (yesterday.getMonth() + 1).toString().padStart(2, "0"); // Tháng hiện tại (01-12)
+    const year = yesterday.getFullYear(); // Năm hiện tại
+
     // Tạo tên các bảng động
     const dynamicTables = [
       "HSSE",
@@ -220,18 +234,21 @@ if(process.env.BACKUP_DRIVER === "development") {
       `tb_checklistchitiet_${month}_${year}`,
       `tb_checklistchitietdone_${month}_${year}`,
     ];
-  
+
     try {
       // Lấy dữ liệu từ các bảng
       const backupDir = path.join(__dirname, "backup");
       if (!fs.existsSync(backupDir)) {
         fs.mkdirSync(backupDir);
       }
-  
-      const sqlFilePath = path.join(backupDir, `backup_yesterday_${new Date().toISOString().slice(0, 10)}.sql`);
-  
-      let sqlData = '';
-  
+
+      const sqlFilePath = path.join(
+        backupDir,
+        `backup_yesterday_${new Date().toISOString().slice(0, 10)}.sql`
+      );
+
+      let sqlData = "";
+
       for (const table of dynamicTables) {
         const results = await sequelize.query(
           `SELECT * FROM ${table} WHERE createdAt BETWEEN ? AND ?`,
@@ -240,100 +257,103 @@ if(process.env.BACKUP_DRIVER === "development") {
             type: Sequelize.QueryTypes.SELECT,
           }
         );
-  
+
         if (results.length > 0) {
           sqlData += `-- Data from table: ${table}\n`;
           results.forEach((row) => {
-            const insertSQL = `INSERT INTO ${table} (${Object.keys(row).join(", ")}) VALUES (${Object.values(row).map((value) => `'${value}'`).join(", ")});\n`;
+            const insertSQL = `INSERT INTO ${table} (${Object.keys(row).join(
+              ", "
+            )}) VALUES (${Object.values(row)
+              .map((value) => `'${value}'`)
+              .join(", ")});\n`;
             sqlData += insertSQL;
           });
           sqlData += `\n`;
         }
       }
-  
+
       if (!sqlData) {
         console.log("Không có dữ liệu nào trong ngày hôm qua.");
         return;
       }
-  
+
       // Tạo file SQL từ dữ liệu truy vấn
       fs.writeFileSync(sqlFilePath, sqlData);
-  
+
       // Nén file SQL thành file ZIP
       const zipFilePath = sqlFilePath + ".zip";
       const output = fs.createWriteStream(zipFilePath);
       const archive = archiver("zip", {
-        zlib: { level: 9 } // Đặt mức độ nén
+        zlib: { level: 9 }, // Đặt mức độ nén
       });
-  
+
       archive.pipe(output);
       archive.file(sqlFilePath, { name: path.basename(sqlFilePath) });
       await archive.finalize();
-      
+
       // Xóa file SQL gốc sau khi nén
       fs.unlinkSync(sqlFilePath);
-      
+
       return zipFilePath;
     } catch (error) {
       console.error("Lỗi khi xuất dữ liệu:", error);
     }
   }
-  
+
   async function uploadFile(filePath) {
     try {
       const folderId = "1TAMvnXHdhkTov68oKrLbB6DE0bVZezAL"; // Thay bằng ID thư mục của bạn
-  
+
       // Tạo stream từ file ZIP
       const fileStream = fs.createReadStream(filePath);
-  
+
       // Tạo file và upload lên Google Drive
       const createFile = await drive.files.create({
         requestBody: {
           name: path.basename(filePath),
-          mimeType: 'application/zip',  // Đặt loại MIME cho file zip
+          mimeType: "application/zip", // Đặt loại MIME cho file zip
           parents: [folderId],
         },
         media: {
-          mimeType: 'application/zip',
-          body: fileStream,  // Dùng stream từ file
+          mimeType: "application/zip",
+          body: fileStream, // Dùng stream từ file
         },
       });
-  
+
       const fileId = createFile.data.id;
-  
+
       // Đặt quyền công khai cho file
       const getUrl = await setFilePublic(fileId);
-  
+
       // Xóa file ZIP sau khi upload thành công
       fs.unlinkSync(filePath);
-  
     } catch (error) {
       console.error("Error uploading file:", error);
     }
   }
-  
+
   // Hàm đặt quyền công khai cho file trên Google Drive
   async function setFilePublic(fileId) {
     try {
       await drive.permissions.create({
         fileId,
         requestBody: {
-          role: 'reader',
-          type: 'anyone',
+          role: "reader",
+          type: "anyone",
         },
       });
-  
+
       const getUrl = await drive.files.get({
         fileId,
-        fields: 'webViewLink, webContentLink',
+        fields: "webViewLink, webContentLink",
       });
-  
+
       return getUrl;
     } catch (error) {
       console.error("Error setting file permissions:", error);
     }
   }
-  
+
   // Hàm thực hiện toàn bộ quá trình
   async function handleBackup() {
     try {
@@ -345,43 +365,56 @@ if(process.env.BACKUP_DRIVER === "development") {
       console.error("Error during backup process:", error);
     }
   }
-  
+
   // Lên lịch chạy hàng ngày lúc 4 AM
-  cron.schedule('30 12 * * *', async () => {
-    console.log('Running Cron Job at 4 AM');
+  cron.schedule("30 12 * * *", async () => {
+    console.log("Running Cron Job at 4 AM");
     try {
       await handleBackup();
-      console.log('Cron job completed successfully');
+      console.log("Cron job completed successfully");
     } catch (error) {
-      console.error('Error running cron job:', error);
+      console.error("Error running cron job:", error);
     }
   });
 } else {
-  console.log("Backup chỉ chạy ở môi trường development. NODE_ENV hiện tại là:", process.env.NODE_ENV);
+  console.log(
+    "Backup chỉ chạy ở môi trường development. NODE_ENV hiện tại là:",
+    process.env.NODE_ENV
+  );
 }
 
-if(process.env.BACKUP_NOTI === "development") {
-cron.schedule('30 11 * * *', async () => {
-  try {
-     await funcAutoNoti();
-    console.log('Cron job completed successfully');
-  } catch (error) {
-    console.error('Error running cron job:', error);
-  }
-});
-}else{
-  console.log("Notification chỉ chạy ở môi trường development. NODE_ENV hiện tại là:", process.env.NODE_ENV);
+if (process.env.BACKUP_NOTI === "development") {
+  cron.schedule("30 11 * * *", async () => {
+    try {
+      await funcAutoNoti();
+      console.log("Cron job completed successfully");
+    } catch (error) {
+      console.error("Error running cron job:", error);
+    }
+  });
+} else {
+  console.log(
+    "Notification chỉ chạy ở môi trường development. NODE_ENV hiện tại là:",
+    process.env.NODE_ENV
+  );
 }
 
 cron.schedule("0 0 20 * *", async () => {
-  const month = (new Date().getMonth() + 1).toString().padStart(2, '0'); 
+  const month = (new Date().getMonth() + 1).toString().padStart(2, "0");
   const year = new Date().getFullYear();
   await createDynamicTableDone(`tb_checklistchitietdone_${month}_${year}`);
   await createDynamicTableChiTiet(`tb_checklistchitiet_${month}_${year}`);
 });
 
-// funcAllNoti()
+process.on("uncaughtException", (err) => {
+  console.error("❌ Lỗi không bắt được:", err);
+  process.exit(1); // Thoát server để PM2 restart lại
+});
 
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("❌ Lỗi promise không xử lý:", promise, "Lý do:", reason);
+  process.exit(1); // Thoát server để PM2 restart lại
+});
 
 require("./app/routes/ent_calv.routes")(app);
 require("./app/routes/ent_user.routes")(app);
