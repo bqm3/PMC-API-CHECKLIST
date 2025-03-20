@@ -27,6 +27,8 @@ const Ent_phanloaida = require('./ent_phanloaida.model')
 const Ent_Hsse_User = require('./Hsse/ent_hsse_user.model')
 const HSSE_Log = require('./Hsse/hsse_log.model')
 const HSSE = require('./hsse.model')
+const Ent_Phanhe = require('./Hsse/ent_phanhe.model')
+const Ent_Thamsophanhe = require("./Hsse/ent_thamsophanhe.model");
 
 //P0
 const P0_User = require('./P0_User.model')
@@ -126,6 +128,8 @@ Tb_sucongoai.belongsTo(Ent_user, { as: "ent_user", foreignKey: "ID_User" });
 
 Ent_user.hasMany(Tb_sucongoai, { as: "ent_handler", foreignKey: "ID_Handler" });
 Tb_sucongoai.belongsTo(Ent_user, { as: "ent_handler", foreignKey: "ID_Handler" });
+
+Tb_sucongoai.belongsTo(Ent_duan, {as: "ent_duan", foreignKey: "ID_Duan"});
 
 // Ent_duan.hasMany(Tb_sucongoai, { as: "ent_duan", foreignKey: "ID_Duan" });
 // Tb_sucongoai.belongsTo(Ent_duan, { as: "ent_duan", foreignKey: "ID_Duan" });
@@ -336,4 +340,6 @@ module.exports = {
   P0_User,
   S0_Thaydoithe,
   S0_Thaydoithe_log,
+  Ent_Phanhe,
+  Ent_Thamsophanhe
 };
