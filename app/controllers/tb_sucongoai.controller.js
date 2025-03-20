@@ -1031,6 +1031,10 @@ exports.getSuCoBenNgoai = async (req, res) => {
       ],
       include: [
         {
+          model: Ent_duan,
+          as: "ent_duan",
+        },
+        {
           model: Ent_hangmuc,
           as: "ent_hangmuc",
           attributes: ["Hangmuc", "Tieuchuankt", "ID_Khuvuc", "MaQrCode", "FileTieuChuan", "ID_Khuvuc"],
@@ -1095,6 +1099,7 @@ exports.getSuCoBenNgoai = async (req, res) => {
           currentWeekCount,
           lastWeekCount,
           percentageChange: percentageChange.toFixed(2),
+          list: data,
         },
       });
     }

@@ -1,13 +1,11 @@
-const {
-  Ent_Hsse_User,
-  Ent_user,
-  HSSE_Log,
-} = require("../../models/setup.model");
+const { Ent_Hsse_User, Ent_user, HSSE_Log } = require("../../models/setup.model");
+const { getThamsophanhe } = require("./ent_thamsophanhe.controller");
 const { Op } = require("sequelize");
 const moment = require("moment");
 const hsse = require("../../models/hsse.model");
 const sequelize = require("../../config/db.config");
 const { Expo } = require("expo-server-sdk");
+
 // Khởi tạo một đối tượng Expo
 let expo = new Expo();
 
@@ -59,9 +57,7 @@ exports.createHSSE = async (req, res) => {
     const userData = req.user.data;
     const data = req.body;
     const Ngay_ghi_nhan = moment(new Date()).format("YYYY-MM-DD");
-    const yesterday = moment(Ngay_ghi_nhan)
-      .subtract(1, "days")
-      .format("YYYY-MM-DD");
+    const yesterday = moment(Ngay_ghi_nhan).subtract(1, "days").format("YYYY-MM-DD");
 
     // Convert null values to 0
     const sanitizedData = Object.keys(data).reduce((acc, key) => {
@@ -88,17 +84,9 @@ exports.createHSSE = async (req, res) => {
     });
 
     if (findHsse) {
-      return res
-        .status(400)
-        .json({ message: "Báo cáo HSSE ngày hôm nay đã được tạo" });
+      return res.status(400).json({ message: "Báo cáo HSSE ngày hôm nay đã được tạo" });
     } else {
-      const htmlResponse = await funcYesterday(
-        userData,
-        data,
-        yesterday,
-        t,
-        "Tạo báo cáo HSSE thành công."
-      );
+      let htmlResponse = await funcYesterday(userData, data, yesterday, t, "Tạo báo cáo HSSE thành công.");
 
       // Token của thiết bị cần gửi thông báo
       let pushToken = "ExponentPushToken[tCg1IsCjTTXAM9Dg7PKpiu]";
@@ -138,6 +126,24 @@ exports.createHSSE = async (req, res) => {
         }
       }
 
+      const xaThaiWarning = await funcXaThai(userData, combinedData);
+
+      // Kết hợp cả 2 cảnh báo
+      if (xaThaiWarning) {
+        if (htmlResponse) {
+          // Nếu đã có cảnh báo từ yesterday, thêm cảnh báo xả thải vào
+          htmlResponse = htmlResponse.replace("</div>", `${xaThaiWarning}</div>`);
+        } else {
+          // Nếu chưa có cảnh báo từ yesterday, tạo mới htmlResponse
+          htmlResponse = `
+          <div>
+            <h2>Cảnh báo:</h2>
+            ${xaThaiWarning}
+            <p>Tạo báo cáo HSSE thành công.</p>
+          </div>`;
+        }
+      }
+
       const createHSSE = await hsse.create(combinedData, { transaction: t });
       await funcHSSE_Log(req, sanitizedData, createHSSE.ID, t);
       await t.commit();
@@ -160,6 +166,11 @@ exports.updateHSSE = async (req, res) => {
     const isToday = moment(Ngay).isSame(moment(), "day");
     const yesterday = moment(Ngay).subtract(1, "days").format("YYYY-MM-DD");
 
+    const sanitizedData = Object.keys(data).reduce((acc, key) => {
+      acc[key] = data[key] === null ? 0 : data[key];
+      return acc;
+    }, {});
+
     if (!isToday) {
       await t.rollback();
       return res.status(400).json({
@@ -167,13 +178,25 @@ exports.updateHSSE = async (req, res) => {
       });
     }
 
-    const htmlResponse = await funcYesterday(
-      userData,
-      data,
-      yesterday,
-      t,
-      "Cập nhật thành công !"
-    );
+    let htmlResponse = await funcYesterday(userData, data, yesterday, t, "Cập nhật thành công !");
+
+    const xaThaiWarning = await funcXaThai(userData, sanitizedData);
+
+    // Kết hợp cả 2 cảnh báo
+    if (xaThaiWarning) {
+      if (htmlResponse) {
+        // Nếu đã có cảnh báo từ yesterday, thêm cảnh báo xả thải vào
+        htmlResponse = htmlResponse.replace("</div>", `${xaThaiWarning}</div>`);
+      } else {
+        // Nếu chưa có cảnh báo từ yesterday, tạo mới htmlResponse
+        htmlResponse = `
+        <div>
+          <h2>Cảnh báo:</h2>
+          ${xaThaiWarning}
+          <p>Tạo báo cáo HSSE thành công.</p>
+        </div>`;
+      }
+    }
     await funcHSSE_Log(req, data, req.params.id, t);
     await funUpdateHSSE(req, req.params.id, t);
     await t.commit();
@@ -184,6 +207,7 @@ exports.updateHSSE = async (req, res) => {
     });
   } catch (error) {
     await t.rollback();
+    console.log("error",error);
     return res.status(500).json({
       message: error?.message || "Lỗi khi cập nhật HSSE.",
     });
@@ -196,9 +220,7 @@ exports.createHSSE_PSH = async (req, res) => {
     const userData = req.user.data;
     const data = req.body;
     const Ngay_ghi_nhan = moment(new Date()).format("YYYY-MM-DD");
-    const yesterday = moment(data.Ngay_ghi_nhan)
-      .subtract(1, "days")
-      .format("YYYY-MM-DD");
+    const yesterday = moment(data.Ngay_ghi_nhan).subtract(1, "days").format("YYYY-MM-DD");
 
     // Convert null values to 0
     const sanitizedData = Object.keys(data).reduce((acc, key) => {
@@ -226,17 +248,9 @@ exports.createHSSE_PSH = async (req, res) => {
     });
 
     if (findHsse) {
-      return res
-        .status(400)
-        .json({ message: "Báo cáo HSSE ngày hôm nay đã được tạo" });
+      return res.status(400).json({ message: "Báo cáo HSSE ngày hôm nay đã được tạo" });
     } else {
-      const htmlResponse = await funcYesterday(
-        userData,
-        data,
-        yesterday,
-        t,
-        "Tạo báo cáo HSSE thành công."
-      );
+      const htmlResponse = await funcYesterday(userData, data, yesterday, t, "Tạo báo cáo HSSE thành công.");
       const createHSSE = await hsse.create(combinedData, { transaction: t });
       // await funcHSSE_Log(req, sanitizedData, createHSSE.ID, t);
       await t.commit();
@@ -259,13 +273,7 @@ exports.updateHSSE_PSH = async (req, res) => {
     const isToday = moment(Ngay).isSame(moment(), "day");
     const yesterday = moment(Ngay).subtract(1, "days").format("YYYY-MM-DD");
 
-    const htmlResponse = await funcYesterday(
-      userData,
-      data,
-      yesterday,
-      t,
-      "Cập nhật thành công !"
-    );
+    const htmlResponse = await funcYesterday(userData, data, yesterday, t, "Cập nhật thành công !");
     // await funcHSSE_Log(req, data, req.params.id, t);
     await funUpdateHSSE(req, req.params.id, t);
     await t.commit();
@@ -417,9 +425,7 @@ exports.checkSubmitHSSE = async (req, res) => {
 exports.getHSSE = async (req, res) => {
   try {
     const Ngay_ghi_nhan = moment(new Date()).format("YYYY-MM-DD");
-    const Ngay_dau_thang = moment(Ngay_ghi_nhan, "YYYY-MM-DD")
-      .startOf("month")
-      .format("YYYY-MM-DD");
+    const Ngay_dau_thang = moment(Ngay_ghi_nhan, "YYYY-MM-DD").startOf("month").format("YYYY-MM-DD");
     const userData = req.user.data;
     const resData = await hsse.findAll({
       where: {
@@ -568,6 +574,46 @@ const funcYesterday = async (userData, data, yesterday, t, message) => {
     }
 
     return htmlResponse;
+  } catch (error) {
+    throw error;
+  }
+};
+
+
+// 20/03/2025 tạm thời lấy tb ở file excel
+
+// * Cách tính mức xả thải trung bình của tất cả các dự án :
+// Sau khi nhập xong chỉ số xả thải của ngày hiện tại thì :
+// Mức xả thải trung bình = (Tổng mức xả thải các ngày (<ngày hiện tại)) /( Số ngày < ngày hiện tại))
+// * Đối với các dự án không có giấy phép thì :
+//  Mức xả thải theo giấy phép=( bằng tổng nước cư dân+nước chủ đầu tư  các ngày< ngày hiện tại) /(Số ngày<ngày hiện tại)
+
+const funcXaThai = async (userData, combinedData) => {
+  try {
+    const dataReq = {
+      ID_Duan: userData.ID_Duan,
+      ID_Phanhe: 1,
+      Thamso: "Xa_thai",
+    };
+    const Xa_thai = await getThamsophanhe(dataReq);
+
+    let xaThaiWarning = "";
+    if (Xa_thai) {
+      if (combinedData.Xa_thai < Xa_thai.Chisotrungbinh * 0.9) {
+        xaThaiWarning = `
+            <div style="color: orange; margin: 10px 0; padding: 10px; border: 1px solid orange; border-radius: 4px;">
+              <p style="font-weight: bold; margin-bottom: 8px;">⚠ Dự án kiểm tra mức xả thải dưới mức trung bình</p>
+              <p>Kiểm tra đồng hồ đo, bơm (nếu có HT XLNT) hoặc hệ thống cấp nước (nếu không có HT XLNT).</p>
+            </div>`;
+      } else if (combinedData.Xa_thai > Xa_thai.Chisogiayphep * 1.1) {
+        xaThaiWarning = `
+            <div style="color: red; margin: 10px 0; padding: 10px; border: 1px solid red; border-radius: 4px;">
+              <p style="font-weight: bold; margin-bottom: 8px;">⚠ Dự án kiểm tra mức xả thải vượt ngưỡng cho phép</p>
+              <p>Kiểm tra van, bơm, hệ thống XLNT (nếu có) hoặc hệ thống cấp nước (nếu không có HT XLNT).</p>
+            </div>`;
+      }
+    }
+    return xaThaiWarning;
   } catch (error) {
     throw error;
   }

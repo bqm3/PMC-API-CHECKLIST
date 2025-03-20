@@ -409,6 +409,7 @@ require("./app/routes/get_image.routes")(app);
 require("./app/routes/ent_baocaochiso.routes")(app);
 require("./app/routes/p0.routes")(app);
 require("./app/routes/s0_thaydoithe.routes")(app);
+require("./app/routes/ent_thamsophanhe.routes")(app);
 
 const PORT = process.env.PORT || 6969;
 app.listen(PORT, () => {

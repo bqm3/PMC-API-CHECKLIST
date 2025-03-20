@@ -737,7 +737,6 @@ exports.getSDTKhanCap = async (req, res) => {
     }
 
   } catch (error) {
-    await transaction.rollback();
     return res.status(500).json({
       success: false,
       message: error.message || "Lỗi server! Vui lòng thử lại sau.",
