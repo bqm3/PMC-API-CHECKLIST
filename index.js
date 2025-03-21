@@ -406,14 +406,60 @@ cron.schedule("0 0 20 * *", async () => {
   await createDynamicTableChiTiet(`tb_checklistchitiet_${month}_${year}`);
 });
 
+// 📝 Ghi log lỗi vào file để debug sau này
+const logErrorToFile = (message) => {
+  const logPath = path.join(__dirname, "error.log");
+  const logMessage = `[${new Date().toISOString()}] ${message}\n`;
+  fs.appendFileSync(logPath, logMessage);
+};
+
+// 🚨 Bắt lỗi không bắt được trong toàn bộ ứng dụng
 process.on("uncaughtException", (err) => {
   console.error("❌ Lỗi không bắt được:", err);
-  process.exit(1); // Thoát server để PM2 restart lại
+  logErrorToFile(`Uncaught Exception: ${err.stack || err}`);
+  process.exit(1); // Restart lại server bằng PM2
 });
 
 process.on("unhandledRejection", (reason, promise) => {
   console.error("❌ Lỗi promise không xử lý:", promise, "Lý do:", reason);
-  process.exit(1); // Thoát server để PM2 restart lại
+  logErrorToFile(`Unhandled Rejection: ${reason}`);
+  process.exit(1); // Restart lại server
+});
+
+// 🚨 Bắt lỗi request bị hủy trước khi xử lý xong
+app.use((req, res, next) => {
+  req.on("aborted", () => {
+    console.error("⚠️ Request bị hủy trước khi hoàn tất!", req.method, req.url);
+    logErrorToFile(`Request aborted: ${req.method} ${req.url}`);
+  });
+  next();
+});
+
+// 🚨 Bắt lỗi middleware không xử lý được
+app.use((err, req, res, next) => {
+  console.error("❌ Lỗi trong Express middleware:", err);
+  logErrorToFile(`Express Middleware Error: ${err.stack || err}`);
+
+  res.status(500).json({ error: "Có lỗi xảy ra, vui lòng thử lại sau!" });
+});
+
+// 🚨 Giới hạn bộ nhớ để tránh crash do Out of Memory
+process.on("warning", (warning) => {
+  console.warn("⚠️ Cảnh báo của Node.js:", warning);
+  logErrorToFile(`Node Warning: ${warning.name} - ${warning.message}`);
+});
+
+// 🚨 Theo dõi tín hiệu hệ thống (có thể giúp tắt server an toàn)
+process.on("SIGTERM", () => {
+  console.log("🔻 Server đang dừng do nhận tín hiệu SIGTERM...");
+  logErrorToFile("Server shutting down due to SIGTERM");
+  process.exit(0);
+});
+
+process.on("SIGINT", () => {
+  console.log("🔻 Server đang dừng do nhận tín hiệu SIGINT...");
+  logErrorToFile("Server shutting down due to SIGINT");
+  process.exit(0);
 });
 
 require("./app/routes/ent_calv.routes")(app);
