@@ -263,7 +263,7 @@ exports.updateStatus = async (req, res) => {
     const idsString = anhs.length > 0 ? anhs.join(",") : null;
 
     const { Tinhtrangxuly, ngayXuLy, Ghichu, ID_Hangmuc, deviceUser, deviceHandler, deviceNameUser, deviceNameHandler, Bienphapxuly } = req.body;
-    if (!Bienphapxuly || Bienphapxuly.trim() === "") {
+    if ((!Bienphapxuly || Bienphapxuly.trim() === "") && Tinhtrangxuly === 3) {
       res.status(400).json({
         message: "Cần có biện pháp xử lý sự cố",
       });
