@@ -629,7 +629,8 @@ exports.getDayCheckListc = async (req, res, next) => {
     const params = {
       khoi: req.query.khoi || "all",
       ca: req.query.ca || "all",
-      fromDate: req.query.fromDate || moment().startOf("month").format("YYYY-MM-DD"),
+      fromDate:
+        req.query.fromDate || moment().startOf("month").format("YYYY-MM-DD"),
       toDate: req.query.toDate || moment().format("YYYY-MM-DD"),
       page: Math.max(0, parseInt(req.query.page) || 0),
       pageSize: Math.min(100, parseInt(req.query.limit) || 100),
@@ -729,7 +730,7 @@ exports.getDayCheckListc = async (req, res, next) => {
       const key = `${item.Ngay}-${item.ID_Calv}-${item.ID_ThietLapCa}`;
       const [year, month] = item.Ngay.split("-");
       const yearMonth = `${year}-${month}`;
-      
+
       if (!processedData.has(key)) {
         processedData.set(key, {
           Key: key,
@@ -742,7 +743,7 @@ exports.getDayCheckListc = async (req, res, next) => {
           ID_Duan: item.ID_Duan,
           ID_KhoiCV: item.ID_KhoiCV,
           Chuky: item.ent_thietlapca?.ent_duan_khoicv?.Tenchuky,
-          ChecklistItems: [item.ID_ChecklistC]
+          ChecklistItems: [item.ID_ChecklistC],
         });
       } else {
         processedData.get(key).ChecklistItems.push(item.ID_ChecklistC);
@@ -755,14 +756,14 @@ exports.getDayCheckListc = async (req, res, next) => {
       yearMonthGroups.get(yearMonth).push({
         key,
         checklistId: item.ID_ChecklistC,
-        TongC: item.TongC
+        TongC: item.TongC,
       });
     }
 
     // Xử lý từng nhóm year-month
     for (const [yearMonth, items] of yearMonthGroups) {
       const [year, month] = yearMonth.split("-");
-      
+
       if (month <= 11 && year <= 2024) {
         // Xử lý dữ liệu cũ
         for (const item of items) {
@@ -773,7 +774,7 @@ exports.getDayCheckListc = async (req, res, next) => {
         }
       } else {
         // Xử lý dữ liệu mới bằng cách gom nhóm checklistIds
-        const checklistIds = items.map(item => item.checklistId);
+        const checklistIds = items.map((item) => item.checklistId);
         const tableName = `tb_checklistchitiet_${month}_${year}`;
         const dynamicTableNameDone = `tb_checklistchitietdone_${month}_${year}`;
 
@@ -787,35 +788,35 @@ exports.getDayCheckListc = async (req, res, next) => {
               attributes: ["ID_ChecklistC", "ID_Checklist"],
               where: {
                 ID_ChecklistC: { [Op.in]: checklistIds },
-                isDelete: 0
+                isDelete: 0,
               },
-              raw: true
+              raw: true,
             }),
             sequelize.models[dynamicTableNameDone].findAll({
               attributes: ["ID_ChecklistC", "Description"],
               where: {
                 ID_ChecklistC: { [Op.in]: checklistIds },
-                isDelete: 0
+                isDelete: 0,
               },
-              raw: true
-            })
+              raw: true,
+            }),
           ]);
 
           // Tạo map để nhóm kết quả theo ID_ChecklistC
           const checklistMap = new Map();
-          chitiet.forEach(item => {
+          chitiet.forEach((item) => {
             if (!checklistMap.has(item.ID_ChecklistC)) {
               checklistMap.set(item.ID_ChecklistC, new Set());
             }
             checklistMap.get(item.ID_ChecklistC).add(Number(item.ID_Checklist));
           });
 
-          done.forEach(item => {
+          done.forEach((item) => {
             if (item.Description) {
               if (!checklistMap.has(item.ID_ChecklistC)) {
                 checklistMap.set(item.ID_ChecklistC, new Set());
               }
-              item.Description.split(",").forEach(id => {
+              item.Description.split(",").forEach((id) => {
                 checklistMap.get(item.ID_ChecklistC).add(Number(id));
               });
             }
@@ -837,20 +838,23 @@ exports.getDayCheckListc = async (req, res, next) => {
 
     const executionTime = Date.now() - startTime;
     const response = {
-      message: processedData.size > 0 ? "Danh sách checklistc!" : "Không có checklistc!",
+      message:
+        processedData.size > 0
+          ? "Danh sách checklistc!"
+          : "Không có checklistc!",
       page: params.page,
       pageSize: params.pageSize,
       totalPages: Math.ceil(result.count / params.pageSize),
       data: Array.from(processedData.values()),
-      executionTime: `${executionTime}ms`
+      executionTime: `${executionTime}ms`,
     };
 
     return res.status(200).json(response);
   } catch (err) {
-    console.error('Error in getDayCheckListc:', err);
+    console.error("Error in getDayCheckListc:", err);
     return res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
-      executionTime: `${Date.now() - startTime}ms`
+      executionTime: `${Date.now() - startTime}ms`,
     });
   }
 };
@@ -1930,7 +1934,6 @@ exports.firstChecklist = async (req, res) => {
           Khoi_an_ninh: "",
           Khoi_lam_sach: "",
           Khoi_dich_vu: "",
-          Khoi_F_B: "",
         };
         excelData.push(project);
       }
@@ -2030,7 +2033,6 @@ exports.firstChecklist = async (req, res) => {
           "Khoi_an_ninh",
           "Khoi_lam_sach",
           "Khoi_dich_vu",
-          "Khoi_F_B",
         ].forEach((key) => {
           row.getCell(key).alignment = { horizontal: "center" };
         });
@@ -9125,7 +9127,6 @@ exports.createExcelDuAn = async (req, res) => {
         if (khoiName === "Khối dịch vụ") {
           rowValues.dichvu = "X";
         }
-       
       });
 
       // Tính tỷ lệ checklist trung bình
@@ -9367,7 +9368,6 @@ exports.createExcelDuAnPercent = async (req, res) => {
         if (khoiName === "Khối dịch vụ") {
           rowValues.dichvu = "X";
         }
-      
       });
 
       let tileChecklist = 0;
