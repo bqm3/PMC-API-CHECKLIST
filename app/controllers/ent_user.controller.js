@@ -359,6 +359,22 @@ exports.updateUser = async (req, res) => {
     const minutes = String(vietnamTime.getMinutes()).padStart(2, "0");
     const seconds = String(vietnamTime.getSeconds()).padStart(2, "0");
 
+    const findUser = await Ent_user.findOne(
+      {
+        UserName,
+      },
+      {
+        where: {
+          UserName,
+          isDelete: 0,
+        },
+      }
+    );
+
+    if (findUser) {
+      return res.status(400).json({ message: "Tên tài khoản đã tồn tại." });
+    }
+
     const formattedVietnamTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     // Kiểm tra xem có dữ liệu mật khẩu được gửi không
     let updateData = {

@@ -633,7 +633,6 @@ exports.createExcelDuAn = async (req, res) => {
       { header: "Làm sạch", key: "lamsach", width: 10 },
       { header: "An ninh", key: "anninh", width: 10 },
       { header: "Dịch vụ", key: "dichvu", width: 10 },
-      { header: "F&B", key: "fb", width: 10 },
       { header: "Tỉ lệ checklist", key: "tile", width: 10 },
       { header: "Đã triển khai", key: "dachay", width: 10 },
       { header: "Ghi chú", key: "ghichu", width: 20 },
@@ -661,9 +660,9 @@ exports.createExcelDuAn = async (req, res) => {
           attributes: ["Duan", "ID_Nhom", "ID_Chinhanh"],
           where: {
             ID_Duan: {
-              [Op.ne]: 1, 
+              [Op.ne]: 1,
             },
-            ID_Chinhanh: userData.ID_Chinhanh
+            ID_Chinhanh: userData.ID_Chinhanh,
           },
           include: [
             {
@@ -673,12 +672,12 @@ exports.createExcelDuAn = async (req, res) => {
           ],
         },
         {
-          model: Ent_khoicv, 
+          model: Ent_khoicv,
           attributes: ["KhoiCV"],
         },
         {
           model: Ent_calv,
-          attributes: ["Tenca", "isDelete"], 
+          attributes: ["Tenca", "isDelete"],
           where: {
             isDelete: 0,
           },
@@ -835,9 +834,6 @@ exports.createExcelDuAn = async (req, res) => {
         }
         if (khoiName === "Khối dịch vụ") {
           rowValues.dichvu = "X";
-        }
-        if (khoiName === "Khối F&B") {
-          rowValues.fb = "X";
         }
       });
 
@@ -1176,7 +1172,6 @@ exports.reportPercentYesterday = async (req, res) => {
       "Khối làm sạch": { totalCompletion: 0, projectCount: 0 },
       "Khối dịch vụ": { totalCompletion: 0, projectCount: 0 },
       "Khối an ninh": { totalCompletion: 0, projectCount: 0 },
-      "Khối F&B": { totalCompletion: 0, projectCount: 0 },
     };
 
     // Tính toán tổng completionRatio cho từng khối từ tất cả các dự án
@@ -1356,7 +1351,8 @@ exports.getChecklistsErrorFromYesterday = async (req, res) => {
             "Ngay",
             "Tong",
             "TongC",
-            "Giobd","Gioghinhan",
+            "Giobd",
+            "Gioghinhan",
             "Giochupanh1",
             "Anh1",
             "Giochupanh2",
@@ -2131,7 +2127,8 @@ cron.schedule("0 */2 * * *", async function () {
         "Ngay",
         "Tong",
         "TongC",
-        "Giobd","Gioghinhan",
+        "Giobd",
+        "Gioghinhan",
         "Giokt",
         "Tinhtrang",
         "isDelete",
@@ -2165,7 +2162,8 @@ cron.schedule("0 */2 * * *", async function () {
         "Ngay",
         "Tong",
         "TongC",
-        "Giobd","Gioghinhan",
+        "Giobd",
+        "Gioghinhan",
         "Giokt",
         "Tinhtrang",
         "isDelete",

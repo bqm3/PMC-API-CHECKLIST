@@ -565,7 +565,6 @@ exports.getKhuvucTotal = async (req, res) => {
       { ID_Khoi: 2, KhoiCV: "Khối kỹ thuật" },
       { ID_Khoi: 3, KhoiCV: "Khối an ninh" },
       { ID_Khoi: 4, KhoiCV: "Khối dịch vụ" },
-      { ID_Khoi: 5, KhoiCV: "Khối F&B" },
     ];
 
     // Create a map for quick lookup of KhoiCV by ID_Khoi

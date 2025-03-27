@@ -1976,7 +1976,6 @@ exports.getBaoCaoChecklistYear = async (req, res, next) => {
           "Khối an ninh",
           "Khối làm sạch",
           "Khối dịch vụ",
-          "Khối F&B",
         ].forEach((khoiName, index) => {
           const colIndex = (day - 1) * 5 + 3 + index;
           let totalCompletion = 0;
@@ -2191,9 +2190,6 @@ exports.firstChecklist = async (req, res) => {
         case "Khối dịch vụ":
           project.Khoi_dich_vu = "X";
           break;
-        case "Khối F&B":
-          project.Khoi_F_B = "X";
-          break;
       }
     });
 
@@ -2249,7 +2245,6 @@ exports.firstChecklist = async (req, res) => {
         { header: "Khối an ninh", key: "Khoi_an_ninh", width: 15 },
         { header: "Khối làm sạch", key: "Khoi_lam_sach", width: 15 },
         { header: "Khối dịch vụ", key: "Khoi_dich_vu", width: 15 },
-        { header: "Khối F&B", key: "Khoi_F_B", width: 15 },
       ];
       //////////////
 
@@ -5541,7 +5536,6 @@ const calculateCompletionPercentagePerProject1 = (danhSachKiemTra) => {
     "Khối làm sạch": { tongTiLe: 0, soDuAn: 0 },
     "Khối dịch vụ": { tongTiLe: 0, soDuAn: 0 },
     "Khối an ninh": { tongTiLe: 0, soDuAn: 0 },
-    "Khối F&B": { tongTiLe: 0, soDuAn: 0 },
   };
 
   Object.values(ketQua).forEach((duAn) => {
@@ -5865,7 +5859,6 @@ exports.reportPercentYesterday = async (req, res) => {
       "Khối làm sạch": { totalCompletion: 0, projectCount: 0 },
       "Khối dịch vụ": { totalCompletion: 0, projectCount: 0 },
       "Khối an ninh": { totalCompletion: 0, projectCount: 0 },
-      "Khối F&B": { totalCompletion: 0, projectCount: 0 },
     };
 
     Object.values(result).forEach((project) => {
@@ -6057,7 +6050,6 @@ exports.reportPercentLastWeek = async (req, res) => {
         "Khối làm sạch": { totalCompletion: 0, projectCount: 0 },
         "Khối dịch vụ": { totalCompletion: 0, projectCount: 0 },
         "Khối an ninh": { totalCompletion: 0, projectCount: 0 },
-        // "Khối F&B": { totalCompletion: 0, projectCount: 0 },
       };
 
       Object.values(result).forEach((project) => {
@@ -6100,7 +6092,6 @@ exports.reportPercentLastWeek = async (req, res) => {
           { name: "Khối làm sạch", data: [] },
           { name: "Khối kỹ thuật", data: [] },
           { name: "Khối dịch vụ", data: [] },
-          // { name: "Khối F&B", data: [] },
         ],
       },
     ];
@@ -9165,7 +9156,6 @@ exports.createExcelDuAn = async (req, res) => {
       { header: "Làm sạch", key: "lamsach", width: 10 },
       { header: "An ninh", key: "anninh", width: 10 },
       { header: "Dịch vụ", key: "dichvu", width: 10 },
-      { header: "F&B", key: "fb", width: 10 },
       { header: "Tỉ lệ checklist", key: "tile", width: 10 },
       { header: "Đã triển khai", key: "dachay", width: 10 },
       { header: "Ghi chú", key: "ghichu", width: 20 },
@@ -9376,9 +9366,7 @@ exports.createExcelDuAn = async (req, res) => {
         if (khoiName === "Khối dịch vụ") {
           rowValues.dichvu = "X";
         }
-        if (khoiName === "Khối F&B") {
-          rowValues.fb = "X";
-        }
+       
       });
 
       // Tính tỷ lệ checklist trung bình
@@ -9431,7 +9419,6 @@ exports.createExcelDuAnPercent = async (req, res) => {
       { header: "Làm sạch", key: "lamsach", width: 10 },
       { header: "An ninh", key: "anninh", width: 10 },
       { header: "Dịch vụ", key: "dichvu", width: 10 },
-      { header: "F&B", key: "fb", width: 10 },
       { header: "Tỉ lệ checklist", key: "tile", width: 10 },
       { header: "Đã triển khai", key: "dachay", width: 10 },
       { header: "Ghi chú", key: "ghichu", width: 20 },
@@ -9621,9 +9608,7 @@ exports.createExcelDuAnPercent = async (req, res) => {
         if (khoiName === "Khối dịch vụ") {
           rowValues.dichvu = "X";
         }
-        if (khoiName === "Khối F&B") {
-          rowValues.fb = "X";
-        }
+      
       });
 
       let tileChecklist = 0;

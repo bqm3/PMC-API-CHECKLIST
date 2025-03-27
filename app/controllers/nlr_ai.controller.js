@@ -74,7 +74,8 @@ const danhSachDuLieu = async (req, res) => {
           "ID_ThietLapCa",
           "ID_Duan",
           "Tinhtrang",
-          "Giobd","Gioghinhan",
+          "Giobd",
+          "Gioghinhan",
           "Giokt",
           "ID_User",
           "ID_Calv",
@@ -246,20 +247,17 @@ const danhSachDuLieu = async (req, res) => {
       transaction: t, // Đảm bảo chèn vào cùng transaction
     });
 
-   
     // Gửi phản hồi thành công
     // res.status(200).json({
     //   message: "Danh sách checklist đã được chèn và xử lý thành công.",
     // });
 
-     // Commit transaction sau khi thành công
-     await t.commit();
-
-
+    // Commit transaction sau khi thành công
+    await t.commit();
   } catch (error) {
     // Nếu có lỗi, rollback transaction
     await t.rollback();
-    console.error('Transaction failed:', error);
+    console.error("Transaction failed:", error);
     throw error;
     // res.status(500).json({ error: error.message });
   }
@@ -404,14 +402,14 @@ const getProjectsChecklistStatus = async (req, res) => {
       Khoidichvu: project.createdKhois["Khối dịch vụ"]?.completionRatio || null,
       Khoikythuat:
         project.createdKhois["Khối kỹ thuật"]?.completionRatio || null,
-      KhoiFB: project.createdKhois["Khối F&B"]?.completionRatio || null,
+
       Ngay: yesterday, // Sử dụng ngày lọc làm Ngày
     }));
 
     // Insert dữ liệu vào bảng ent_tile
     await Ent_tile.bulkCreate(transformedRows);
   } catch (err) {
-    console.error('Transaction failed:', err);
+    console.error("Transaction failed:", err);
     throw err;
   }
 };
@@ -424,20 +422,22 @@ exports.chatMessage = async (req, res) => {
       return res.status(400).json({ error: "No message provided" });
     }
 
-    const response = await axios.post('https://pmc.ai.pmcweb.vn/api/v1/process', {
-      // const response = await axios.post('http://localhost:5000/api/v1/process', {
-      question: message
-  });
+    const response = await axios.post(
+      "https://pmc.ai.pmcweb.vn/api/v1/process",
+      {
+        // const response = await axios.post('http://localhost:5000/api/v1/process', {
+        question: message,
+      }
+    );
 
-  // Trả kết quả từ Flask API cho client
-  res.json(response.data);
+    // Trả kết quả từ Flask API cho client
+    res.json(response.data);
   } catch (error) {
     return res.status(500).json({
       message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
 };
-
 
 cron.schedule("0 4 * * *", async () => {
   try {
