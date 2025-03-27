@@ -547,6 +547,7 @@ const funcYesterday = async (userData, data, yesterday, t, message) => {
 
     if (yesterdayHSSE) {
       Object.keys(data).forEach((key) => {
+        if (key === "Ghichu") return;
         const currentValue = data[key];
         const yesterdayValue = yesterdayHSSE[key];
         const plus = currentValue - yesterdayValue;
