@@ -346,6 +346,7 @@ exports.updateUser = async (req, res) => {
       Gioitinh,
       arr_Duan,
       isCheckketoan,
+      oldUserName
     } = req.body;
 
     const now = new Date();
@@ -361,9 +362,6 @@ exports.updateUser = async (req, res) => {
 
     const findUser = await Ent_user.findOne(
       {
-        UserName,
-      },
-      {
         where: {
           UserName,
           isDelete: 0,
@@ -371,7 +369,7 @@ exports.updateUser = async (req, res) => {
       }
     );
 
-    if (findUser) {
+    if (findUser && oldUserName !== UserName) {
       return res.status(400).json({ message: "Tên tài khoản đã tồn tại." });
     }
 
