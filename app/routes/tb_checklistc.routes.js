@@ -52,7 +52,7 @@ module.exports = (app) => {
     tb_checklistc.getChecklistsErrorFromYesterday
   );
   router.get(
-    "/percent-checklist-project",
+    "/percent-checklist-project", [isAuthenticated],
     tb_checklistc.getProjectsChecklistStatus
   );
   router.get(

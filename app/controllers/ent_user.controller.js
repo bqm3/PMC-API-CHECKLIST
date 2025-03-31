@@ -724,6 +724,7 @@ exports.checkAuth = async (req, res, next) => {
         "deviceToken",
         "isCheckketoan",
         "ID_Chucvu",
+        "ID_Chinhanh"
       ],
       include: [
         {
@@ -765,6 +766,9 @@ exports.checkAuth = async (req, res, next) => {
         {
           model: Ent_khoicv,
           attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
+        },
+        {
+          model: Ent_chinhanh,
         },
       ],
       where: {

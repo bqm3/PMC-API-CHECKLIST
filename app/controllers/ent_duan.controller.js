@@ -422,6 +422,13 @@ exports.getThongtinduan = async (req, res) => {
       };
     }
 
+    if (userData.ID_Chucvu == 14 && userData.ID_Chinhanh != null) {
+      whereCondition.ID_Chinhanh = userData.ID_Chinhanh;
+      whereCondition.ID_Duan = {
+        [Op.notIn]: [1, 140],
+      };
+    }
+
     const data = await Ent_duan.findAll({
       attributes: [
         "ID_Duan",
@@ -560,7 +567,7 @@ exports.getThongtinduantheonhom = async (req, res) => {
       where: {
         isDelete: 0,
         ID_Duan: {
-          [Op.ne]: 1,
+          [Op.notIn]: [1, 140],
         },
       },
     });

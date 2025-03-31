@@ -215,6 +215,12 @@ Ent_user.belongsTo(Ent_khoicv, {
   foreignKey: "ID_KhoiCV",
 });
 
+Ent_chinhanh.hasMany(Ent_user);
+Ent_user.belongsTo(Ent_chinhanh, {
+  foreignKey: "ID_Chinhanh",
+});
+
+
 // Checklist ===========================================================================
 Ent_khuvuc.hasMany(Ent_checklist);
 Ent_checklist.belongsTo(Ent_khuvuc, {

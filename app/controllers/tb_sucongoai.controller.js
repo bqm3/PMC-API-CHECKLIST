@@ -816,6 +816,7 @@ exports.dashboardByDuAn = async (req, res) => {
 
 exports.dashboardAll = async (req, res) => {
   try {
+    const user = req.user.data;
     const year = req.query.year || new Date().getFullYear();
     const chinhanh = req.query.chinhanh || "all";
     const top = parseInt(req.query.top) || 20; // Lấy giá trị 'top' từ query, mặc định là 20
@@ -834,6 +835,10 @@ exports.dashboardAll = async (req, res) => {
 
     if (chinhanh !== "all") {
       whereClause["$ent_user.ent_duan.ID_Chinhanh$"] = chinhanh;
+    }
+
+    if (user.ID_Chucvu == 14 && user.ID_Chinhanh != null) {
+      whereClause["$ent_user.ent_duan.ID_Chinhanh$"] = user.ID_Chinhanh;
     }
 
     // Truy vấn cơ sở dữ liệu
@@ -875,7 +880,7 @@ exports.dashboardAll = async (req, res) => {
           },
           where: {
             ID_Duan: {
-              [Op.ne]: 1,
+              [Op.notIn]: [1, 140],
             },
           },
         },
