@@ -346,7 +346,7 @@ exports.updateUser = async (req, res) => {
       Gioitinh,
       arr_Duan,
       isCheckketoan,
-      oldUserName
+      oldUserName,
     } = req.body;
 
     const now = new Date();
@@ -360,14 +360,24 @@ exports.updateUser = async (req, res) => {
     const minutes = String(vietnamTime.getMinutes()).padStart(2, "0");
     const seconds = String(vietnamTime.getSeconds()).padStart(2, "0");
 
-    const findUser = await Ent_user.findOne(
-      {
-        where: {
-          UserName,
-          isDelete: 0,
-        },
-      }
-    );
+    const findUser = await Ent_user.findOne({
+      attributes: [
+        "ID_User",
+        "UserName",
+        "Email",
+        "Hoten",
+        "Sodienthoai",
+        "arr_Duan",
+        "ID_Duan",
+        "ID_KhoiCV",
+        "ID_Chucvu",
+        "isDelete",
+      ],
+      where: {
+        UserName,
+        isDelete: 0,
+      },
+    });
 
     if (findUser && oldUserName !== UserName) {
       return res.status(400).json({ message: "Tên tài khoản đã tồn tại." });
@@ -724,7 +734,7 @@ exports.checkAuth = async (req, res, next) => {
         "deviceToken",
         "isCheckketoan",
         "ID_Chucvu",
-        "ID_Chinhanh"
+        "ID_Chinhanh",
       ],
       include: [
         {
