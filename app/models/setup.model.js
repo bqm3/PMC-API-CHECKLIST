@@ -46,6 +46,8 @@ const Ent_Hangmuc_Chiso = require('./BaocaochisoModel/ent_hangmuc_chiso.model')
 const Ent_Baocaochiso = require('./BaocaochisoModel/ent_baocaochiso.model');
 const Ent_hsse_user = require("./Hsse/ent_hsse_user.model");
 
+const Tb_User_History = require("./tb_user_history.model")
+
 Ent_Hangmuc_Chiso.belongsTo(Ent_duan, {as: "ent_duan", foreignKey: "ID_Duan"})
 Ent_Hangmuc_Chiso.belongsTo(Ent_Loai_Chiso, {as:"ent_loai_chiso", foreignKey: "ID_LoaiCS"})
 
@@ -311,6 +313,9 @@ Tb_checklistchitietdone.belongsTo(Tb_checklistc, {
   foreignKey: "ID_ChecklistC",
 });
 
+// user history
+Tb_User_History.belongsTo(Ent_duan, {foreignKey: "ID_Duan",})
+Tb_User_History.belongsTo(Ent_chucvu, {foreignKey: "ID_Chucvu",})
 
 module.exports = {
   Ent_toanha,
@@ -347,5 +352,6 @@ module.exports = {
   S0_Thaydoithe,
   S0_Thaydoithe_log,
   Ent_Phanhe,
-  Ent_Thamsophanhe
+  Ent_Thamsophanhe,
+  Tb_User_History
 };
