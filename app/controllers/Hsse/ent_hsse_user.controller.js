@@ -1,10 +1,11 @@
 const { Ent_Hsse_User, Ent_user, HSSE_Log } = require("../../models/setup.model");
 const { getThamsophanhe } = require("./ent_thamsophanhe.controller");
-const { Op } = require("sequelize");
+const { Op, fn, col, literal } = require('sequelize');
 const moment = require("moment");
 const hsse = require("../../models/hsse.model");
 const sequelize = require("../../config/db.config");
 const { Expo } = require("expo-server-sdk");
+const { QueryTypes } = require('sequelize');
 
 // Khởi tạo một đối tượng Expo
 let expo = new Expo();
@@ -617,5 +618,28 @@ const funcXaThai = async (userData, combinedData) => {
     return xaThaiWarning;
   } catch (error) {
     throw error;
+  }
+};
+
+exports.canhBaoXaThai = async (req, res) => {
+  try {
+    const { Ngay } = req.query;
+
+    // Gọi stored procedure trong MySQL
+    const result = await sequelize.query(
+      'CALL TimKiemCanhBaoTheoNgay(:Ngay)',  // dùng CALL thay vì EXEC
+      {
+        replacements: { Ngay },
+        type: QueryTypes.RAW // dùng RAW vì CALL trả về mảng nhiều lớp
+      }
+    );
+
+    // Với CALL, kết quả thường nằm trong mảng đầu tiên
+    res.status(200).json(result); 
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({
+      message: error.message || "Có lỗi xảy ra khi gọi thủ tục",
+    });
   }
 };

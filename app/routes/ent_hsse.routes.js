@@ -16,6 +16,7 @@ module.exports = (app) => {
   router.get("/find", [isAuthenticated], ent_hsse_user.checkHSSE);
   router.get("/all", [isAuthenticated], ent_hsse_user.getHSSE);
   router.get("/admin", [isAuthenticated], ent_hsse_user.getHSSEAll);
+  router.get("/canhbao-xathai", ent_hsse_user.canhBaoXaThai);
   router.get("/:id", [isAuthenticated], ent_hsse_user.getDetailHSSE);
   router.put("/update/:id", [isAuthenticated], ent_hsse_user.updateHSSE);
   router.put("/update/psh/:id", [isAuthenticated], ent_hsse_user.updateHSSE_PSH);
