@@ -41,6 +41,9 @@ const Ent_duan = sequelize.define(
     SDTKhanCap: {
       type: DataTypes.CHAR,
     },
+    Ngayketthuc: {
+      type: DataTypes.DATE,
+    },
     isDelete: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
@@ -54,8 +57,8 @@ const Ent_duan = sequelize.define(
   {
     indexes: [
       {
-        unique: false,  
-        fields: ['isDelete'], 
+        unique: false,
+        fields: ["isDelete"],
       },
     ],
   }

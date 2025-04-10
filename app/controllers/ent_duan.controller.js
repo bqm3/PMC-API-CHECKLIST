@@ -38,6 +38,7 @@ exports.create = async (req, res) => {
     const data = {
       Duan: formatVietnameseText(req.body.Duan),
       Ngaybatdau: req.body.Ngaybatdau,
+      Ngayketthuc: req.body.Ngayketthuc,
       ID_Nhom: req.body.ID_Nhom || null,
       ID_Chinhanh: req.body.ID_Chinhanh || null,
       ID_Linhvuc: req.body.ID_Linhvuc || null,
@@ -273,6 +274,7 @@ exports.update = async (req, res) => {
             req.body.Logo ||
             `https://checklist.pmcweb.vn/be/upload/logo/${Anh}`,
           Ngaybatdau: req.body.Ngaybatdau,
+          Ngayketthuc: req.body.Ngayketthuc,
           Percent: req.body.Percent,
           ID_Nhom: req.body.ID_Nhom || null,
           ID_Chinhanh: req.body.ID_Chinhanh || null,
@@ -667,9 +669,9 @@ exports.getProjectbyName = async (req, res) => {
 };
 
 exports.updateSDTKhanCap = async (req, res) => {
-  const transaction = await sequelize.transaction(); 
+  const transaction = await sequelize.transaction();
   try {
-    const { SDTKhanCap } = req.body; 
+    const { SDTKhanCap } = req.body;
     const userData = req.user?.data;
 
     if (!SDTKhanCap) {
@@ -721,10 +723,10 @@ exports.getSDTKhanCap = async (req, res) => {
       where: {
         ID_Duan: userData.ID_Duan,
         isDelete: 0,
-      }
-    })
+      },
+    });
 
-    if(sdt.SDTKhanCap != null && sdt.SDTKhanCap != undefined) {
+    if (sdt.SDTKhanCap != null && sdt.SDTKhanCap != undefined) {
       return res.status(200).json({
         message: "Số điện thoại khẩn cấp của dự án!",
         SDTKhanCap: sdt.SDTKhanCap,
@@ -734,19 +736,18 @@ exports.getSDTKhanCap = async (req, res) => {
         where: {
           ID_Chucvu: 2,
           ID_Duan: userData.ID_Duan,
-          isDelete: 0
-        }
-      })
+          isDelete: 0,
+        },
+      });
       return res.status(200).json({
         message: "Số điện thoại khẩn cấp của dự án!",
-        SDTKhanCap: data[0]?.Sodienthoai
+        SDTKhanCap: data[0]?.Sodienthoai,
       });
     }
-
   } catch (error) {
     return res.status(500).json({
       success: false,
       message: error.message || "Lỗi server! Vui lòng thử lại sau.",
     });
   }
-}
+};
