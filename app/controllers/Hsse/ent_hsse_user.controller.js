@@ -627,7 +627,7 @@ exports.canhBaoXaThai = async (req, res) => {
 
     // Gọi stored procedure trong MySQL
     const result = await sequelize.query(
-      'CALL TimKiemCanhBaoTheoNgay(:Ngay)',  // dùng CALL thay vì EXEC
+      'CALL Timkiemthongkexathai(:Ngay)',  // dùng CALL thay vì EXEC
       {
         replacements: { Ngay },
         type: QueryTypes.RAW // dùng RAW vì CALL trả về mảng nhiều lớp

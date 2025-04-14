@@ -18,6 +18,7 @@ module.exports = (app) => {
   router.get("/all-duan", [isAuthenticated], p0.getAll_ByID_Duan);
   router.get("/so-the-phat-hanh", [isAuthenticated], p0.get_SoThePhatHanh);
   router.get("/export-excel", [isAuthenticated], p0.exportExcel);
+  router.get("/analytics/:id", p0.analytics);
   router.get("/:id", [isAuthenticated], p0.getDetailP0);
   router.put("/update/:id", [isAuthenticated], p0.updateP0);
 
