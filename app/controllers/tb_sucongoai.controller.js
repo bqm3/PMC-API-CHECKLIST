@@ -19,8 +19,10 @@ const xlsx = require("xlsx");
 const ExcelJS = require("exceljs");
 const moment = require("moment");
 const moment2 = require("moment-timezone");
+const { sendMail } = require("./ent_bansuco.controller")
 
 exports.create = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
     const userData = req.user.data;
     const { body, files } = req;
@@ -105,18 +107,15 @@ exports.create = async (req, res) => {
         `${Ghichu}` !== "null" && `${Ghichu}` !== "undefined" ? Ghichu : null,
     };
 
-    Tb_sucongoai.create(data)
-      .then(() => {
-        res.status(200).json({
-          message: "Gửi sự cố thành công!",
-        });
-      })
-      .catch((err) => {
-        res.status(500).json({
-          message: err.message || "Lỗi! Vui lòng thử lại sau.",
-        });
-      });
+    const createPromise = Tb_sucongoai.create(data, { transaction: t });
+    const mailPromise = sendMail(data, userData); 
+
+    await Promise.all([createPromise, mailPromise]);
+    await t.commit();
+    
+    res.status(200).json({ message: "Thành công!" });
   } catch (error) {
+    await t.rollback();
     res.status(500).json({
       message: error.message || "Lỗi! Vui lòng thử lại sau.",
     });
