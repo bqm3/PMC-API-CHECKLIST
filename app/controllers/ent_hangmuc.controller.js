@@ -661,6 +661,7 @@ exports.uploadFiles = async (req, res) => {
         const tenTang = formatVietnameseText(transformedItem["TÊNTẦNG"]);
         const tenHangmuc = formatVietnameseText(transformedItem["TÊNHẠNGMỤC"]);
         const quanTrong = formatVietnameseText(transformedItem["QUANTRỌNG"]);
+        const ma_qr_cu = formatVietnameseText(transformedItem["QRCŨ"]);
 
         const khoiCongViecList = tenKhoiCongViec
           ?.split(",")
@@ -694,7 +695,7 @@ exports.uploadFiles = async (req, res) => {
           ],
           where: {
             Tenkhuvuc: tenKhuvuc,
-            MaQrCode: generateQRCodeKV(
+            MaQrCode: ma_qr_cu ? ma_qr_cu :generateQRCodeKV(
               tenToanha,
               tenKhuvuc,
               tenTang,
@@ -709,7 +710,7 @@ exports.uploadFiles = async (req, res) => {
         });
 
         // Generate a QR code for hạng mục
-        const maQrCode = generateQRCodeHM(
+        const maQrCode = ma_qr_cu ? ma_qr_cu :generateQRCodeHM(
           tenToanha,
           tenKhuvuc,
           tenHangmuc,

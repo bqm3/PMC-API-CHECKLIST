@@ -733,6 +733,7 @@ exports.getSDTKhanCap = async (req, res) => {
       });
     } else {
       const data = await Ent_user.findAll({
+        attributes: ['ID_Chucvu', 'ID_Duan', 'Sodienthoai'],
         where: {
           ID_Chucvu: 2,
           ID_Duan: userData.ID_Duan,

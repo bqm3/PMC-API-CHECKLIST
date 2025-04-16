@@ -2011,6 +2011,8 @@ exports.filterReturn = async (req, res) => {
       whereCondition.ID_Hangmuc = {
         [Op.in]: tbChecklist.ID_Hangmucs,
       };
+    } else {
+      whereCondition.ID_Hangmuc = null
     }
 
     whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
@@ -2490,6 +2492,7 @@ exports.uploadFiles = async (req, res) => {
           const quanTrong = formatVietnameseText(transformedItem["QUANTRỌNG"]);
           const ghiChu = formatVietnameseText(transformedItem["GHICHÚ"]);
           const nhap = formatVietnameseText(transformedItem["NHẬP"]);
+          const ma_qr_cu = formatVietnameseText(transformedItem["QRCŨ"]);
 
           if (!tenChecklist) {
             console.log("Bỏ qua do thiếu tên checklist");
@@ -2553,7 +2556,7 @@ exports.uploadFiles = async (req, res) => {
                       validKhoiCVs
                     )}')`
                   ),
-                  MaQrCode: generateQRCodeKV(
+                  MaQrCode: ma_qr_cu ? ma_qr_cu : generateQRCodeKV(
                     tenToanha,
                     tenKhuvuc,
                     tenTang,
@@ -2563,7 +2566,7 @@ exports.uploadFiles = async (req, res) => {
               },
             ],
             where: {
-              MaQrCode: generateQRCodeHM(
+              MaQrCode: ma_qr_cu ? ma_qr_cu :generateQRCodeHM(
                 tenToanha,
                 tenKhuvuc,
                 tenHangmuc,
