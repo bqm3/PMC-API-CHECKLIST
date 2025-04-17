@@ -468,15 +468,18 @@ exports.getKhuVucFilter = async (req, res) => {
           {
             model: Ent_toanha,
             attributes: ["Toanha", "Sotang", "ID_Toanha"],
+            where: { isDelete: 0 },
           },
           {
             model: Ent_khuvuc_khoicv,
             as: "ent_khuvuc_khoicvs",
             attributes: ["ID_KhoiCV", "ID_Khuvuc", "ID_KV_CV"],
+            where: { isDelete: 0 },
             include: [
               {
                 model: Ent_khoicv,
                 attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
+                where: { isDelete: 0 },
               },
             ],
           },
