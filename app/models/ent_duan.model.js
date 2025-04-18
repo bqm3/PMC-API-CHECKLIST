@@ -44,6 +44,9 @@ const Ent_duan = sequelize.define(
     Ngayketthuc: {
       type: DataTypes.DATE,
     },
+    P0: {
+      type: DataTypes.INTEGER,
+    },
     isDelete: {
       type: DataTypes.INTEGER,
       defaultValue: 0,

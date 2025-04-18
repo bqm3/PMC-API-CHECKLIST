@@ -1105,7 +1105,8 @@ const phan4P0 = async (inputDate) => {
         isDelete: 0,
         ID_Duan: {
           [Op.notIn]: [1,140]
-        }
+        },
+        P0: 1
       },
       include: [
         {
