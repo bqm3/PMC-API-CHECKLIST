@@ -643,3 +643,26 @@ exports.canhBaoXaThai = async (req, res) => {
     });
   }
 };
+
+exports.duan_khongnhap_xathai = async (req, res) => {
+  try {
+    const { p_ngay } = req.query;
+
+    // Gọi stored procedure trong MySQL
+    const result = await sequelize.query(
+      'CALL Dsduan_khongnhap_xathai(:p_ngay)',  // dùng CALL thay vì EXEC
+      {
+        replacements: { p_ngay },
+        type: QueryTypes.RAW // dùng RAW vì CALL trả về mảng nhiều lớp
+      }
+    );
+
+    // Với CALL, kết quả thường nằm trong mảng đầu tiên
+    res.status(200).json(result); 
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({
+      message: error.message || "Có lỗi xảy ra khi gọi thủ tục",
+    });
+  }
+};
