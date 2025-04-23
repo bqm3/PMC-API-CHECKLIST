@@ -59,6 +59,8 @@ exports.createHSSE = async (req, res) => {
     const data = req.body;
     const Ngay_ghi_nhan = moment(new Date()).format("YYYY-MM-DD");
     const yesterday = moment(Ngay_ghi_nhan).subtract(1, "days").format("YYYY-MM-DD");
+    const thuSo = moment(Ngay_ghi_nhan).day();
+    const thuSoDieuChinh = thuSo === 0 ? 7 : thuSo;
 
     // Convert null values to 0
     const sanitizedData = Object.keys(data).reduce((acc, key) => {
@@ -72,6 +74,7 @@ exports.createHSSE = async (req, res) => {
       Nguoi_tao: userData?.UserName || userData?.Hoten,
       Email: userData?.Email,
       modifiedBy: "Checklist",
+      ID_Ngay: thuSoDieuChinh
     };
 
     const combinedData = { ...sanitizedData, ...dataUser };
@@ -229,6 +232,9 @@ exports.createHSSE_PSH = async (req, res) => {
       return acc;
     }, {});
 
+    const thuSo = moment(data.Ngay_ghi_nhan).day();
+    const thuSoDieuChinh = thuSo === 0 ? 7 : thuSo;
+
     const dataUser = {
       Ten_du_an: userData?.ent_duan?.Duan,
       Ghichu: data?.Ghichu || null,
@@ -236,6 +242,7 @@ exports.createHSSE_PSH = async (req, res) => {
       Nguoi_tao: userData?.UserName || userData?.Hoten,
       Email: userData?.Email,
       modifiedBy: "Checklist",
+      ID_Ngay: thuSoDieuChinh
     };
 
     const combinedData = { ...sanitizedData, ...dataUser };

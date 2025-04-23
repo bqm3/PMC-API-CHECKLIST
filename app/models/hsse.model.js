@@ -149,6 +149,9 @@ const hsse = sequelize.define(
     NaOCL: {
       type: DataTypes.DOUBLE,
     },
+    ID_Ngay: {
+      type: DataTypes.INTEGER,
+    }
   },
   {
     freezeTableName: true,
