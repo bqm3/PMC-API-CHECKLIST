@@ -10,6 +10,8 @@ module.exports = (app) => {
   router.get("/ent_linhvuc/all", ent_all.getLinhvuc);
   router.get("/ent_loaihinh/all", ent_all.getLoaihinh);
   router.get("/ent_phanloai/all", ent_all.getPhanloai);
+  router.get("/ent_phanhe/all", ent_all.getPhanhe);
+  router.get("/ent_loaisosanh/all", ent_all.getLoaisosanh);
   router.get("/apilogs", ent_all.getLogsWhere);
   router.post("/date", ent_all.checkDateReportData);
 

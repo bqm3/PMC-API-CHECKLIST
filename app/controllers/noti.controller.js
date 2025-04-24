@@ -1,7 +1,7 @@
 exports.notiAll = async (req, res) => {
   const { version, platform } = req.query;
-  const keyVersionIOS = "2.1.7";
-  const keyVersionAPK = "2.1.7";
+  const keyVersionIOS = "2.2.0";
+  const keyVersionAPK = "2.2.0";
 
   let ischeck = false;
   let resData = "";
@@ -20,7 +20,7 @@ exports.notiAll = async (req, res) => {
         type: "NEW",
         textTitle: "PMC Checklist",
         textBody:
-          "Phiên bản 2.1.7 đã xuất bản. Cập nhật phiên bản để có trải nghiệm tốt nhất.",
+          "Phiên bản 2.2.0 đã xuất bản. Cập nhật phiên bản để có trải nghiệm tốt nhất.",
         time: 10000,
       };
       status = "1";
@@ -29,7 +29,7 @@ exports.notiAll = async (req, res) => {
         type: "NEW",
         textTitle: "PMC Checklist",
         textBody:
-          "Phiên bản 2.1.7 đã xuất bản. Cập nhật phiên bản để có trải nghiệm tốt nhất.",
+          "Phiên bản 2.2.0 đã xuất bản. Cập nhật phiên bản để có trải nghiệm tốt nhất.",
         time: 10000,
       };
       status = "1";

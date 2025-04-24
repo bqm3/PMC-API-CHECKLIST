@@ -19,6 +19,12 @@ const Ent_checklist = sequelize.define(
     ID_Tang: {
       type: DataTypes.INTEGER,
     },
+    ID_Loaisosanh: {
+      type: DataTypes.INTEGER,
+    },
+    ID_Phanhe: {
+      type: DataTypes.INTEGER,
+    },
     Sothutu: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -40,7 +46,8 @@ const Ent_checklist = sequelize.define(
     },
     Giatridinhdanh: {
       type: DataTypes.CHAR,
-    }, Giatriloi: {
+    },
+    Giatriloi: {
       type: DataTypes.CHAR,
     },
     sCalv: {
@@ -58,16 +65,11 @@ const Ent_checklist = sequelize.define(
       type: DataTypes.INTEGER,
       defaultValue: 0,
     },
-    calv_1: {
-      type: DataTypes.CHAR,
+    isCanhbao: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
     },
-    calv_2: {
-      type: DataTypes.CHAR,
-    },
-    calv_3: {
-      type: DataTypes.CHAR,
-    },
-    calv_4: {
+    Giatrisosanh: {
       type: DataTypes.CHAR,
     },
     Giatrinhan: {
@@ -76,8 +78,8 @@ const Ent_checklist = sequelize.define(
     ID_User: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      
     },
+
     isDelete: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
@@ -88,15 +90,12 @@ const Ent_checklist = sequelize.define(
     timestamps: true,
     tableName: "ent_checklist",
     indexes: [
-    
       {
         unique: false,
         fields: ["isDelete"],
       },
     ],
-  },
- 
+  }
 );
 
 module.exports = Ent_checklist;
-

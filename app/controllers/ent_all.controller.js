@@ -6,6 +6,8 @@ const {
   Ent_phanloaida,
   Ent_duan,
   Ent_Baocaochiso,
+  Ent_loaisosanh,
+  Ent_phanhe,
 } = require("../models/setup.model");
 const hsse = require("../models/hsse.model");
 const moment = require("moment");
@@ -122,6 +124,56 @@ exports.getPhanloai = async (req, res) => {
   try {
     await Ent_phanloaida.findAll({
       attributes: ["ID_Phanloai", "Phanloai", "isDelete"],
+      where: {
+        isDelete: 0,
+      },
+    })
+      .then((data) => {
+        res.status(200).json({
+          message: "Danh sách",
+          data: data,
+        });
+      })
+      .catch((err) => {
+        res.status(500).json({
+          message: err.message || "Lỗi! Vui lòng thử lại sau.",
+        });
+      });
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+exports.getLoaisosanh = async (req, res) => {
+  try {
+    await Ent_loaisosanh.findAll({
+      where: {
+        isDelete: 0,
+      },
+    })
+      .then((data) => {
+        res.status(200).json({
+          message: "Danh sách",
+          data: data,
+        });
+      })
+      .catch((err) => {
+        res.status(500).json({
+          message: err.message || "Lỗi! Vui lòng thử lại sau.",
+        });
+      });
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+exports.getPhanhe = async (req, res) => {
+  try {
+    await Ent_phanhe.findAll({
       where: {
         isDelete: 0,
       },

@@ -222,11 +222,6 @@ exports.createFirstChecklist = async (req, res, next) => {
         "isCheck",
         "Giatrinhan",
         "ID_User",
-
-        "calv_1",
-        "calv_2",
-        "calv_3",
-        "calv_4",
         "isDelete",
       ],
       include: [
@@ -2520,6 +2515,9 @@ exports.checklistCalv = async (req, res) => {
                 "ID_Checklist",
                 "ID_Hangmuc",
                 "ID_Tang",
+                "ID_Phanhe",
+                "ID_Loaisosanh",
+                "Giatrisosanh",
                 "Sothutu",
                 "Maso",
                 "MaQrCode",
@@ -2619,6 +2617,9 @@ exports.checklistCalv = async (req, res) => {
             "ID_Hangmuc",
             "ID_Khuvuc",
             "ID_Tang",
+            "ID_Phanhe",
+            "ID_Loaisosanh",
+            "Giatrisosanh",
             "Sothutu",
             "Maso",
             "MaQrCode",
@@ -2745,6 +2746,9 @@ exports.checklistCalv = async (req, res) => {
                 "ID_Checklist",
                 "ID_Hangmuc",
                 "ID_Tang",
+                "ID_Phanhe",
+                "ID_Loaisosanh",
+                "Giatrisosanh",
                 "Sothutu",
                 "Maso",
                 "MaQrCode",
@@ -2856,6 +2860,9 @@ exports.checklistCalv = async (req, res) => {
             "ID_Hangmuc",
             "ID_Khuvuc",
             "ID_Tang",
+            "ID_Phanhe",
+            "ID_Loaisosanh",
+            "Giatrisosanh",
             "Sothutu",
             "Maso",
             "MaQrCode",
@@ -4546,8 +4553,7 @@ exports.tiLeHoanThanh = async (req, res) => {
     const tangGiam = req.query.tangGiam || "desc";
     const top = req.query.top || "5";
 
-
-    let where = {} ;
+    let where = {};
 
     if (user.ID_Chucvu == 14 && user.ID_Chinhanh != null) {
       where.ID_Chinhanh = user.ID_Chinhanh;
@@ -4618,7 +4624,7 @@ exports.tiLeHoanThanh = async (req, res) => {
         {
           model: Ent_duan,
           attributes: ["Duan", "ID_Nhom", "ID_Phanloai"],
-          where
+          where,
         },
         {
           model: Ent_khoicv,
@@ -4776,7 +4782,7 @@ exports.tiLeSuco = async (req, res) => {
     const top = req.query.top || "5";
 
     // Xây dựng điều kiện where cho truy vấn
-    let where = {} ;
+    let where = {};
 
     if (user.ID_Chucvu == 14 && user.ID_Chinhanh != null) {
       where.ID_Chinhanh = user.ID_Chinhanh;
@@ -4831,7 +4837,7 @@ exports.tiLeSuco = async (req, res) => {
         {
           model: Ent_duan,
           attributes: ["Duan", "ID_Nhom", "ID_Phanloai"],
-          where
+          where,
         },
         {
           model: Ent_khoicv,
@@ -4965,7 +4971,7 @@ exports.suCoChiTiet = async (req, res) => {
     const tableName = `tb_checklistchitiet_${month}_${year}`;
     defineDynamicModelChiTiet(tableName, sequelize);
 
-    let where = {} ;
+    let where = {};
 
     if (user.ID_Chucvu == 14 && user.ID_Chinhanh != null) {
       where.ID_Chinhanh = user.ID_Chinhanh;
@@ -5010,7 +5016,7 @@ exports.suCoChiTiet = async (req, res) => {
         {
           model: Ent_duan,
           attributes: ["Duan", "ID_Nhom", "ID_Phanloai"],
-          where
+          where,
         },
         {
           model: Ent_khoicv,
@@ -5135,7 +5141,7 @@ exports.soSanhSuCo = async (req, res) => {
       whereClause.ID_KhoiCV = user.ID_KhoiCV;
     }
 
-    let where = {} ;
+    let where = {};
 
     if (user.ID_Chucvu == 14 && user.ID_Chinhanh != null) {
       where.ID_Chinhanh = user.ID_Chinhanh;
@@ -5144,7 +5150,10 @@ exports.soSanhSuCo = async (req, res) => {
     // Truy vấn số lượng sự cố cho tuần trước
     const lastWeekIncidents = await Tb_checklistc.findAll({
       attributes: [
-        [sequelize.fn("COUNT", sequelize.col("tb_checklistc.ID_Duan")), "lastWeekTotalCount"],
+        [
+          sequelize.fn("COUNT", sequelize.col("tb_checklistc.ID_Duan")),
+          "lastWeekTotalCount",
+        ],
       ],
       where: {
         ...whereClause,
@@ -5157,9 +5166,7 @@ exports.soSanhSuCo = async (req, res) => {
         },
         Tinhtrang: 1,
       },
-      include: [
-        { model: Ent_duan, attributes: ["Duan"], where},
-      ],
+      include: [{ model: Ent_duan, attributes: ["Duan"], where }],
       raw: true,
     });
 
@@ -5179,9 +5186,7 @@ exports.soSanhSuCo = async (req, res) => {
         },
         Tinhtrang: 1,
       },
-      include: [
-        { model: Ent_duan, attributes: ["Duan"], where},
-      ],
+      include: [{ model: Ent_duan, attributes: ["Duan"], where }],
       raw: true,
     });
 
@@ -5398,9 +5403,8 @@ exports.reportPercentWeek = async (req, res) => {
       prevWhereClause.ID_KhoiCV = user.ID_KhoiCV;
     }
 
-
     // role gd chi nhanh
-    let where = {} ;
+    let where = {};
 
     if (user.ID_Chucvu == 14 && user.ID_Chinhanh != null) {
       where.ID_Chinhanh = user.ID_Chinhanh;
@@ -5480,7 +5484,7 @@ exports.reportPercentWeek = async (req, res) => {
       ],
       where: lastWhereClause,
       include: [
-        { model: Ent_duan, attributes: ["Duan"], where},
+        { model: Ent_duan, attributes: ["Duan"], where },
         { model: Ent_khoicv, attributes: ["KhoiCV"] },
         { model: Ent_calv, attributes: ["Tenca"] },
       ],
@@ -5723,7 +5727,7 @@ exports.reportPercentLastWeek = async (req, res) => {
       whereClause.ID_KhoiCV = user.ID_KhoiCV;
     }
 
-    let where = {} ;
+    let where = {};
 
     if (user.ID_Chucvu == 14 && user.ID_Chinhanh != null) {
       where.ID_Chinhanh = user.ID_Chinhanh;
@@ -6802,7 +6806,7 @@ exports.getProjectsChecklistStatus = async (req, res) => {
     }
 
     // role gd chi nhanh
-    let where = {} ;
+    let where = {};
 
     if (user.ID_Chucvu == 14 && user.ID_Chinhanh != null) {
       where.ID_Chinhanh = user.ID_Chinhanh;
@@ -6825,7 +6829,7 @@ exports.getProjectsChecklistStatus = async (req, res) => {
         {
           model: Ent_duan,
           attributes: ["Duan"],
-          where
+          where,
         },
         {
           model: Ent_khoicv, // Thêm bảng Ent_khoicv để lấy tên khối

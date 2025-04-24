@@ -213,10 +213,7 @@ exports.get = async (req, res) => {
         "isCheck",
         "Giatrinhan",
         "Tinhtrang",
-        "calv_1",
-        "calv_2",
-        "calv_3",
-        "calv_4",
+
         "ID_User",
         "isImportant",
         "isDelete",
@@ -352,6 +349,9 @@ exports.getDetail = async (req, res) => {
           "Ghichu",
           "Tieuchuan",
           "Giatridinhdanh",
+          "ID_Phanhe",
+          "ID_Loaisosanh",
+          "Giatrisosanh",
           "isCheck",
           "Giatrinhan",
           "Giatriloi",
@@ -456,7 +456,7 @@ exports.update = async (req, res) => {
   try {
     const userData = req.user.data;
     if (req.params.id && userData) {
-      if (!req.body.Giatrinhan || !req.body.Checklist) {
+      if (!req.body.Checklist) {
         return res.status(400).json({
           message: "Cần nhập đầy đủ thông tin!",
         });
@@ -467,6 +467,9 @@ exports.update = async (req, res) => {
         ID_Khuvuc: req.body.ID_Khuvuc,
         ID_Tang: req.body.ID_Tang,
         ID_Hangmuc: req.body.ID_Hangmuc,
+        ID_Phanhe: req.body.ID_Phanhe,
+        ID_Loaisosanh: req.body.ID_Loaisosanh,
+        Giatrisosanh: req.body.Giatrisosanh,
         Sothutu: req.body.Sothutu,
         Maso: req.body.Maso,
         MaQrCode: req.body.MaQrCode,
@@ -477,10 +480,7 @@ exports.update = async (req, res) => {
         Giatriloi: req.body.Giatriloi || "",
         isCheck: req.body.isCheck,
         Tieuchuan: req.body.Tieuchuan || "",
-        // calv_1: JSON.stringify(validCalv[0]) || null,
-        // calv_2: JSON.stringify(validCalv[1]) || null,
-        // calv_3: JSON.stringify(validCalv[2]) || null,
-        // calv_4: JSON.stringify(validCalv[3]) || null,
+
         isDelete: 0,
         isImportant: req.body.isImportant || 0,
       };
@@ -902,10 +902,6 @@ exports.getChecklist = async (req, res) => {
         "Giatrinhan",
         "ID_User",
 
-        "calv_1",
-        "calv_2",
-        "calv_3",
-        "calv_4",
         "isDelete",
         "isImportant",
       ],
@@ -1377,6 +1373,9 @@ exports.filterChecklists = async (req, res) => {
         "ID_Khuvuc",
         "ID_Hangmuc",
         "ID_Tang",
+        "ID_Phanhe",
+        "ID_Loaisosanh",
+        "Giatrisosanh",
         "Sothutu",
         "Maso",
         "MaQrCode",
@@ -1390,10 +1389,7 @@ exports.filterChecklists = async (req, res) => {
         "Giatrinhan",
         "Tinhtrang",
         "ID_User",
-        "calv_1",
-        "calv_2",
-        "calv_3",
-        "calv_4",
+
         "isDelete",
       ],
       include: [
@@ -1477,8 +1473,6 @@ exports.filterChecklists = async (req, res) => {
     const filteredData = checklistData.filter(
       (item) => item.ent_hangmuc !== null
     );
-    console.log("filtered data", filteredData.length);
-
     return res.status(200).json({
       message:
         filteredData.length > 0
@@ -1621,10 +1615,6 @@ exports.filterChecklistWeb = async (req, res) => {
         "Tinhtrang",
         "ID_User",
 
-        "calv_1",
-        "calv_2",
-        "calv_3",
-        "calv_4",
         "isDelete",
       ],
       include: [
@@ -1991,7 +1981,6 @@ exports.filterReturn = async (req, res) => {
   try {
     const userData = req.user.data;
     const ID_ChecklistC = req.params.idc;
-    const ID_Calv = req.params.id_calv;
 
     const tbChecklist = await Tb_checklistc.findByPk(ID_ChecklistC, {
       attributes: ["ID_Hangmucs", "isDelete", "ID_ThietLapCa", "ID_Calv"],
@@ -2012,7 +2001,7 @@ exports.filterReturn = async (req, res) => {
         [Op.in]: tbChecklist.ID_Hangmucs,
       };
     } else {
-      whereCondition.ID_Hangmuc = null
+      whereCondition.ID_Hangmuc = null;
     }
 
     whereCondition["$ent_khuvuc.ent_toanha.ID_Duan$"] = userData?.ID_Duan;
@@ -2023,6 +2012,9 @@ exports.filterReturn = async (req, res) => {
         "ID_Khuvuc",
         "ID_Hangmuc",
         "ID_Tang",
+        "ID_Phanhe",
+        "ID_Loaisosanh",
+        "Giatrisosanh",
         "Sothutu",
         "Maso",
         "MaQrCode",
@@ -2037,10 +2029,6 @@ exports.filterReturn = async (req, res) => {
         "Tinhtrang",
         "ID_User",
 
-        "calv_1",
-        "calv_2",
-        "calv_3",
-        "calv_4",
         "isDelete",
       ],
       include: [
@@ -2181,10 +2169,7 @@ exports.getListChecklistWeb = async (req, res) => {
         "Giatrinhan",
 
         "Tinhtrang",
-        "calv_1",
-        "calv_2",
-        "calv_3",
-        "calv_4",
+
         "ID_User",
         "isDelete",
       ],
@@ -2304,10 +2289,6 @@ exports.getChecklistTotal = async (req, res) => {
         "Giatrinhan",
         "ID_User",
 
-        "calv_1",
-        "calv_2",
-        "calv_3",
-        "calv_4",
         "isDelete",
       ],
       include: [
@@ -2556,22 +2537,21 @@ exports.uploadFiles = async (req, res) => {
                       validKhoiCVs
                     )}')`
                   ),
-                  MaQrCode: ma_qr_cu ? ma_qr_cu : generateQRCodeKV(
-                    tenToanha,
-                    tenKhuvuc,
-                    tenTang,
-                    userData.ID_Duan
-                  ),
+                  MaQrCode: ma_qr_cu
+                    ? ma_qr_cu
+                    : generateQRCodeKV(
+                        tenToanha,
+                        tenKhuvuc,
+                        tenTang,
+                        userData.ID_Duan
+                      ),
                 },
               },
             ],
             where: {
-              MaQrCode: ma_qr_cu ? ma_qr_cu :generateQRCodeHM(
-                tenToanha,
-                tenKhuvuc,
-                tenHangmuc,
-                tenTang
-              ),
+              MaQrCode: ma_qr_cu
+                ? ma_qr_cu
+                : generateQRCodeHM(tenToanha, tenKhuvuc, tenHangmuc, tenTang),
               Hangmuc: tenHangmuc,
               isDelete: 0,
             },
@@ -2641,10 +2621,7 @@ exports.uploadFiles = async (req, res) => {
               "Giatrinhan",
 
               "Tinhtrang",
-              "calv_1",
-              "calv_2",
-              "calv_3",
-              "calv_4",
+
               "ID_User",
               "isDelete",
             ],
@@ -2895,10 +2872,7 @@ exports.uploadFixFiles = async (req, res) => {
               "Giatrinhan",
 
               "Tinhtrang",
-              "calv_1",
-              "calv_2",
-              "calv_3",
-              "calv_4",
+
               "ID_User",
               "isDelete",
             ],
@@ -2929,7 +2903,6 @@ exports.uploadFixFiles = async (req, res) => {
               },
               { transaction }
             );
-            console.log(`Cập nhật checklist: ${tenChecklist}`);
           }
         } catch (error) {
           throw new Error(`Lỗi ở dòng ${index + 2}: ${error.message}`);
