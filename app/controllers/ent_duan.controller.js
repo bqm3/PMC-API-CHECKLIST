@@ -45,6 +45,9 @@ exports.create = async (req, res) => {
       ID_Loaihinh: req.body.ID_Loaihinh || null,
       ID_Phanloai: req.body.ID_Phanloai || null,
       Percent: req.body.Percent || null,
+      P0: req.body.P0 || null,
+      HSSE: req.body.HSSE || null,
+      BeBoi: req.body.BeBoi || null,
       Diachi: req.body.Diachi,
       Vido: req.body.Vido,
       Kinhdo: req.body.Kinhdo,
@@ -91,6 +94,9 @@ exports.get = async (req, res) => {
           "Percent",
           "Kinhdo",
           "Logo",
+          "P0",
+          "HSSE",
+          "BeBoi",
           "isDelete",
         ],
         include: [
@@ -137,6 +143,9 @@ exports.get = async (req, res) => {
           "Vido",
           "Kinhdo",
           "Logo",
+          "P0",
+          "HSSE",
+          "BeBoi",
           "isDelete",
         ],
         include: [
@@ -281,6 +290,9 @@ exports.update = async (req, res) => {
           ID_Linhvuc: req.body.ID_Linhvuc || null,
           ID_Loaihinh: req.body.ID_Loaihinh || null,
           ID_Phanloai: req.body.ID_Phanloai || null,
+          P0: req.body.P0 || null,
+          HSSE: req.body.HSSE || null,
+          BeBoi: req.body.BeBoi || null,
         },
         {
           where: {
@@ -352,6 +364,9 @@ exports.getKhuvucByDuan = async (req, res) => {
         "Percent",
         "Vido",
         "Kinhdo",
+        "P0",
+        "HSSE",
+        "BeBoi",
         "Logo",
         "isDelete",
       ],
@@ -445,80 +460,12 @@ exports.getThongtinduan = async (req, res) => {
         "ID_Loaihinh",
         "ID_Phanloai",
         "Logo",
+        "P0",
+        "HSSE",
+        "BeBoi",
         "isDelete",
       ],
-      include: [
-        // {
-        //   model: Ent_toanha,
-        //   as: "ent_toanha",
-        //   attributes: [
-        //     "ID_Toanha",
-        //     "Toanha",
-        //     "Sotang",
-        //     "ID_Duan",
-        //     "Vido",
-        //     "Kinhdo",
-        //     "isDelete",
-        //   ],
-        //   where: { isDelete: 0 },
-        //   required: false,
-        //   include: [
-        //     {
-        //       model: Ent_khuvuc,
-        //       as: "ent_khuvuc",
-        //       attributes: [
-        //         "ID_Khuvuc",
-        //         "Makhuvuc",
-        //         "MaQrCode",
-        //         "Tenkhuvuc",
-        //         "isDelete",
-        //       ],
-        //       where: { isDelete: 0 },
-        //       required: false,
-        //       include: [
-        //         {
-        //           model: Ent_hangmuc,
-        //           as: "ent_hangmuc",
-        //           attributes: [
-        //             "ID_Hangmuc",
-        //             "ID_Khuvuc",
-        //             "Hangmuc",
-        //             "MaQrCode",
-        //             "isDelete",
-        //             "Tieuchuankt",
-        //             "FileTieuChuan",
-        //           ],
-        //           where: { isDelete: 0 },
-        //           required: false,
-        //         },
-        //         {
-        //           model: Ent_khuvuc_khoicv,
-        //           attributes: ["ID_KhoiCV", "ID_Khuvuc", "ID_KV_CV"],
-        //           include: [
-        //             {
-        //               model: Ent_khoicv,
-        //               attributes: ["KhoiCV", "Ngaybatdau", "Chuky"],
-        //             },
-        //           ],
-        //         },
-        //       ],
-        //     },
-        //   ],
-        // },
-        {
-          model: Ent_chinhanh,
-          attributes: ["Tenchinhanh", "ID_Chinhanh"],
-        },
-        {
-          model: Ent_nhom,
-          attributes: ["Tennhom", "ID_Nhom"],
-        },
-        {
-          model: Ent_phanloaida,
-          as: "ent_phanloaida",
-          attributes: ["ID_Phanloai", "Phanloai"],
-        },
-      ],
+
       where: whereCondition, // Apply the dynamic where condition
     });
 
@@ -549,6 +496,9 @@ exports.getThongtinduantheonhom = async (req, res) => {
         "Percent",
         "ID_Phanloai",
         "Logo",
+        "P0",
+        "HSSE",
+        "BeBoi",
         "isDelete",
       ],
       include: [
@@ -614,6 +564,9 @@ exports.getProjectbyName = async (req, res) => {
         "ID_Loaihinh",
         "Percent",
         "ID_Phanloai",
+        "P0",
+        "HSSE",
+        "BeBoi",
         "Logo",
         "isDelete",
       ],
@@ -733,7 +686,7 @@ exports.getSDTKhanCap = async (req, res) => {
       });
     } else {
       const data = await Ent_user.findAll({
-        attributes: ['ID_Chucvu', 'ID_Duan', 'Sodienthoai'],
+        attributes: ["ID_Chucvu", "ID_Duan", "Sodienthoai"],
         where: {
           ID_Chucvu: 2,
           ID_Duan: userData.ID_Duan,
