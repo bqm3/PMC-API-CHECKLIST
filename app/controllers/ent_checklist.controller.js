@@ -2474,6 +2474,20 @@ exports.uploadFiles = async (req, res) => {
           const ghiChu = formatVietnameseText(transformedItem["GHICHÚ"]);
           const nhap = formatVietnameseText(transformedItem["NHẬP"]);
           const ma_qr_cu = formatVietnameseText(transformedItem["QRCŨ"]);
+          const soLanThucHien = formatVietnameseText(
+            transformedItem["SỐLẦNTHỰCHIỆN"]
+          );
+          const chupAnh = formatVietnameseText(transformedItem["CHỤPẢNH"]);
+          const canhBao = formatVietnameseText(transformedItem["CẢNHBÁO"]);
+          const thuocPhanHe = formatVietnameseText(
+            transformedItem["THUỘCPHÂNHỆ"]
+          );
+          const loaiSoSanh = formatVietnameseText(
+            transformedItem["LOẠISOSÁNH"]
+          );
+          const giaTriSoSanh = formatVietnameseText(
+            transformedItem["GIÁTRỊSOSÁNH"]
+          );
 
           if (!tenChecklist) {
             console.log("Bỏ qua do thiếu tên checklist");
@@ -2599,6 +2613,10 @@ exports.uploadFiles = async (req, res) => {
                 : 0,
             isCheck: nhap !== undefined && nhap !== null && nhap !== "" ? 1 : 0,
             ID_User: userData.ID_User,
+            ID_Phanhe: thuocPhanHe || 4,
+            ID_Loaisosanh: loaiSoSanh || null,
+            Giatrisosanh: giaTriSoSanh || null,
+            isCanhbao: canhBao || 0,
             isDelete: 0,
             Tinhtrang: 0,
           };
@@ -2707,6 +2725,20 @@ exports.uploadFixFiles = async (req, res) => {
           const quanTrong = formatVietnameseText(transformedItem["QUANTRỌNG"]);
           const ghiChu = formatVietnameseText(transformedItem["GHICHÚ"]);
           const nhap = formatVietnameseText(transformedItem["NHẬP"]);
+          const soLanThucHien = formatVietnameseText(
+            transformedItem["SỐLẦNTHỰCHIỆN"]
+          );
+          const chupAnh = formatVietnameseText(transformedItem["CHỤPẢNH"]);
+          const canhBao = formatVietnameseText(transformedItem["CẢNHBÁO"]);
+          const thuocPhanHe = formatVietnameseText(
+            transformedItem["THUỘCPHÂNHỆ"]
+          );
+          const loaiSoSanh = formatVietnameseText(
+            transformedItem["LOẠISOSÁNH"]
+          );
+          const giaTriSoSanh = formatVietnameseText(
+            transformedItem["GIÁTRỊSOSÁNH"]
+          );
 
           if (!tenChecklist) {
             console.log("Bỏ qua do thiếu tên checklist");
@@ -2717,19 +2749,6 @@ exports.uploadFixFiles = async (req, res) => {
             console.log("Bỏ qua do thiếu tên tầng");
             continue;
           }
-
-          const maQrKhuVuc = generateQRCodeKV(
-            tenToanha,
-            tenKhuvuc,
-            tenTang,
-            userData.ID_Duan
-          );
-          const maQrHangMuc = generateQRCodeHM(
-            tenToanha,
-            tenKhuvuc,
-            tenHangmuc,
-            tenTang
-          );
 
           const khoiCongViecList = tenKhoiCongViec
             ?.split(",")
@@ -2850,6 +2869,10 @@ exports.uploadFixFiles = async (req, res) => {
                 : 0,
             isCheck: nhap !== undefined && nhap !== null && nhap !== "" ? 1 : 0,
             ID_User: userData.ID_User,
+            ID_Phanhe: thuocPhanHe || 4,
+            ID_Loaisosanh: loaiSoSanh || null,
+            Giatrisosanh: giaTriSoSanh || null,
+            isCanhbao: canhBao || 0,
             isDelete: 0,
             Tinhtrang: 0,
           };
@@ -2900,6 +2923,10 @@ exports.uploadFixFiles = async (req, res) => {
                 Ghichu: ghiChu || existingChecklist.Ghichu,
                 isImportant: quanTrong ? 1 : existingChecklist.isImportant,
                 isCheck: nhap ? 1 : existingChecklist.isCheck,
+                ID_Phanhe: thuocPhanHe || 4,
+                ID_Loaisosanh: loaiSoSanh || null,
+                Giatrisosanh: giaTriSoSanh || null,
+                isCanhbao: canhBao || 0,
               },
               { transaction }
             );
