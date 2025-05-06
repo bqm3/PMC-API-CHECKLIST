@@ -10,14 +10,22 @@ module.exports = (app) => {
 
   router.post("/create", [isAuthenticated], ent_checklist.create);
   router.get("/", [isAuthenticated], ent_checklist.get);
-  router.get("/all", [isAuthenticated], ent_checklist.getListChecklistWeb)
-  router.get("/total", [isAuthenticated], ent_checklist.getChecklistTotal)
+  router.get("/all", [isAuthenticated], ent_checklist.getListChecklistWeb);
+  router.get("/total", [isAuthenticated], ent_checklist.getChecklistTotal);
 
   router.get("/:id", [isAuthenticated], ent_checklist.getDetail);
-  router.get("/:id/:idc/:id_calv/:id_hm", [isAuthenticated], ent_checklist.getChecklist);
-  router.post("/filter/:id/:idc/:id_calv/:id_hm", [isAuthenticated], ent_checklist.getFilter);
+  router.get(
+    "/:id/:idc/:id_calv/:id_hm",
+    [isAuthenticated],
+    ent_checklist.getChecklist
+  );
+  router.post(
+    "/filter/:id/:idc/:id_calv/:id_hm",
+    [isAuthenticated],
+    ent_checklist.getFilter
+  );
   router.post("/filter/", [isAuthenticated], ent_checklist.getFilterSearch);
-  
+
   router.put("/update/:id", [isAuthenticated], ent_checklist.update);
   router.put("/delete/:id", [isAuthenticated, logAction], ent_checklist.delete);
   router.put(
@@ -48,9 +56,21 @@ module.exports = (app) => {
     ent_checklist.filterReturn
   );
 
-  router.put("/delete-mul", [isAuthenticated, logAction], ent_checklist.deleteMul)
-  router.post("/uploads", [isAuthenticated, upload.single('files')], ent_checklist.uploadFiles)
-  router.post("/fix-uploads", [isAuthenticated, upload.single('files')], ent_checklist.uploadFixFiles)
+  router.put(
+    "/delete-mul",
+    [isAuthenticated, logAction],
+    ent_checklist.deleteMul
+  );
+  router.post(
+    "/uploads",
+    [isAuthenticated, upload.single("files")],
+    ent_checklist.uploadFiles
+  );
+  router.post(
+    "/fix-uploads",
+    [isAuthenticated, upload.single("files")],
+    ent_checklist.uploadFixFiles
+  );
 
   app.use("/api/v2/ent_checklist", router);
 };

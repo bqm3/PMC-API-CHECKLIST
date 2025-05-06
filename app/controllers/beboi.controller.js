@@ -97,9 +97,33 @@ exports.detailChecklistBeboi = async (req, res) => {
       order: [["Ngay_ghi_nhan", "DESC"]],
     });
 
+    const processedData = resData.map((item) => {
+      const dinhdanh = parseFloat(item.Giatridinhdanh || 0);
+      const ghinhan = parseFloat(item.Giatrighinhan || 0);
+      const sosanh = parseFloat(item.Giatrisosanh || 0);
+      let tyle = null;
+      let vuotChuan = null;
+
+      if (!isNaN(dinhdanh) && !isNaN(ghinhan) && ghinhan !== 0) {
+        // Tính tỷ lệ phần trăm
+        tyle = ((ghinhan - dinhdanh) / dinhdanh) * 100;
+
+        // So sánh lệch quá chuẩn (cả âm và dương)
+        if (!isNaN(sosanh)) {
+          vuotChuan = Math.abs(tyle) > sosanh;
+        }
+      }
+
+      return {
+        ...item.toJSON(),
+        Tyle: tyle !== null ? +tyle.toFixed(2) : null,
+        VuotChuan: vuotChuan,
+      };
+    });
+
     return res.status(200).json({
       message: "Danh sách bể bơi",
-      data: resData || [],
+      data: processedData || [],
     });
   } catch (error) {
     return res.status(500).json({

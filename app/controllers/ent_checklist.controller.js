@@ -1377,8 +1377,6 @@ exports.filterChecklists = async (req, res) => {
         "ID_Loaisosanh",
         "Giatrisosanh",
         "Sothutu",
-        "Maso",
-        "MaQrCode",
         "isImportant",
         "Checklist",
         "Ghichu",
@@ -1388,8 +1386,6 @@ exports.filterChecklists = async (req, res) => {
         "isCheck",
         "Giatrinhan",
         "Tinhtrang",
-        "ID_User",
-
         "isDelete",
       ],
       include: [
@@ -1424,14 +1420,7 @@ exports.filterChecklists = async (req, res) => {
               attributes: ["Toanha", "ID_Toanha"],
               include: {
                 model: Ent_duan,
-                attributes: [
-                  "ID_Duan",
-                  "Duan",
-                  "Diachi",
-                  "Vido",
-                  "Kinhdo",
-                  "Logo",
-                ],
+                attributes: ["ID_Duan", "Duan"],
                 where: { ID_Duan: userData.ID_Duan },
               },
             },
@@ -2594,6 +2583,7 @@ exports.uploadFiles = async (req, res) => {
 
           const sttChecklist = checklistOrderMap[checklistKey]; // Lấy số thứ tự hiện tại cho checklist
 
+          console.log("canhBao", canhBao);
           const data = {
             ID_Khuvuc: hangmuc.ID_Khuvuc,
             ID_Tang: tang.ID_Tang,
@@ -2616,7 +2606,7 @@ exports.uploadFiles = async (req, res) => {
             ID_Phanhe: thuocPhanHe || 4,
             ID_Loaisosanh: loaiSoSanh || null,
             Giatrisosanh: giaTriSoSanh || null,
-            isCanhbao: canhBao || 0,
+            isCanhbao: canhBao ? 1 : 0 || 0,
             isDelete: 0,
             Tinhtrang: 0,
           };
@@ -2872,7 +2862,7 @@ exports.uploadFixFiles = async (req, res) => {
             ID_Phanhe: thuocPhanHe || 4,
             ID_Loaisosanh: loaiSoSanh || null,
             Giatrisosanh: giaTriSoSanh || null,
-            isCanhbao: canhBao || 0,
+            isCanhbao: canhBao ? 1 : 0 || 0,
             isDelete: 0,
             Tinhtrang: 0,
           };
@@ -2926,7 +2916,7 @@ exports.uploadFixFiles = async (req, res) => {
                 ID_Phanhe: thuocPhanHe || 4,
                 ID_Loaisosanh: loaiSoSanh || null,
                 Giatrisosanh: giaTriSoSanh || null,
-                isCanhbao: canhBao || 0,
+                isCanhbao: canhBao ? 1 : 0 || 0,
               },
               { transaction }
             );

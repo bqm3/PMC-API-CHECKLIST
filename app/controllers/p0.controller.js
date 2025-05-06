@@ -1,4 +1,12 @@
-const { P0, P0_Log, P0_User, Ent_user, Ent_chucvu, Ent_duan, Ent_chinhanh } = require("../models/setup.model");
+const {
+  P0,
+  P0_Log,
+  P0_User,
+  Ent_user,
+  Ent_chucvu,
+  Ent_duan,
+  Ent_chinhanh,
+} = require("../models/setup.model");
 const { Op, fn, col, where, QueryTypes } = require("sequelize");
 const moment = require("moment");
 const sequelize = require("../config/db.config");
@@ -222,7 +230,9 @@ exports.createP0 = async (req, res) => {
     });
 
     if (findP0) {
-      return res.status(400).json({ message: "Báo cáo P0 ngày hôm nay đã được tạo" });
+      return res
+        .status(400)
+        .json({ message: "Báo cáo P0 ngày hôm nay đã được tạo" });
     } else {
       const createP0 = await P0.create(combinedData, { transaction: t });
       await funcP0_Log(req, sanitizedData, createP0.ID_P0, t);
@@ -606,7 +616,9 @@ exports.uploadPheduyet = async (req, res) => {
     for (const row of data.slice(0, 50)) {
       const values = columns.map((column) => {
         // Ánh xạ tiêu đề cột từ Excel sang tên cột trong bảng
-        const excelColumn = Object.keys(columnMapping).find((key) => columnMapping[key] === column);
+        const excelColumn = Object.keys(columnMapping).find(
+          (key) => columnMapping[key] === column
+        );
 
         // Lấy giá trị từ dòng Excel, giữ nguyên dưới dạng chuỗi
         let value = row[excelColumn] || null;
@@ -627,11 +639,16 @@ exports.uploadPheduyet = async (req, res) => {
     }
 
     await transaction.commit();
-    res.status(200).json({ message: "Import dữ liệu thành công", totalRows: data.length });
+    res
+      .status(200)
+      .json({ message: "Import dữ liệu thành công", totalRows: data.length });
   } catch (error) {
     await transaction.rollback();
     console.error("Lỗi khi import dữ liệu:", error);
-    res.status(500).json({ message: "Đã có lỗi xảy ra khi import dữ liệu", error: error.message });
+    res.status(500).json({
+      message: "Đã có lỗi xảy ra khi import dữ liệu",
+      error: error.message,
+    });
   }
 };
 
@@ -646,7 +663,10 @@ exports.exportExcel = async (req, res) => {
       where: {
         ID_Duan: user.ID_Duan,
         isDelete: 0,
-        [Op.and]: [where(fn("MONTH", col("P0.createdAt")), month), where(fn("YEAR", col("P0.createdAt")), year)],
+        [Op.and]: [
+          where(fn("MONTH", col("P0.createdAt")), month),
+          where(fn("YEAR", col("P0.createdAt")), year),
+        ],
       },
       include: [
         {
@@ -694,7 +714,9 @@ exports.exportExcel = async (req, res) => {
     // Add title row with gradient background
     worksheet.mergeCells("A1:AF1");
     const titleCell = worksheet.getCell("A1");
-    const projectName = data[0]?.ent_duan?.Duan ? data[0].ent_duan.Duan.toUpperCase() : "KHÔNG XÁC ĐỊNH";
+    const projectName = data[0]?.ent_duan?.Duan
+      ? data[0].ent_duan.Duan.toUpperCase()
+      : "KHÔNG XÁC ĐỊNH";
     titleCell.value = `BÁO CÁO S0 DỰ ÁN ${projectName} - THÁNG ${month}/${year}`;
 
     console.log(":titleCell.value", titleCell.value);
@@ -728,7 +750,9 @@ exports.exportExcel = async (req, res) => {
     // Add subtitle with date
     worksheet.mergeCells("A2:AF2");
     const subtitleCell = worksheet.getCell("A2");
-    subtitleCell.value = `Ngày xuất báo cáo: ${moment().format("DD/MM/YYYY HH:mm:ss")}`;
+    subtitleCell.value = `Ngày xuất báo cáo: ${moment().format(
+      "DD/MM/YYYY HH:mm:ss"
+    )}`;
     subtitleCell.font = {
       name: "Arial",
       size: 12,
@@ -851,12 +875,18 @@ exports.exportExcel = async (req, res) => {
         QuansoDB: row.QuansoDB || 0,
 
         // Status and Revenue
-        Doanhthu: row.Doanhthu ? row.Doanhthu.toLocaleString("vi-VN") + " VND" : "0 VND",
+        Doanhthu: row.Doanhthu
+          ? row.Doanhthu.toLocaleString("vi-VN") + " VND"
+          : "0 VND",
         Ghichu: row.Ghichu || "Không có ghi chú",
 
         // Timestamp Information
-        createdAt: row.createdAt ? moment(row.createdAt).format("DD/MM/YYYY HH:mm:ss") : "N/A",
-        updatedAt: row.updatedAt ? moment(row.updatedAt).format("DD/MM/YYYY HH:mm:ss") : "N/A",
+        createdAt: row.createdAt
+          ? moment(row.createdAt).format("DD/MM/YYYY HH:mm:ss")
+          : "N/A",
+        updatedAt: row.updatedAt
+          ? moment(row.updatedAt).format("DD/MM/YYYY HH:mm:ss")
+          : "N/A",
       };
 
       const worksheetRow = worksheet.addRow(excelRow);
@@ -935,15 +965,19 @@ exports.exportExcel = async (req, res) => {
     const buffer = await workbook.xlsx.writeBuffer();
 
     // Set headers for file download (unchanged)
-    const filename = `BaoCao_${data[0]?.ent_duan?.Duan}_Thang${month}_Nam${year}.xlsx`
-      .replace(/\s+/g, "_")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/đ/g, "d")
-      .replace(/Đ/g, "D");
+    const filename =
+      `BaoCao_${data[0]?.ent_duan?.Duan}_Thang${month}_Nam${year}.xlsx`
+        .replace(/\s+/g, "_")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/Đ/g, "D");
 
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
 
     // Send Excel file to client
     res.send(buffer);
@@ -958,7 +992,10 @@ exports.exportExcel = async (req, res) => {
 
 exports.analytics = async (req, res) => {
   try {
-    const yesterday = moment_timezone().tz("Asia/Ho_Chi_Minh").subtract(1, "day").format("YYYY-MM-DD");
+    const yesterday = moment_timezone()
+      .tz("Asia/Ho_Chi_Minh")
+      .subtract(1, "day")
+      .format("YYYY-MM-DD");
     const type = parseInt(req.params.id, 10);
     let respone = "";
     switch (type) {
@@ -978,7 +1015,10 @@ exports.analytics = async (req, res) => {
         respone = await phan4P0(yesterday);
         break;
       case 6:
-        respone = await get7DaysPhanP0 (yesterday);
+        respone = await get7DaysPhanP0(yesterday);
+        break;
+      case 7:
+        respone = await get_DuanChuaTrienKhai();
         break;
     }
 
@@ -990,10 +1030,12 @@ exports.analytics = async (req, res) => {
   }
 };
 
-
 const phan1P0 = async (inputDate) => {
   try {
-    const dayBeforeYesterday = moment().tz("Asia/Ho_Chi_Minh").subtract(2, "days").format("YYYY-MM-DD");
+    const dayBeforeYesterday = moment()
+      .tz("Asia/Ho_Chi_Minh")
+      .subtract(2, "days")
+      .format("YYYY-MM-DD");
 
     // Gọi stored procedure trong MySQL
     const resultYesterday = await sequelize.query(
@@ -1040,6 +1082,19 @@ const phan2P0 = async (p_Ngay) => {
       thuaThe,
       thieuThe,
     };
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+const get_DuanChuaTrienKhai = async () => {
+  try {
+    // Gọi stored procedure trong MySQL
+    const result = await sequelize.query("CALL  sp_GetDuAnChuaTrienKhai", {
+      type: QueryTypes.RAW, // dùng RAW vì CALL trả về mảng nhiều lớp
+    });
+
+    return result;
   } catch (error) {
     throw new Error(error.message);
   }
@@ -1098,29 +1153,29 @@ const phan4P0 = async (inputDate) => {
 
     const duanCountByChiNhanh = await Ent_duan.findAll({
       attributes: [
-        [fn('COUNT', col('ent_duan.Duan')), 'soLuongDuan'],
-        [col('ent_chinhanh.Tenchinhanh'), 'Tenchinhanh']
+        [fn("COUNT", col("ent_duan.Duan")), "soLuongDuan"],
+        [col("ent_chinhanh.Tenchinhanh"), "Tenchinhanh"],
       ],
       where: {
         isDelete: 0,
         ID_Duan: {
-          [Op.notIn]: [1,140]
+          [Op.notIn]: [1, 140],
         },
-        P0: 1
+        P0: 1,
       },
       include: [
         {
           model: Ent_chinhanh,
-          as: 'ent_chinhanh',
-          attributes: []
-        }
+          as: "ent_chinhanh",
+          attributes: [],
+        },
       ],
-      group: ['ent_chinhanh.Tenchinhanh']
+      group: ["ent_chinhanh.Tenchinhanh"],
     });
 
-    const allChiNhanhData = duanCountByChiNhanh.map(item => ({
-      label: item.get('Tenchinhanh'),
-      count: parseInt(item.get('soLuongDuan')),
+    const allChiNhanhData = duanCountByChiNhanh.map((item) => ({
+      label: item.get("Tenchinhanh"),
+      count: parseInt(item.get("soLuongDuan")),
     }));
 
     const formattedResult = result.map((item) => ({
@@ -1129,14 +1184,14 @@ const phan4P0 = async (inputDate) => {
     }));
 
     const formattedMap = Object.fromEntries(
-      formattedResult.map(item => [item.label, item.value])
+      formattedResult.map((item) => [item.label, item.value])
     );
-    
-    const resultWithRatio = allChiNhanhData.map(item => {
+
+    const resultWithRatio = allChiNhanhData.map((item) => {
       const valueInFormatted = formattedMap[item.label] ?? 0;
       return {
         label: item.label,
-        value: `${valueInFormatted}/${item.count}`
+        value: `${valueInFormatted}/${item.count}`,
       };
     });
 
@@ -1166,23 +1221,24 @@ const phanP0 = async (inputDate) => {
   }
 };
 
-
 const get7DaysPhanP0 = async () => {
   const results = [];
   const promises = [];
 
   // Create array of promises for parallel processing
   for (let i = 0; i < 7; i++) {
-    const date = moment_timezone().subtract(i+1, 'days').format("YYYY-MM-DD");
+    const date = moment_timezone()
+      .subtract(i + 1, "days")
+      .format("YYYY-MM-DD");
     promises.push(
       phanP0(date)
-        .then(result => ({
+        .then((result) => ({
           date,
-          data: result.inputDate
+          data: result.inputDate,
         }))
-        .catch(err => ({
+        .catch((err) => ({
           date,
-          error: err.message
+          error: err.message,
         }))
     );
   }
