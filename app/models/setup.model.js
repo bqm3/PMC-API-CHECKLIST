@@ -19,6 +19,7 @@ const Ent_thietlapca = require("./ent_thietlapca.model");
 const Ent_duan_khoicv = require("./ent_duan_khoicv.model");
 const Ent_loaisosanh = require("./ent_loaisosanh.model");
 const Ent_phanhe = require("./ent_phanhe.model");
+const Ent_tailieuphanhe = require("./ent_tailieuphanhe.model");
 
 const Ent_chinhanh = require("./ent_chinhanh.model");
 const Ent_linhvuc = require("./ent_linhvuc.model");
@@ -62,6 +63,10 @@ Ent_Hangmuc_Chiso.belongsTo(Ent_Loai_Chiso, {
   foreignKey: "ID_LoaiCS",
 });
 
+Ent_tailieuphanhe.belongsTo(Ent_Phanhe, {
+  as: "ent_phanhe",
+  foreignKey: "ID_Phanhe",
+});
 // Ent_duan.belongsToMany(Ent_Loai_Chiso, {
 //   through: 'ent_loai_chiso',
 //   foreignKey: 'ID_Duan',
