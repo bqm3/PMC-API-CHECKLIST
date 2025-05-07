@@ -2,12 +2,10 @@ const {
   Tb_checklistchitietdone,
   Tb_checklistc,
   Ent_checklist,
+  beboi,
 } = require("../models/setup.model");
 const sequelize = require("../config/db.config");
-const { Op, Sequelize } = require("sequelize");
-const { sendToQueueDone } = require("../queue/producer.checklist");
-const moment = require('moment');
-
+const { sendToQueueDone, sendToQueue } = require("../queue/producer.checklist");
 
 const insertIntoDynamicTable = async (tableName, data, transaction) => {
   await sequelize.query(
@@ -33,16 +31,45 @@ const insertIntoDynamicTable = async (tableName, data, transaction) => {
   );
 };
 
+const insertIntoDynamicTableChiTiet = async (
+  tableName,
+  records,
+  transaction
+) => {
+  const query = `
+    INSERT INTO ${tableName}
+      (ID_ChecklistC, ID_Checklist, Vido, Kinhdo, Docao, Ketqua, Gioht, Ghichu, isScan, Anh, Ngay, isCheckListLai)
+    VALUES ?`;
+
+  const values = records.map((record) => [
+    record.ID_ChecklistC,
+    record.ID_Checklist,
+    record.Vido || null,
+    record.Kinhdo || null,
+    record.Docao || null,
+    record.Ketqua || null,
+    record.Gioht || null,
+    record.Ghichu || null,
+    record.isScan || null,
+    record.Anh || null,
+    record.Ngay || null,
+    record.isCheckListLai || 0,
+  ]);
+
+  await sequelize.query(query, {
+    replacements: [values],
+    type: sequelize.QueryTypes.INSERT,
+    transaction,
+  });
+};
+
 exports.create = async (req, res) => {
-  const transaction = await sequelize.transaction(); // Mở giao dịch
+  const transaction = await sequelize.transaction();
 
   try {
     const userData = req.user.data;
-
     if (!userData) {
-      return res.status(401).json({
-        message: "Bạn không có quyền tạo dự án!",
-      });
+      return res.status(401).json({ message: "Bạn không có quyền tạo dự án!" });
     }
 
     const {
@@ -58,93 +85,127 @@ exports.create = async (req, res) => {
       isCheckListLai,
     } = req.body;
 
-    // Kiểm tra đầu vào
     if (!Description || !Gioht) {
-      return res.status(400).json({
-        message: "Không thể checklist dữ liệu!",
-      });
+      return res.status(400).json({ message: "Không thể checklist dữ liệu!" });
     }
 
-    const data = {
-      ID_ChecklistC: ID_ChecklistC || null,
-      Description: Description || "",
-      Gioht,
-      Vido: Vido || null,
-      Kinhdo: Kinhdo || null,
-      Docao: Docao || null,
-      isScan: isScan || null,
-      isCheckListLai: isCheckListLai === 1 ? 1 : 0,
-      isDelete: 0,
-    };
-    const currentDate = moment();
-    const cutoffDate = moment("2024-12-31", "YYYY-MM-DD");
-    // Tạo bảng động nếu chưa tồn tại
-    const dynamicTableName = `tb_checklistchitietdone_${
-      (new Date().getMonth() + 1).toString().padStart(2, '0')
-    }_${new Date().getFullYear()}`;
-    // const dynamicTableName = "tb_checklistchitietdone_01_2025"
+    const now = new Date();
+    const dynamicTableName = `tb_checklistchitietdone_${(now.getMonth() + 1)
+      .toString()
+      .padStart(2, "0")}_${now.getFullYear()}`;
+    const dynamicTableNameChitiet = `tb_checklistchitiet_${(now.getMonth() + 1)
+      .toString()
+      .padStart(2, "0")}_${now.getFullYear()}`;
 
-    if (currentDate.isAfter(cutoffDate)) {
-      // Nếu ngày hiện tại > 31/12/2024, chỉ chèn vào Dynamic Table
-      await insertIntoDynamicTable(dynamicTableName, data, transaction);
-    } else {
-      // Nếu ngày hiện tại <= 31/12/2024, chèn cả hai
-      await insertIntoDynamicTable(dynamicTableName, data, transaction);
-      await Tb_checklistchitietdone.create(data, {
-        transaction,
-      });
-    }
-
-    // Commit giao dịch
-    await transaction.commit();
-
-    res.status(200).json({
-      message: "Checklist thành công!",
+    // Truy vấn toàn bộ checklist theo ID_Checklists
+    const entChecklists = await Ent_checklist.findAll({
+      attributes: ["ID_Checklist", "Giatridinhdanh", "ID_Phanhe"],
+      where: { ID_Checklist: ID_Checklists },
+      transaction,
     });
 
-    const backgroundTask = {
-      records: {
-        ...data,
-        checklistLength,
-        ID_Checklists,
-      },
-      dynamicTableName,
-    };
-    await sendToQueueDone(backgroundTask);
+    // Lọc checklist thuộc phân hệ 3
+    const checklistPhanhe3 = entChecklists.filter(
+      (item) => item.ID_Phanhe === 3
+    );
+    const checklistPhanhe3Ids = checklistPhanhe3.map(
+      (item) => item.ID_Checklist
+    );
 
-    // // Cập nhật `TongC` trong `Tb_checklistc`
-    // if (ID_ChecklistC) {
-    //   const checklistC = await Tb_checklistc.findOne({
-    //     attributes: ["ID_ChecklistC", "TongC", "Tong"],
-    //     where: { ID_ChecklistC },
-    //     transaction,
-    //   });
+    // Lấy phần còn lại không thuộc phân hệ 3
+    const remainingChecklists = ID_Checklists.filter(
+      (id) => !checklistPhanhe3Ids.includes(id)
+    );
+    const remainingDescription = remainingChecklists.join(",");
 
-    //   if (checklistC) {
-    //     const { TongC, Tong } = checklistC;
-    //     if (TongC < Tong && data.isCheckListLai === 0) {
-    //       await Tb_checklistc.update(
-    //         { TongC: Sequelize.literal(`TongC + ${checklistLength}`) },
-    //         { where: { ID_ChecklistC }, transaction }
-    //       );
-    //     }
-    //   }
-    // }
+    // Nếu có checklist phân hệ 3 → insert vào bảng chitiet
+    if (checklistPhanhe3.length > 0) {
+      const dataChiTiet = checklistPhanhe3.map((item) => ({
+        ID_ChecklistC,
+        ID_Checklist: item.ID_Checklist,
+        Ketqua: item.Giatridinhdanh || null,
+        Anh: null,
+        Vido,
+        Kinhdo,
+        Docao,
+        Gioht,
+        isScan,
+        isCheckListLai: !isCheckListLai ? 0 : 1,
+      }));
 
-    // // Cập nhật `Tinhtrang` trong `Ent_checklist`
-    // if (ID_Checklists && ID_Checklists.length > 0) {
-    //   await Ent_checklist.update(
-    //     { Tinhtrang: 0 },
-    //     { where: { ID_Checklist: { [Op.in]: ID_Checklists } }, transaction }
-    //   );
-    // }
+      await insertIntoDynamicTableChiTiet(
+        dynamicTableNameChitiet,
+        dataChiTiet,
+        transaction
+      );
+      const backgroundTask = {
+        records: dataChiTiet,
+        dynamicTableName: dynamicTableNameChitiet,
+      };
+      await sendToQueue(backgroundTask);
+      await insertBeBoiSimple(req.user.data, dataChiTiet);
+    }
+
+    // Nếu còn checklist không phải phân hệ 3 → insert vào bảng done
+    if (remainingChecklists.length > 0) {
+      const data = {
+        ID_ChecklistC: ID_ChecklistC || null,
+        Description: remainingDescription || "",
+        Gioht,
+        Vido: Vido || null,
+        Kinhdo: Kinhdo || null,
+        Docao: Docao || null,
+        isScan: isScan || null,
+        isCheckListLai: isCheckListLai === 1 ? 1 : 0,
+        isDelete: 0,
+      };
+
+      await insertIntoDynamicTable(dynamicTableName, data, transaction);
+
+      // Gửi task lên queue sau khi insert thành công
+      const backgroundTask = {
+        records: {
+          ...data,
+          checklistLength: remainingChecklists.length,
+          ID_Checklists: remainingChecklists,
+        },
+        dynamicTableName,
+      };
+
+      setImmediate(() => {
+        sendToQueueDone(backgroundTask).catch(console.error);
+      });
+    }
+
+    // ✅ Commit cuối cùng
+    await transaction.commit();
+
+    return res.status(200).json({ message: "Checklist thành công!" });
   } catch (error) {
-    // Rollback giao dịch nếu có lỗi
     await transaction.rollback();
     console.error("Error details:", error);
     return res.status(500).json({
       error: error.message || "Đã xảy ra lỗi trong quá trình checklist",
     });
+  }
+};
+
+const insertBeBoiSimple = async (userData, checklistPhanhe3) => {
+  const dataToInsert = checklistPhanhe3.map((item) => ({
+    Nguoi_tao: userData?.UserName || userData.Email || "unknown",
+    ID_Duan: userData?.ID_Duan,
+    ID_Checklist: item.ID_Checklist,
+    ID_ChecklistC: item.ID_ChecklistC,
+    Giatrighinhan: item.Ketqua,
+    ID_Loaisosanh: 0,
+    Giatridinhdanh: null,
+    Giatrisosanh: null,
+    Giatriloi: null,
+    Ngay_ghi_nhan: new Date().toISOString(),
+  }));
+
+  if (dataToInsert.length > 0) {
+    await beboi.bulkCreate(dataToInsert);
   }
 };
 

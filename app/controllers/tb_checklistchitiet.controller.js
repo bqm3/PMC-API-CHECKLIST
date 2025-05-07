@@ -19,28 +19,19 @@ const { Op, where, Sequelize } = require("sequelize");
 const ExcelJS = require("exceljs");
 const cron = require("node-cron");
 var path = require("path");
-const moment = require("moment");
-const { removeVietnameseTones } = require("../utils/util");
 const { sendToQueue } = require("../queue/producer.checklist");
 
-const BATCH_SIZE = 20; // Adjust the batch size based on your data size and performance
 const ensureArray = (data) => {
   if (!Array.isArray(data)) {
     return [data];
   }
   return data;
 };
-// Function to insert records in batches
-const insertInBatches = async (records, transaction) => {
-  for (let i = 0; i < records?.length; i += BATCH_SIZE) {
-    const batch = records?.slice(i, i + BATCH_SIZE);
-    await Tb_checklistchitiet.bulkCreate(batch, { transaction });
-  }
-};
+
 const processImageUpload = async (index, ID_Checklist, uploadedFiles) => {
   let anhs = [];
-  for (let i = 0; i < 10; i++) {
-    // Giả sử tối đa 10 ảnh mỗi record
+  for (let i = 0; i < 15; i++) {
+    // Giả sử tối đa 15 ảnh mỗi record
     const imageIndex = `Images_${index}_${ID_Checklist}_${i}`;
     const matchingImage = uploadedFiles?.find(
       (file) => file.fieldname === imageIndex
@@ -57,7 +48,6 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     const records = req.body;
     const userData = req.user.data;
     const uploadedFiles = req.uploadedFiles || [];
-    console.log("records", records);
 
     records.ID_ChecklistC = ensureArray(records.ID_ChecklistC);
     records.ID_Checklist = ensureArray(records.ID_Checklist);

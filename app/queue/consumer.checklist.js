@@ -136,7 +136,6 @@ const processChecklist = async (record, transaction) => {
   }
 };
 
-
 // ======================================
 async function processBackgroundTaskDone() {
   try {
@@ -158,7 +157,7 @@ async function processBackgroundTaskDone() {
             if (task) {
               const checklistC = await Tb_checklistc.findOne({
                 attributes: ["ID_ChecklistC", "TongC", "Tong"],
-                where: {ID_ChecklistC:  task.records.ID_ChecklistC },
+                where: { ID_ChecklistC: task.records.ID_ChecklistC },
                 transaction,
               });
 
@@ -166,19 +165,31 @@ async function processBackgroundTaskDone() {
                 const { TongC, Tong } = checklistC;
                 if (TongC < Tong && task.records.isCheckListLai === 0) {
                   await Tb_checklistc.update(
-                    { TongC: Sequelize.literal(`TongC + ${task.records.checklistLength}`) },
-                    { where: { ID_ChecklistC: task.records.ID_ChecklistC }, transaction }
+                    {
+                      TongC: Sequelize.literal(
+                        `TongC + ${task.records.checklistLength}`
+                      ),
+                    },
+                    {
+                      where: { ID_ChecklistC: task.records.ID_ChecklistC },
+                      transaction,
+                    }
                   );
                 }
               }
             }
 
             // Cập nhật `Tinhtrang` trong `Ent_checklist`
-            if (task.records.ID_Checklists && task.records.ID_Checklists?.length > 0) {
+            if (
+              task.records.ID_Checklists &&
+              task.records.ID_Checklists?.length > 0
+            ) {
               await Ent_checklist.update(
                 { Tinhtrang: 0 },
                 {
-                  where: { ID_Checklist: { [Op.in]: task.records.ID_Checklists } },
+                  where: {
+                    ID_Checklist: { [Op.in]: task.records.ID_Checklists },
+                  },
                   transaction,
                 }
               );
@@ -200,8 +211,5 @@ async function processBackgroundTaskDone() {
     console.error("Error in background task processor:", error);
   }
 }
- 
-
-
 
 module.exports = { processBackgroundTask, processBackgroundTaskDone };

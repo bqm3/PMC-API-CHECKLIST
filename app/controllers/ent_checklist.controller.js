@@ -469,7 +469,6 @@ exports.update = async (req, res) => {
         ID_Hangmuc: req.body.ID_Hangmuc,
         ID_Phanhe: req.body.ID_Phanhe,
         ID_Loaisosanh: req.body.ID_Loaisosanh,
-        Giatrisosanh: req.body.Giatrisosanh,
         Sothutu: req.body.Sothutu,
         Maso: req.body.Maso,
         MaQrCode: req.body.MaQrCode,
@@ -478,6 +477,7 @@ exports.update = async (req, res) => {
         Giatridinhdanh: req.body.Giatridinhdanh || "",
         Giatrinhan: req.body.Giatrinhan || "",
         Giatriloi: req.body.Giatriloi || "",
+        Giatrisosanh: req.body.Giatrisosanh || null,
         isCheck: req.body.isCheck,
         Tieuchuan: req.body.Tieuchuan || "",
 
