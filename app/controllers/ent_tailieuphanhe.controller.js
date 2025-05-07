@@ -6,7 +6,7 @@ exports.create = async (req, res) => {
   try {
     const userData = req.user.data;
     if (userData) {
-      const { ID_Phanhe, Duongdan, Ghichu } = req.body;
+      const { ID_Phanhe, Tenduongdan, Duongdan, Ghichu } = req.body;
       if (!ID_Phanhe || !Duongdan) {
         return res.status(400).json({
           message: "Thiếu trường thông tin",
@@ -16,6 +16,7 @@ exports.create = async (req, res) => {
       const newData = await Ent_tailieuphanhe.create({
         ID_Duan: userData.ID_Duan,
         ID_Phanhe,
+        Tenduongdan,
         Duongdan,
         Ghichu,
       });
@@ -32,6 +33,99 @@ exports.create = async (req, res) => {
   }
 };
 
+exports.findByID = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    const ID_Duongdantl = req.params.id;
+    if (userData) {
+      const newData = await Ent_tailieuphanhe.findOne({
+        where: {
+          ID_Duongdantl,
+        },
+      });
+
+      return res.status(200).json({
+        message: "Tải tài liệu thành công",
+        data: newData,
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+exports.update = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    const ID_Duongdantl = req.params.id;
+    if (userData) {
+      const { ID_Phanhe, Tenduongdan, Duongdan, Ghichu } = req.body;
+      if (!ID_Phanhe || !Duongdan) {
+        return res.status(400).json({
+          message: "Thiếu trường thông tin",
+        });
+      }
+
+      const newData = await Ent_tailieuphanhe.update(
+        {
+          ID_Duan: userData.ID_Duan,
+          ID_Phanhe,
+          Tenduongdan,
+          Duongdan,
+          Ghichu,
+        },
+        {
+          where: {
+            ID_Duongdantl,
+          },
+        }
+      );
+
+      return res.status(200).json({
+        message: "Tải tài liệu thành công",
+        data: newData,
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+exports.deleteMul = async (req, res) => {
+  try {
+    const userData = req.user.data;
+    const deleteRows = req.body;
+    const idsToDelete = deleteRows.map((row) => row.ID_Duongdantl);
+    if (userData) {
+      Ent_tailieuphanhe.update(
+        { isDelete: 1 },
+        {
+          where: {
+            ID_Duongdantl: idsToDelete,
+          },
+        }
+      )
+        .then((data) => {
+          res.status(200).json({
+            message: "Xóa tài liệu thành công!",
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message || "Lỗi! Vui lòng thử lại sau.",
+          });
+        });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
 exports.getByDuan = async (req, res) => {
   try {
     const userData = req.user.data;

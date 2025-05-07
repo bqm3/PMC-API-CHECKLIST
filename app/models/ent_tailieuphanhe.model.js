@@ -16,6 +16,9 @@ const Ent_tailieuphanhe = sequelize.define(
     ID_Duan: {
       type: DataTypes.INTEGER,
     },
+    Tenduongdan: {
+      type: DataTypes.CHAR,
+    },
     Duongdan: {
       type: DataTypes.CHAR,
     },
