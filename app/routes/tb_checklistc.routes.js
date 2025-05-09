@@ -15,8 +15,6 @@ module.exports = (app) => {
 
   router.get("/first-checklist", tb_checklistc.firstChecklist);
 
-  // router.get("/report-checklist-month", tb_checklistc.filterChecklistMonth)
-
   // Xuất báo cáo
   //==================================
   router.post(

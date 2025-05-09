@@ -6956,6 +6956,7 @@ exports.getProjectsChecklistStatus = async (req, res) => {
 
 exports.getProjectChecklistDays = async (req, res) => {
   try {
+    const userData = req.user.data;
     // Lấy ngày bắt đầu từ 7 ngày trước
     const startDate = moment().subtract(7, "days").format("YYYY-MM-DD");
     const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
@@ -6985,6 +6986,11 @@ exports.getProjectChecklistDays = async (req, res) => {
       (ID_KhoiCV != null && ID_KhoiCV != undefined && ent_chucvu.Role !== 5)
     ) {
       whereClause.ID_KhoiCV = ID_KhoiCV;
+    }
+
+    if (ent_chucvu.Role == 2 && userData?.arr_Khoi !== null) {
+      const arrKhoi = userData?.arr_Khoi?.split(",").map(Number);
+      whereClause.ID_KhoiCV = { [Op.in]: arrKhoi };
     }
 
     // Lấy tất cả dữ liệu checklistC cho dự án duy nhất trong vòng 7 ngày

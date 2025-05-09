@@ -17,45 +17,50 @@ const Lich_LamViec_PhanHe = require("../../models/Lich_LamViec_PhanHe.model");
 let expo = new Expo();
 
 const HSSE = [
-  { id: 0, title: "Điện cư dân", key: "Dien_cu_dan" },
-  { id: 1, title: "Điện chủ đầu tư", key: "Dien_cdt" },
-  { id: 2, title: "Nước cư dân", key: "Nuoc_cu_dan" },
-  { id: 3, title: "Nước chủ đầu tư", key: "Nuoc_cdt" },
-  { id: 4, title: "Nước xả thải", key: "Xa_thai" },
-  { id: 5, title: "Rác sinh hoạt", key: "Rac_sh" },
-  { id: 6, title: "Muối điện phân", key: "Muoi_dp" },
-  { id: 7, title: "PAC", key: "PAC" },
-  { id: 8, title: "NaHSO3", key: "NaHSO3" },
-  { id: 9, title: "NaOH", key: "NaOH" },
-  { id: 10, title: "Mật rỉ đường", key: "Mat_rd" },
-  { id: 11, title: "Polymer Anion", key: "Polymer_Anion" },
-  { id: 12, title: "Chlorine bột", key: "Chlorine_bot" },
-  { id: 13, title: "Chlorine viên", key: "Chlorine_vien" },
-  { id: 14, title: "Methanol", key: "Methanol" },
-  { id: 15, title: "Dầu máy phát", key: "Dau_may" },
-  { id: 16, title: "Túi rác 240L", key: "Tui_rac240" },
-  { id: 17, title: "Túi rác 120L", key: "Tui_rac120" },
-  { id: 18, title: "Túi rác 20L", key: "Tui_rac20" },
-  { id: 19, title: "Túi rác 10L", key: "Tui_rac10" },
-  { id: 20, title: "Túi rác 5L", key: "Tui_rac5" },
-  { id: 21, title: "Giấy vệ sinh 235mm", key: "giayvs_235" },
-  { id: 22, title: "Giấy vệ sinh 120mm", key: "giaivs_120" },
-  { id: 23, title: "Giấy lau tay", key: "giay_lau_tay" },
-  { id: 24, title: "Hóa chất làm sạch", key: "hoa_chat" },
-  { id: 25, title: "Nước rửa tay", key: "nuoc_rua_tay" },
-  { id: 26, title: "Nhiệt độ", key: "nhiet_do" },
-  { id: 27, title: "Nước bù bể", key: "nuoc_bu" },
-  { id: 28, title: "Clo", key: "clo" },
-  { id: 29, title: "Nồng độ PH", key: "PH" },
-  { id: 30, title: "Poolblock", key: "Poolblock" },
-  { id: 31, title: "Trạt thải", key: "trat_thai" },
-  { id: 32, title: "pH Minus", key: "pHMINUS" },
-  { id: 33, title: "Axit", key: "axit" },
-  { id: 34, title: "PN180", key: "PN180" },
-  { id: 35, title: "Chỉ số CO2", key: "chiSoCO2" },
-  { id: 36, title: "Clorin", key: "clorin" },
-  { id: 37, title: "NaOCL", key: "NaOCL" },
-  { id: 38, title: "Ghichu", key: "Ghichu" },
+  { id: 0, title: "Điện cư dân", key: "Dien_cu_dan", unit: "Kwh" },
+  { id: 1, title: "Điện chủ đầu tư", key: "Dien_cdt", unit: "Kwh" },
+  { id: 2, title: "Nước cư dân", key: "Nuoc_cu_dan", unit: "m³" },
+  { id: 3, title: "Nước chủ đầu tư", key: "Nuoc_cdt", unit: "m³" },
+  { id: 4, title: "Nước xả thải", key: "Xa_thai", unit: "m³" },
+  { id: 5, title: "Rác sinh hoạt", key: "Rac_sh", unit: "m³" },
+  { id: 6, title: "Muối điện phân", key: "Muoi_dp", unit: "" },
+  { id: 7, title: "PAC", key: "PAC", unit: "" },
+  { id: 8, title: "NaHSO3", key: "NaHSO3", unit: "" },
+  { id: 9, title: "NaOH", key: "NaOH", unit: "" },
+  { id: 10, title: "Mật rỉ đường", key: "Mat_rd", unit: "" },
+  { id: 11, title: "Polymer Anion", key: "Polymer_Anion", unit: "" },
+  { id: 12, title: "Chlorine bột", key: "Chlorine_bot", unit: "mg/l" },
+  { id: 13, title: "Chlorine viên", key: "Chlorine_vien", unit: "" },
+  { id: 14, title: "Methanol", key: "Methanol", unit: "" },
+  { id: 15, title: "Dầu máy phát", key: "Dau_may", unit: "lít" },
+  { id: 16, title: "Túi rác 240L", key: "Tui_rac240", unit: "kg" },
+  { id: 17, title: "Túi rác 120L", key: "Tui_rac120", unit: "kg" },
+  { id: 18, title: "Túi rác 20L", key: "Tui_rac20", unit: "kg" },
+  { id: 19, title: "Túi rác 10L", key: "Tui_rac10", unit: "kg" },
+  { id: 20, title: "Túi rác 5L", key: "Tui_rac5", unit: "kg" },
+  { id: 21, title: "Giấy vệ sinh 235mm", key: "giayvs_235", unit: "cuộn" },
+  { id: 22, title: "Giấy vệ sinh 120mm", key: "giaivs_120", unit: "cuộn" },
+  { id: 23, title: "Giấy lau tay", key: "giay_lau_tay", unit: "bịch" },
+  { id: 24, title: "Hóa chất làm sạch", key: "hoa_chat", unit: "lít" },
+  { id: 25, title: "Nước rửa tay", key: "nuoc_rua_tay", unit: "lít" },
+  { id: 26, title: "Nhiệt độ", key: "nhiet_do", unit: "°C" },
+  { id: 27, title: "Nước bù bể", key: "nuoc_bu", unit: "m³" },
+  { id: 28, title: "Clo", key: "clo", unit: "mg/l" },
+  { id: 29, title: "Nồng độ PH", key: "PH", unit: "" },
+  { id: 30, title: "Poolblock", key: "Poolblock", unit: "" },
+  { id: 31, title: "Trạt thải", key: "trat_thai", unit: "kg" },
+  { id: 32, title: "pH Minus", key: "pHMINUS", unit: "" },
+  { id: 33, title: "Axit", key: "axit", unit: "" },
+  { id: 34, title: "PN180", key: "PN180", unit: "" },
+  {
+    id: 35,
+    title: "Chỉ số CO2",
+    key: "chiSoCO2",
+    unit: "PPM (part per million)",
+  },
+  { id: 36, title: "Clorin", key: "clorin", unit: "" },
+  { id: 37, title: "NaOCL", key: "NaOCL", unit: "" },
+  { id: 38, title: "Ghichu", key: "Ghichu", unit: "" },
 ];
 
 exports.createHSSE = async (req, res) => {
@@ -589,20 +594,38 @@ exports.getWarningHsseYesterday = async (req, res) => {
       }
       const warnings = [];
 
-      for (const { key, title } of HSSE) {
+      for (const { key, title, unit } of HSSE) {
         const todayValue = todayItem[key] || 0;
         const yesterdayValue = yItem[key] || 0;
         const diff = todayValue - yesterdayValue;
 
-        let percentIncrease = 0;
+        let percentChange = 0;
         if (yesterdayValue === 0 && todayValue !== 0) {
-          percentIncrease = 100;
+          percentChange = 100;
         } else if (yesterdayValue !== 0) {
-          percentIncrease = ((diff / yesterdayValue) * 100).toFixed(2);
+          percentChange = (diff / yesterdayValue) * 100;
         }
 
-        if (parseFloat(percentIncrease) > 15) {
-          warnings.push(`${title} lớn hơn ${percentIncrease}% so với hôm qua`);
+        const percentFormatted = percentChange.toFixed(2);
+
+        // Tăng > 10%
+        if (percentChange > 10) {
+          warnings.push(
+            `${title} hôm nay (${todayValue} ${
+              unit || ""
+            }) lớn hơn ${percentFormatted}% so với hôm qua là (${yesterdayValue} ${
+              unit || ""
+            })`
+          );
+        }
+
+        // Giảm > 10%
+        if (percentChange < -10) {
+          warnings.push(
+            `${title} hôm nay (${todayValue} ${unit || ""}) nhỏ hơn ${Math.abs(
+              percentFormatted
+            )}% so với hôm qua là (${yesterdayValue} ${unit || ""})`
+          );
         }
       }
 
