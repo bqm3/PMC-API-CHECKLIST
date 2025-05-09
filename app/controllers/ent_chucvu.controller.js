@@ -54,17 +54,21 @@ exports.get = async (req, res) => {
       whereCondition.ID_Chucvu = { [Op.notIn]: [1] };
     }
 
-    if (userData && userData.ent_chucvu.Role == 2 || userData.ent_chucvu.Role == 1) {
-      whereCondition.ID_Chucvu = { [Op.in]: [2,3,4,8,9] };
+    if (userData && userData.ent_chucvu.Role == 1) {
+      whereCondition.ID_Chucvu = { [Op.in]: [2, 3, 4, 8, 9] };
     }
 
-    if (userData && userData.ent_chucvu.Role == 3 ) {
-      whereCondition.ID_Chucvu = { [Op.in]: [4,9] };
+    if (userData && userData.ent_chucvu.Role == 2) {
+      whereCondition.Role = { [Op.in]: [2, 3] };
+    }
+
+    if (userData && userData.ent_chucvu.Role == 3) {
+      whereCondition.Role = { [Op.in]: [3] };
     }
 
     if (userData) {
       await Ent_chucvu.findAll({
-        attributes: ["ID_Chucvu", "Chucvu", "isDelete"],
+        attributes: ["ID_Chucvu", "Chucvu", "isDelete", "Role"],
         where: whereCondition,
       })
         .then((data) => {

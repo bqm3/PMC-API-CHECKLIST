@@ -435,14 +435,15 @@ exports.getCheckListc = async (req, res, next) => {
 
       // Nếu quyền là 1 (ID_Chucvu === 1) thì không cần thêm điều kiện ID_KhoiCV
       if (
-        userData.ID_Chucvu !== 1 &&
-        userData.ID_Chucvu !== 2 &&
-        userData.ID_Chucvu !== 3 &&
-        userData.ID_Chucvu !== 11
+        userData.ent_chucvu.Role !== 10 &&
+        userData.ent_chucvu.Role !== 1 &&
+        userData.ent_chucvu.Role !== 0 &&
+        userData.ent_chucvu.Role !== 5 &&
+        userData.ent_chucvu.Role !== 2
       ) {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
         whereClause.ID_User = userData?.ID_User;
-      } else if (userData?.ent_chucvu.Role == 2) {
+      } else if (userData?.ent_chucvu.Role == 2 && userData?.arr_Khoi == null) {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
       }
 
@@ -455,6 +456,13 @@ exports.getCheckListc = async (req, res, next) => {
           // Thêm điều kiện tham chiếu cột từ bảng liên kết
           whereClause.ID_KhoiCV = userData.ID_KhoiCV;
         }
+      }
+
+      if (userData?.arr_Khoi !== null) {
+        const arrKhoi = userData?.arr_Khoi?.split(",").map(Number);
+        whereClause.ID_KhoiCV = {
+          [Op.in]: arrKhoi,
+        };
       }
 
       const page = parseInt(req.query.page) || 0;
@@ -638,11 +646,35 @@ exports.getDayCheckListc = async (req, res, next) => {
       isDelete: 0,
     };
 
-    if (![1, 2, 3, 11].includes(userData.ID_Chucvu)) {
-      whereClause.ID_KhoiCV = userData.ID_KhoiCV;
-      whereClause.ID_User = userData.ID_User;
-    } else if (userData?.ent_chucvu?.Role === 2) {
-      whereClause.ID_KhoiCV = userData.ID_KhoiCV;
+    if (
+      userData.ent_chucvu.Role !== 10 &&
+      userData.ent_chucvu.Role !== 1 &&
+      userData.ent_chucvu.Role !== 0 &&
+      userData.ent_chucvu.Role !== 5 &&
+      userData.ent_chucvu.Role !== 2
+    ) {
+      whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
+      whereClause.ID_User = userData?.ID_User;
+    } else if (userData?.ent_chucvu.Role == 2 && userData?.arr_Khoi == null) {
+      whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
+    }
+
+    if (userData?.ent_chucvu.Role === 5 && userData?.arr_Duan !== null) {
+      const arrDuanArray = userData?.arr_Duan.split(",").map(Number);
+
+      // Kiểm tra ID_Duan có thuộc mảng không
+      const exists = arrDuanArray?.includes(userData?.ID_Duan);
+      if (!exists) {
+        // Thêm điều kiện tham chiếu cột từ bảng liên kết
+        whereClause.ID_KhoiCV = userData.ID_KhoiCV;
+      }
+    }
+
+    if (userData?.arr_Khoi !== null) {
+      const arrKhoi = userData?.arr_Khoi?.split(",").map(Number);
+      whereClause.ID_KhoiCV = {
+        [Op.in]: arrKhoi,
+      };
     }
 
     if (params.khoi !== "all" && params.khoi !== "null") {
@@ -856,7 +888,6 @@ exports.getDayCheckListc = async (req, res, next) => {
 
 exports.getThongKe = async (req, res, next) => {
   try {
-    console.log("============================================");
     const userData = req.user.data;
     if (userData) {
       const fromDate = req.body.fromDate;
@@ -4547,7 +4578,6 @@ exports.tiLeHoanThanh = async (req, res) => {
   try {
     const user = req.user.data;
     const year = req.query.year || new Date().getFullYear();
-    const month = req.query.month || new Date().getMonth() + 1;
     const khoi = req.query.khoi;
     const nhom = req.query.nhom;
     const tangGiam = req.query.tangGiam || "desc";
@@ -4570,43 +4600,23 @@ exports.tiLeHoanThanh = async (req, res) => {
     const getLastDayOfMonth = (year, month) => {
       return new Date(year, month, 0).getDate(); // Get the last day of the given month
     };
+    console.log("khoi", khoi);
 
-    if (khoi !== "all") {
+    if (khoi !== "all" && khoi !== undefined) {
       whereClause.ID_KhoiCV = khoi;
-    }
-
-    if (user.ent_chucvu.Role == 11 && user.ID_KhoiCV != null) {
+    } else if (user.ent_chucvu.Role == 11 && user.ID_KhoiCV != null) {
       whereClause.ID_KhoiCV = user.ID_KhoiCV;
+    } else {
     }
 
-    if (nhom !== "all") {
-      whereClause["$ent_duan.ID_Phanloai$"] = nhom; // Add condition for nhom
+    if (nhom !== "all" && nhom !== undefined) {
+      whereClause["$ent_duan.ID_Phanloai$"] = nhom;
     }
 
     const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
-
-    // Use this in place of the current date logic in the `whereClause`
-    // whereClause.Ngay = {
-    //   [Op.gte]: `${yesterday} 00:00:00`,
-    //   [Op.lte]: `${yesterday} 23:59:59`,
-    // };
     whereClause.Ngay = yesterday;
-    // if (year && month === "all") {
-    //   whereClause.Ngay = {
-    //     [Op.gte]: `${year}-01-01`,
-    //     [Op.lte]: `${year}-12-31`,
-    //   };
-    // }
 
-    // if (year && month !== "all") {
-    //   const lastDay = getLastDayOfMonth(year, month); // Get the correct last day for the given month
-    //   const formattedMonth = month < 10 ? `0${month}` : `${month}`; // Ensure the month is formatted as two digits
-    //   whereClause.Ngay = {
-    //     [Op.gte]: `${year}-${formattedMonth}-01`,
-    //     [Op.lte]: `${year}-${formattedMonth}-${lastDay}`,
-    //   };
-    // }
-
+    console.log("whereClause", whereClause);
     // Fetch related checklist data along with project and khối information
     const relatedChecklists = await Tb_checklistc.findAll({
       attributes: [
@@ -4642,9 +4652,9 @@ exports.tiLeHoanThanh = async (req, res) => {
 
     relatedChecklists.forEach((checklistC) => {
       const projectId = checklistC.ID_Duan;
-      const projectName = checklistC.ent_duan.Duan;
-      const khoiName = checklistC.ent_khoicv.KhoiCV;
-      const shiftName = checklistC.ent_calv.Tenca;
+      const projectName = checklistC?.ent_duan?.Duan;
+      const khoiName = checklistC?.ent_khoicv?.KhoiCV;
+      const shiftName = checklistC?.ent_calv?.Tenca;
 
       if (!result[projectId]) {
         result[projectId] = {

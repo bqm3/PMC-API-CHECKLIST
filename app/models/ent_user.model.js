@@ -60,6 +60,9 @@ const Ent_user = sequelize.define(
     arr_Duan: {
       type: DataTypes.CHAR,
     },
+    arr_Khoi: {
+      type: DataTypes.CHAR,
+    },
     ID_Chucvu: {
       type: DataTypes.INTEGER,
     },

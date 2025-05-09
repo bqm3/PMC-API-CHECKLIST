@@ -28,16 +28,16 @@ const {
   createDynamicTableChiTiet,
 } = require("./app/utils/util");
 
-(async () => {
-  try {
-    await initRabbitMQ(); // Khởi tạo kết nối RabbitMQ
-    processBackgroundTask(); // Bắt đầu lắng nghe các tác vụ từ queue
-    processBackgroundTaskDone();
-    console.log("Queue is ready.");
-  } catch (error) {
-    console.error("Failed to initialize RabbitMQ:", error);
-  }
-})();
+// (async () => {
+//   try {
+//     await initRabbitMQ(); // Khởi tạo kết nối RabbitMQ
+//     processBackgroundTask(); // Bắt đầu lắng nghe các tác vụ từ queue
+//     processBackgroundTaskDone();
+//     console.log("Queue is ready.");
+//   } catch (error) {
+//     console.error("Failed to initialize RabbitMQ:", error);
+//   }
+// })();
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -487,10 +487,12 @@ require("./app/routes/sql.routes")(app);
 require("./app/routes/get_image.routes")(app);
 require("./app/routes/ent_baocaochiso.routes")(app);
 require("./app/routes/p0.routes")(app);
+require("./app/routes/beboi.routes")(app);
 require("./app/routes/s0_thaydoithe.routes")(app);
 require("./app/routes/ent_thamsophanhe.routes")(app);
 require("./app/routes/tb_user_history.routes")(app);
 require("./app/routes/ent_bansuco.routes")(app);
+require("./app/routes/ent_tailieuphanhe.routes")(app);
 
 const PORT = process.env.PORT || 6969;
 app.listen(PORT, () => {

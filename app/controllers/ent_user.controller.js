@@ -48,6 +48,7 @@ exports.login = async (req, res) => {
         "Hoten",
         "ID_KhoiCV",
         "Password",
+        "arr_Khoi",
         "PasswordPrivate",
         "arr_Duan",
         "Email",
@@ -171,6 +172,7 @@ exports.register = async (req, res, next) => {
       ID_Duan,
       isCheckketoan,
       arr_Duan,
+      arr_Khoi,
     } = req.body;
     if (!UserName || !Password || !ID_Chucvu) {
       return res.status(400).json({
@@ -234,6 +236,7 @@ exports.register = async (req, res, next) => {
           ? null
           : ID_KhoiCV,
       arr_Duan: `${arr_Duan}`,
+      arr_Khoi,
       isCheckketoan: isCheckketoan || 0,
       isDelete: 0,
     };
@@ -345,6 +348,7 @@ exports.updateUser = async (req, res) => {
       Ngaysinh,
       Gioitinh,
       arr_Duan,
+      arr_Khoi,
       isCheckketoan,
       oldUserName,
     } = req.body;
@@ -368,6 +372,7 @@ exports.updateUser = async (req, res) => {
         "Hoten",
         "Sodienthoai",
         "arr_Duan",
+        "arr_Khoi",
         "ID_Duan",
         "ID_KhoiCV",
         "ID_Chucvu",
@@ -400,6 +405,7 @@ exports.updateUser = async (req, res) => {
       Gioitinh,
       PasswordPrivate: Password,
       Email,
+      arr_Khoi,
       Ngaysinh,
       arrData,
       arr_Duan: `${arr_Duan}`,
@@ -489,6 +495,10 @@ exports.getUserOnline = async (req, res, next) => {
       whereClause["$ent_chucvu.Role$"] = { [Op.notIn]: [2, 3] };
     }
 
+    if (userData.ent_chucvu.Role == 2) {
+      whereClause["$ent_chucvu.Role$"] = { [Op.in]: [3] };
+    }
+
     await Ent_user.findAll({
       attributes: [
         "ID_User",
@@ -499,6 +509,7 @@ exports.getUserOnline = async (req, res, next) => {
         "PasswordPrivate",
         "arr_Duan",
         "ID_Duan",
+        "arr_Khoi",
         "ID_KhoiCV",
         "ID_Chucvu",
         "isCheckketoan",
@@ -570,6 +581,7 @@ exports.getUserRoleOnline = async (req, res, next) => {
         "Sodienthoai",
         "PasswordPrivate",
         "arr_Duan",
+        "arr_Khoi",
         "ID_Duan",
         "ID_KhoiCV",
         "ID_Chucvu",
@@ -637,6 +649,7 @@ exports.getDetail = async (req, res) => {
           "Gioitinh",
           "PasswordPrivate",
           "arr_Duan",
+          "arr_Khoi",
           "ID_Duan",
           "ID_KhoiCV",
           "ID_Chucvu",
@@ -729,6 +742,7 @@ exports.checkAuth = async (req, res, next) => {
         "Ngaysinh",
         "PasswordPrivate",
         "arr_Duan",
+        "arr_Khoi",
         "ID_Duan",
         "ID_KhoiCV",
         "deviceToken",

@@ -1,11 +1,17 @@
-const { Ent_Hsse_User, Ent_user, HSSE_Log } = require("../../models/setup.model");
+const {
+  Ent_Hsse_User,
+  Ent_user,
+  HSSE_Log,
+  Ent_duan,
+} = require("../../models/setup.model");
 const { getThamsophanhe } = require("./ent_thamsophanhe.controller");
-const { Op, fn, col, literal } = require('sequelize');
+const { Op, fn, col, literal } = require("sequelize");
 const moment = require("moment");
 const hsse = require("../../models/hsse.model");
 const sequelize = require("../../config/db.config");
 const { Expo } = require("expo-server-sdk");
-const { QueryTypes } = require('sequelize');
+const { QueryTypes } = require("sequelize");
+const Lich_LamViec_PhanHe = require("../../models/Lich_LamViec_PhanHe.model");
 
 // Khởi tạo một đối tượng Expo
 let expo = new Expo();
@@ -58,7 +64,9 @@ exports.createHSSE = async (req, res) => {
     const userData = req.user.data;
     const data = req.body;
     const Ngay_ghi_nhan = moment(new Date()).format("YYYY-MM-DD");
-    const yesterday = moment(Ngay_ghi_nhan).subtract(1, "days").format("YYYY-MM-DD");
+    const yesterday = moment(Ngay_ghi_nhan)
+      .subtract(1, "days")
+      .format("YYYY-MM-DD");
     const thuSo = moment(Ngay_ghi_nhan).day();
     const thuSoDieuChinh = thuSo === 0 ? 7 : thuSo;
 
@@ -74,7 +82,7 @@ exports.createHSSE = async (req, res) => {
       Nguoi_tao: userData?.UserName || userData?.Hoten,
       Email: userData?.Email,
       modifiedBy: "Checklist",
-      ID_Ngay: thuSoDieuChinh
+      ID_Ngay: thuSoDieuChinh,
     };
 
     const combinedData = { ...sanitizedData, ...dataUser };
@@ -88,9 +96,17 @@ exports.createHSSE = async (req, res) => {
     });
 
     if (findHsse) {
-      return res.status(400).json({ message: "Báo cáo HSSE ngày hôm nay đã được tạo" });
+      return res
+        .status(400)
+        .json({ message: "Báo cáo HSSE ngày hôm nay đã được tạo" });
     } else {
-      let htmlResponse = await funcYesterday(userData, data, yesterday, t, "Tạo báo cáo HSSE thành công.");
+      let htmlResponse = await funcYesterday(
+        userData,
+        data,
+        yesterday,
+        t,
+        "Tạo báo cáo HSSE thành công."
+      );
 
       // Token của thiết bị cần gửi thông báo
       let pushToken = "ExponentPushToken[tCg1IsCjTTXAM9Dg7PKpiu]";
@@ -136,7 +152,10 @@ exports.createHSSE = async (req, res) => {
       if (xaThaiWarning) {
         if (htmlResponse) {
           // Nếu đã có cảnh báo từ yesterday, thêm cảnh báo xả thải vào
-          htmlResponse = htmlResponse.replace("</div>", `${xaThaiWarning}</div>`);
+          htmlResponse = htmlResponse.replace(
+            "</div>",
+            `${xaThaiWarning}</div>`
+          );
         } else {
           // Nếu chưa có cảnh báo từ yesterday, tạo mới htmlResponse
           htmlResponse = `
@@ -182,7 +201,13 @@ exports.updateHSSE = async (req, res) => {
       });
     }
 
-    let htmlResponse = await funcYesterday(userData, data, yesterday, t, "Cập nhật thành công !");
+    let htmlResponse = await funcYesterday(
+      userData,
+      data,
+      yesterday,
+      t,
+      "Cập nhật thành công !"
+    );
 
     const xaThaiWarning = await funcXaThai(userData, sanitizedData);
 
@@ -211,7 +236,7 @@ exports.updateHSSE = async (req, res) => {
     });
   } catch (error) {
     await t.rollback();
-    console.log("error",error);
+    console.log("error", error);
     return res.status(500).json({
       message: error?.message || "Lỗi khi cập nhật HSSE.",
     });
@@ -224,7 +249,9 @@ exports.createHSSE_PSH = async (req, res) => {
     const userData = req.user.data;
     const data = req.body;
     const Ngay_ghi_nhan = moment(new Date()).format("YYYY-MM-DD");
-    const yesterday = moment(data.Ngay_ghi_nhan).subtract(1, "days").format("YYYY-MM-DD");
+    const yesterday = moment(data.Ngay_ghi_nhan)
+      .subtract(1, "days")
+      .format("YYYY-MM-DD");
 
     // Convert null values to 0
     const sanitizedData = Object.keys(data).reduce((acc, key) => {
@@ -242,7 +269,7 @@ exports.createHSSE_PSH = async (req, res) => {
       Nguoi_tao: userData?.UserName || userData?.Hoten,
       Email: userData?.Email,
       modifiedBy: "Checklist",
-      ID_Ngay: thuSoDieuChinh
+      ID_Ngay: thuSoDieuChinh,
     };
 
     const combinedData = { ...sanitizedData, ...dataUser };
@@ -256,9 +283,17 @@ exports.createHSSE_PSH = async (req, res) => {
     });
 
     if (findHsse) {
-      return res.status(400).json({ message: "Báo cáo HSSE ngày hôm nay đã được tạo" });
+      return res
+        .status(400)
+        .json({ message: "Báo cáo HSSE ngày hôm nay đã được tạo" });
     } else {
-      const htmlResponse = await funcYesterday(userData, data, yesterday, t, "Tạo báo cáo HSSE thành công.");
+      const htmlResponse = await funcYesterday(
+        userData,
+        data,
+        yesterday,
+        t,
+        "Tạo báo cáo HSSE thành công."
+      );
       const createHSSE = await hsse.create(combinedData, { transaction: t });
       // await funcHSSE_Log(req, sanitizedData, createHSSE.ID, t);
       await t.commit();
@@ -281,7 +316,13 @@ exports.updateHSSE_PSH = async (req, res) => {
     const isToday = moment(Ngay).isSame(moment(), "day");
     const yesterday = moment(Ngay).subtract(1, "days").format("YYYY-MM-DD");
 
-    const htmlResponse = await funcYesterday(userData, data, yesterday, t, "Cập nhật thành công !");
+    const htmlResponse = await funcYesterday(
+      userData,
+      data,
+      yesterday,
+      t,
+      "Cập nhật thành công !"
+    );
     // await funcHSSE_Log(req, data, req.params.id, t);
     await funUpdateHSSE(req, req.params.id, t);
     await t.commit();
@@ -433,7 +474,9 @@ exports.checkSubmitHSSE = async (req, res) => {
 exports.getHSSE = async (req, res) => {
   try {
     const Ngay_ghi_nhan = moment(new Date()).format("YYYY-MM-DD");
-    const Ngay_dau_thang = moment(Ngay_ghi_nhan, "YYYY-MM-DD").startOf("month").format("YYYY-MM-DD");
+    const Ngay_dau_thang = moment(Ngay_ghi_nhan, "YYYY-MM-DD")
+      .startOf("month")
+      .format("YYYY-MM-DD");
     const userData = req.user.data;
     const resData = await hsse.findAll({
       where: {
@@ -489,6 +532,90 @@ exports.getDetailHSSE = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       message: error.mesage || "Có lỗi xảy ra",
+    });
+  }
+};
+
+exports.getWarningHsseYesterday = async (req, res) => {
+  try {
+    const today = moment().format("YYYY-MM-DD");
+    const thuSo = moment().isoWeekday(); // 1: Thứ 2 → 7: Chủ nhật
+
+    const yesterday =
+      thuSo === 1
+        ? moment(today).subtract(3, "days").format("YYYY-MM-DD") // nếu Thứ 2 → lấy Thứ 6 tuần trước
+        : moment(today).subtract(1, "days").format("YYYY-MM-DD");
+    const yesterdayISO = moment(yesterday).isoWeekday();
+    // 1. Lấy danh sách dự án có lịch làm việc hôm qua (join ent_duan để có tên)
+    const duAnLamViecHomQua = await Lich_LamViec_PhanHe.findAll({
+      attributes: ["ID_Duan", "ID_Phanhe", "ID_Ngay"],
+      where: {
+        ID_Phanhe: 1,
+        ID_Ngay: yesterdayISO,
+      },
+      include: [
+        {
+          model: Ent_duan,
+          as: "ent_duan",
+          attributes: ["Duan", "ID_Duan"],
+          required: true,
+        },
+      ],
+      group: ["ID_Duan", "ent_duan.ID_Duan", "ent_duan.Duan"],
+    });
+
+    // 2. Tạo Set tên dự án có làm việc hôm qua
+    const dsTenDuAnLamHomQua = new Set(
+      duAnLamViecHomQua.map((item) => item.ent_duan.Duan)
+    );
+
+    // 3. Lấy dữ liệu HSSE hôm nay và hôm qua
+    const [todayHSSE, yesterdayHSSE] = await Promise.all([
+      hsse.findAll({ where: { Ngay_ghi_nhan: today } }),
+      hsse.findAll({ where: { Ngay_ghi_nhan: yesterday } }),
+    ]);
+
+    const result = {};
+
+    for (const todayItem of todayHSSE) {
+      const tenDuAn = todayItem.Ten_du_an;
+
+      // Bỏ qua nếu hôm qua dự án này không làm việc
+      if (!dsTenDuAnLamHomQua.has(tenDuAn)) continue;
+
+      const yItem = yesterdayHSSE.find((item) => item.Ten_du_an === tenDuAn);
+      if (!yItem) {
+        continue;
+      }
+      const warnings = [];
+
+      for (const { key, title } of HSSE) {
+        const todayValue = todayItem[key] || 0;
+        const yesterdayValue = yItem[key] || 0;
+        const diff = todayValue - yesterdayValue;
+
+        let percentIncrease = 0;
+        if (yesterdayValue === 0 && todayValue !== 0) {
+          percentIncrease = 100;
+        } else if (yesterdayValue !== 0) {
+          percentIncrease = ((diff / yesterdayValue) * 100).toFixed(2);
+        }
+
+        if (parseFloat(percentIncrease) > 15) {
+          warnings.push(`${title} lớn hơn ${percentIncrease}% so với hôm qua`);
+        }
+      }
+
+      if (warnings.length > 0) {
+        result[tenDuAn] = warnings;
+      }
+    }
+
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: error.message || "Có lỗi xảy ra",
     });
   }
 };
@@ -588,7 +715,6 @@ const funcYesterday = async (userData, data, yesterday, t, message) => {
   }
 };
 
-
 // 20/03/2025 tạm thời lấy tb ở file excel
 
 // * Cách tính mức xả thải trung bình của tất cả các dự án :
@@ -634,17 +760,17 @@ exports.canhBaoXaThai = async (req, res) => {
 
     // Gọi stored procedure trong MySQL
     const result = await sequelize.query(
-      'CALL Timkiemthongkexathai(:Ngay)',  // dùng CALL thay vì EXEC
+      "CALL Timkiemthongkexathai(:Ngay)", // dùng CALL thay vì EXEC
       {
         replacements: { Ngay },
-        type: QueryTypes.RAW // dùng RAW vì CALL trả về mảng nhiều lớp
+        type: QueryTypes.RAW, // dùng RAW vì CALL trả về mảng nhiều lớp
       }
     );
 
     // Với CALL, kết quả thường nằm trong mảng đầu tiên
-    res.status(200).json(result); 
+    res.status(200).json(result);
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res.status(500).json({
       message: error.message || "Có lỗi xảy ra khi gọi thủ tục",
     });
@@ -657,17 +783,17 @@ exports.duan_khongnhap_xathai = async (req, res) => {
 
     // Gọi stored procedure trong MySQL
     const result = await sequelize.query(
-      'CALL Dsduan_khongnhap_xathai(:p_ngay)',  // dùng CALL thay vì EXEC
+      "CALL Dsduan_khongnhap_xathai(:p_ngay)", // dùng CALL thay vì EXEC
       {
         replacements: { p_ngay },
-        type: QueryTypes.RAW // dùng RAW vì CALL trả về mảng nhiều lớp
+        type: QueryTypes.RAW, // dùng RAW vì CALL trả về mảng nhiều lớp
       }
     );
 
     // Với CALL, kết quả thường nằm trong mảng đầu tiên
-    res.status(200).json(result); 
+    res.status(200).json(result);
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res.status(500).json({
       message: error.message || "Có lỗi xảy ra khi gọi thủ tục",
     });

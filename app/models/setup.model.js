@@ -32,6 +32,7 @@ const HSSE_Log = require("./Hsse/hsse_log.model");
 const HSSE = require("./hsse.model");
 const Ent_Phanhe = require("./Hsse/ent_phanhe.model");
 const Ent_Thamsophanhe = require("./Hsse/ent_thamsophanhe.model");
+const Lich_LamViec_PhanHe = require("./Lich_LamViec_PhanHe.model");
 
 //P0
 const P0_User = require("./P0_User.model");
@@ -54,6 +55,10 @@ const Ent_hsse_user = require("./Hsse/ent_hsse_user.model");
 const Tb_User_History = require("./tb_user_history.model");
 const Ent_bansuco = require("./ent_bansuco.model");
 
+Lich_LamViec_PhanHe.belongsTo(Ent_duan, {
+  as: "ent_duan",
+  foreignKey: "ID_Duan",
+});
 Ent_Hangmuc_Chiso.belongsTo(Ent_duan, {
   as: "ent_duan",
   foreignKey: "ID_Duan",
@@ -412,4 +417,5 @@ module.exports = {
   Ent_loaisosanh,
   Ent_phanhe,
   beboi,
+  Lich_LamViec_PhanHe,
 };
