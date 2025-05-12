@@ -2441,6 +2441,7 @@ exports.uploadFiles = async (req, res) => {
           const tenDuan = formatVietnameseText(transformedItem["TÊNDỰÁN"]);
           const tenToanha = formatVietnameseText(transformedItem["TÊNTÒANHÀ"]);
           const tenKhoiCongViec = transformedItem["TÊNKHỐICÔNGVIỆC"];
+          const soThuTu = transformedItem["SỐTHỨTỰ"];
 
           const tenTang = formatVietnameseText(transformedItem["TÊNTẦNG"]);
           const tenHangmuc = formatVietnameseText(
@@ -2583,12 +2584,11 @@ exports.uploadFiles = async (req, res) => {
 
           const sttChecklist = checklistOrderMap[checklistKey]; // Lấy số thứ tự hiện tại cho checklist
 
-          console.log("canhBao", canhBao);
           const data = {
             ID_Khuvuc: hangmuc.ID_Khuvuc,
             ID_Tang: tang.ID_Tang,
             ID_Hangmuc: hangmuc.ID_Hangmuc,
-            Sothutu: sttChecklist, // Sử dụng số thứ tự vừa tính toán
+            Sothutu: soThuTu || sttChecklist, // Sử dụng số thứ tự vừa tính toán
             Maso: "",
             MaQrCode: "",
             Checklist: tenChecklist,
@@ -2694,6 +2694,7 @@ exports.uploadFixFiles = async (req, res) => {
           const tenDuan = formatVietnameseText(transformedItem["TÊNDỰÁN"]);
           const tenToanha = formatVietnameseText(transformedItem["TÊNTÒANHÀ"]);
           const tenKhoiCongViec = transformedItem["TÊNKHỐICÔNGVIỆC"];
+          const soThuTu = transformedItem["SỐTHỨTỰ"];
 
           const tenTang = formatVietnameseText(transformedItem["TÊNTẦNG"]);
           const tenHangmuc = formatVietnameseText(
@@ -2844,7 +2845,7 @@ exports.uploadFixFiles = async (req, res) => {
             ID_Khuvuc: hangmuc.ID_Khuvuc,
             ID_Tang: tang.ID_Tang,
             ID_Hangmuc: hangmuc.ID_Hangmuc,
-            Sothutu: sttChecklist, // Sử dụng số thứ tự vừa tính toán
+            Sothutu: soThuTu || sttChecklist, // Sử dụng số thứ tự vừa tính toán
             Maso: "",
             MaQrCode: "",
             Checklist: tenChecklist,
