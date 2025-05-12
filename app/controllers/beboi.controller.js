@@ -50,12 +50,11 @@ exports.detailChecklistBeboi = async (req, res) => {
   try {
     const userData = req.user.data;
     const Ngay_ghi_nhan = req.params.date;
-    const resData = await beboi.findAll({
+    const rawData = await beboi.findAll({
       where: {
         ID_Duan: userData?.ID_Duan,
         [Op.and]: [where(fn("DATE", col("Ngay_ghi_nhan")), Ngay_ghi_nhan)],
       },
-
       attributes: [
         "ID_Beboi",
         "ID_Duan",
@@ -67,6 +66,7 @@ exports.detailChecklistBeboi = async (req, res) => {
         "Giatrighinhan",
         "Giatrisosanh",
         "ID_Loaisosanh",
+        "createdAt",
       ],
       include: [
         {
@@ -94,10 +94,21 @@ exports.detailChecklistBeboi = async (req, res) => {
           ],
         },
       ],
-      order: [["Ngay_ghi_nhan", "DESC"]],
+      order: [["createdAt", "DESC"]],
     });
 
-    const processedData = resData.map((item) => {
+    // Giữ lại bản ghi mới nhất theo ID_Checklist
+    const latestPerChecklist = new Map();
+
+    for (const item of rawData) {
+      const id = item.ID_Checklist;
+      if (!latestPerChecklist.has(id)) {
+        latestPerChecklist.set(id, item);
+      }
+    }
+
+    // Xử lý từng bản
+    const processedData = [...latestPerChecklist.values()].map((item) => {
       const dinhdanh = parseFloat(item.Giatridinhdanh || 0);
       const ghinhan = parseFloat(item.Giatrighinhan || 0);
       const sosanh = parseFloat(item.Giatrisosanh || 0);
@@ -105,10 +116,7 @@ exports.detailChecklistBeboi = async (req, res) => {
       let vuotChuan = null;
 
       if (!isNaN(dinhdanh) && !isNaN(ghinhan) && ghinhan !== 0) {
-        // Tính tỷ lệ phần trăm
         tyle = ((ghinhan - dinhdanh) / dinhdanh) * 100;
-
-        // So sánh lệch quá chuẩn (cả âm và dương)
         if (!isNaN(sosanh)) {
           vuotChuan = Math.abs(tyle) > sosanh;
         }
