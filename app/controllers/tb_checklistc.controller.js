@@ -471,9 +471,6 @@ exports.getCheckListc = async (req, res, next) => {
           [Op.in]: arrKhoi,
         };
       }
-
-      console.log("whereClause", whereClause);
-
       const page = parseInt(req.query.page) || 0;
       const pageSize = parseInt(req.query.limit) || 100; // Số lượng phần tử trên mỗi trang
       const offset = page * pageSize;

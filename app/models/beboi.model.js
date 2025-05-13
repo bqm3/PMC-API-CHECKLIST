@@ -25,6 +25,9 @@ const beboi = sequelize.define(
     ID_ChecklistC: {
       type: DataTypes.INTEGER,
     },
+    Gioht: {
+      type: DataTypes.TIME,
+    },
     Giatridinhdanh: {
       type: DataTypes.CHAR,
     },

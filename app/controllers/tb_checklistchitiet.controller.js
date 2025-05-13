@@ -168,7 +168,7 @@ const insertCheckListPhanheBeboi = async (userData, checklistPhanheBeboi) => {
     };
 
     for (const item of checklistPhanheBeboi) {
-      const { ID_Checklist, ID_ChecklistC, Ketqua } = item;
+      const { ID_Checklist, ID_ChecklistC, Ketqua, Gioht } = item;
 
       const checklistInfo = await Ent_checklist.findOne({
         where: { ID_Checklist },
@@ -261,6 +261,7 @@ const insertCheckListPhanheBeboi = async (userData, checklistPhanheBeboi) => {
         ID_ChecklistC,
         Giatrighinhan: Ketqua,
         ID_Loaisosanh,
+        Gioht,
         Giatridinhdanh,
         Giatrisosanh,
         Giatriloi,

@@ -199,6 +199,7 @@ const insertBeBoiSimple = async (userData, checklistPhanhe3) => {
     Giatrighinhan: item.Ketqua,
     ID_Loaisosanh: 0,
     Giatridinhdanh: null,
+    Gioht: item?.Gioht,
     Giatrisosanh: null,
     Giatriloi: null,
     Ngay_ghi_nhan: new Date().toISOString(),
