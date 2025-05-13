@@ -458,12 +458,21 @@ exports.getCheckListc = async (req, res, next) => {
         }
       }
 
-      if (userData?.arr_Khoi !== null) {
-        const arrKhoi = userData?.arr_Khoi?.split(",").map(Number);
+      if (userData?.arr_Khoi !== null && userData?.ID_KhoiCV) {
+        let arrKhoi = userData.arr_Khoi.split(",").map(Number);
+        const idKhoiCV = Number(userData.ID_KhoiCV);
+
+        // Thêm ID_KhoiCV vào mảng nếu chưa tồn tại
+        if (!arrKhoi.includes(idKhoiCV)) {
+          arrKhoi.push(idKhoiCV);
+        }
+
         whereClause.ID_KhoiCV = {
           [Op.in]: arrKhoi,
         };
       }
+
+      console.log("whereClause", whereClause);
 
       const page = parseInt(req.query.page) || 0;
       const pageSize = parseInt(req.query.limit) || 100; // Số lượng phần tử trên mỗi trang
