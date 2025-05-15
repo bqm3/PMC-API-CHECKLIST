@@ -1,11 +1,9 @@
 const { fn, col, Op, literal, where } = require("sequelize");
 const beboi = require("../models/beboi.model");
-const {
-  Ent_checklist,
-  Tb_checklistc,
-  Ent_loaisosanh,
-} = require("../models/setup.model");
+const { Ent_checklist, Tb_checklistc, Ent_loaisosanh, Ent_duan, Ent_chinhanh, Ent_nhom, Ent_phanloaida } = require("../models/setup.model");
 const moment = require("moment");
+const sequelize = require("../config/db.config");
+const { QueryTypes } = require("sequelize");
 
 exports.getBeBoiByMonth = async (req, res) => {
   try {
@@ -16,18 +14,12 @@ exports.getBeBoiByMonth = async (req, res) => {
       attributes: [
         "ID_Duan",
         [fn("DATE", col("Ngay_ghi_nhan")), "Ngay_ghi_nhan"],
-        [
-          literal('GROUP_CONCAT(DISTINCT COALESCE(Nguoi_tao, "Chưa nhập"))'),
-          "Nguoi_tao",
-        ],
+        [literal('GROUP_CONCAT(DISTINCT COALESCE(Nguoi_tao, "Chưa nhập"))'), "Nguoi_tao"],
       ],
       where: {
         ID_Duan: userData?.ID_Duan,
         Ngay_ghi_nhan: {
-          [Op.between]: [
-            `${Ngay_dau_thang} 00:00:00`,
-            `${Ngay_ghi_nhan} 23:59:59`,
-          ],
+          [Op.between]: [`${Ngay_dau_thang} 00:00:00`, `${Ngay_ghi_nhan} 23:59:59`],
         },
       },
       group: ["ID_Duan", fn("DATE", col("Ngay_ghi_nhan"))],
@@ -72,26 +64,12 @@ exports.detailChecklistBeboi = async (req, res) => {
         {
           model: Ent_checklist,
           as: "ent_checklist",
-          attributes: [
-            "ID_Checklist",
-            "Checklist",
-            "Giatrinhan",
-            "Giatriloi",
-            "Giatrisosanh",
-            "Giatridinhdanh",
-            "Tieuchuan",
-          ],
+          attributes: ["ID_Checklist", "Checklist", "Giatrinhan", "Giatriloi", "Giatrisosanh", "Giatridinhdanh", "Tieuchuan"],
         },
         {
           model: Tb_checklistc,
           as: "tb_checklistc",
-          attributes: [
-            "ID_ChecklistC",
-            "ID_KhoiCV",
-            "ID_User",
-            "ID_ThietLapCa",
-            "ID_Calv",
-          ],
+          attributes: ["ID_ChecklistC", "ID_KhoiCV", "ID_User", "ID_ThietLapCa", "ID_Calv"],
         },
       ],
       order: [["createdAt", "DESC"]],
@@ -137,5 +115,173 @@ exports.detailChecklistBeboi = async (req, res) => {
     return res.status(500).json({
       message: error.message || "Có lỗi xảy ra",
     });
+  }
+};
+
+exports.duanListBeBoi = async (req, res) => {
+  try {
+    const data = await Ent_duan.findAll({
+      attributes: [
+        "ID_Duan",
+        "Duan",
+        "Diachi",
+        "Vido",
+        "Kinhdo",
+        "ID_Nhom",
+        "ID_Chinhanh",
+        "ID_Linhvuc",
+        "ID_Loaihinh",
+        "Percent",
+        "ID_Phanloai",
+        "P0",
+        "HSSE",
+        "BeBoi",
+        "Logo",
+        "isDelete",
+      ],
+      include: [
+        {
+          model: Ent_chinhanh,
+          attributes: ["Tenchinhanh", "ID_Chinhanh"],
+        },
+        {
+          model: Ent_nhom,
+          attributes: ["Tennhom", "ID_Nhom"],
+        },
+        {
+          model: Ent_phanloaida,
+          as: "ent_phanloaida",
+          attributes: ["ID_Phanloai", "Phanloai"],
+        },
+      ],
+      where: {
+        isDelete: 0,
+        BeBoi: 1,
+        ID_Duan: {
+          [Op.notIn]: [1, 140],
+        },
+      },
+    });
+
+    console.log("data",data)
+
+    res.status(200).json(data);
+  } catch (error) {
+    return res.status(500).json({
+      message: error?.message || "Lỗi khi lấy danh sách dự án.",
+    });
+  }
+};
+
+exports.analytics = async (req, res) => {
+  try {
+    const { type, p_ngay, p_ID_Duan } = req.body;
+    const int_type = parseInt(type, 10);
+    let respone = "";
+    switch (int_type) {
+      case 1:
+        respone = await BEBOI_DuAn_DaLamChecklist(p_ngay);
+        break;
+      case 2:
+        respone = await BEBOI_Phan1(p_ngay);
+        break;
+      case 3:
+        respone = await BeBoi_Danhsachdachualam(p_ngay);
+        break;
+      case 4:
+        respone = await St_ThongTinBeBoi(p_ID_Duan, p_ngay);
+        break;
+    }
+
+    res.status(200).json(respone);
+  } catch (error) {
+    return res.status(500).json({
+      message: error?.message || "Lỗi khi cập nhật P0.",
+    });
+  }
+};
+
+const BEBOI_DuAn_DaLamChecklist = async (p_Ngay) => {
+  try {
+    // Gọi stored procedure trong MySQL
+    const result = await sequelize.query(
+      "CALL BEBOI_DuAn_DaLamChecklist(:p_Ngay)", // dùng CALL thay vì EXEC
+      {
+        replacements: { p_Ngay },
+        type: QueryTypes.RAW, // dùng RAW vì CALL trả về mảng nhiều lớp
+      }
+    );
+
+    // Với CALL, kết quả thường nằm trong mảng đầu tiên
+    return result;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+const BEBOI_Phan1 = async (p_Ngay) => {
+  try {
+    const dayBeforeYesterday = moment().tz("Asia/Ho_Chi_Minh").subtract(2, "days").format("YYYY-MM-DD");
+    // Gọi stored procedure trong MySQL
+
+    const resultYesterday = await sequelize.query(
+      "CALL BEBOI_Phan1(:p_Ngay)", // dùng CALL thay vì EXEC
+      {
+        replacements: { p_Ngay },
+        type: QueryTypes.RAW, // dùng RAW vì CALL trả về mảng nhiều lớp
+      }
+    );
+
+    const resultDayBefore = await sequelize.query(
+      "CALL BEBOI_Phan1(:p_Ngay)", // dùng CALL thay vì EXEC
+      {
+        replacements: { p_Ngay: dayBeforeYesterday },
+        type: QueryTypes.RAW, // dùng RAW vì CALL trả về mảng nhiều lớp
+      }
+    );
+
+    // Với CALL, kết quả thường nằm trong mảng đầu tiên
+    return {
+      yesterday: resultYesterday[0],
+      dayBeforeYesterday: resultDayBefore[0],
+    };
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+const BeBoi_Danhsachdachualam = async (p_Ngay) => {
+  try {
+    // Gọi stored procedure trong MySQL
+    const result = await sequelize.query(
+      "CALL BeBoi_Danhsachdachualam(:p_Ngay)", // dùng CALL thay vì EXEC
+      {
+        replacements: { p_Ngay },
+        type: QueryTypes.RAW, // dùng RAW vì CALL trả về mảng nhiều lớp
+      }
+    );
+
+    // Với CALL, kết quả thường nằm trong mảng đầu tiên
+    return result;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+const St_ThongTinBeBoi = async (p_ID_Duan, p_Ngay) => {
+  try {
+    // Gọi stored procedure trong MySQL
+    const result = await sequelize.query(
+      "CALL St_ThongTinBeBoi(:p_ID_Duan, :p_Ngay)", // dùng CALL thay vì EXEC
+      {
+        replacements: { p_ID_Duan, p_Ngay },
+        type: QueryTypes.RAW, // dùng RAW vì CALL trả về mảng nhiều lớp
+      }
+    );
+
+    // Với CALL, kết quả thường nằm trong mảng đầu tiên
+    return result;
+  } catch (error) {
+    throw new Error(error.message);
   }
 };

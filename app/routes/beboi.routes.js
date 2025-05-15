@@ -8,8 +8,11 @@ module.exports = (app) => {
   } = require("../middleware/auth_middleware.js");
   var router = require("express").Router();
 
+  router.get("/duan", [isAuthenticated], beboi.duanListBeBoi);
   router.get("/", [isAuthenticated], beboi.getBeBoiByMonth);
   router.get("/:date", [isAuthenticated], beboi.detailChecklistBeboi);
+
+  router.post("/analytics", [isAuthenticated], beboi.analytics);
 
   app.use("/api/v2/beboi", router);
 };
