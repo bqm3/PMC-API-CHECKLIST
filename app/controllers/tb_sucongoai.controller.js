@@ -1086,16 +1086,38 @@ exports.getSuCoBenNgoai = async (req, res) => {
 
     // Xác định ngày bắt đầu và kết thúc của tuần này và tuần trước
     const today = new Date();
-    const startOfCurrentWeek = new Date(
-      today.setDate(today.getDate() - today.getDay())
-    );
-    const endOfCurrentWeek = new Date(startOfCurrentWeek);
-    endOfCurrentWeek.setDate(endOfCurrentWeek.getDate() + 6); // Thêm 6 ngày để có ngày kết thúc tuần này
+    // const startOfCurrentWeek = new Date(
+    //   today.setDate(today.getDate() - today.getDay())
+    // );
+    // const endOfCurrentWeek = new Date(startOfCurrentWeek);
+    // endOfCurrentWeek.setDate(endOfCurrentWeek.getDate() + 6); // Thêm 6 ngày để có ngày kết thúc tuần này
 
+    // const startOfLastWeek = new Date(startOfCurrentWeek);
+    // startOfLastWeek.setDate(startOfCurrentWeek.getDate() - 7); // Lùi 7 ngày để có ngày bắt đầu tuần trước
+    // const endOfLastWeek = new Date(startOfLastWeek);
+    // endOfLastWeek.setDate(endOfLastWeek.getDate() + 6); // Thêm 6 ngày để có ngày kết thúc tuần trước
+
+    // 🟩 Tuần này
+    const day = today.getDay(); // 0 = Chủ nhật, 1 = Thứ hai, ..., 6 = Thứ bảy
+    // Xử lý sao cho Thứ 2 là ngày đầu tuần
+    const diffToMonday = (day === 0 ? -6 : 1 - day);
+
+    const startOfCurrentWeek = new Date(today);
+    startOfCurrentWeek.setDate(today.getDate() + diffToMonday);
+    startOfCurrentWeek.setHours(0, 0, 0, 0);
+
+    const endOfCurrentWeek = new Date(startOfCurrentWeek);
+    endOfCurrentWeek.setDate(endOfCurrentWeek.getDate() + 6);
+    endOfCurrentWeek.setHours(23, 59, 59, 999);
+
+    // 🟦 Tuần trước
     const startOfLastWeek = new Date(startOfCurrentWeek);
-    startOfLastWeek.setDate(startOfCurrentWeek.getDate() - 7); // Lùi 7 ngày để có ngày bắt đầu tuần trước
+    startOfLastWeek.setDate(startOfCurrentWeek.getDate() - 7);
+    startOfLastWeek.setHours(0, 0, 0, 0);
+
     const endOfLastWeek = new Date(startOfLastWeek);
-    endOfLastWeek.setDate(endOfLastWeek.getDate() + 6); // Thêm 6 ngày để có ngày kết thúc tuần trước
+    endOfLastWeek.setDate(endOfLastWeek.getDate() + 6);
+    endOfLastWeek.setHours(23, 59, 59, 999);  
 
     // Truy vấn số lượng sự cố cho tuần này
     const currentWeekIncidents = await Tb_sucongoai.findAll({
@@ -1280,8 +1302,8 @@ exports.getSuCoBenNgoai = async (req, res) => {
       where: {
         isDelete: 0,
         Ngaysuco: {
-          [Op.gte]: startOfCurrentWeek,
-          [Op.lte]: endOfCurrentWeek,
+          [Op.gte]: startOfLastWeek,
+          [Op.lte]: endOfLastWeek,
         },
       },
       order: [
