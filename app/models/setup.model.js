@@ -126,6 +126,7 @@ Ent_duan.hasMany(Ent_duan_khoicv, {
   foreignKey: "ID_Duan",
 });
 Ent_duan_khoicv.belongsTo(Ent_duan, { foreignKey: "ID_Duan" });
+Ent_duan_khoicv.belongsTo(Ent_phanhe, { foreignKey: "ID_Phanhe" });
 
 Ent_chinhanh.hasMany(Ent_duan, {
   as: "ent_chinhanh",

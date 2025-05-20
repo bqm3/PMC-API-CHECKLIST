@@ -18,6 +18,10 @@ const Ent_duan_khoicv = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    ID_Phanhe: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
     Chuky: {
       type: DataTypes.INTEGER,
       allowNull: false,

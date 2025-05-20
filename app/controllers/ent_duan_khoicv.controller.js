@@ -8,13 +8,23 @@ const {
   Ent_calv,
   Ent_duan_khoicv,
   Ent_nhom,
+  Ent_phanhe,
 } = require("../models/setup.model");
 const { Op, Sequelize, fn, col, literal, where } = require("sequelize");
 
 exports.create = async (req, res) => {
   try {
     const userData = req.user.data;
-    const { Chuky, ID_KhoiCV, ID_Duan, Ngaybatdau, KhoiCV, Tenchuky, isQuantrong } = req.body;
+    const {
+      Chuky,
+      ID_KhoiCV,
+      ID_Duan,
+      Ngaybatdau,
+      KhoiCV,
+      Tenchuky,
+      isQuantrong,
+      ID_Phanhe,
+    } = req.body;
 
     if (!ID_KhoiCV || !ID_Duan || !Chuky) {
       return res.status(400).json({
@@ -22,12 +32,12 @@ exports.create = async (req, res) => {
       });
     }
 
-
     if (userData) {
       const data = {
         Chuky: Chuky,
         ID_Duan: ID_Duan,
         ID_KhoiCV: ID_KhoiCV,
+        ID_Phanhe: ID_Phanhe,
         Ngaybatdau: Ngaybatdau,
         Tenchuky: Tenchuky || `Chu kỳ ${Chuky} ngày`,
         isQuantrong,
@@ -38,8 +48,9 @@ exports.create = async (req, res) => {
         where: {
           ID_Duan: ID_Duan,
           ID_KhoiCV: ID_KhoiCV,
+          ID_Phanhe,
           Chuky: Chuky,
-          isDelete: 0
+          isDelete: 0,
         },
       });
 
@@ -69,8 +80,8 @@ exports.get = async (req, res) => {
     const userData = req.user.data;
     const andConditions = {
       ID_Duan: userData.ID_Duan,
-      isDelete: 0
-    }
+      isDelete: 0,
+    };
     if (userData?.ent_chucvu.Role == 5 && userData?.arr_Duan !== null) {
       const arrDuanArray = userData?.arr_Duan.split(",").map(Number);
 
@@ -78,13 +89,13 @@ exports.get = async (req, res) => {
       const exists = arrDuanArray.includes(userData?.ID_Duan);
       if (!exists) {
         andConditions.ID_KhoiCV = userData.ID_KhoiCV;
-
       }
     }
     await Ent_duan_khoicv.findAll({
       attributes: [
         "ID_Duan_KhoiCV",
         "ID_KhoiCV",
+        "ID_Phanhe",
         "Chuky",
         "Tenchuky",
         "ID_Duan",
@@ -106,6 +117,10 @@ exports.get = async (req, res) => {
         {
           model: Ent_khoicv,
           attributes: ["KhoiCV"],
+        },
+        {
+          model: Ent_phanhe,
+          attributes: ["Phanhe"],
         },
       ],
       where: andConditions,
@@ -139,10 +154,11 @@ exports.getDetail = async (req, res) => {
           "ID_Duan_KhoiCV",
           "ID_KhoiCV",
           "Tenchuky",
+          "ID_Phanhe",
           "Chuky",
           "ID_Duan",
           "Ngaybatdau",
-          "isQuantrong"
+          "isQuantrong",
         ],
         include: [
           {
@@ -158,6 +174,10 @@ exports.getDetail = async (req, res) => {
           {
             model: Ent_khoicv,
             attributes: ["KhoiCV"],
+          },
+          {
+            model: Ent_phanhe,
+            attributes: ["Phanhe"],
           },
         ],
       });
@@ -185,7 +205,15 @@ exports.update = async (req, res) => {
   try {
     const ID_Duan_KhoiCV = req.params.id;
     const userData = req.user.data;
-    const { Chuky, ID_KhoiCV, ID_Duan, Ngaybatdau, Tenchuky, isQuantrong } = req.body;
+    const {
+      Chuky,
+      ID_KhoiCV,
+      ID_Duan,
+      Ngaybatdau,
+      Tenchuky,
+      isQuantrong,
+      ID_Phanhe,
+    } = req.body;
 
     if (userData) {
       Ent_duan_khoicv.update(
@@ -193,6 +221,7 @@ exports.update = async (req, res) => {
           Chuky: Chuky,
           ID_KhoiCV: ID_KhoiCV,
           ID_Duan: ID_Duan,
+          ID_Phanhe: ID_Phanhe,
           Tenchuky: Tenchuky,
           Ngaybatdau: Ngaybatdau,
           isQuantrong: isQuantrong,
