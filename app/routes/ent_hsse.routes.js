@@ -7,6 +7,9 @@ module.exports = (app) => {
     isAdmin,
   } = require("../middleware/auth_middleware.js");
   var router = require("express").Router();
+  const multer = require('multer');
+  const upload = multer({ storage: multer.memoryStorage() });
+
 
   router.get("/", [isAuthenticated], ent_hsse_user.getHSSE_User_ByDuAn);
   router.post("/create", [isAuthenticated], ent_hsse_user.createHSSE);
@@ -27,5 +30,7 @@ module.exports = (app) => {
     ent_hsse_user.updateHSSE_PSH
   );
 
+  router.post("/export-excel", [isAuthenticated], ent_hsse_user.exportExcel)
+  router.post("/import-excel", [isAuthenticated], upload.single('file'), ent_hsse_user.importExcel)
   app.use("/api/v2/hsse", router);
 };
