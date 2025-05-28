@@ -206,12 +206,14 @@ exports.createP0 = async (req, res) => {
       isDelete: 0,
     };
 
+    const arrKhoiParsed = userData?.arr_Khoi?.split(",").map(Number);
+
     if (userData?.isCheckketoan === 1) {
       generalData.ID_User_KT = userData.ID_User;
     }
-    if (userData.ID_KhoiCV == 3) {
+    if (userData.ID_KhoiCV == 3 || arrKhoiParsed.includes(3)) {
       generalData.ID_User_AN = userData.ID_User;
-    } else if (userData.ID_KhoiCV == 4) {
+    } else if (userData.ID_KhoiCV == 4 || arrKhoiParsed.includes(4)) {
       generalData.ID_User_DV = userData.ID_User;
     } else if (userData?.ent_chucvu?.Role == 1) {
       generalData.ID_User_AN = userData.ID_User;
@@ -378,13 +380,15 @@ const updateP0 = async (req, ID_P0, t) => {
       return acc;
     }, {});
 
+    const arrKhoiParsed = userData?.arr_Khoi?.split(",").map(Number);
+
     if (userData?.isCheckketoan === 1) {
       sanitizedData.ID_User_KT = userData.ID_User;
     }
 
-    if (userData.ID_KhoiCV == 3) {
+    if (userData.ID_KhoiCV == 3 || arrKhoiParsed.includes(3)) {
       sanitizedData.ID_User_AN = userData.ID_User;
-    } else if (userData.ID_KhoiCV == 4) {
+    } else if (userData.ID_KhoiCV == 4 || arrKhoiParsed.includes(4)) {
       sanitizedData.ID_User_DV = userData.ID_User;
     } else if (userData?.ent_chucvu?.Role == 1) {
       sanitizedData.ID_User_AN = userData.ID_User;
