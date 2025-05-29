@@ -192,6 +192,9 @@ exports.analytics = async (req, res) => {
       case 5:
         respone = await Beboi_duan_csbt(p_ngay);
         break;
+      case 6:
+        respone = await BEBOI_Canhbao(p_ngay);
+        break;
     }
 
     res.status(200).json(respone);
@@ -301,6 +304,24 @@ const Beboi_duan_csbt = async (p_ngay) => {
 
     // Với CALL, kết quả thường nằm trong mảng đầu tiên
     return result;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+const BEBOI_Canhbao = async (ngay_input) => {
+  try {
+    // Gọi stored procedure trong MySQL
+    const result = await sequelize.query(
+      "CALL BEBOI_Canhbao(:ngay_input)", // dùng CALL thay vì EXEC
+      {
+        replacements: { ngay_input },
+        type: QueryTypes.RAW, // dùng RAW vì CALL trả về mảng nhiều lớp
+      }
+    );
+    const sorted = result.sort((a, b) => a.Duan.localeCompare(b.Duan));
+    // Với CALL, kết quả thường nằm trong mảng đầu tiên
+    return sorted;
   } catch (error) {
     throw new Error(error.message);
   }
