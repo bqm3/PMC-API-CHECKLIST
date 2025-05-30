@@ -200,7 +200,7 @@ exports.register = async (req, res, next) => {
       include: [
         {
           model: Ent_duan,
-          attributes: ["Duan"],
+          attributes: ["Duan", "ID_Duan"],
         },
         {
           model: Ent_chucvu,
@@ -232,7 +232,8 @@ exports.register = async (req, res, next) => {
         ID_Chucvu == 5 ||
         ID_Chucvu == 6 ||
         ID_Chucvu == 7 ||
-        ID_Chucvu == 2
+        ID_Chucvu == 2 ||
+        ID_Chucvu == 13
           ? null
           : ID_KhoiCV,
       arr_Duan: `${arr_Duan}`,
@@ -560,11 +561,10 @@ exports.getUserRoleOnline = async (req, res, next) => {
       isDelete: 0,
     };
 
-    if (
-      (userData.ent_chucvu.Role !== 10 && userData.ID_Duan !== null) ||
-      (userData.ent_chucvu.Role !== 0 && userData.ID_Duan !== null) ||
-      (userData.ent_chucvu.Role !== 4 && userData.ID_Duan !== null)
-    ) {
+    const role = userData.ent_chucvu.Role;
+    const roleLimited = [10, 0, 4];
+
+    if (!roleLimited.includes(role) && userData.ID_Duan !== null) {
       whereClause.ID_Duan = userData.ID_Duan;
     }
 

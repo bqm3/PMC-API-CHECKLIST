@@ -55,7 +55,7 @@ exports.get = async (req, res) => {
     }
 
     if (userData && userData.ent_chucvu.Role == 1) {
-      whereCondition.ID_Chucvu = { [Op.in]: [2, 3, 4, 8, 9] };
+      whereCondition.ID_Chucvu = { [Op.in]: [2, 3, 4, 8, 9, 13] };
     }
 
     if (userData && userData.ent_chucvu.Role == 2) {
@@ -68,7 +68,7 @@ exports.get = async (req, res) => {
 
     if (userData) {
       await Ent_chucvu.findAll({
-        attributes: ["ID_Chucvu", "Chucvu", "isDelete", "Role"],
+        attributes: ["ID_Chucvu", "Chucvu", "isDelete", "Role", "Ghichu"],
         where: whereCondition,
       })
         .then((data) => {

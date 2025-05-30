@@ -433,44 +433,38 @@ exports.getCheckListc = async (req, res, next) => {
         isDelete: 0,
       };
 
-      // Nếu quyền là 1 (ID_Chucvu === 1) thì không cần thêm điều kiện ID_KhoiCV
-      if (
-        userData.ent_chucvu.Role !== 10 &&
-        userData.ent_chucvu.Role !== 1 &&
-        userData.ent_chucvu.Role !== 0 &&
-        userData.ent_chucvu.Role !== 5 &&
-        userData.ent_chucvu.Role !== 2
-      ) {
-        whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
-        whereClause.ID_User = userData?.ID_User;
-      } else if (userData?.ent_chucvu.Role == 2 && userData?.arr_Khoi == null) {
-        whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
+      if (![0, 1, 2, 5, 10, 6, 7].includes(userData.ent_chucvu.Role)) {
+        if (userData.ID_KhoiCV != null) {
+          whereClause.ID_KhoiCV = userData.ID_KhoiCV;
+        }
+        whereClause.ID_User = userData.ID_User;
       }
 
-      if (userData?.ent_chucvu.Role === 5 && userData?.arr_Duan !== null) {
-        const arrDuanArray = userData?.arr_Duan.split(",").map(Number);
-
-        // Kiểm tra ID_Duan có thuộc mảng không
-        const exists = arrDuanArray?.includes(userData?.ID_Duan);
-        if (!exists) {
-          // Thêm điều kiện tham chiếu cột từ bảng liên kết
+      if (userData.ent_chucvu.Role === 2 && userData.arr_Khoi == null) {
+        if (userData.ID_KhoiCV != null) {
           whereClause.ID_KhoiCV = userData.ID_KhoiCV;
         }
       }
 
-      if (userData?.arr_Khoi !== null && userData?.ID_KhoiCV) {
-        let arrKhoi = userData.arr_Khoi.split(",").map(Number);
-        const idKhoiCV = Number(userData.ID_KhoiCV);
-
-        // Thêm ID_KhoiCV vào mảng nếu chưa tồn tại
-        if (!arrKhoi.includes(idKhoiCV)) {
-          arrKhoi.push(idKhoiCV);
+      if (userData.ent_chucvu.Role === 5 && userData.arr_Duan) {
+        const arrDuanArray = userData.arr_Duan.split(",").map(Number);
+        if (!arrDuanArray.includes(userData.ID_Duan)) {
+          if (userData.ID_KhoiCV != null) {
+            whereClause.ID_KhoiCV = userData.ID_KhoiCV;
+          }
         }
-
-        whereClause.ID_KhoiCV = {
-          [Op.in]: arrKhoi,
-        };
       }
+
+      if (userData.arr_Khoi && userData.ID_KhoiCV) {
+        const arrKhoi = userData.arr_Khoi.split(",").map(Number);
+        const idKhoiCV = Number(userData.ID_KhoiCV);
+        if (!arrKhoi.includes(idKhoiCV)) arrKhoi.push(idKhoiCV);
+
+        whereClause.ID_KhoiCV = { [Op.in]: arrKhoi };
+      }
+
+      console.log("whereClause", whereClause);
+
       const page = parseInt(req.query.page) || 0;
       const pageSize = parseInt(req.query.limit) || 100; // Số lượng phần tử trên mỗi trang
       const offset = page * pageSize;
@@ -645,56 +639,47 @@ exports.getDayCheckListc = async (req, res, next) => {
       pageSize: Math.min(100, parseInt(req.query.limit) || 100),
     };
 
-    // Tối ưu whereClause với Sequelize
     const whereClause = {
       ID_Duan: userData.ID_Duan,
       Ngay: { [Op.between]: [params.fromDate, params.toDate] },
       isDelete: 0,
     };
 
-    if (
-      userData.ent_chucvu.Role !== 10 &&
-      userData.ent_chucvu.Role !== 1 &&
-      userData.ent_chucvu.Role !== 0 &&
-      userData.ent_chucvu.Role !== 5 &&
-      userData.ent_chucvu.Role !== 2
-    ) {
-      whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
-      whereClause.ID_User = userData?.ID_User;
-    } else if (userData?.ent_chucvu.Role == 2 && userData?.arr_Khoi == null) {
-      whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
-    }
-
-    if (userData?.ent_chucvu.Role === 5 && userData?.arr_Duan !== null) {
-      const arrDuanArray = userData?.arr_Duan.split(",").map(Number);
-
-      // Kiểm tra ID_Duan có thuộc mảng không
-      const exists = arrDuanArray?.includes(userData?.ID_Duan);
-      if (!exists) {
-        // Thêm điều kiện tham chiếu cột từ bảng liên kết
-        whereClause.ID_KhoiCV = userData.ID_KhoiCV;
-      }
-    }
-
-    if (userData?.arr_Khoi !== null) {
-      const arrKhoi = userData?.arr_Khoi?.split(",").map(Number);
-      whereClause.ID_KhoiCV = {
-        [Op.in]: arrKhoi,
-      };
-    }
-
+    // Ưu tiên truyền từ query string
     if (params.khoi !== "all" && params.khoi !== "null") {
-      whereClause.ID_KhoiCV = params.khoi;
-    }
-    if (params.ca !== "all" && params.ca !== "null") {
-      whereClause.ID_Calv = params.ca;
+      whereClause.ID_KhoiCV = Number(params.khoi);
+    } else {
+      const role = userData.ent_chucvu.Role;
+
+      // Trường hợp Role đặc biệt không cần lọc theo Khối/User
+      const isSpecialRole = [0, 1, 2, 5, 10, 6, 7].includes(role);
+
+      if (!isSpecialRole) {
+        // Nhân viên thường: chỉ xem của chính mình
+        whereClause.ID_User = userData.ID_User;
+        whereClause.ID_KhoiCV = userData.ID_KhoiCV;
+      } else if (role === 2 && !userData.arr_Khoi) {
+        // Role 2 không có arr_Khoi thì lọc theo khối chính
+        whereClause.ID_KhoiCV = userData.ID_KhoiCV;
+      } else if (role === 5 && userData.arr_Duan) {
+        const arrDuan = userData.arr_Duan.split(",").map(Number);
+        if (!arrDuan.includes(userData.ID_Duan)) {
+          whereClause.ID_KhoiCV = userData.ID_KhoiCV;
+        }
+      }
+
+      // Nếu có nhiều khối (arr_Khoi) thì lọc theo danh sách
+      if (userData.arr_Khoi) {
+        const arrKhoi = userData.arr_Khoi.split(",").map(Number);
+        if (arrKhoi.length > 0) {
+          whereClause.ID_KhoiCV = { [Op.in]: arrKhoi };
+        }
+      }
     }
 
-    if (userData?.ent_chucvu?.Role === 5 && userData?.arr_Duan) {
-      const arrDuanArray = userData.arr_Duan.split(",").map(Number);
-      if (!arrDuanArray.includes(userData.ID_Duan)) {
-        whereClause.ID_KhoiCV = userData.ID_KhoiCV;
-      }
+    // Lọc theo ca nếu có
+    if (params.ca !== "all" && params.ca !== "null") {
+      whereClause.ID_Calv = Number(params.ca);
     }
 
     // Tối ưu query với Sequelize
@@ -4018,10 +4003,10 @@ exports.checklistCalvDate = async (req, res) => {
 
     // Nếu không có startDate hoặc endDate, gán ngày hiện tại
     if (!startDate) {
-      startDate = moment().format("YYYY-MM-DD"); // Ngày hiện tại
+      startDate = moment().format("YYYY-MM-DD");
     }
     if (!endDate) {
-      endDate = moment().format("YYYY-MM-DD"); // Ngày hiện tại
+      endDate = moment().format("YYYY-MM-DD");
     }
 
     // Định dạng ngày theo yêu cầu
@@ -4029,6 +4014,8 @@ exports.checklistCalvDate = async (req, res) => {
     const formattedEndDate = moment(endDate).format("YYYY-MM-DD");
 
     if (userData) {
+      const excludedRoles = [0, 1, 2, 5, 6, 7, 10];
+
       let whereClause = {
         ID_Duan: userData?.ID_Duan,
         isDelete: 0,
@@ -4038,12 +4025,7 @@ exports.checklistCalvDate = async (req, res) => {
         },
       };
 
-      // Nếu quyền là 1 (ID_Chucvu === 1) thì không cần thêm điều kiện ID_KhoiCV
-      if (
-        userData.ID_Chucvu !== 1 &&
-        userData.ID_Chucvu !== 2 &&
-        userData.ID_Chucvu !== 3
-      ) {
+      if (!excludedRoles.includes(userData?.ent_chucvu?.Role)) {
         whereClause.ID_KhoiCV = userData?.ID_KhoiCV;
         whereClause.ID_User = userData?.ID_User;
       }
