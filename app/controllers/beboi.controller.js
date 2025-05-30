@@ -163,8 +163,6 @@ exports.duanListBeBoi = async (req, res) => {
       },
     });
 
-    console.log("data",data)
-
     res.status(200).json(data);
   } catch (error) {
     return res.status(500).json({
@@ -190,6 +188,12 @@ exports.analytics = async (req, res) => {
         break;
       case 4:
         respone = await St_ThongTinBeBoi(p_ID_Duan, p_ngay);
+        break;
+      case 5:
+        respone = await Beboi_duan_csbt(p_ngay);
+        break;
+      case 6:
+        respone = await BEBOI_Canhbao(p_ngay);
         break;
     }
 
@@ -281,6 +285,43 @@ const St_ThongTinBeBoi = async (p_ID_Duan, p_Ngay) => {
 
     // Với CALL, kết quả thường nằm trong mảng đầu tiên
     return result;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+
+const Beboi_duan_csbt = async (p_ngay) => {
+  try {
+    // Gọi stored procedure trong MySQL
+    const result = await sequelize.query(
+      "CALL Beboi_duan_csbt(:p_ngay)", // dùng CALL thay vì EXEC
+      {
+        replacements: { p_ngay },
+        type: QueryTypes.RAW, // dùng RAW vì CALL trả về mảng nhiều lớp
+      }
+    );
+
+    // Với CALL, kết quả thường nằm trong mảng đầu tiên
+    return result;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+const BEBOI_Canhbao = async (ngay_input) => {
+  try {
+    // Gọi stored procedure trong MySQL
+    const result = await sequelize.query(
+      "CALL BEBOI_Canhbao(:ngay_input)", // dùng CALL thay vì EXEC
+      {
+        replacements: { ngay_input },
+        type: QueryTypes.RAW, // dùng RAW vì CALL trả về mảng nhiều lớp
+      }
+    );
+    const sorted = result.sort((a, b) => a.Duan.localeCompare(b.Duan));
+    // Với CALL, kết quả thường nằm trong mảng đầu tiên
+    return sorted;
   } catch (error) {
     throw new Error(error.message);
   }
