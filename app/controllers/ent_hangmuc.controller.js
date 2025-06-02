@@ -3,6 +3,7 @@ const {
   Ent_toanha,
   Ent_khoicv,
   Ent_khuvuc_khoicv,
+  Ent_thietlapca,
 } = require("../models/setup.model");
 const { Ent_khuvuc } = require("../models/setup.model");
 const { Op, Sequelize } = require("sequelize");

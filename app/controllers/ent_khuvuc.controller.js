@@ -7,6 +7,7 @@ const {
   Ent_tang,
   Ent_checklist,
   Ent_khuvuc_khoicv,
+  Ent_thietlapca,
 } = require("../models/setup.model");
 const { Op, Sequelize, fn, col, literal, where } = require("sequelize");
 const sequelize = require("../config/db.config");
