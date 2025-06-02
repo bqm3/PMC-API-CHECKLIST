@@ -15,6 +15,7 @@ const {
   Tb_checklistc,
   Ent_calv,
   Ent_khuvuc_khoicv,
+  Ent_thietlapca,
 } = require("../models/setup.model");
 const { Op, Sequelize } = require("sequelize");
 const {
@@ -24,6 +25,7 @@ const {
 } = require("../utils/util");
 const defineDynamicModelChiTiet = require("../models/definechecklistchitiet.model");
 const defineDynamicModelChiTietDone = require("../models/definechecklistchitietdone.model");
+const { syncSochecklist } = require("../services/thietlapca.service");
 
 exports.create = async (req, res) => {
   try {
@@ -510,62 +512,111 @@ exports.update = async (req, res) => {
 };
 
 exports.delete = async (req, res) => {
+  const transaction = await sequelize.transaction();
   try {
-    const userData = req.user.data;
-    if (req.params.id && userData) {
-      Ent_checklist.update(
-        { isDelete: 1 },
-        {
-          where: {
-            ID_Checklist: req.params.id,
-          },
-        }
-      )
-        .then((data) => {
-          res.status(200).json({
-            message: "Xóa checklist thành công!",
-          });
-        })
-        .catch((err) => {
-          res.status(500).json({
-            message: err.message || "Lỗi! Vui lòng thử lại sau.",
-          });
-        });
-    }
-  } catch (error) {
-    res.status(500).json({
-      message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    const { id } = req.params;
+    const checklist = await Ent_checklist.findByPk(id, {
+      attributes: ["ID_Checklist", "ID_Hangmuc", "ID_Khuvuc", "isDelete"],
+      transaction,
     });
+
+    if (!checklist) throw new Error("Checklist không tồn tại!");
+
+    await Ent_checklist.update(
+      { isDelete: 1 },
+      { where: { ID_Checklist: id }, transaction }
+    );
+
+    const setups = await Ent_thietlapca.findAll({
+      where: {
+        [Op.and]: [
+          Sequelize.where(
+            Sequelize.fn(
+              "JSON_CONTAINS",
+              Sequelize.col("ID_Hangmucs"),
+              JSON.stringify([checklist.ID_Hangmuc])
+            ),
+            true
+          ),
+          { isDelete: 0 },
+        ],
+      },
+      transaction,
+    });
+
+    console.log("setups", setups);
+    for (const setup of setups) {
+      await syncSochecklist(setup.ID_ThietLapCa, transaction);
+    }
+
+    await transaction.commit();
+    res.json({ message: "Đã xóa checklist và cập nhật Sochecklist." });
+  } catch (err) {
+    await transaction.rollback();
+    res.status(500).json({ message: err.message });
   }
 };
 
 exports.deleteMul = async (req, res) => {
+  const transaction = await sequelize.transaction();
   try {
     const userData = req.user.data;
     const deleteRows = req.body;
+
     const idsToDelete = deleteRows.map((row) => row.ID_Checklist);
-    if (userData) {
-      Ent_checklist.update(
-        { isDelete: 1, ID_User: userData.ID_User },
-        {
-          where: {
-            ID_Checklist: idsToDelete,
-          },
-        }
+
+    // Lấy toàn bộ checklist trước khi xóa để biết ID_Hangmuc liên quan
+    const checklists = await Ent_checklist.findAll({
+      where: {
+        ID_Checklist: idsToDelete,
+      },
+      transaction,
+    });
+
+    // Cập nhật isDelete = 1
+    await Ent_checklist.update(
+      { isDelete: 1, ID_User: userData.ID_User },
+      {
+        where: {
+          ID_Checklist: idsToDelete,
+        },
+        transaction,
+      }
+    );
+
+    // Tìm các ID_Hangmuc liên quan
+    const uniqueHangmucs = [...new Set(checklists.map((c) => c.ID_Hangmuc))];
+
+    // Duyệt các thiết lập ca có chứa bất kỳ hạng mục nào
+    const ors = uniqueHangmucs.map((hid) =>
+      Sequelize.where(
+        Sequelize.fn(
+          "JSON_CONTAINS",
+          Sequelize.col("ID_Hangmucs"),
+          JSON.stringify([hid])
+        ),
+        true
       )
-        .then((data) => {
-          res.status(200).json({
-            message: "Xóa checklist thành công!",
-          });
-        })
-        .catch((err) => {
-          res.status(500).json({
-            message: err.message || "Lỗi! Vui lòng thử lại sau.",
-          });
-        });
+    );
+
+    const setups = await Ent_thietlapca.findAll({
+      where: {
+        [Op.and]: [{ isDelete: 0 }, { [Op.or]: ors }],
+      },
+      transaction,
+    });
+
+    for (const setup of setups) {
+      await syncSochecklist(setup.ID_ThietLapCa, transaction);
     }
+
+    await transaction.commit();
+    res.status(200).json({
+      message: "Xóa checklist thành công và đã cập nhật lại Sochecklist!",
+    });
   } catch (err) {
-    return res.status(500).json({
+    await transaction.rollback();
+    res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }

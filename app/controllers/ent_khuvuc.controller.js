@@ -327,64 +327,141 @@ exports.update = async (req, res) => {
 };
 
 exports.delete = async (req, res) => {
+  const transaction = await sequelize.transaction();
   try {
-    const userData = req.user.data;
-    if (req.params.id && userData) {
-      Ent_khuvuc.update(
-        { isDelete: 1, ID_User: userData.ID_User },
-        {
-          where: {
-            ID_Khuvuc: req.params.id,
-          },
-        }
-      )
-        .then((data) => {
-          res.status(200).json({
-            message: "Xóa khu vực thành công!",
-          });
-        })
-        .catch((err) => {
-          res.status(500).json({
-            message: err.message || "Lỗi! Vui lòng thử lại sau.",
-          });
-        });
-    }
-  } catch (error) {
-    res.status(500).json({
-      message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    const { id } = req.params;
+
+    await Ent_khuvuc.update(
+      { isDelete: 1 },
+      { where: { ID_Khuvuc: id }, transaction }
+    );
+
+    const hangmucs = await Ent_hangmuc.findAll({
+      where: { ID_Khuvuc: id, isDelete: 0 },
+      transaction,
     });
+
+    const hangmucIds = hangmucs.map((hm) => hm.ID_Hangmuc);
+
+    await Ent_hangmuc.update(
+      { isDelete: 1 },
+      { where: { ID_Khuvuc: id }, transaction }
+    );
+
+    const ors = hangmucIds.map((hid) =>
+      Sequelize.where(
+        Sequelize.fn(
+          "JSON_CONTAINS",
+          Sequelize.col("ID_Hangmucs"),
+          JSON.stringify([hid])
+        ),
+        true
+      )
+    );
+
+    const setups = await Ent_thietlapca.findAll({
+      where: {
+        [Op.and]: [{ isDelete: 0 }, { [Op.or]: ors }],
+      },
+      transaction,
+    });
+
+    for (const setup of setups) {
+      const newHms = setup.ID_Hangmucs.filter((id) => !hangmucIds.includes(id));
+      await Ent_thietlapca.update(
+        { ID_Hangmucs: newHms },
+        { where: { ID_ThietLapCa: setup.ID_ThietLapCa }, transaction }
+      );
+      await syncSochecklist(setup.ID_ThietLapCa, transaction);
+    }
+
+    await transaction.commit();
+    res.json({ message: "Xóa khu vực và cập nhật số checklist thành công!" });
+  } catch (err) {
+    await transaction.rollback();
+    res.status(500).json({ message: err.message });
   }
 };
 
 exports.deleteMul = async (req, res) => {
+  const transaction = await sequelize.transaction();
   try {
     const userData = req.user.data;
     const deleteRows = req.body;
     const idsToDelete = deleteRows.map((row) => row.ID_Khuvuc);
-    if (userData) {
-      Ent_khuvuc.update(
-        { isDelete: 1, ID_User: userData.ID_User },
-        {
-          where: {
-            ID_Khuvuc: idsToDelete,
-          },
-        }
-      )
-        .then((data) => {
-          res.status(200).json({
-            message: "Xóa khu vực thành công!",
-          });
-        })
-        .catch((err) => {
-          res.status(500).json({
-            message: err.message || "Lỗi! Vui lòng thử lại sau.",
-          });
-        });
-    }
-  } catch (err) {
-    return res.status(500).json({
-      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+
+    // Đánh dấu khu vực là đã xóa
+    await Ent_khuvuc.update(
+      { isDelete: 1, ID_User: userData.ID_User },
+      {
+        where: {
+          ID_Khuvuc: idsToDelete,
+        },
+        transaction,
+      }
+    );
+
+    // Lấy các hạng mục thuộc khu vực bị xóa
+    const hangmucs = await Ent_hangmuc.findAll({
+      where: {
+        ID_Khuvuc: { [Op.in]: idsToDelete },
+        isDelete: 0,
+      },
+      transaction,
     });
+
+    const hangmucIds = hangmucs.map((hm) => hm.ID_Hangmuc);
+
+    // Đánh dấu xóa các hạng mục đó
+    await Ent_hangmuc.update(
+      { isDelete: 1 },
+      {
+        where: {
+          ID_Hangmuc: hangmucIds,
+        },
+        transaction,
+      }
+    );
+
+    // Tìm các thiết lập ca có chứa hạng mục này
+    const ors = hangmucIds.map((hid) =>
+      Sequelize.where(
+        Sequelize.fn(
+          "JSON_CONTAINS",
+          Sequelize.col("ID_Hangmucs"),
+          JSON.stringify([hid])
+        ),
+        true
+      )
+    );
+
+    const setups = await Ent_thietlapca.findAll({
+      where: {
+        [Op.and]: [{ isDelete: 0 }, { [Op.or]: ors }],
+      },
+      transaction,
+    });
+
+    for (const setup of setups) {
+      const updatedHangmucs = setup.ID_Hangmucs.filter(
+        (h) => !hangmucIds.includes(h)
+      );
+      await Ent_thietlapca.update(
+        { ID_Hangmucs: updatedHangmucs },
+        { where: { ID_ThietLapCa: setup.ID_ThietLapCa }, transaction }
+      );
+      await syncSochecklist(setup.ID_ThietLapCa, transaction);
+    }
+
+    await transaction.commit();
+    res
+      .status(200)
+      .json({ message: "Xóa khu vực thành công và cập nhật Sochecklist!" });
+  } catch (err) {
+    await transaction.rollback();
+    res
+      .status(500)
+      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 

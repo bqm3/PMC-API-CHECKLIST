@@ -345,64 +345,111 @@ exports.update = async (req, res) => {
 };
 
 exports.delete = async (req, res) => {
+  const transaction = await sequelize.transaction();
   try {
-    const userData = req.user.data;
-    if (req.params.id && userData) {
-      Ent_hangmuc.update(
-        { isDelete: 1 },
-        {
-          where: {
-            ID_Hangmuc: req.params.id,
-          },
-        }
-      )
-        .then((data) => {
-          res.status(200).json({
-            message: "Xóa hạng mục thành công!",
-          });
-        })
-        .catch((err) => {
-          res.status(500).json({
-            message: err.message || "Lỗi! Vui lòng thử lại sau.",
-          });
-        });
-    }
-  } catch (error) {
-    res.status(500).json({
-      message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    const { id } = req.params;
+
+    await Ent_hangmuc.update(
+      { isDelete: 1 },
+      { where: { ID_Hangmuc: id }, transaction }
+    );
+
+    const setups = await Ent_thietlapca.findAll({
+      where: {
+        [Op.and]: [
+          Sequelize.where(
+            Sequelize.fn(
+              "JSON_CONTAINS",
+              Sequelize.col("ID_Hangmucs"),
+              JSON.stringify([parseInt(id)])
+            ),
+            true
+          ),
+          { isDelete: 0 },
+        ],
+      },
+      transaction,
     });
+
+    for (const setup of setups) {
+      // Cập nhật danh sách hạng mục đã xóa
+      const newHangmucs = setup.ID_Hangmucs.filter(
+        (hid) => hid !== parseInt(id)
+      );
+      await Ent_thietlapca.update(
+        { ID_Hangmucs: newHangmucs },
+        { where: { ID_ThietLapCa: setup.ID_ThietLapCa }, transaction }
+      );
+      await syncSochecklist(setup.ID_ThietLapCa, transaction);
+    }
+
+    await transaction.commit();
+    res.json({ message: "Xóa hạng mục thành công và cập nhật số checklist!" });
+  } catch (err) {
+    await transaction.rollback();
+    res.status(500).json({ message: err.message });
   }
 };
 
 exports.deleteMul = async (req, res) => {
+  const transaction = await sequelize.transaction();
   try {
     const userData = req.user.data;
     const deleteRows = req.body;
     const idsToDelete = deleteRows.map((row) => row.ID_Hangmuc);
-    if (userData) {
-      Ent_hangmuc.update(
-        { isDelete: 1 },
-        {
-          where: {
-            ID_Hangmuc: idsToDelete,
-          },
-        }
+
+    // Đánh dấu isDelete = 1
+    await Ent_hangmuc.update(
+      { isDelete: 1 },
+      {
+        where: {
+          ID_Hangmuc: idsToDelete,
+        },
+        transaction,
+      }
+    );
+
+    // Tìm tất cả Ent_thietlapca có chứa ít nhất 1 ID_Hangmuc
+    const ors = idsToDelete.map((hid) =>
+      Sequelize.where(
+        Sequelize.fn(
+          "JSON_CONTAINS",
+          Sequelize.col("ID_Hangmucs"),
+          JSON.stringify([hid])
+        ),
+        true
       )
-        .then((data) => {
-          res.status(200).json({
-            message: "Xóa hạng mục thành công!",
-          });
-        })
-        .catch((err) => {
-          res.status(500).json({
-            message: err.message || "Lỗi! Vui lòng thử lại sau.",
-          });
-        });
-    }
-  } catch (err) {
-    return res.status(500).json({
-      message: err.message || "Lỗi! Vui lòng thử lại sau.",
+    );
+
+    const setups = await Ent_thietlapca.findAll({
+      where: {
+        [Op.and]: [{ isDelete: 0 }, { [Op.or]: ors }],
+      },
+      transaction,
     });
+
+    // Cập nhật lại Sochecklist
+    for (const setup of setups) {
+      // Cập nhật danh sách ID_Hangmucs (loại bỏ các hạng mục vừa bị xóa)
+      const updatedHangmucs = setup.ID_Hangmucs.filter(
+        (h) => !idsToDelete.includes(h)
+      );
+      await Ent_thietlapca.update(
+        { ID_Hangmucs: updatedHangmucs },
+        { where: { ID_ThietLapCa: setup.ID_ThietLapCa }, transaction }
+      );
+      await syncSochecklist(setup.ID_ThietLapCa, transaction);
+    }
+
+    await transaction.commit();
+    res
+      .status(200)
+      .json({ message: "Xóa hạng mục thành công và cập nhật Sochecklist!" });
+  } catch (err) {
+    await transaction.rollback();
+    res
+      .status(500)
+      .json({ message: err.message || "Lỗi! Vui lòng thử lại sau." });
   }
 };
 
@@ -695,12 +742,14 @@ exports.uploadFiles = async (req, res) => {
           ],
           where: {
             Tenkhuvuc: tenKhuvuc,
-            MaQrCode: ma_qr_cu ? ma_qr_cu :generateQRCodeKV(
-              tenToanha,
-              tenKhuvuc,
-              tenTang,
-              userData.ID_Duan
-            ),
+            MaQrCode: ma_qr_cu
+              ? ma_qr_cu
+              : generateQRCodeKV(
+                  tenToanha,
+                  tenKhuvuc,
+                  tenTang,
+                  userData.ID_Duan
+                ),
             [Op.and]: Sequelize.literal(
               `JSON_CONTAINS(ID_KhoiCVs, '${JSON.stringify(validKhoiCVs)}')`
             ),
@@ -710,12 +759,9 @@ exports.uploadFiles = async (req, res) => {
         });
 
         // Generate a QR code for hạng mục
-        const maQrCode = ma_qr_cu ? ma_qr_cu :generateQRCodeHM(
-          tenToanha,
-          tenKhuvuc,
-          tenHangmuc,
-          tenTang
-        );
+        const maQrCode = ma_qr_cu
+          ? ma_qr_cu
+          : generateQRCodeHM(tenToanha, tenKhuvuc, tenHangmuc, tenTang);
 
         // Check if hạng mục already exists for this khu vực
         const existingHangMuc = await Ent_hangmuc.findOne({
