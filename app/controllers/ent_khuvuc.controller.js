@@ -23,6 +23,7 @@ const {
   formatVietnameseText,
   removeVietnameseTones,
 } = require("../utils/util");
+const { syncSochecklist } = require("../services/thietlapca.service");
 
 exports.create = async (req, res) => {
   try {
