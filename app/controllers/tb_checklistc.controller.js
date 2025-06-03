@@ -5725,7 +5725,9 @@ exports.reportPercentLastWeek = async (req, res) => {
       whereClause.ID_KhoiCV = user.ID_KhoiCV;
     }
 
-    let where = {};
+    let where = {
+      isBaoCao: 0
+    };
 
     if (user.ID_Chucvu == 14 && user.ID_Chinhanh != null) {
       where.ID_Chinhanh = user.ID_Chinhanh;
@@ -5763,7 +5765,7 @@ exports.reportPercentLastWeek = async (req, res) => {
           {
             model: Ent_duan,
             attributes: ["Duan"],
-            // where
+            where
           },
           {
             model: Ent_khoicv,
@@ -6804,7 +6806,9 @@ exports.getProjectsChecklistStatus = async (req, res) => {
     }
 
     // role gd chi nhanh
-    let where = {};
+    let where = {
+      isBaoCao: 0
+    };
 
     if (user.ID_Chucvu == 14 && user.ID_Chinhanh != null) {
       where.ID_Chinhanh = user.ID_Chinhanh;

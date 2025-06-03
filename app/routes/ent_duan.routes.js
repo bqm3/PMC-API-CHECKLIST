@@ -32,6 +32,7 @@ module.exports = (app) => {
   );
   router.put("/update-sdt-khan-cap/", [isAuthenticated], ent_duan.updateSDTKhanCap);
   router.put("/delete/:id", [isAuthenticated, logAction], ent_duan.delete);
+  router.put("/update-action/:id", [isAuthenticated, logAction], ent_duan.UpdateProjectStatus);
 
   app.use("/api/v2/ent_duan", router);
 };

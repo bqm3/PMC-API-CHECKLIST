@@ -350,6 +350,38 @@ exports.delete = async (req, res) => {
   }
 };
 
+exports.UpdateProjectStatus = async (req, res) => {
+  try {
+    const userData = req.user?.data;
+    const id = req.params.id;
+    const { action, type } = req.query;
+
+    if (!id || !userData) {
+      return res.status(400).json({ message: "Thiếu ID hoặc chưa xác thực." });
+    }
+
+    if (!['close', 'baocao'].includes(type)) {
+      return res.status(400).json({ message: "Tham số 'type' không hợp lệ." });
+    }
+
+    let updateData = {};
+    if (type === 'close') {
+      updateData.isDelete = action === 'open' ? 0 : 2;  // đóng mở dự án
+    } else if (type === 'baocao') {
+      updateData.isBaoCao = action === 'report' ? 0 : 1; // báo cáo || không báo cáo
+    }
+
+    await Ent_duan.update(updateData, { where: { ID_Duan: id } });
+
+    res.status(200).json({ message: "Cập nhật trạng thái thành công!" });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message || "Lỗi! Vui lòng thử lại sau.",
+    });
+  }
+};
+
+
 exports.getKhuvucByDuan = async (req, res) => {
   try {
     const data = await Ent_duan.findAll({
@@ -427,7 +459,9 @@ exports.getThongtinduan = async (req, res) => {
       : [];
 
     const whereCondition = {
-      isDelete: 0,
+       isDelete: {
+         [Op.in]: [0, 2]
+       }
     };
 
     if (
@@ -464,6 +498,7 @@ exports.getThongtinduan = async (req, res) => {
         "P0",
         "HSSE",
         "BeBoi",
+        "isBaoCao",
         "isDelete",
       ],
 

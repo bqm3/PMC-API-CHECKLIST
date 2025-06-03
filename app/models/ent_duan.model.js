@@ -56,6 +56,10 @@ const Ent_duan = sequelize.define(
     Xathai: {
       type: DataTypes.INTEGER,
     },
+    isBaoCao: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
     isDelete: {
       type: DataTypes.INTEGER,
       defaultValue: 0,

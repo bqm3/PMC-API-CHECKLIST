@@ -59,7 +59,7 @@ exports.login = async (req, res) => {
       include: [
         {
           model: Ent_duan,
-          attributes: ["Duan", "Diachi", "Logo", "ID_LoaiCS"],
+          attributes: ["Duan", "Diachi", "Logo", "ID_LoaiCS", "isDelete"],
           include: [
             {
               model: Ent_chinhanh,
@@ -85,6 +85,13 @@ exports.login = async (req, res) => {
         },
       ],
     });
+
+    if(user.ent_duan && (user.ent_duan.isDelete != 0) && user.ID_Chucvu != 1) {
+      return res.status(400).json({
+        message:
+          "Dự án của bạn đã bị đóng hoặc xóa. Vui lòng nhắn tin cho phòng chuyển đổi số.",
+      });
+    }
 
     // Check if user exists and is not deleted
     if (user && user.isDelete === 0) {
