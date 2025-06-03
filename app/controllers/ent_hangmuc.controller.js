@@ -3,6 +3,7 @@ const {
   Ent_toanha,
   Ent_khoicv,
   Ent_khuvuc_khoicv,
+  Ent_thietlapca,
 } = require("../models/setup.model");
 const { Ent_khuvuc } = require("../models/setup.model");
 const { Op, Sequelize } = require("sequelize");
@@ -18,6 +19,7 @@ const {
   formatVietnameseText,
   removeVietnameseTones,
 } = require("../utils/util");
+const { syncSochecklist } = require("../services/thietlapca.service");
 
 // Create and Save a new Ent_tang
 exports.create = async (req, res, next) => {

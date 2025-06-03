@@ -7,6 +7,7 @@ const {
   Ent_tang,
   Ent_checklist,
   Ent_khuvuc_khoicv,
+  Ent_thietlapca,
 } = require("../models/setup.model");
 const { Op, Sequelize, fn, col, literal, where } = require("sequelize");
 const sequelize = require("../config/db.config");
@@ -22,6 +23,7 @@ const {
   formatVietnameseText,
   removeVietnameseTones,
 } = require("../utils/util");
+const { syncSochecklist } = require("../services/thietlapca.service");
 
 exports.create = async (req, res) => {
   try {

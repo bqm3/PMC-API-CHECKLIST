@@ -10,6 +10,12 @@ const nrl_ai = sequelize.define(
       autoIncrement: true,
       primaryKey: true,
     },
+    ID_Calv: {
+      type: DataTypes.INTEGER,
+    },
+    ID_Thietlapca: {
+      type: DataTypes.INTEGER,
+    },
     Tenduan: {
       type: DataTypes.CHAR,
     },

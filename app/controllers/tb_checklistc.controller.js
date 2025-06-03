@@ -7604,8 +7604,6 @@ exports.createExcelTongHopCa = async (req, res) => {
         ],
         where: whereClause,
       });
-      // Đầy
-      // Đầy
       // Create a map to aggregate data by shift (ca) and date
       const aggregatedData = {};
       dataChecklist.forEach((item) => {
@@ -7637,25 +7635,6 @@ exports.createExcelTongHopCa = async (req, res) => {
       const projectData =
         dataChecklist.length > 0 ? dataChecklist[0].ent_duan : {};
       const projectName = projectData?.Duan || "Tên dự án không có";
-      // const projectLogo =
-      //   projectData?.Logo || "https://pmcweb.vn/wp-content/uploads/logo.png";
-
-      // // Download the image and add it to the workbook
-      // const imageResponse = await axios({
-      //   url: projectLogo,
-      //   responseType: "arraybuffer",
-      // });
-      // const imageBuffer = Buffer.from(imageResponse.data, "binary");
-
-      // // Add image to the merged cells A1:B1
-      // const imageId = workbook.addImage({
-      //   buffer: imageBuffer,
-      //   extension: "png",
-      // });
-      // worksheet.addImage(imageId, {
-      //   tl: { col: 0, row: 0 },
-      //   ext: { width: 120, height: 60 },
-      // });
       worksheet.getRow(1).height = 60; // Adjust row height to fit the image
       worksheet.getRow(2).height = 25; // Adjust row height
 

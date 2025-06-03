@@ -192,6 +192,8 @@ const danhSachDuLieu = async (req, res) => {
           Tenkhoi: result.ent_khoicv.KhoiCV,
           Tenca: result.ent_calv.Tenca,
           Ngay: result.Ngay,
+          ID_Calv: result.ID_Calv,
+          ID_Thietlapca: result.ID_ThietLapCa,
           Tilehoanthanh: (result.TongC / result.Tong) * 100 || 0, // Tỷ lệ hoàn thành
           TongC: result.TongC,
           Tong: result.Tong,

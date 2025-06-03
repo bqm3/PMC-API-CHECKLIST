@@ -28,52 +28,77 @@ const defineDynamicModelChiTietDone = require("../models/definechecklistchitietd
 const { syncSochecklist } = require("../services/thietlapca.service");
 
 exports.create = async (req, res) => {
+  const transaction = await sequelize.transaction();
   try {
     const userData = req.user.data;
-    if (userData) {
-      if (!req.body.Checklist || !req.body.Giatrinhan || !req.body.ID_Hangmuc) {
-        res.status(400).json({
-          message: "Phải nhập đầy đủ dữ liệu!",
-        });
-        return;
-      }
 
-      const data = {
-        ID_Khuvuc: req.body.ID_Khuvuc,
-        ID_Tang: req.body.ID_Tang,
-        ID_Hangmuc: req.body.ID_Hangmuc,
-        Sothutu: req.body.Sothutu || 0,
-        Maso: req.body.Maso || "",
-        MaQrCode: req.body.MaQrCode || "",
-        Checklist: req.body.Checklist,
-        Ghichu: req.body.Ghichu || "",
-        Tieuchuan: req.body.Tieuchuan || "",
-        Giatridinhdanh:
-          req.body.Giatridinhdanh || req.body.Giatrinhan.split("/")[0] || "",
-        Giatrinhan: req.body.Giatrinhan || "",
-        Giatriloi: req.body.Giatriloi || "",
-        ID_User: userData.ID_User,
-        isDelete: 0,
-        Tinhtrang: 0,
-        isImportant: req.body.isImportant || 0,
-        isCheck: req.body.isCheck,
-      };
-
-      Ent_checklist.create(data)
-        .then(async (data) => {
-          res.status(200).json({
-            message: "Tạo checklist thành công!",
-            data: data,
-          });
-        })
-        .catch((err) => {
-          res.status(500).json({
-            message: err.message || "Lỗi! Vui lòng thử lại sau.",
-          });
-        });
+    if (!userData) {
+      throw new Error("Không xác thực được người dùng.");
     }
+
+    const { Checklist, Giatrinhan, ID_Hangmuc } = req.body;
+
+    if (!Checklist || !Giatrinhan || !ID_Hangmuc) {
+      return res.status(400).json({
+        message: "Phải nhập đầy đủ dữ liệu!",
+      });
+    }
+
+    const data = {
+      ID_Khuvuc: req.body.ID_Khuvuc,
+      ID_Tang: req.body.ID_Tang,
+      ID_Hangmuc: ID_Hangmuc,
+      Sothutu: req.body.Sothutu || 0,
+      Maso: req.body.Maso || "",
+      MaQrCode: req.body.MaQrCode || "",
+      Checklist: Checklist,
+      Ghichu: req.body.Ghichu || "",
+      Tieuchuan: req.body.Tieuchuan || "",
+      Giatridinhdanh: req.body.Giatridinhdanh || Giatrinhan.split("/")[0] || "",
+      Giatrinhan: Giatrinhan,
+      Giatriloi: req.body.Giatriloi || "",
+      ID_User: userData.ID_User,
+      isDelete: 0,
+      Tinhtrang: 0,
+      isImportant: req.body.isImportant || 0,
+      isCheck: req.body.isCheck || 0,
+    };
+
+    // 1. Tạo checklist
+    const checklist = await Ent_checklist.create(data, { transaction });
+
+    // 2. Tìm tất cả Ent_thietlapca có chứa ID_Hangmuc
+    const setups = await Ent_thietlapca.findAll({
+      where: {
+        isDelete: 0,
+        [Op.and]: [
+          Sequelize.where(
+            Sequelize.fn(
+              "JSON_CONTAINS",
+              Sequelize.col("ID_Hangmucs"),
+              JSON.stringify([ID_Hangmuc])
+            ),
+            true
+          ),
+        ],
+      },
+      transaction,
+    });
+
+    // 3. Cập nhật lại Sochecklist
+    for (const setup of setups) {
+      await syncSochecklist(setup.ID_ThietLapCa, transaction);
+    }
+
+    await transaction.commit();
+
+    res.status(200).json({
+      message: "Tạo checklist thành công!",
+      data: checklist,
+    });
   } catch (err) {
-    return res.status(500).json({
+    await transaction.rollback();
+    res.status(500).json({
       message: err.message || "Lỗi! Vui lòng thử lại sau.",
     });
   }
