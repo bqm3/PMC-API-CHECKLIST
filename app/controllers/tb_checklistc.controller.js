@@ -4368,7 +4368,8 @@ exports.checklistYearByKhoiCVSuCo = async (req, res) => {
       const relatedChecklists = [];
 
       for (let month = 1; month <= 12; month++) {
-        const tableName = `tb_checkilstchitiet_${month}_${year}`;
+         const paddedMonth = String(month).padStart(2, '0');
+         const tableName = `tb_checkilstchitiet_${paddedMonth}_${year}`;
 
         // Kiểm tra bảng có tồn tại không
         const tableExists = await sequelize.query(

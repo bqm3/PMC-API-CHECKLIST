@@ -72,6 +72,11 @@ Ent_tailieuphanhe.belongsTo(Ent_Phanhe, {
   as: "ent_phanhe",
   foreignKey: "ID_Phanhe",
 });
+
+Ent_Thamsophanhe.belongsTo(Ent_Phanhe, {
+  as: "ent_phanhe",
+  foreignKey: "ID_Phanhe",
+});
 // Ent_duan.belongsToMany(Ent_Loai_Chiso, {
 //   through: 'ent_loai_chiso',
 //   foreignKey: 'ID_Duan',

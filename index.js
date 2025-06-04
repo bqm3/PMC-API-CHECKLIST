@@ -493,6 +493,7 @@ require("./app/routes/ent_thamsophanhe.routes")(app);
 require("./app/routes/tb_user_history.routes")(app);
 require("./app/routes/ent_bansuco.routes")(app);
 require("./app/routes/ent_tailieuphanhe.routes")(app);
+require("./app/routes/ent_phanhe.routes")(app);
 
 const PORT = process.env.PORT || 6969;
 app.listen(PORT, () => {
