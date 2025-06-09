@@ -55,6 +55,20 @@ const Ent_hsse_user = require("./Hsse/ent_hsse_user.model");
 const Tb_User_History = require("./tb_user_history.model");
 const Ent_bansuco = require("./ent_bansuco.model");
 
+// lb
+const LB_yeucauKH = require("./lb_yeucauKH.model");
+const LB_xulyCV = require("./lb_xulyCV.model");
+const LB_hinhanh = require("./lb_hinhanh.model");
+
+LB_xulyCV.hasMany(LB_hinhanh, {as: "hinhanh_xuly", foreignKey: 'ID_Xuly'});
+LB_xulyCV.belongsTo(Ent_user, {as: "ent_user", foreignKey: 'ID_User'});
+
+LB_yeucauKH.belongsTo(Ent_user, {as: "ent_user", foreignKey: 'ID_Useryc', targetKey: "ID_User"});
+LB_yeucauKH.belongsTo(Ent_duan, {as: "ent_duan", foreignKey: 'ID_Duan'});
+LB_yeucauKH.hasMany(LB_hinhanh, {as: "hinhanh_yeucau", foreignKey: 'ID_Yeucau'});
+LB_yeucauKH.hasMany(LB_xulyCV, {as: "lb_xuly", foreignKey: 'ID_YeuCau'});
+LB_yeucauKH.belongsTo(Ent_phanhe, {as: "ent_phanhe", foreignKey: "ID_Phanhe"});
+
 Lich_LamViec_PhanHe.belongsTo(Ent_duan, {
   as: "ent_duan",
   foreignKey: "ID_Duan",
@@ -424,4 +438,7 @@ module.exports = {
   Ent_phanhe,
   beboi,
   Lich_LamViec_PhanHe,
+  LB_yeucauKH,
+  LB_xulyCV,
+  LB_hinhanh
 };

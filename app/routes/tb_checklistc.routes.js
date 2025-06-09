@@ -10,6 +10,10 @@ module.exports = (app) => {
     isAdmin,
   } = require("../middleware/auth_middleware.js");
   const uploader = require("../config/cloudinary.config.js");
+  const {
+  uploadImgCaChecklist,
+  resizeImage,
+} = require("../middleware/upload_image.js");
 
   var router = require("express").Router();
 
@@ -191,9 +195,15 @@ module.exports = (app) => {
   // Tra cứu, Tìm kiếm
   router.post("/date", [isAuthenticated], tb_checklistc.checklistCalvDate);
 
-  router.post(
+  // router.post(
+  //   "/update_images/:id",
+  //   [isAuthenticated, upload.any()],
+  //   tb_checklistc.checklistImages
+  // );
+
+    router.post(
     "/update_images/:id",
-    [isAuthenticated, upload.any()],
+    [isAuthenticated, uploadImgCaChecklist.any("images"), resizeImage],
     tb_checklistc.checklistImages
   );
 

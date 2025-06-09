@@ -2381,30 +2381,27 @@ exports.checklistImages = async (req, res) => {
   try {
     const userData = req.user.data;
     const ID_Checklist = req.params.id;
+    const formData = req.body;
+    const images = req.files
+
     if (userData && ID_Checklist) {
-      let images = req.files;
-
-      const uploadedFileIds = [];
-
-      for (let f = 0; f < images.length; f += 1) {
-        const fileId = await uploadFile(images[f]); // Upload file and get its id
-        uploadedFileIds.push(fileId); // Push id to array
-      }
-
       const reqData = {};
+
+      const isLocalhost = req.get("host").includes("localhost");
+      const host = `${isLocalhost ? "http" : "http"}://${req.get("host")}`;
 
       // Populate reqData with available image data
       for (let i = 1; i <= 4; i++) {
         const imageKey = `Anh${i}`;
         const timestampKey = `Giochupanh${i}`;
-        if (req.body[imageKey]) {
-          const imagePath = uploadedFileIds.find(
-            (file) => file.name === req.body[imageKey]
-          )?.id;
-          //  ;
-          if (imagePath) {
-            reqData[imageKey] = imagePath;
-            reqData[timestampKey] = req.body[timestampKey] || "";
+        if (formData[imageKey]) {
+          const file = images.find((img) => img.originalname === formData[imageKey])
+          if(file) {
+
+            const relativeLink = file.path.replace(/.*public[\\/]/, "").replace(/\\/g, "/");
+            const fullUrl = `${host}/upload/${relativeLink}`;
+            reqData[imageKey] = fullUrl
+            reqData[timestampKey] = formData[timestampKey] || "";
           }
         }
       }

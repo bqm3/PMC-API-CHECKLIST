@@ -18,6 +18,7 @@ const storageChecklist = (uploadFolderKey) =>
         sucongoai: path.join(__dirname, "..", "public", "sucongoai"),
         baocaochiso: path.join(__dirname, "..", "public", "baocaochiso"),
         logo: path.join(__dirname, "..", "public", "logo"),
+        imgCaChecklist: path.join(__dirname, "..", "public", "imgCaChecklist"),
       };
 
       const uploadFolder = uploadFolderMap[uploadFolderKey];
@@ -50,6 +51,10 @@ const storageChecklist = (uploadFolderKey) =>
 
 const uploadChecklist = multer({
   storage: storageChecklist("checklist"),
+});
+
+const uploadImgCaChecklist = multer({
+  storage: storageChecklist("imgCaChecklist"),
 });
 
 const uploadSuCongNgoai = multer({
@@ -129,6 +134,7 @@ module.exports = {
   uploadChecklist,
   uploadSuCongNgoai,
   uploadBaoCaoChiSo,
+  uploadImgCaChecklist,
   resizeImage,
   uploadLogo,
 };
