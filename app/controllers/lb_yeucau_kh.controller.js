@@ -3,6 +3,12 @@ const { Op, Sequelize, where } = require("sequelize");
 const sequelize = require("../config/db.config");
 const fs = require("fs");
 
+// 0: 'Chờ xử lý',
+// 1: 'Đang xử lý',
+// 2: 'Hoàn thành',
+// 3: 'Hủy',
+// 4: 'Chưa hoàn thành',
+
 const getAll = async (req, res) => {
   try {
     const user = req.user.data;
@@ -132,7 +138,7 @@ const create = async (req, res) => {
     const images = req.files || [];
 
     const isLocalhost = req.get("host").includes("localhost");
-    const host = `${isLocalhost ? "http" : "https   "}://${req.get("host")}`;
+    const host = `${isLocalhost ? "http" : "https"}://${req.get("host")}`;
 
     if (data.type == 0) {
       const dataDetail = {
