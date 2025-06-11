@@ -60,6 +60,9 @@ const LB_yeucauKH = require("./lb_yeucauKH.model");
 const LB_xulyCV = require("./lb_xulyCV.model");
 const LB_hinhanh = require("./lb_hinhanh.model");
 
+// thangmay
+const Lich_Thangmayct = require("./lichthangmayct.model");
+
 LB_xulyCV.hasMany(LB_hinhanh, {as: "hinhanh_xuly", foreignKey: 'ID_Xuly'});
 LB_xulyCV.belongsTo(Ent_user, {as: "ent_user", foreignKey: 'ID_User'});
 
@@ -440,5 +443,6 @@ module.exports = {
   Lich_LamViec_PhanHe,
   LB_yeucauKH,
   LB_xulyCV,
-  LB_hinhanh
+  LB_hinhanh,
+  Lich_Thangmayct
 };

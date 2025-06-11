@@ -13,6 +13,7 @@ const {
   Ent_tang,
   Ent_toanha,
   beboi,
+  Lich_Thangmayct,
 } = require("../models/setup.model");
 const sequelize = require("../config/db.config");
 const { Op, where, Sequelize } = require("sequelize");
@@ -43,7 +44,49 @@ const processImageUpload = async (index, ID_Checklist, uploadedFiles) => {
   return anhs;
 };
 
+const processChecklistsByPhanhe = async (records, uploadedFiles) => {
+  const checklistPhanheBeboi = [];
+  const thangMayPromises = [];
+
+  const processValue = (data) => data !== "null" && data !== undefined && data !== "" ? data : null;
+
+  // Chỉ loop 1 lần để phân loại và xử lý
+  records.ID_Phanhe.forEach((val, index) => {
+    const baseItem = {
+      index,
+      ID_ChecklistC: records.ID_ChecklistC[0],
+      ID_Checklist: records.ID_Checklist[index],
+      ID_Phanhe: processValue(records.ID_Phanhe[index]) || null,
+      Ketqua: processValue(records.Ketqua[index]) || null,
+      Gioht: processValue(records.Gioht[index]),
+      Ghichu: processValue(records.Ghichu[index]),
+    };
+
+    if (`${val}` === `3`) {
+      // Xử lý ngay cho ID_Phanhe = 3 beboi
+      checklistPhanheBeboi.push(baseItem);
+    } else if (`${val}` === `5`) {
+      // Tạo promise cho ID_Phanhe = 4 thangmay (cần xử lý async)
+      thangMayPromises.push(
+        processImageUpload(index, records.ID_Checklist[index], uploadedFiles)
+          .then(anhs => ({
+            ...baseItem,
+            Duongdananh: anhs.length > 0 ? anhs.join(",") : null,
+          }))
+      );
+    }
+  });
+
+  // Chờ tất cả promises cho thang máy hoàn thành
+  const checklistThangMay = await Promise.all(thangMayPromises);
+  return {
+    checklistPhanheBeboi,
+    checklistThangMay
+  };
+};
+
 exports.createCheckListChiTiet = async (req, res, next) => {
+  const transaction = await sequelize.transaction();
   try {
     const records = req.body;
     const userData = req.user.data;
@@ -75,19 +118,7 @@ exports.createCheckListChiTiet = async (req, res, next) => {
     const processValue = (data) =>
       data !== "null" && data !== undefined && data !== "" ? data : null;
     // Gom tất cả ID_Phanhe = 3 thành một mảng riêng
-    const checklistPhanheBeboi = records.ID_Phanhe.map((val, index) =>
-      val == 3
-        ? {
-            index,
-            ID_ChecklistC: records.ID_ChecklistC[0],
-            ID_Checklist: records.ID_Checklist[index],
-            ID_Phanhe: processValue(records.ID_Phanhe[index]) || null,
-            Ketqua: processValue(records.Ketqua[index]) || null,
-            Gioht: processValue(records.Gioht[index]),
-            Ghichu: processValue(records.Ghichu[index]),
-          }
-        : null
-    ).filter((item) => item !== null);
+    const { checklistPhanheBeboi, checklistThangMay } = await processChecklistsByPhanhe(records, uploadedFiles);
 
     const newRecords = await Promise.all(
       records.ID_Checklist.map(async (ID_Checklist, index) => {
@@ -117,15 +148,28 @@ exports.createCheckListChiTiet = async (req, res, next) => {
       })
     );
 
-    const transaction = await sequelize.transaction();
+      const insertTablePromise = insertIntoDynamicTable(dynamicTableName, newRecords, transaction);
+      const promises = [insertTablePromise];
 
-    try {
-      const { status, message } = await insertCheckListPhanheBeboi(
-        userData,
-        checklistPhanheBeboi
-      );
+      let beboiPromise = null;
+      let thangMayPromise = null;
 
-      await insertIntoDynamicTable(dynamicTableName, newRecords, transaction);
+      if (checklistPhanheBeboi.length > 0) {
+        beboiPromise = insertCheckListPhanheBeboi(userData, checklistPhanheBeboi);
+        promises.push(beboiPromise);
+      }
+
+      console.log("checklistThangMay",checklistThangMay)
+      console.log("checklistThangMay.length",checklistThangMay.length)
+
+      if (checklistThangMay.length > 0) {
+        thangMayPromise = insertCheckListThangMay(userData, checklistThangMay, transaction);
+        promises.push(thangMayPromise);
+      }
+
+      await Promise.all(promises);
+      const { status, message } = (await beboiPromise) || {};
+
       await transaction.commit();
 
       res.status(200).json({
@@ -137,13 +181,47 @@ exports.createCheckListChiTiet = async (req, res, next) => {
         dynamicTableName,
       };
       await sendToQueue(backgroundTask);
-    } catch (error) {
-      await transaction.rollback();
-      res.status(500).json({ error: "Failed to create checklist details" });
-    }
+   
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    await transaction.rollback();
+    res.status(500).json({ error: error.message || "Failed to create checklist details" });
   }
+};
+
+const insertCheckListThangMay = async (userData, checklistThangMay, transaction) => {
+    const checklistInfoPromises = checklistThangMay.map(item => 
+      Ent_checklist.findOne({
+        where: { ID_Checklist: item.ID_Checklist },
+        attributes: [
+          "Checklist",
+          "ID_Loaisosanh",
+          "isCanhbao", 
+          "Giatrisosanh",
+          "Giatriloi",
+          "Giatridinhdanh",
+        ],
+      })
+    );
+
+    const checklistInfoResults = await Promise.all(checklistInfoPromises);
+    const createData = checklistThangMay.map((item, index) => ({
+      ID_Duan: userData?.ID_Duan,
+      Ngay_ghi_nhan: new Date().toISOString(),
+      Nguoi_tao: userData?.UserName || userData.Email || "unknown",
+      ID_Checklist: item.ID_Checklist,
+      ID_ChecklistC: item.ID_ChecklistC,
+      Giatridinhdanh: checklistInfoResults[index]?.Giatridinhdanh,
+      Giatrighinhan: item?.Ketqua,
+      Giatrisosanh: checklistInfoResults[index]?.Giatrisosanh,
+      ID_Loaisosanh: checklistInfoResults[index]?.ID_Loaisosanh,
+      Danhgia: null,
+      iChaydg: 0,
+      Gioht: item?.Gioht,
+      Duongdananh: item?.Duongdananh,
+      Ghichu: item?.Ghichu
+    }));
+    // Bước 3: Bulk create (hiệu quả hơn nhiều create riêng lẻ)
+    return await Lich_Thangmayct.bulkCreate(createData, {transaction});
 };
 
 const insertCheckListPhanheBeboi = async (userData, checklistPhanheBeboi) => {
